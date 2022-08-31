@@ -6,7 +6,7 @@ public abstract class AInstrumentByFiatTestStrategy extends AInstrumentByFiatStr
 
     private Map FIGIES = Map.of(
 //            "BBG004730N88", 10,    // SBER
-            "BBG006L8G4H1", 1,    //Yandex
+//            "BBG006L8G4H1", 1,    //Yandex
 //            "BBG004S683W7", 10, //Аэрофлот
 //            "BBG00178PGX3", 1,    //VK
 //            "BBG004730JJ5", 10,  // Московская биржа
@@ -37,6 +37,6 @@ public abstract class AInstrumentByFiatTestStrategy extends AInstrumentByFiatStr
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return false;
     }
 }

@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.PostConstruct;
 import javax.transaction.Transactional;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -73,7 +74,7 @@ public class OrderService {
                 .build();
 
         var result = tinkoffOrderAPI.buy(instrument, candle.getClosingPrice(), order.getLots());
-        order.setPurchaseCommission(result.getCommission());
+        order.setPurchaseCommission(result.getCommission().setScale(2, RoundingMode.UP));
         order.setPurchasePrice(result.getPrice());
         order = orderRepository.save(order);
 
@@ -90,7 +91,7 @@ public class OrderService {
         order.setSellDateTime(candle.getDateTime());
 
         var result = tinkoffOrderAPI.sell(instrument, candle.getClosingPrice(), order.getLots());
-        order.setSellCommission(result.getCommission());
+        order.setSellCommission(result.getCommission().setScale(2, RoundingMode.UP));
         order.setSellPrice(result.getPrice());
         order.setSellProfit(result.getPrice().subtract(order.getPurchasePrice()));
         order = orderRepository.save(order);

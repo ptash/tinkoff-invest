@@ -1,11 +1,11 @@
-package com.struchev.invest.strategy.instrument_by_fiat;
+package com.struchev.invest.strategy.instrument_by_fiat_cross;
 
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
 
 @Component
-public class BuyP10AndTP1PercentAndSL3PercentStrategy extends AInstrumentByFiatStrategy {
+public class BuyAndTP1PercentAndSL3CrossStrategy extends AInstrumentByFiatCrossStrategy {
 
     private Map FIGIES = Map.of(
             //"BBG004S683W7", 10,   // Аэрофлот
@@ -22,17 +22,17 @@ public class BuyP10AndTP1PercentAndSL3PercentStrategy extends AInstrumentByFiatS
     }
 
     @Override
-    public AInstrumentByFiatStrategy.BuyCriteria getBuyCriteria() {
-        return AInstrumentByFiatStrategy.BuyCriteria.builder().lessThenPercentile(5).build();
+    public BuyCriteria getBuyCriteria() {
+        return BuyCriteria.builder().lessThenPercentile(5).build();
     }
 
     @Override
-    public AInstrumentByFiatStrategy.SellCriteria getSellCriteria() {
-        return AInstrumentByFiatStrategy.SellCriteria.builder().takeProfitPercent(1f).stopLossPercent(3f).build();
+    public SellCriteria getSellCriteria() {
+        return SellCriteria.builder().takeProfitPercent(1f).stopLossPercent(3f).build();
     }
 
     @Override
     public boolean isEnabled() {
-        return false;
+        return true;
     }
 }

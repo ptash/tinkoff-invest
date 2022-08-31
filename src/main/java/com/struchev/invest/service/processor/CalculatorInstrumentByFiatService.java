@@ -62,7 +62,7 @@ public class CalculatorInstrumentByFiatService implements ICalculatorService<AIn
 
         var startDateTime = currentDateTime.minus(duration);
         var candleHistoryLocal = candleHistoryService.getCandlesByFigiBetweenDateTimes(figi,
-                startDateTime, currentDateTime);
+                startDateTime, currentDateTime, "1min");
 
         // недостаточно данных за промежуток (мало свечек) - не калькулируем
         if (Duration.ofMinutes(30).compareTo(duration) <= 0 && candleHistoryLocal.size() < 15) {
@@ -75,7 +75,9 @@ public class CalculatorInstrumentByFiatService implements ICalculatorService<AIn
 
         candleHistoryLocal.sort(Comparator.comparing(keyExtractor));
         int index = candleHistoryLocal.size() * percentile / 100;
-        return Optional.ofNullable(candleHistoryLocal.get(index)).map(keyExtractor).orElse(null);
+        BigDecimal result = Optional.ofNullable(candleHistoryLocal.get(index)).map(keyExtractor).orElse(null);
+        //log.info("calculate result = {} currentDateTime = {} (startDateTime = {}) percentile = {} size = {}", result, currentDateTime, startDateTime, percentile, candleHistoryLocal.size());
+        return result;
     }
 
 
@@ -96,6 +98,7 @@ public class CalculatorInstrumentByFiatService implements ICalculatorService<AIn
                 CandleDomainEntity::getLowestPrice, strategy.getHistoryDuration());
 
         if (valueByPercentile != null && candle.getClosingPrice().compareTo(valueByPercentile) < 0) {
+            //log.info("isShouldBuy valueByPercentile = {} getClosingPrice = {} (startDateTime = {}) percentile = {} size = {}", valueByPercentile, candle.getClosingPrice());
             return true;
         }
         return false;

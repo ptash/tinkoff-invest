@@ -37,7 +37,7 @@ class StrategiesByCandleHistoryTests {
     @Autowired
     StrategySelector strategySelector;
 
-    @Value("${candle.history.duration}")
+    @Value("${test.candle.history.duration}")
     private Duration historyDuration;
 
     @Value("${tinkoff.emulator}")
@@ -55,9 +55,11 @@ class StrategiesByCandleHistoryTests {
         // Проверяем свойства для тестов
         assertTrue("Tests are allowed with Tinkoff API emulator only (tinkoff.emulator=true)", isTinkoffEmulator);
 
-        // Эмулируем поток свечей за заданный интервал (candle.history.duration)
+        // Эмулируем поток свечей за заданный интервал (test.candle.history.duration)
         var days = historyDuration.toDays();
         var startDateTime = OffsetDateTime.now().minusDays(days);
+        log.info("Эмулируем поток свечей за заданный интервал в днях {}", days);
+
         strategySelector.getFigiesForActiveStrategies().stream()
                 .flatMap(figi -> candleRepository.findByFigiAndIntervalAndDateTimeAfterOrderByDateTime(figi, "1min", startDateTime).stream())
                 .sorted(Comparator.comparing(CandleDomainEntity::getDateTime))

@@ -42,11 +42,17 @@ public abstract class AStrategy {
     @AllArgsConstructor
     public enum Type {
         instrumentByFiat("Инструмент за фиат"),
-        instrumentByInstrument("Инструмент за инструмент");
+        instrumentByInstrument("Инструмент за инструмент"),
+        instrumentCrossByFiat("Инструмент с каналами за фиат");
 
         @Getter
         String title;
     }
 
     public abstract Type getType();
+
+    public Duration getHistoryDuration()
+    {
+        return Duration.ofDays(0);
+    }
 }

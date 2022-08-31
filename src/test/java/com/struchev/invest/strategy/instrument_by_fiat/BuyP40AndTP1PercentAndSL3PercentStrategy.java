@@ -14,4 +14,9 @@ public class BuyP40AndTP1PercentAndSL3PercentStrategy extends AInstrumentByFiatT
     public SellCriteria getSellCriteria() {
         return SellCriteria.builder().takeProfitPercent(1f).stopLossPercent(3f).build();
     }
+
+    @Override
+    public boolean isEnabled() {
+        return false;
+    }
 }

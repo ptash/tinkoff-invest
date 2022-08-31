@@ -66,7 +66,7 @@ public class ReportService {
     public List<OrderReportInstrumentByFiatRow> buildReportInstrumentByFiat() {
         var query = entityManager.createNativeQuery(reportInstrumentByFiatSql);
         var rows = ((List<Object[]>) query.getResultList()).stream()
-                .filter(r -> strategySelector.getStrategyType(String.valueOf(r[1]), null) == AStrategy.Type.instrumentByFiat)
+                .filter(r -> strategySelector.getStrategyType(String.valueOf(r[1]), null) != AStrategy.Type.instrumentByInstrument)
                 .map(r -> OrderReportInstrumentByFiatRow.builder()
                         .figiTitle(String.valueOf(r[0]))
                         .strategy(String.valueOf(r[1]))

@@ -43,7 +43,7 @@ public class CandleListenerService {
                             candle.setHigh(item.getCandle().getHigh());
                             candle.setLow(item.getCandle().getLow());
                             candle.setTime(item.getCandle().getTime());
-                            var candleDomainEntity = candleHistoryService.addOrReplaceCandles(candle.build(), item.getCandle().getFigi());
+                            var candleDomainEntity = candleHistoryService.addOrReplaceCandles(candle.build(), item.getCandle().getFigi(), "1min");
                             purchaseService.observeNewCandleNoThrow(candleDomainEntity);
                         }
                     }, e -> {

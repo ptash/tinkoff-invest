@@ -21,7 +21,7 @@ public class JPYbyCNYByEURByGBPStrategy extends AInstrumentByInstrumentStrategy 
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return false;
     }
 }
 

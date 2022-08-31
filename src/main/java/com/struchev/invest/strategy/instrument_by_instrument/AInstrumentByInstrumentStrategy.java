@@ -12,8 +12,7 @@ public abstract class AInstrumentByInstrumentStrategy extends AStrategy {
 
     @Override
     public final Duration getDelayBySL() {
-        // Delay not implemented for this type at the moment
-        throw new UnsupportedOperationException("Not supported by type: " + getType());
+        return null;
     }
 
     @Override
