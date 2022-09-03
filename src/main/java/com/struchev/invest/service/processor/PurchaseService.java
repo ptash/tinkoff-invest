@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 
 /**
@@ -71,7 +72,7 @@ public class PurchaseService {
                             ? calculatorInstrumentByInstrumentService.getCurrentPrices() : null;
                     order = orderService.openOrder(candleDomainEntity, strategy, currentPrices);
 
-                    notificationService.sendBuyInfo(order, candleDomainEntity);
+                    notificationService.sendBuyInfo(strategy, order, candleDomainEntity);
                 }
                 return;
             }
@@ -86,7 +87,7 @@ public class PurchaseService {
             var isShouldSell = calculator.isShouldSell(strategy, candleDomainEntity, order.getPurchasePrice());
             if (isShouldSell) {
                 order = orderService.closeOrder(candleDomainEntity, strategy);
-                notificationService.sendSellInfo(order, candleDomainEntity);
+                notificationService.sendSellInfo(strategy, order, candleDomainEntity);
                 return;
             }
         });

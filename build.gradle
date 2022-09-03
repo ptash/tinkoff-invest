@@ -50,6 +50,7 @@ dependencies {
     implementation("io.grpc:grpc-api:1.43.0")
 
     implementation 'net.bull.javamelody:javamelody-spring-boot-starter:1.91.0'
+    implementation 'commons-io:commons-io:2.11.0'
 
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'

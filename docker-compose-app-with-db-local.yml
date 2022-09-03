@@ -2,7 +2,7 @@ version: '3'
 
 services:
   invest-app:
-    image: 'romanew/invest:latest'
+    image: 'ptash/tinkoff-invest-robot:latest'
     container_name: invest-app
     depends_on:
       - invest-db

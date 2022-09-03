@@ -29,6 +29,14 @@ public abstract class AInstrumentByFiatCrossStrategy extends AStrategy {
     }
 
     /**
+     * Количество бар у коридорной SMA
+     * @return
+     */
+    public Integer getSmaTubeLength() {
+        return 2000;
+    }
+
+    /**
      * Количество бар у самой медленной SMA
      * @return
      */
@@ -59,6 +67,28 @@ public abstract class AInstrumentByFiatCrossStrategy extends AStrategy {
     public Integer getEmaFastLength() {
         return 20;
     }
+
+    /**
+     * Процент вверх от smaFast, выше цены от короторого не покупаем
+     * @return
+     */
+    public Double getDeadLinePercent() { return 0.0; }
+
+    /**
+     * Процент вверх от smaFast, выше цены от короторого не покупаем
+     * @return
+     */
+    public Double getDeadLinePercentFromSmaSlowest() { return 5.0; }
+
+    /**
+     * Максимально допустимый процент изменения при пересечения с smaFast
+     * @return
+     */
+    public Double getMaxSmaFastCrossPercent() { return 0.5; }
+
+    public Integer getTicksMoveUp() { return 2; }
+    public Double getMinPercentMoveUp() { return 0.01; }
+    public Double getMinPercentTubeMoveUp() { return -0.002; }
 
     @Builder
     @Data

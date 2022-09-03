@@ -21,7 +21,10 @@
         </thead>
         <tbody id="orders-table">
         <tr th:each="o: ${orders}">
-            <td th:text="${o.figiTitle}"/>
+            <td>
+                <span th:text="${o.figiTitle}"/>
+                <a th:href="'strategy_dygraphs_by_fiat?strategy=' + ${o.strategy} + '&figi=' + ${o.figi}">График</a>
+            </td>
             <td th:text="${o.strategy}"/>
             <td th:text="${#numbers.formatDecimal(o.purchasePrice, 1, 4, 'DEFAULT')}"/>
             <td th:text="${{o.purchaseDateTime}}"/>

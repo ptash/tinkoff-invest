@@ -14,7 +14,7 @@ import com.pengrad.telegrambot.UpdatesListener;
 import com.pengrad.telegrambot.request.SendMessage;
 import com.struchev.invest.entity.CandleDomainEntity;
 import com.struchev.invest.entity.OrderDomainEntity;
-import com.struchev.invest.strategy.instrument_by_fiat_cross.AInstrumentByFiatCrossStrategy;
+import com.struchev.invest.strategy.AStrategy;
 import io.micrometer.core.instrument.util.StringUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +25,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
@@ -47,10 +54,14 @@ public class NotificationService {
     @Value("${telegram.bot.chat-id:}")
     private String telegramBotChatId;
 
+    @Value("${logging.file.path}")
+    private String loggingPath;
+
     private TelegramBot bot;
 
     private Map<String, Marker> reportStrategyLoggerMap = new HashMap<>();
     private Map<String, Marker> reportOfferLoggerMap = new HashMap<>();
+    private OffsetDateTime dateTime = OffsetDateTime.now();
 
     public void sendMessage(String content) {
         if (bot != null && StringUtils.isNotEmpty(telegramBotChatId)) {
@@ -64,11 +75,11 @@ public class NotificationService {
         sendMessage(content);
     }
 
-    public void sendBuyInfo(OrderDomainEntity order, CandleDomainEntity candle) {
+    public void sendBuyInfo(AStrategy strategy, OrderDomainEntity order, CandleDomainEntity candle) {
         log.info(
-                getOfferReportLogMarker(candle.getFigi()),
-                "{} | B | Bye by {}",
-                order.getPurchaseDateTime().format(DateTimeFormatter.ISO_LOCAL_DATE) + " " + order.getPurchaseDateTime().format(DateTimeFormatter.ISO_LOCAL_TIME),
+                getOfferReportLogMarker(strategy, candle.getFigi()),
+                "{} | B | {}",
+                formatDateTime(order.getPurchaseDateTime()),
                 order.getPurchasePrice()
         );
         var msg = String.format("Buy %s (%s), %s, %s, %s. Wanted %s", order.getFigi(), order.getFigiTitle(),
@@ -76,16 +87,21 @@ public class NotificationService {
         this.sendMessageAndLog(msg);
     }
 
-    public void sendSellInfo(OrderDomainEntity order, CandleDomainEntity candle) {
+    public void sendSellInfo(AStrategy strategy, OrderDomainEntity order, CandleDomainEntity candle) {
         log.info(
-                getOfferReportLogMarker(candle.getFigi()),
-                "{} | S | Sell by {}",
-                order.getSellDateTime().format(DateTimeFormatter.ISO_LOCAL_DATE) + " " + order.getSellDateTime().format(DateTimeFormatter.ISO_LOCAL_TIME),
+                getOfferReportLogMarker(strategy, candle.getFigi()),
+                "{} | S | {}",
+                formatDateTime(order.getSellDateTime()),
+                order.getSellPrice(),
                 order.getSellPrice()
         );
         var msg = String.format("Sell %s (%s), %s (%s), %s, %s. Wanted: %s", candle.getFigi(), order.getFigiTitle(),
                 order.getSellPrice(), order.getSellProfit(), order.getSellDateTime(), order.getStrategy(), candle.getClosingPrice());
         this.sendMessageAndLog(msg);
+    }
+
+    public String formatDateTime(OffsetDateTime date) {
+        return date.atZoneSimilarLocal(ZoneId.systemDefault()).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
     }
 
     @PostConstruct
@@ -128,31 +144,58 @@ public class NotificationService {
         }
     }
 
-    private Marker getOfferReportLogMarker(String figi)
+    private void buildDygraphsPage(String instanceName)
     {
-        String instanceName = figi;
-        if (!reportStrategyLoggerMap.containsKey(instanceName)) {
-            reportStrategyLoggerMap.put(instanceName, this.createReportLogMarker(
-                    "Offer" + instanceName,
-                    "Date|Short text|Text"
-            ));
+        String fileName = loggingPath + "/" + instanceName + "Dygraphs-" + dateTime.toString() + ".html";
+        File f = new File(fileName);
+        if (f.exists()) {
+            return;
         }
-        return reportStrategyLoggerMap.get(instanceName);
+        try {
+            Path filePath = Path.of("./dygraphs/dygraphs.html");
+            String content = Files.readString(filePath);
+            content = content.replace("s.csv", instanceName + "Strategy-" + dateTime.toString() + ".csv");
+            content = content.replace("a.csv",  instanceName + "Offer-" + dateTime.toString() + ".csv");
+
+            BufferedWriter bufferedWriter = Files.newBufferedWriter(Paths.get(fileName));
+            bufferedWriter.write(content); // to write some data
+            bufferedWriter.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
     }
 
-    public void reportStrategy(AInstrumentByFiatCrossStrategy strategy, String figi, String headerLine, String format, Object... arguments)
+    private Marker getOfferReportLogMarker(AStrategy strategy, String figi)
+    {
+        String instanceName = strategy.getName() + figi;
+        synchronized (reportOfferLoggerMap) {
+            if (!reportOfferLoggerMap.containsKey(instanceName)) {
+                reportOfferLoggerMap.put(instanceName, this.createReportLogMarker(
+                        instanceName + "Offer",
+                        "Date|Short text|Text"
+                ));
+                buildDygraphsPage(instanceName);
+            }
+        }
+        return reportOfferLoggerMap.get(instanceName);
+    }
+
+    public void reportStrategy(AStrategy strategy, String figi, String headerLine, String format, Object... arguments)
     {
         log.info(getStrategyReportLogMarker(strategy, figi, headerLine), format, arguments);
     }
 
-    private Marker getStrategyReportLogMarker(AInstrumentByFiatCrossStrategy strategy, String figi, String headerLine)
+    private Marker getStrategyReportLogMarker(AStrategy strategy, String figi, String headerLine)
     {
         String instanceName = strategy.getName() + figi;
-        if (!reportStrategyLoggerMap.containsKey(instanceName)) {
-            reportStrategyLoggerMap.put(instanceName, this.createReportLogMarker(
-                    "Strategy" + instanceName,
-                    headerLine
-            ));
+        synchronized (reportStrategyLoggerMap) {
+            if (!reportStrategyLoggerMap.containsKey(instanceName)) {
+                reportStrategyLoggerMap.put(instanceName, this.createReportLogMarker(
+                        instanceName + "Strategy",
+                        headerLine
+                ));
+            }
         }
         return reportStrategyLoggerMap.get(instanceName);
     }
@@ -160,7 +203,8 @@ public class NotificationService {
     private Marker createReportLogMarker(String instanceName, String headerLine) {
         Marker marker = MarkerFactory.getMarker(instanceName);
         LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-        String fileName = "./logs" + "/" + instanceName + "-" + OffsetDateTime.now().toString() + ".csv";
+        String fileName = loggingPath + "/" + instanceName + "-" + dateTime.toString() + ".csv";
+        log.info("Create log file {}", fileName);
         FileAppender fileAppender = new FileAppender();
         fileAppender.setContext(loggerContext);
         fileAppender.setName(instanceName);

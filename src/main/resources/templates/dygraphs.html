@@ -1,28 +1,49 @@
 <html>
 <head>
     <script type="text/javascript"
-            src="https://dygraphs.com/dygraph.min.js"></script>
+            src="dygraph.min.js"></script>
     <script type="text/javascript"
-            src="/moment.min.js"></script>
-    <link rel="stylesheet" href="https://dygraphs.com/dygraph.min.css" />
+            src="moment.min.js"></script>
+    <link rel="stylesheet" href="dygraph.min.css" />
+    <style>
+        .annotation_sell_profit {
+            background-color: lightgreen;
+        }
+
+        .annotation_sell_loss {
+            background-color: lightpink;
+        }
+
+        .annotation_buy_profit {
+            background-color: lightblue;
+        }
+
+        .annotation_buy_loss {
+            background-color: yellow;
+        }
+    </style>
 </head>
 <body>
 <div id="list"></div>
 <div id="graphdiv2"
      style="width:1800px; height:1000px;"></div>
-<script type="text/javascript">
+<script th:inline="javascript">
+/*<![CDATA[*/
+    var strategy = /*[[${strategy}]]*/ 'Strategy';
+    var figi = /*[[${figi}]]*/ 'figi';
     function nameAnnotation(ann) {
         return "(" + ann.series + ", " + ann.x + ")";
     }
     var dateIndex   = [];
+    var annotationIndex = [];
     g = new Dygraph(
         document.getElementById("graphdiv2"),
-        "/s.csv", // path to CSV file
+        "/strategy_dygraphs_by_fiat.csv?strategy=" + strategy + "&figi=" + figi, // path to CSV file
         {
             delimiter: '|',
-            visibility: [true,true,true,true,true,false,false,true,false],
+            visibility: [true,true,true,true,true,false,false,true,true,true,true,false],
             xValueParser: function(x) {
-                dateIndex.push(new Date(x));
+                dateIndex.push(new Date(x.trim()));
                 return dateIndex.length - 1;
             },
             ticker: Dygraph.numericTicks,
@@ -34,7 +55,11 @@
                         if (!dateIndex[val]) {
                             return '';
                         }
-                        return moment(dateIndex[val]).format("dddd, MMM Do YYYY, HH:mm");
+                        var ret = moment(dateIndex[val]).format("YYYY-MM-DD HH:mm");
+                        if (annotationIndex[val]) {
+                            ret += ' ' + annotationIndex[val];
+                        }
+                        return ret;
                     },
                     axisLabelFormatter: function (val, granularity, opts, dygraph) {
                         if (!dateIndex[val]) {
@@ -48,6 +73,14 @@
                 strokeWidth: 2,
                 drawPoints: true,
                 pointSize: 1.5,
+                'smaTube': {
+                    strokeWidth: 5.0,
+                    color: 'blue',
+                },
+                'deadLineTop' : {
+                    strokeWidth: 5.0,
+                    color: 'green',
+                },
                 'smaSlowest': {
                     strokeWidth: 5.0,
                     pointSize: 2,
@@ -60,7 +93,7 @@
                 },
                 'smaFast': {
                     strokeWidth: 5.0,
-                    color: 'yellow',
+                    color: 'red',
                 },
                 'emaFast': {
                     strokeWidth: 3.0,
@@ -177,37 +210,96 @@
                     req.status === 0) {    // Chrome w/ --allow-file-access-from-files
                     var lines = req.responseText.split("\n");
                     var annotations = [];
+                    var buyPrice;
+                    var profit = 0.0;
                     for (var i = 1; i < lines.length; i++) {
                         var line = lines[i];
                         if (line.length === 0) continue;
                         if (line[0] == '#') continue;
                         var inFields = line.split("|");
                         if (inFields.length < 3) continue;
-                        var date = new Date(inFields[0]).getTime();
+                        var date = new Date(inFields[0].trim()).getTime();
                         var index;
                         for (var j = 0; j < dateIndex.length; j++) {
-                            if (dateIndex[j].getTime() === date) {
+                            if (dateIndex[j].getTime() >= date) {
                                 index = j;
+                                break;
+                            }
+                        }
+                        var text;
+                        var cssClass = 'annotation';
+                        if (inFields[1].trim() === 'B') {
+                            buyPrice = parseFloat(inFields[2]);
+                            text = 'Buy by ' + inFields[2];
+                        } else {
+                            text = 'Sell by ' + inFields[2];
+                            if (buyPrice) {
+                                var buyCssClass;
+                                var sellPrice = parseFloat(inFields[2]);
+                                if (buyPrice < sellPrice) {
+                                    cssClass = 'annotation_sell_profit';
+                                    buyCssClass = 'annotation_buy_profit';
+                                    var curProfit = ((sellPrice * 100 / buyPrice) - 100);
+                                    profit += curProfit;
+                                    text += ' with profit ' + curProfit.toFixed(2) + '%';
+                                } else {
+                                    cssClass = 'annotation_sell_loss';
+                                    buyCssClass = 'annotation_buy_loss';
+                                    var curLoss = ((buyPrice * 100 / sellPrice) - 100);
+                                    profit -= curLoss;
+                                    text += ' with loss -' + curLoss.toFixed(2) + '%';
+                                }
+                                annotations[annotations.length - 1].cssClass = buyCssClass;
                             }
                         }
                         if (index !== undefined) {
                             annotations.push({
                                 series: 'ema2',
                                 xval: index,
-                                x: inFields[0],
+                                x: inFields[0] + ' profit ' + profit.toFixed(2) + '%' + (annotationIndex[index] ? ' ' + annotationIndex[index] : ''),
                                 shortText: inFields[1],
-                                text: inFields[2]
+                                cssClass: cssClass,
+                                text: text
                             });
                         }
+                    }
+                    if (profit) {
+                        annotations.push({
+                            series: 'ema2',
+                            xval: dateIndex.length - 1,
+                            x: 'Total',
+                            shortText: 'T',
+                            text: 'Total profit ' + profit.toFixed(2) + '%'
+                        });
                     }
                     g.setAnnotations(annotations);
                 }
             }
         };
 
-        req.open("GET", '/a.csv', true);
-        req.send(null);
+        req2 = new XMLHttpRequest();
+        req2.onreadystatechange = function () {
+            if (req2.readyState == 4) {
+                if (req2.status === 200 ||  // Normal http
+                    req2.status === 0) {    // Chrome w/ --allow-file-access-from-files
+                    var lines = req2.responseText.split("\n");
+                    for (var i = 1; i < lines.length; i++) {
+                        var line = lines[i];
+                        if (line.length === 0) continue;
+                        if (line[0] == '#') continue;
+                        var inFields = line.split("|");
+                        annotationIndex[i - 1] = inFields[inFields.length - 1];
+                    }
+                }
+            }
+            req.open("GET", '/strategy_dygraphs_by_fiat_orders.csv?strategy=' + strategy + "&figi=" + figi, true);
+            req.send(null);
+        }
+
+        req2.open("GET", '/strategy_dygraphs_by_fiat.csv?strategy=' + strategy + "&figi=" + figi, true);
+        req2.send(null);
     });
+/*]]>*/
 </script>
 </body>
 </html>

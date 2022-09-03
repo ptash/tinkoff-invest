@@ -1,5 +1,6 @@
 package com.struchev.invest.dto;
 
+import com.struchev.invest.service.dictionary.InstrumentService;
 import com.struchev.invest.strategy.instrument_by_fiat.AInstrumentByFiatStrategy;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -16,7 +17,7 @@ import java.util.Map;
 public class StrategyInfoReportRow {
     private boolean isEnabled;
     private String name;
-    private Map<String, Integer> figies;
+    private Map<String, InstrumentService.Instrument> figies;
     private String type;
     private AInstrumentByFiatStrategy.BuyCriteria buyCriteria;
     private AInstrumentByFiatStrategy.SellCriteria sellCriteria;

@@ -5,17 +5,17 @@ import org.springframework.stereotype.Component;
 import java.util.Map;
 
 @Component
-public class BuyEma600CrossStrategy extends AInstrumentByFiatCrossStrategy {
+public abstract class ABuyEma600CrossStrategy extends AInstrumentByFiatCrossStrategy {
     private Map FIGIES = Map.of(
             //"BBG004730RP0", 10, // Газпром
             //"BBG004S683W7", 10,   // Аэрофлот
             //"BBG00178PGX3", 1,    // VK
             //"BBG008NMBXN8", 1, // Robinhood
             //"BBG004NLQHL0", 1, // Fastly Inc
-            "BBG000BPWXK1", 1, // Newmont Goldcorp Corporation
-            "BBG000QGWY50", 1, // Bluebird Bio Inc
-            //"BBG005F1DK91", 1, // G1
-            //"BBG002NLDLV8", 1, // VIPS
+            //"BBG000BPWXK1", 1, // Newmont Goldcorp Corporation
+            "BBG000QGWY50", 5, // Bluebird Bio Inc
+            "BBG005F1DK91", 3, // G1
+            "BBG002NLDLV8", 2, // VIPS
             //"BBG000BLY663", 1, // CROCS
             "BBG00W0KZD98", 1  //LI
     );
