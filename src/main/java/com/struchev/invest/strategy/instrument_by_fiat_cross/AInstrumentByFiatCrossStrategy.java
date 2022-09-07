@@ -90,6 +90,9 @@ public abstract class AInstrumentByFiatCrossStrategy extends AStrategy {
     public Double getMinPercentMoveUp() { return 0.01; }
     public Double getMinPercentTubeMoveUp() { return -0.002; }
 
+    public Double getInvestPercentFromFast() { return -1.0; }
+    public Double getMinInvestMoveUp() { return -10.0; }
+
     @Builder
     @Data
     public static class BuyCriteria {

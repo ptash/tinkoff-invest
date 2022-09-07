@@ -8,22 +8,16 @@ services:
       - invest-db
     ports:
       - 10000:10000
-    environment:
-      - spring.datasource.url=jdbc:postgresql://invest-db:5432/postgres
-      - spring.datasource.username=posgres
-      - spring.datasource.password=posgres
-      - candle.listener.enabled=true
-      - tinkoff.emulator=false
-      - tinkoff.is-token-sandbox=true
-      - tinkoff.token=
-      - tinkoff.account-id=
+    volumes:
+      - ./data/container/logs:/logs
+    env_file: env.sandbox
   invest-db:
     image: 'postgres:14.1-alpine'
     container_name: invest-db
     volumes:
-      - ./postgresql:/var/lib/postgresql
+      - ./data/container/postgresql:/var/lib/postgresql
     ports:
-      - 5432:5432
+      - 5438:5432
     environment:
       - POSTGRES_USER=posgres
       - POSTGRES_PASSWORD=posgres

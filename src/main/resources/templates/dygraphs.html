@@ -1,5 +1,6 @@
 <html>
 <head>
+    <meta http-equiv="refresh" content="60">
     <script type="text/javascript"
             src="dygraph.min.js"></script>
     <script type="text/javascript"
@@ -41,7 +42,8 @@
         "/strategy_dygraphs_by_fiat.csv?strategy=" + strategy + "&figi=" + figi, // path to CSV file
         {
             delimiter: '|',
-            visibility: [true,true,true,true,true,false,false,true,true,true,true,false],
+            visibility: [true,true,true,true,true,false,false,true,true,true,true,true,true,false],
+            digitsAfterDecimal: 8,
             xValueParser: function(x) {
                 dateIndex.push(new Date(x.trim()));
                 return dateIndex.length - 1;
@@ -76,6 +78,14 @@
                 'smaTube': {
                     strokeWidth: 5.0,
                     color: 'blue',
+                },
+                'investBottom' : {
+                    strokeWidth: 2.0,
+                    color: 'navy',
+                },
+                'investTop' : {
+                    strokeWidth: 2.0,
+                    color: 'grey',
                 },
                 'deadLineTop' : {
                     strokeWidth: 5.0,

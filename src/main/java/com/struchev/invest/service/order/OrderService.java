@@ -74,7 +74,7 @@ public class OrderService {
                 .build();
 
         var result = tinkoffOrderAPI.buy(instrument, candle.getClosingPrice(), order.getLots());
-        order.setPurchaseCommission(result.getCommission().setScale(2, RoundingMode.UP));
+        order.setPurchaseCommission(result.getCommission());
         order.setPurchasePrice(result.getPrice());
         order = orderRepository.save(order);
 

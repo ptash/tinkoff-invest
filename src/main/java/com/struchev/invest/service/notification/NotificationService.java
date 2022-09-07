@@ -148,11 +148,12 @@ public class NotificationService {
     {
         String fileName = loggingPath + "/" + instanceName + "Dygraphs-" + dateTime.toString() + ".html";
         File f = new File(fileName);
-        if (f.exists()) {
+        File fTemplate = new File("./dygraphs/dygraphs.html");
+        if (f.exists() || !fTemplate.exists()) {
             return;
         }
         try {
-            Path filePath = Path.of("./dygraphs/dygraphs.html");
+            Path filePath = fTemplate.toPath();
             String content = Files.readString(filePath);
             content = content.replace("s.csv", instanceName + "Strategy-" + dateTime.toString() + ".csv");
             content = content.replace("a.csv",  instanceName + "Offer-" + dateTime.toString() + ".csv");
@@ -175,7 +176,6 @@ public class NotificationService {
                         instanceName + "Offer",
                         "Date|Short text|Text"
                 ));
-                buildDygraphsPage(instanceName);
             }
         }
         return reportOfferLoggerMap.get(instanceName);
@@ -195,6 +195,7 @@ public class NotificationService {
                         instanceName + "Strategy",
                         headerLine
                 ));
+                buildDygraphsPage(instanceName);
             }
         }
         return reportStrategyLoggerMap.get(instanceName);

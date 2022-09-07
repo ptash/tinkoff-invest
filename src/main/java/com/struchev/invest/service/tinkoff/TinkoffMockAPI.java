@@ -7,6 +7,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 @Service
 @Slf4j
@@ -33,7 +34,7 @@ public class TinkoffMockAPI extends ATinkoffAPI {
     }
 
     private BigDecimal calculateCommission(BigDecimal price, Integer count) {
-        var commission = price.multiply(PERCENT).multiply(BigDecimal.valueOf(count));
+        var commission = price.multiply(PERCENT).multiply(BigDecimal.valueOf(count)).setScale(2, RoundingMode.UP);
         return commission;
     }
 
