@@ -10,9 +10,12 @@ public class BuyEma600DeadLineP1DeadLine2InvestPercent02CrossStrategy extends AB
     private Map FIGIES = Map.of(
             "BBG004730RP0", 10, // Газпром
             "BBG004S683W7", 10,   // Аэрофлот
+            "BBG004S68696", 10,    // Распадская
             "BBG00178PGX3", 1,    // VK
             "BBG00475KKY8", 1, // НОВАТЭК
-            "BBG000LWVHN8", 1000 // Дагестанская энергосбытовая компания
+            "BBG000LWVHN8", 2000 // Дагестанская энергосбытовая компания
+
+            //"BBG006G2JVL2", 1, // Alibaba
     );
 
     public Map<String, Integer> getFigies() {
@@ -32,6 +35,6 @@ public class BuyEma600DeadLineP1DeadLine2InvestPercent02CrossStrategy extends AB
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return false;
     }
 }

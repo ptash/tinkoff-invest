@@ -18,6 +18,6 @@ public class BuyEma600DeadLineP1DeadLine2CrossStrategy extends BuyEma600CrossStr
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return false;
     }
 }

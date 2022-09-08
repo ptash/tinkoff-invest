@@ -20,6 +20,6 @@ public class BuyEma600DeadLineP1DeadLine2InvestPercent01MoveUp01CrossStrategy ex
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return false;
     }
 }

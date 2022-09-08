@@ -39,6 +39,8 @@ public abstract class AStrategy {
 
     public abstract Duration getDelayBySL();
 
+    public Duration getDelayPlusBySL() { return null; }
+
     @AllArgsConstructor
     public enum Type {
         instrumentByFiat("Инструмент за фиат"),

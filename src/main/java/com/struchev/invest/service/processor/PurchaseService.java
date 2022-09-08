@@ -68,6 +68,19 @@ public class PurchaseService {
                         }
                     }
 
+                    if (strategy.getDelayPlusBySL() != null) {
+                        var finishedOrders = orderService.findClosedByFigiAndStrategy(candleDomainEntity.getFigi(), strategy);
+                        if (finishedOrders.size() > 0) {
+                            var lastOrder = finishedOrders.get(finishedOrders.size() - 1);
+                            if (lastOrder.getSellProfit().compareTo(BigDecimal.ZERO) < 0
+                                    && ChronoUnit.SECONDS.between(lastOrder.getSellDateTime(), candleDomainEntity.getDateTime()) < strategy.getDelayPlusBySL().getSeconds()
+                                    && candleDomainEntity.getClosingPrice().compareTo(lastOrder.getSellPrice()) >= 0
+                            ) {
+                                return;
+                            }
+                        }
+                    }
+
                     var currentPrices = strategy.getType() == AStrategy.Type.instrumentByInstrument
                             ? calculatorInstrumentByInstrumentService.getCurrentPrices() : null;
                     order = orderService.openOrder(candleDomainEntity, strategy, currentPrices);
