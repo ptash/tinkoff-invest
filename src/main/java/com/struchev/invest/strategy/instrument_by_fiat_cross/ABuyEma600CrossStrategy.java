@@ -11,7 +11,7 @@ public abstract class ABuyEma600CrossStrategy extends AInstrumentByFiatCrossStra
             //"BBG004S683W7", 10,   // Аэрофлот
             //"BBG00178PGX3", 1,    // VK
             //"BBG008NMBXN8", 1, // Robinhood
-            //"BBG004NLQHL0", 1, // Fastly Inc
+            "BBG004NLQHL0", 2, // Fastly Inc
             //"BBG000BPWXK1", 1, // Newmont Goldcorp Corporation
             //"BBG006G2JVL2", 1, // Alibaba
             //"BBG000QGWY50", 5, // Bluebird Bio Inc
@@ -53,5 +53,5 @@ public abstract class ABuyEma600CrossStrategy extends AInstrumentByFiatCrossStra
     }
 
     @Override
-    public boolean isEnabled() { return true; }
+    public boolean isEnabled() { return false; }
 }

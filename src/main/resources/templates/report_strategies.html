@@ -16,7 +16,7 @@
                     <td>
                     <div th:each="figi: ${s.figies}">
                         <div th:with="figi=${figi.value}">
-                            <span th:text="|${figi.name} ${figi.lot} ${figi.currency} ${figi.figi}|"/>
+                            <span th:text="|${figi.name} ${figi.lot} (${s.figiesCount.get(figi.figi)}) ${figi.currency} ${figi.figi}|"/>
                             <a th:if="${s.isEnabled}" th:href="'strategy_dygraphs_by_fiat?strategy=' + ${s.name} + '&figi=' + ${figi.figi}">График</a>
                         </div>
                     </div>

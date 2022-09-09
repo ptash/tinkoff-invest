@@ -49,6 +49,7 @@ public class ReportService {
                         .name(s.getName())
                         .type(s.getType().getTitle())
                         .figies(s.getFigies().entrySet().stream().collect(Collectors.toMap(e -> e.getKey(), e -> instrumentService.getInstrument(e.getKey()))))
+                        .figiesCount(s.getFigies().entrySet().stream().collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue())))
                         .buyCriteria(s instanceof AInstrumentByFiatStrategy ? ((AInstrumentByFiatStrategy) s).getBuyCriteria() : null)
                         .sellCriteria(s instanceof AInstrumentByFiatStrategy ? ((AInstrumentByFiatStrategy) s).getSellCriteria() : null)
                         .history(s instanceof AInstrumentByFiatStrategy ? ((AInstrumentByFiatStrategy) s).getHistoryDuration() : null)

@@ -18,6 +18,7 @@ public class StrategyInfoReportRow {
     private boolean isEnabled;
     private String name;
     private Map<String, InstrumentService.Instrument> figies;
+    private Map<String, Integer> figiesCount;
     private String type;
     private AInstrumentByFiatStrategy.BuyCriteria buyCriteria;
     private AInstrumentByFiatStrategy.SellCriteria sellCriteria;
