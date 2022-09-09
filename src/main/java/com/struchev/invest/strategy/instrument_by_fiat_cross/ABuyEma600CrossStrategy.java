@@ -53,7 +53,5 @@ public abstract class ABuyEma600CrossStrategy extends AInstrumentByFiatCrossStra
     }
 
     @Override
-    public boolean isEnabled() {
-        return true;
-    }
+    public boolean isEnabled() { return true; }
 }

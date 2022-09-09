@@ -25,7 +25,5 @@ public class BuyEma600DeadLineP1DeadLine2InvestPercent01DelaySLNullCrossStrategy
         return null;
     }
 
-    public boolean isEnabled() {
-        return true;
-    }
+    public boolean isEnabled() { return true; }
 }
