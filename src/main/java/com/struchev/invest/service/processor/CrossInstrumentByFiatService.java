@@ -30,7 +30,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
     private final NotificationService notificationService;
 
     private Integer cashSize = 1000;
-    private Map<String, List<Double>> smaCashMap = new HashMap<>();
+    private Map<String, Double> smaCashMap = new HashMap<>();
 
     /**
      * Расчет перцентиля по цене инструмента за определенный промежуток
@@ -68,14 +68,15 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         var deadLineTop = BigDecimal.valueOf(deadLine.get(1));
         var tubeTopToBy = BigDecimal.valueOf(deadLine.get(2));
         var tubeTopToInvest = BigDecimal.valueOf(deadLine.get(3));
+        var ema2Cur = BigDecimal.valueOf(ema2.get(ema2.size() - 1));
 
-        var result = (candle.getClosingPrice().compareTo(deadLineTop) < 0
-                && candle.getClosingPrice().compareTo(deadLineBottom) > 0);
+        var result = (ema2Cur.compareTo(deadLineTop) < 0
+                && ema2Cur.compareTo(deadLineBottom) > 0);
         var annotation = "";
         Double investTubeBottom = null;
         Double smaSlowDelta = null;
         if (result) {
-            if (tubeTopToBy.compareTo(BigDecimal.ZERO) > 0 && getPercentMoveUp(smaTube) >= strategy.getMinPercentTubeMoveUp() && candle.getClosingPrice().compareTo(tubeTopToBy) < 0) {
+            if (tubeTopToBy.compareTo(BigDecimal.ZERO) > 0 && getPercentMoveUp(smaTube) >= strategy.getMinPercentTubeMoveUp() && ema2Cur.compareTo(tubeTopToBy) < 0) {
                 annotation += " tubeTopToBy " + getPercentMoveUp(smaTube) + " (" + smaTube + ")";
             } else if (isCrossover(smaFast, smaSlow)) {
                 annotation += " smaFast/smaSlow";
@@ -100,7 +101,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             } else {
                 result = false;
             }
-        } else if (strategy.getInvestPercentFromFast() > 0 && tubeTopToInvest.compareTo(BigDecimal.ZERO) > 0 && candle.getClosingPrice().compareTo(tubeTopToInvest) > 0) {
+        } else if (strategy.getInvestPercentFromFast() > 0 && tubeTopToInvest.compareTo(BigDecimal.ZERO) > 0 && ema2Cur.compareTo(tubeTopToInvest) > 0) {
             Double smaFastCur = smaFast.get(smaFast.size() - 1);
             Double emaFastCur = emaFast.get(emaFast.size() - 1);
             Double smaSlowCur = smaSlow.get(smaSlow.size() - 1);
@@ -283,6 +284,34 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         return getSma(figi, currentDateTime, length, interval, keyExtractor, 1);
     }
 
+    private synchronized Double getCashedValue(String indent)
+    {
+        return null;
+        /*
+        if (smaCashMap.containsKey(indent)) {
+            //log.info("getCashedValue {} = {}", indent, smaCashMap.get(indent));
+            return smaCashMap.get(indent);
+        }
+        //log.info("getCashedValue no value by {}", indent);
+        return null;*/
+    }
+
+    private synchronized void addCashedValue(String indent, Double v)
+    {
+        /*
+        if (smaCashMap.size() > cashSize) {
+            smaCashMap.clear();
+        }
+        smaCashMap.put(indent, v);
+        */
+        //log.info("addCashedValue {} = {}", indent, v);
+    }
+
+    private String getMethodKey(Function<? super CandleDomainEntity, ? extends BigDecimal> keyExtractor)
+    {
+        return Integer.toHexString(keyExtractor.hashCode());
+    }
+
     private List<Double> getSma(
             String figi,
             OffsetDateTime currentDateTime,
@@ -291,31 +320,42 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             Function<? super CandleDomainEntity, ? extends BigDecimal> keyExtractor,
             Integer prevTicks
     ) {
-        /*var indent = "sma" + figi + notificationService.formatDateTime(currentDateTime) + (length + prevTicks) + interval + keyExtractor;
-        if (smaCashMap.containsKey(indent)) {
-            return smaCashMap.get(indent);
-        }
-        if (smaCashMap.size() > cashSize) {
-            smaCashMap.clear();
-        }*/
+        List<Double> ret = new ArrayList<Double>();
+        var prevTicksToCalc = prevTicks;
         var candleList = getCandlesByFigiByLength(figi,
-                currentDateTime, length + prevTicks, interval);
+                currentDateTime, prevTicks + 1, interval);
         if (candleList == null) {
             return null;
         }
-        List<Double> ret = new ArrayList<Double>();
         for (var i = 0; i < prevTicks + 1; i++) {
+            var indent = "sma" + figi + notificationService.formatDateTime(candleList.get(i).getDateTime()) + interval + length + getMethodKey(keyExtractor);
+            var smaCashed = getCashedValue(indent);
+            if (smaCashed == null) {
+                break;
+            }
+            ret.add(smaCashed);
+            prevTicksToCalc--;
+        }
+
+        candleList = getCandlesByFigiByLength(figi,
+                currentDateTime, length + prevTicksToCalc, interval);
+        if (candleList == null) {
+            return null;
+        }
+
+        for (var i = 0; i < prevTicksToCalc + 1; i++) {
             var candleListPrev = new ArrayList<CandleDomainEntity>(candleList);
             for (var j = 0; j < i; j++) {
                 candleListPrev.remove(0);
             }
-            for (var j = i; j < prevTicks; j++) {
+            for (var j = i; j < prevTicksToCalc; j++) {
                 candleListPrev.remove(candleListPrev.size() - 1);
             }
             Double smaPrev = candleListPrev.stream().mapToDouble(a -> Optional.ofNullable(a).map(keyExtractor).orElse(null).doubleValue()).average().orElse(0);
             ret.add(smaPrev);
+            var indent = "sma" + figi + notificationService.formatDateTime(candleListPrev.get(candleListPrev.size() - 1).getDateTime()) + interval + length + getMethodKey(keyExtractor);
+            addCashedValue(indent, smaPrev);
         }
-        //smaCashMap.put(indent, ret);
         return ret;
     }
 
@@ -326,30 +366,40 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             String interval,
             Function<? super CandleDomainEntity, ? extends BigDecimal> keyExtractor
     ) {
-        /*var indent = "ema" + figi + notificationService.formatDateTime(currentDateTime) + length + interval + keyExtractor;
-        if (smaCashMap.containsKey(indent)) {
-            return smaCashMap.get(indent);
-        }
-        if (smaCashMap.size() > cashSize) {
-            smaCashMap.clear();
-        }*/
         var candleList = getCandlesByFigiByLength(figi,
-                currentDateTime, length + 1, interval);
+                currentDateTime, 1 + 1, interval);
         if (candleList == null) {
             return null;
         }
-        Double ema = Optional.ofNullable(candleList.get(1)).map(keyExtractor).orElse(null).doubleValue();
-        for (int i = 2; i < (length + 1); i++) {
-            var alpha = 2f / (i + 1);
-            ema = alpha * Optional.ofNullable(candleList.get(i)).map(keyExtractor).orElse(null).doubleValue() + (1 - alpha) * ema;
-        }
+        var indent = "ema" + figi + notificationService.formatDateTime(candleList.get(1).getDateTime()) + interval + length + getMethodKey(keyExtractor);
+        var ema = getCashedValue(indent);
+        var indentPrev = "ema" + figi + notificationService.formatDateTime(candleList.get(0).getDateTime()) + interval + length + getMethodKey(keyExtractor);
+        var emaPrev = getCashedValue(indentPrev);
 
-        Double emaPrev = Optional.ofNullable(candleList.get(0)).map(keyExtractor).orElse(null).doubleValue();
-        for (int i = 1; i < length; i++) {
-            var alpha = 2f / (i + 1 + 1);
-            emaPrev = alpha * Optional.ofNullable(candleList.get(i)).map(keyExtractor).orElse(null).doubleValue() + (1 - alpha) * emaPrev;
+        if (ema == null || emaPrev == null) {
+            candleList = getCandlesByFigiByLength(figi,
+                    currentDateTime, length + 1, interval);
+            if (candleList == null) {
+                return null;
+            }
+            if (ema == null) {
+                ema = Optional.ofNullable(candleList.get(1)).map(keyExtractor).orElse(null).doubleValue();
+                for (int i = 2; i < (length + 1); i++) {
+                    var alpha = 2f / (i + 1);
+                    ema = alpha * Optional.ofNullable(candleList.get(i)).map(keyExtractor).orElse(null).doubleValue() + (1 - alpha) * ema;
+                }
+                addCashedValue(indent, ema);
+            }
+
+            if (emaPrev == null) {
+                emaPrev = Optional.ofNullable(candleList.get(0)).map(keyExtractor).orElse(null).doubleValue();
+                for (int i = 1; i < length; i++) {
+                    var alpha = 2f / (i + 1 + 1);
+                    emaPrev = alpha * Optional.ofNullable(candleList.get(i)).map(keyExtractor).orElse(null).doubleValue() + (1 - alpha) * emaPrev;
+                }
+                addCashedValue(indentPrev, emaPrev);
+            }
         }
-        //smaCashMap.put(indent, List.of(emaPrev, ema));
         return List.of(emaPrev, ema);
     }
 
