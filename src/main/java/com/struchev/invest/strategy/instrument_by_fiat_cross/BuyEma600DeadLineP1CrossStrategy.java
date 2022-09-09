@@ -7,6 +7,6 @@ public class BuyEma600DeadLineP1CrossStrategy extends ABuyEma600CrossStrategy {
     public Double getDeadLinePercent() { return 1.0; }
 
     public boolean isEnabled() {
-        return false;
+        return true;
     }
 }

@@ -10,7 +10,7 @@ public class BuyEma600DeadLineP1DeadLine2InvestPercent01DelaySLNullCrossStrategy
 
     private Map FIGIES = Map.of(
             //"BBG006G2JVL2", 1, // Alibaba
-            "BBG000QGWY50", 5, // Bluebird Bio Inc
+            "BBG000QGWY50", 3, // Bluebird Bio Inc
             "BBG000BR85F1", 1, // PetroChina
             //"BBG004NLQHL0", 1, // Fastly Inc
             "BBG000BPWXK1", 1 // Newmont Goldcorp Corporation

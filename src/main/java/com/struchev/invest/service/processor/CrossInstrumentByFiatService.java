@@ -131,7 +131,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
                 emaFast.get(1),
                 ema2.get(1),
                 result ? candle.getClosingPrice() : "",
-                result ? candle.getClosingPrice() : "",
+                candle.getClosingPrice(),
                 deadLineBottom,
                 deadLineTop,
                 smaSlowDelta == null ? "" : smaSlowDelta,
@@ -189,7 +189,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
                 emaFast.get(1),
                 ema2.get(1),
                 result ? candle.getClosingPrice() : "",
-                result ? candle.getClosingPrice() : "",
+                candle.getClosingPrice(),
                 deadLineBottom,
                 deadLineTop,
                 smaTube.get(smaTube.size() - 1)

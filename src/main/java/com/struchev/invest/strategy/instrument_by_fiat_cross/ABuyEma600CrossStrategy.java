@@ -17,7 +17,7 @@ public abstract class ABuyEma600CrossStrategy extends AInstrumentByFiatCrossStra
             //"BBG000QGWY50", 5, // Bluebird Bio Inc
             "BBG005F1DK91", 1, // G1
             //"BBG002NLDLV8", 2, // VIPS
-            "BBG0016XJ8S0", 1 // TAL Education Group
+            "BBG0016XJ8S0", 4 // TAL Education Group
             //"BBG000BLY663", 1, // CROCS
             //"BBG00W0KZD98", 1  //LI
     );
