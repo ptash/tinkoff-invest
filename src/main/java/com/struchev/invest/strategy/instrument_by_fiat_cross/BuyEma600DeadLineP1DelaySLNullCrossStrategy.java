@@ -20,7 +20,7 @@ public class BuyEma600DeadLineP1DelaySLNullCrossStrategy extends BuyEma600DeadLi
             "BBG002NLDLV8", 2, // VIPS
             //"BBG0016XJ8S0", 1, // TAL Education Group
             //"BBG000BLY663", 1, // CROCS
-            "BBG00W0KZD98", 1  //LI
+            "BBG00W0KZD98", 1  //LI ?
     );
 
     public Map<String, Integer> getFigies() {

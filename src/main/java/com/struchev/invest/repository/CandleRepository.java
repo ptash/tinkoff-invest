@@ -6,10 +6,16 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public interface CandleRepository extends JpaRepository<CandleDomainEntity, Long> {
     List<CandleDomainEntity> findByIntervalOrderByDateTime(String interval);
+
+    @Query("select c from CandleDomainEntity c where c.figi IN :figies AND c.interval = :interval " +
+            "AND c.dateTime >= :dateTime ORDER BY c.dateTime")
+    List<CandleDomainEntity> findByByFigiesAndIntervalOrderByDateTime(Set<String> figies, String interval, OffsetDateTime dateTime);
 
     List<CandleDomainEntity> findByFigiAndIntervalOrderByDateTime(String figi, String interval);
 

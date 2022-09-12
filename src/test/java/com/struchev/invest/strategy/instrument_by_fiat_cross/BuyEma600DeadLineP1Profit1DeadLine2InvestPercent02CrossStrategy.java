@@ -2,10 +2,8 @@ package com.struchev.invest.strategy.instrument_by_fiat_cross;
 
 import org.springframework.stereotype.Component;
 
-import java.time.Duration;
-
 @Component
-public class BuyEma600DeadLineP1Profit1DeadLine2InvestPercent01CrossStrategy extends BuyEma600DeadLineP1DeadLine2InvestPercent01DelaySLNullCrossStrategy {
+public class BuyEma600DeadLineP1Profit1DeadLine2InvestPercent02CrossStrategy extends BuyEma600DeadLineP1DeadLine2InvestPercent02DelaySLNullCrossStrategy {
 
     //public Double getDeadLinePercent() { return 1.0; }
 

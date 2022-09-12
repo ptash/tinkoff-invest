@@ -7,4 +7,8 @@ import java.util.Map;
 @Component
 public class BuyEma600DeadLineM1CrossStrategy extends BuyEma600CrossStrategy {
     public Double getDeadLinePercent() { return -1.0; }
+
+    public boolean isEnabled() {
+        return false;
+    }
 }

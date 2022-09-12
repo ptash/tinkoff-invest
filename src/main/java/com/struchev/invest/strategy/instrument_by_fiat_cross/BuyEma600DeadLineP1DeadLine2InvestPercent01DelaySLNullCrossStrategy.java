@@ -12,7 +12,8 @@ public class BuyEma600DeadLineP1DeadLine2InvestPercent01DelaySLNullCrossStrategy
             //"BBG006G2JVL2", 1, // Alibaba
             "BBG000QGWY50", 3, // Bluebird Bio Inc
             //"BBG000BR85F1", 1, // PetroChina
-            //"BBG004NLQHL0", 1, // Fastly Inc
+            "BBG004NLQHL0", 1, // Fastly Inc
+            "BBG003QBJKN0", 1, // Allakos Inc
             "BBG000BPWXK1", 1 // Newmont Goldcorp Corporation
     );
 

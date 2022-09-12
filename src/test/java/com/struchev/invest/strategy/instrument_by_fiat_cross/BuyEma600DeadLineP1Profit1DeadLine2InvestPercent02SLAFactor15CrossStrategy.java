@@ -2,10 +2,8 @@ package com.struchev.invest.strategy.instrument_by_fiat_cross;
 
 import org.springframework.stereotype.Component;
 
-import java.time.Duration;
-
 @Component
-public class BuyEma600DeadLineP1Profit1DeadLine2InvestPercent01CrossStrategy extends BuyEma600DeadLineP1DeadLine2InvestPercent01DelaySLNullCrossStrategy {
+public class BuyEma600DeadLineP1Profit1DeadLine2InvestPercent02SLAFactor15CrossStrategy extends BuyEma600DeadLineP1Profit1DeadLine2InvestPercent02CrossStrategy {
 
     //public Double getDeadLinePercent() { return 1.0; }
 
@@ -26,8 +24,10 @@ public class BuyEma600DeadLineP1Profit1DeadLine2InvestPercent01CrossStrategy ext
     //}
 
     public Boolean isBuyInvestCrossSmaEma2() { return true; }
-    public Double getDelayPlusBySLFactor() { return 1.0; }
 
+    public Integer getDelayPlusBySL() { return 6 * 60; }
+
+    public Double getDelayPlusBySLFactor() { return 1.0; }
     public Double getMinPercentTubeMoveUp() { return -0.020; }
 
     @Override

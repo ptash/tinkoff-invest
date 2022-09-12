@@ -11,7 +11,6 @@ import java.util.Map;
 public class BuyEma600CrossStrategy extends AInstrumentByFiatCrossStrategy {
     private static final Map FIGIES = new HashMap<String, Integer>();
     static {
-        /*
         FIGIES.put("BBG004730RP0", 1); // Газпром
         FIGIES.put("BBG004S683W7", 1);   // Аэрофлот
         FIGIES.put("BBG00178PGX3", 1);    // VK
@@ -30,10 +29,11 @@ public class BuyEma600CrossStrategy extends AInstrumentByFiatCrossStrategy {
         FIGIES.put("BBG000QFH687", 1); // ТГК-1
         FIGIES.put("BBG004S68CP5", 1); // М.видео
         FIGIES.put("BBG002W2FT69", 1); // АбрауДюрсо
-        */
 
         //"BBG008NMBXN8", 1, // Robinhood
-        FIGIES.put("BBG005DXJS36", 1); // TCS Group (Tinkoff Bank holder)
+        //FIGIES.put("BBG005DXJS36", 1); // TCS Group (Tinkoff Bank holder)
+        //FIGIES.put("BBG006G2JVL2", 1); // Alibaba
+        //FIGIES.put("BBG001KS9450", 1); // 2U Inc
         /*FIGIES.put("BBG003QBJKN0", 1); // Allakos Inc
         FIGIES.put("BBG001KS9450", 1); // 2U Inc
         FIGIES.put("BBG000GRZDV1", 1); // Strategic Education Inc
@@ -83,5 +83,5 @@ public class BuyEma600CrossStrategy extends AInstrumentByFiatCrossStrategy {
     }
 
     @Override
-    public boolean isEnabled() { return true; }
+    public boolean isEnabled() { return false; }
 }

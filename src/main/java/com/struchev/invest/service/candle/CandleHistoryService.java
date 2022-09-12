@@ -260,11 +260,13 @@ public class CandleHistoryService {
                 .map(s -> s.getHistoryDuration())
                 .reduce((d1, d2) -> d1.toSeconds() > d2.toSeconds() ? d1 : d2)
                 .stream().findFirst().orElse(Duration.ZERO);
-        requestCandlesHistoryForDays(historyDurationByStrategies.toSeconds() > historyDuration.toSeconds()
-                ? historyDurationByStrategies.toDays() : historyDuration.toDays());
+        var days = historyDurationByStrategies.toSeconds() > historyDuration.toSeconds()
+                ? historyDurationByStrategies.toDays() : historyDuration.toDays();
+        requestCandlesHistoryForDays(days);
 
         if (!isCandleListenerEnabled) {
-            var candles = candleRepository.findByIntervalOrderByDateTime("1min");
+            var figies = strategySelector.getFigiesForActiveStrategies();
+            var candles = candleRepository.findByByFigiesAndIntervalOrderByDateTime(figies, "1min", OffsetDateTime.now().minusDays(days));
             candlesLocalCacheMinute = candles.stream()
                     .peek(c -> entityManager.detach(c))
                     .collect(Collectors.groupingBy(CandleDomainEntity::getFigi));

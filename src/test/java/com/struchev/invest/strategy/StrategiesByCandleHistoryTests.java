@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.time.Duration;
@@ -39,8 +40,8 @@ class StrategiesByCandleHistoryTests {
     @Autowired
     StrategySelector strategySelector;
 
-    @Autowired
-    CandleHistoryService candleHistoryService;
+    //@Autowired
+    //CandleHistoryService candleHistoryService;
 
     @Value("${test.candle.history.duration}")
     private Duration historyDuration;
@@ -66,12 +67,14 @@ class StrategiesByCandleHistoryTests {
 
         strategySelector.getFigiesForActiveStrategies().stream()
                 .flatMap(figi -> {
-                    var candles = candleHistoryService.getCandlesByFigiByLength(
+                    /*var candles = candleHistoryService.getCandlesByFigiByLength(
                             figi,
                             OffsetDateTime.now(),
                             1,
                             "1min"
-                    );
+                    );*/
+                    var candles = candleRepository.findByFigiAndIntervalAndBeforeDateTimeLimit(figi,
+                            "1min", OffsetDateTime.now(), PageRequest.of(0, 1));
                     if (candles == null) {
                         log.info("getFigiesForActiveStrategies cancel {}: getCandlesByFigiByLength return null", figi);
                         return new ArrayList<CandleDomainEntity>().stream();

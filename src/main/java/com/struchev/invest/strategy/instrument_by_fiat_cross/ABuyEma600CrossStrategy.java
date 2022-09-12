@@ -11,13 +11,13 @@ public abstract class ABuyEma600CrossStrategy extends AInstrumentByFiatCrossStra
             //"BBG004S683W7", 10,   // Аэрофлот
             //"BBG00178PGX3", 1,    // VK
             //"BBG008NMBXN8", 1, // Robinhood
-            "BBG004NLQHL0", 2, // Fastly Inc
+            //"BBG004NLQHL0", 2, // Fastly Inc
             //"BBG000BPWXK1", 1, // Newmont Goldcorp Corporation
             //"BBG006G2JVL2", 1, // Alibaba
             //"BBG000QGWY50", 5, // Bluebird Bio Inc
-            "BBG005F1DK91", 1, // G1
+            //"BBG005F1DK91", 1 // G1
             //"BBG002NLDLV8", 2, // VIPS
-            "BBG0016XJ8S0", 4 // TAL Education Group
+            //"BBG0016XJ8S0", 4 // TAL Education Group
             //"BBG000BLY663", 1, // CROCS
             //"BBG00W0KZD98", 1  //LI
     );

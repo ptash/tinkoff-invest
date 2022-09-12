@@ -72,7 +72,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
 
         var price = ema2Cur.min(candle.getClosingPrice());
         var result = price.compareTo(deadLineTop) < 0 && price.compareTo(deadLineBottom) > 0;
-        var annotation = "" + result;
+        var annotation = " " + result;
         Double investTubeBottom = null;
         Double smaSlowDelta = null;
         if (result) {
@@ -249,7 +249,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             }
             deadLineTop = Math.min(deadLineTop, smaSlowestCur - delta * factor);
         } else {
-            //deadLineTop = smaSlowestCur + smaSlowestCur * strategy.getDeadLinePercentFromSmaSlowest() / b100;
+            //var deadLineTopFromSmaSlowest = smaSlowestCur + smaSlowestCur * strategy.getDeadLinePercentFromSmaSlowest() / b100;
             deadLineTop = Math.min(deadLineTop, smaSlowestCur + smaSlowestCur * strategy.getDeadLinePercentFromSmaSlowest() / b100);
         }
         if (Math.abs(deltaTubePercent) < tubeMaxPercent) {
@@ -261,8 +261,11 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             //}
         } else if (deltaTubePercent > 0) {
             // средняя выше
-            deadLineTop = Math.min(deadLineTop, smaSlowestCur - ((smaSlowestCur * tubeMaxPercent * 2)/ 100));
-            deadLineTop = Math.min(deadLineTop, smaSlowestCur - (smaTubeCur - smaSlowestCur));
+            var deadLineTopInBotton = Math.min(smaSlowestCur - ((smaSlowestCur * tubeMaxPercent * 2)/ 100), smaSlowestCur - (smaTubeCur - smaSlowestCur));
+            if (deadLineTopInBotton < deadLineTop) {
+                deadLineTop = deadLineTopInBotton;
+                tubeTopToBy = deadLineTopInBotton;
+            }
         } else {
             // средняя ниже
             deadLineTop = Math.min(deadLineTop, Math.max(

@@ -15,4 +15,8 @@ public class BuyEma600DeadLineP1DeadLine2InvestPercent01CrossStrategy extends Bu
     public SellCriteria getSellCriteria() {
         return SellCriteria.builder().takeProfitPercent(1f).stopLossPercent(2f).build();
     }
+
+    public boolean isEnabled() {
+        return false;
+    }
 }
