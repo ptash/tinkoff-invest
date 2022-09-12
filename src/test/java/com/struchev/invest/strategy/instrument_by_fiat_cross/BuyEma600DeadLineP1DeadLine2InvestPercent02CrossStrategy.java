@@ -17,7 +17,5 @@ public class BuyEma600DeadLineP1DeadLine2InvestPercent02CrossStrategy extends Bu
     }
 
     @Override
-    public boolean isEnabled() {
-        return true;
-    }
+    public boolean isEnabled() { return true; }
 }

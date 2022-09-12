@@ -10,5 +10,5 @@ public class BuyEma600DeadLineP1DeadLine2InvestPercent02DelaySLNullCrossStrategy
     public Duration getDelayBySL() {
         return null;
     }
-    public Duration getDelayPlusBySL() { return Duration.ofHours(4); }
+    public Integer getDelayPlusBySL() { return 4 * 60; }
 }

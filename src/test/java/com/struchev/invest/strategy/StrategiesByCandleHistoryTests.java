@@ -3,6 +3,7 @@ package com.struchev.invest.strategy;
 import com.struchev.invest.entity.CandleDomainEntity;
 import com.struchev.invest.repository.CandleRepository;
 import com.struchev.invest.repository.OrderRepository;
+import com.struchev.invest.service.candle.CandleHistoryService;
 import com.struchev.invest.service.order.OrderService;
 import com.struchev.invest.service.processor.PurchaseService;
 import com.struchev.invest.service.report.ReportService;
@@ -16,6 +17,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 import java.time.Duration;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.Comparator;
 
 import static org.junit.Assert.assertTrue;
@@ -37,6 +39,9 @@ class StrategiesByCandleHistoryTests {
     @Autowired
     StrategySelector strategySelector;
 
+    @Autowired
+    CandleHistoryService candleHistoryService;
+
     @Value("${test.candle.history.duration}")
     private Duration historyDuration;
 
@@ -57,11 +62,23 @@ class StrategiesByCandleHistoryTests {
 
         // Эмулируем поток свечей за заданный интервал (test.candle.history.duration)
         var days = historyDuration.toDays();
-        var startDateTime = OffsetDateTime.now().minusDays(days);
         log.info("Эмулируем поток свечей за заданный интервал в днях {}", days);
 
         strategySelector.getFigiesForActiveStrategies().stream()
-                .flatMap(figi -> candleRepository.findByFigiAndIntervalAndDateTimeAfterOrderByDateTime(figi, "1min", startDateTime).stream())
+                .flatMap(figi -> {
+                    var candles = candleHistoryService.getCandlesByFigiByLength(
+                            figi,
+                            OffsetDateTime.now(),
+                            1,
+                            "1min"
+                    );
+                    if (candles == null) {
+                        log.info("getFigiesForActiveStrategies cancel {}: getCandlesByFigiByLength return null", figi);
+                        return new ArrayList<CandleDomainEntity>().stream();
+                    }
+                    var startDateTime = candles.get(0).getDateTime().minusDays(days);
+                    return candleRepository.findByFigiAndIntervalAndDateTimeAfterOrderByDateTime(figi, "1min", startDateTime).stream();
+                })
                 .sorted(Comparator.comparing(CandleDomainEntity::getDateTime))
                 .forEach(c -> purchaseService.observeNewCandle(c));
 

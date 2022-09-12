@@ -24,10 +24,6 @@ public abstract class AInstrumentByFiatCrossStrategy extends AStrategy {
         return Duration.ofDays(255);
     }
 
-    public String getInterval() {
-        return "1min";
-    }
-
     /**
      * Количество бар у коридорной SMA
      * @return
@@ -93,6 +89,8 @@ public abstract class AInstrumentByFiatCrossStrategy extends AStrategy {
     public Double getInvestPercentFromFast() { return -1.0; }
     public Double getMinInvestMoveUp() { return -10.0; }
 
+    public Boolean isBuyInvestCrossSmaEma2() { return false; }
+
     @Builder
     @Data
     public static class BuyCriteria {
@@ -107,12 +105,10 @@ public abstract class AInstrumentByFiatCrossStrategy extends AStrategy {
     public static class SellCriteria {
         // Процент (stop loss), если цена покупки падает на него, продаем
         Float stopLossPercent;
-        // Процент (перцентиль), если цена за указанный период падает ниже него, продаем
-        Integer stopLossPercentile;
-        // Процент (take profit), если цена покупки растет на него, продаем
+        // Процент (take profit), если цена покупки не растет на него, то даже
         Float takeProfitPercent;
-        // Процент (take profit, перцентиль), если цена за указанный период растет выше него, продаем
-        Integer takeProfitPercentile;
+        // Процент (take profit), если цена покупки растет на него, продаем в любом случае
+        Float exitProfitPercent;
     }
 
     public abstract AInstrumentByFiatCrossStrategy.SellCriteria getSellCriteria();

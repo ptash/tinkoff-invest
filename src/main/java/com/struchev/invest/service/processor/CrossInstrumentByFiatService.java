@@ -46,7 +46,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         OffsetDateTime currentDateTime = candle.getDateTime();
         String figi = candle.getFigi();
 
-        var smaTube = getSma(figi, currentDateTime, strategy.getSmaTubeLength(), strategy.getInterval(), keyExtractor);
+        var smaTube = getSma(figi, currentDateTime, strategy.getSmaTubeLength(), strategy.getInterval(), keyExtractor, strategy.getTicksMoveUp());
 
         var smaSlowest = getSma(figi, currentDateTime, strategy.getSmaSlowestLength(), strategy.getInterval(), keyExtractor, strategy.getTicksMoveUp());
 
@@ -70,18 +70,26 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         var tubeTopToInvest = BigDecimal.valueOf(deadLine.get(3));
         var ema2Cur = BigDecimal.valueOf(ema2.get(ema2.size() - 1));
 
-        var result = (ema2Cur.compareTo(deadLineTop) < 0
-                && ema2Cur.compareTo(deadLineBottom) > 0);
-        var annotation = "";
+        var price = ema2Cur.min(candle.getClosingPrice());
+        var result = price.compareTo(deadLineTop) < 0 && price.compareTo(deadLineBottom) > 0;
+        var annotation = "" + result;
         Double investTubeBottom = null;
         Double smaSlowDelta = null;
         if (result) {
-            if (tubeTopToBy.compareTo(BigDecimal.ZERO) > 0 && getPercentMoveUp(smaTube) >= strategy.getMinPercentTubeMoveUp() && ema2Cur.compareTo(tubeTopToBy) < 0) {
-                annotation += " tubeTopToBy " + getPercentMoveUp(smaTube) + " (" + smaTube + ")";
+            var isTubeTopToBy = false;
+            if (tubeTopToBy.compareTo(BigDecimal.ZERO) > 0 && price.compareTo(tubeTopToBy) < 0) {
+                if (getPercentMoveUp(smaTube) >= strategy.getMinPercentTubeMoveUp()) {
+                    isTubeTopToBy = true;
+                    annotation += " tubeTopToBy " + getPercentMoveUp(smaTube) + " (" + smaTube + ")";
+                } else {
+                    annotation += " tubeTopToBy false " + getPercentMoveUp(smaTube) + " (" + smaTube + ")";
+                }
+            }
+            if (isTubeTopToBy) {
             } else if (isCrossover(smaFast, smaSlow)) {
                 annotation += " smaFast/smaSlow";
-            //} else if (isCrossover(smaSlow, smaSlowest)) {
-            //    annotation += " smaSlow/smaSlowest";
+                //} else if (isCrossover(smaSlow, smaSlowest)) {
+                //    annotation += " smaSlow/smaSlowest";
             } else if (isCrossover(emaFast, smaFast)) {
                 annotation += " emaFast/smaFast";
             } else if (isCrossover(emaFast, smaSlow)) {
@@ -101,22 +109,34 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             } else {
                 result = false;
             }
-        } else if (strategy.getInvestPercentFromFast() > 0 && tubeTopToInvest.compareTo(BigDecimal.ZERO) > 0 && ema2Cur.compareTo(tubeTopToInvest) > 0) {
-            Double smaFastCur = smaFast.get(smaFast.size() - 1);
-            Double emaFastCur = emaFast.get(emaFast.size() - 1);
-            Double smaSlowCur = smaSlow.get(smaSlow.size() - 1);
-            var investMaxPercent = strategy.getInvestPercentFromFast();
-            smaSlowDelta = smaSlowCur + smaSlowCur * strategy.getDeadLinePercent() / 100.;
-            investTubeBottom = smaFastCur - smaFastCur * investMaxPercent / 100.;
-            Double investTubeTop = smaFastCur + smaFastCur * investMaxPercent / 100.;
-            //investBottom = investTubeBottom - smaFastCur * investMaxPercent * 2. / 100.;
-            var percentMoveUp = getPercentMoveUp(ema2);
-            if (smaFastCur < smaSlowDelta && ema2.get(0) < smaFastCur) {
-                if (percentMoveUp > strategy.getMinInvestMoveUp() && emaFastCur < investTubeTop && emaFastCur > investTubeBottom) {
-                    annotation += " invest smaFast/smaSlow";
-                    result = true;
-                } else {
-                    annotation += " percentMoveUp (" + (percentMoveUp > strategy.getMinInvestMoveUp()) + ") = " + percentMoveUp + " > " + strategy.getMinInvestMoveUp();
+        }
+        if (!result) {
+            if (strategy.isBuyInvestCrossSmaEma2() && smaTube.get(smaTube.size() - 1) < smaSlowest.get(smaSlowest.size() - 1)
+                    && isCrossover(smaTube, ema2)) {
+                annotation += " smaTube/ema2";
+                result = true;
+            //} else if (candle.getClosingPrice().compareTo(deadLineBottom) < 0
+            } else if (price.compareTo(deadLineBottom) < 0
+                    && getPercentMoveUp(smaTube) >= strategy.getMinPercentTubeMoveUp()) {
+                annotation += " deadLineBottom " + getPercentMoveUp(smaTube) + " (" + smaTube + ")";
+                result = true;
+            } else if (strategy.getInvestPercentFromFast() > 0 && tubeTopToInvest.compareTo(BigDecimal.ZERO) > 0 && price.compareTo(tubeTopToInvest) > 0) {
+                Double smaFastCur = smaFast.get(smaFast.size() - 1);
+                Double emaFastCur = emaFast.get(emaFast.size() - 1);
+                Double smaSlowCur = smaSlow.get(smaSlow.size() - 1);
+                var investMaxPercent = strategy.getInvestPercentFromFast();
+                smaSlowDelta = smaSlowCur + smaSlowCur * strategy.getDeadLinePercent() / 100.;
+                investTubeBottom = smaFastCur - smaFastCur * investMaxPercent / 100.;
+                Double investTubeTop = smaFastCur + smaFastCur * investMaxPercent / 100.;
+                //investBottom = investTubeBottom - smaFastCur * investMaxPercent * 2. / 100.;
+                var percentMoveUp = getPercentMoveUp(ema2);
+                if (smaFastCur < smaSlowDelta && ema2.get(0) < smaFastCur) {
+                    if (percentMoveUp > strategy.getMinInvestMoveUp() && emaFastCur < investTubeTop && emaFastCur > investTubeBottom) {
+                        annotation += " invest smaFast/smaSlow";
+                        result = true;
+                    } else {
+                        annotation += " percentMoveUp (" + (percentMoveUp > strategy.getMinInvestMoveUp()) + ") = " + percentMoveUp + " > " + strategy.getMinInvestMoveUp();
+                    }
                 }
             }
         }
@@ -208,21 +228,37 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         Double b100 = 100.0;
         deadLineTop = deadLineTop + deadLineTop * strategy.getDeadLinePercent() / b100;
         var deadLineBottom = smaSlowestCur;
-        deadLineTop = Math.min(deadLineTop, deadLineBottom + deadLineBottom * strategy.getDeadLinePercentFromSmaSlowest() / b100);
+        //deadLineTop = Math.min(deadLineTop, smaSlowestCur + smaSlowestCur * strategy.getDeadLinePercentFromSmaSlowest() / b100);
         deadLineBottom = deadLineBottom - deadLineBottom * strategy.getDeadLinePercentFromSmaSlowest() / b100;
 
         var tubeMaxPercent = strategy.getDeadLinePercentFromSmaSlowest() / 2.0;
         var deltaTubePercent = ((smaTubeCur - smaSlowestCur) * 100.0)/smaTubeCur;
         Double tubeTopToBy = -1.;
         Double tubeTopToInvest = -1.;
+        if (tubeMaxPercent > 0 && Math.abs(deltaTubePercent) < tubeMaxPercent * 2) {
+            var delta = smaSlowestCur * tubeMaxPercent * 2 / 100.0;
+            var factor = (smaTubeCur - smaSlowestCur) / delta;
+            //if (deltaTubePercent < 0f) {
+            //    factor = -1f * factor;
+            //}
+            factor = factor / Math.abs(factor) * Math.sqrt(Math.abs(factor));
+            var tubeTopToByBlur = smaSlowestCur - delta * factor;
+            if (tubeTopToByBlur < deadLineTop) {
+                deadLineTop = tubeTopToByBlur;
+                tubeTopToBy = tubeTopToByBlur;
+            }
+            deadLineTop = Math.min(deadLineTop, smaSlowestCur - delta * factor);
+        } else {
+            //deadLineTop = smaSlowestCur + smaSlowestCur * strategy.getDeadLinePercentFromSmaSlowest() / b100;
+            deadLineTop = Math.min(deadLineTop, smaSlowestCur + smaSlowestCur * strategy.getDeadLinePercentFromSmaSlowest() / b100);
+        }
         if (Math.abs(deltaTubePercent) < tubeMaxPercent) {
             // рядом
-            tubeTopToBy = smaTubeCur - ((smaTubeCur * tubeMaxPercent) / 100);
-            if (deadLineTop > tubeTopToBy) {
-                deadLineTop = tubeTopToBy;
-            } else {
-                tubeTopToBy =  -1.;
-            }
+            //var tubeTopToByNear = smaTubeCur - ((smaTubeCur * tubeMaxPercent) / 100);
+            //if (deadLineTop > tubeTopToByNear) {
+            //    deadLineTop = tubeTopToByNear;
+            //    tubeTopToBy = tubeTopToByNear;
+            //}
         } else if (deltaTubePercent > 0) {
             // средняя выше
             deadLineTop = Math.min(deadLineTop, smaSlowestCur - ((smaSlowestCur * tubeMaxPercent * 2)/ 100));
@@ -235,6 +271,9 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             ));
             tubeTopToInvest = deadLineTop;
         }
+        //if (deadLineBottom >= deadLineTop) {
+            deadLineBottom = deadLineTop - deadLineTop * strategy.getDeadLinePercentFromSmaSlowest() / b100;
+        //}
         return List.of(deadLineBottom, deadLineTop, tubeTopToBy, tubeTopToInvest);
     }
 
@@ -424,14 +463,8 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
 
     private List<CandleDomainEntity> getCandlesByFigiByLength(String figi, OffsetDateTime currentDateTime, Integer length, String interval)
     {
-        var candleHistoryLocal = candleHistoryService.getCandlesByFigiAndIntervalAndBeforeDateTimeLimit(figi,
+        return candleHistoryService.getCandlesByFigiByLength(figi,
                 currentDateTime, length, interval);
-
-        if (candleHistoryLocal.size() < length) {
-            // недостаточно данных за промежуток (мало свечек) - не калькулируем
-            return null;
-        }
-        return candleHistoryLocal;
     }
 
     /**
@@ -471,17 +504,16 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             return true;
         }
 
+        if (sellCriteria.getExitProfitPercent() != null
+                && profitPercent.floatValue() > sellCriteria.getExitProfitPercent()
+        ) {
+            return true;
+        }
+
         if (!calculateCellCriteria(candle, CandleDomainEntity::getClosingPrice, strategy)) {
             return false;
         }
 
-        if (sellCriteria.getTakeProfitPercent() == null && candle.getClosingPrice().compareTo(purchaseRate) > 0) {
-            return true;
-        }
-
-        if (sellCriteria.getStopLossPercent() == null && candle.getClosingPrice().compareTo(purchaseRate) < 0) {
-            return true;
-        }
 
         // profit % > take profit %, profit % > 0.1%
         if (sellCriteria.getTakeProfitPercent() != null

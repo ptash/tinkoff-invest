@@ -29,5 +29,5 @@ public class BuyEma600DeadLineP1DelaySLNullCrossStrategy extends BuyEma600DeadLi
     public Duration getDelayBySL() {
         return null;
     }
-    public Duration getDelayPlusBySL() { return Duration.ofHours(1); }
+    public Integer getDelayPlusBySL() { return 60; }
 }

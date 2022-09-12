@@ -39,7 +39,11 @@ public abstract class AStrategy {
 
     public abstract Duration getDelayBySL();
 
-    public Duration getDelayPlusBySL() { return null; }
+    public Integer getDelayPlusBySL() { return null; }
+
+    public Double getDelayPlusBySLFactor() { return 1.; }
+
+    public String getInterval() { return "1min"; }
 
     @AllArgsConstructor
     public enum Type {
