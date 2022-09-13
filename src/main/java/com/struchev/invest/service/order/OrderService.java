@@ -91,7 +91,7 @@ public class OrderService {
         order.setSellDateTime(candle.getDateTime());
 
         var result = tinkoffOrderAPI.sell(instrument, candle.getClosingPrice(), order.getLots());
-        order.setSellCommission(result.getCommission().setScale(2, RoundingMode.UP));
+        order.setSellCommission(result.getCommission());
         order.setSellPrice(result.getPrice());
         order.setSellProfit(result.getPrice().subtract(order.getPurchasePrice()));
         order = orderRepository.save(order);

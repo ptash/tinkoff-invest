@@ -18,6 +18,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 import java.time.Duration;
 import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 
@@ -40,11 +41,10 @@ class StrategiesByCandleHistoryTests {
     @Autowired
     StrategySelector strategySelector;
 
-    //@Autowired
-    //CandleHistoryService candleHistoryService;
-
     @Value("${test.candle.history.duration}")
     private Duration historyDuration;
+    //@Value("${test.candle.history.dateBefore}")
+    private OffsetDateTime dateBefore = OffsetDateTime.parse("2022-09-13T03:00:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
 
     @Value("${tinkoff.emulator}")
     private Boolean isTinkoffEmulator;
@@ -63,18 +63,12 @@ class StrategiesByCandleHistoryTests {
 
         // Эмулируем поток свечей за заданный интервал (test.candle.history.duration)
         var days = historyDuration.toDays();
-        log.info("Эмулируем поток свечей за заданный интервал в днях {}", days);
+        log.info("Эмулируем поток свечей за заданный интервал в днях {} до {}", days, dateBefore);
 
         strategySelector.getFigiesForActiveStrategies().stream()
                 .flatMap(figi -> {
-                    /*var candles = candleHistoryService.getCandlesByFigiByLength(
-                            figi,
-                            OffsetDateTime.now(),
-                            1,
-                            "1min"
-                    );*/
                     var candles = candleRepository.findByFigiAndIntervalAndBeforeDateTimeLimit(figi,
-                            "1min", OffsetDateTime.now(), PageRequest.of(0, 1));
+                            "1min", dateBefore, PageRequest.of(0, 1));
                     if (candles == null) {
                         log.info("getFigiesForActiveStrategies cancel {}: getCandlesByFigiByLength return null", figi);
                         return new ArrayList<CandleDomainEntity>().stream();

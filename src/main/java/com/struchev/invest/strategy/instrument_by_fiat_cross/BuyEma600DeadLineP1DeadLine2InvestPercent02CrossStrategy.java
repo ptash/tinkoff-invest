@@ -15,7 +15,7 @@ public class BuyEma600DeadLineP1DeadLine2InvestPercent02CrossStrategy extends AB
             "BBG00475KKY8", 2, // НОВАТЭК
             "BBG000LWVHN8", 6 // Дагестанская энергосбытовая компания*/
 
-            //"BBG006G2JVL2", 1 // Alibaba
+            "BBG006G2JVL2", 1 // Alibaba
             //"BBG005F1DK91", 1 // G1
     );
 

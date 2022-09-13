@@ -34,7 +34,8 @@ public class TinkoffMockAPI extends ATinkoffAPI {
     }
 
     private BigDecimal calculateCommission(BigDecimal price, Integer count) {
-        var commission = price.multiply(PERCENT).multiply(BigDecimal.valueOf(count)).setScale(2, RoundingMode.UP);
+        var commission = price.multiply(PERCENT).multiply(BigDecimal.valueOf(count));
+        //var commission = price.multiply(PERCENT).multiply(BigDecimal.valueOf(count)).setScale(2, RoundingMode.UP);
         return commission;
     }
 

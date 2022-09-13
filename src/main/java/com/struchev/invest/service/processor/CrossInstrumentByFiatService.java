@@ -227,7 +227,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         deadLineTop = deadLineTop + deadLineTop * strategy.getDeadLinePercent() / b100;
         var deadLineBottom = smaSlowestCur;
         //deadLineTop = Math.min(deadLineTop, smaSlowestCur + smaSlowestCur * strategy.getDeadLinePercentFromSmaSlowest() / b100);
-        deadLineBottom = deadLineBottom - deadLineBottom * strategy.getDeadLinePercentFromSmaSlowest() / b100;
+        //deadLineBottom = deadLineBottom - deadLineBottom * strategy.getDeadLinePercentFromSmaSlowest() / b100;
 
         var tubeMaxPercent = strategy.getDeadLinePercentFromSmaSlowest() / 2.0;
         var deltaTubePercent = ((smaTubeCur - smaSlowestCur) * 100.0)/smaTubeCur;
