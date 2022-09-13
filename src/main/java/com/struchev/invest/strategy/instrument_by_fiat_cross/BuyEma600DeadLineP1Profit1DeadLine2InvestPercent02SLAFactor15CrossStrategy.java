@@ -5,8 +5,15 @@ import org.springframework.stereotype.Component;
 import java.util.Map;
 
 @Component
-public class BuyEma600DeadLineP1Profit1DeadLine2InvestPercent02CrossStrategy extends BuyEma600DeadLineP1DeadLine2InvestPercent02DelaySLNullCrossStrategy {
+public class BuyEma600DeadLineP1Profit1DeadLine2InvestPercent02SLAFactor15CrossStrategy extends BuyEma600DeadLineP1Profit1DeadLine2InvestPercent02CrossStrategy {
+
     private Map FIGIES = Map.of(
+            "BBG004S68CP5", 5,   // М.видео
+            "BBG000QFH687", 1,   // ТГК-1
+            "BBG004S683W7", 9,   // Аэрофлот
+            "BBG004S68696", 1,    // Распадская
+            "BBG00475KKY8", 2 // НОВАТЭК
+
             /*
             //"BBG005F1DK91", 1, // G1
             "BBG0016XJ8S0", 4, // TAL Education Group
@@ -23,11 +30,14 @@ public class BuyEma600DeadLineP1Profit1DeadLine2InvestPercent02CrossStrategy ext
     public Map<String, Integer> getFigies() {
         return FIGIES;
     }
-    public Boolean isBuyInvestCrossSmaEma2() { return true; }
-    public Double getDelayPlusBySLFactor() { return 1.0; }
 
+    public Boolean isBuyInvestCrossSmaEma2() { return true; }
+
+    public Integer getDelayPlusBySL() { return 6 * 60; }
+
+    public Double getDelayPlusBySLFactor() { return 1.0; }
     public Double getMinPercentTubeMoveUp() { return -0.020; }
 
     @Override
-    public boolean isEnabled() { return false; }
+    public boolean isEnabled() { return true; }
 }
