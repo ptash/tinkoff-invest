@@ -7,7 +7,6 @@ import com.struchev.invest.strategy.AStrategy;
 import com.struchev.invest.strategy.instrument_by_fiat_cross.AInstrumentByFiatCrossStrategy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Marker;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -115,10 +114,9 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
                     && isCrossover(smaTube, ema2)) {
                 annotation += " smaTube/ema2";
                 result = true;
-            //} else if (candle.getClosingPrice().compareTo(deadLineBottom) < 0
             } else if (price.compareTo(deadLineBottom) < 0
-                    && getPercentMoveUp(smaTube) >= strategy.getMinPercentTubeMoveUp()) {
-                annotation += " deadLineBottom " + getPercentMoveUp(smaTube) + " (" + smaTube + ")";
+                    && getPercentMoveUp(smaTube) >= strategy.getMinPercentTubeBottomMoveUp()) {
+                annotation += " deadLineBottom " + getPercentMoveUp(smaTube) + " (" + smaTube + ") :" + getPercentMoveUp(smaTube) + " >= " + strategy.getMinPercentTubeBottomMoveUp();
                 result = true;
             } else if (strategy.getInvestPercentFromFast() > 0 && tubeTopToInvest.compareTo(BigDecimal.ZERO) > 0 && price.compareTo(tubeTopToInvest) > 0) {
                 Double smaFastCur = smaFast.get(smaFast.size() - 1);
@@ -235,7 +233,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         var deltaTubePercent = ((smaTubeCur - smaSlowestCur) * 100.0)/smaTubeCur;
         Double tubeTopToBy = -1.;
         Double tubeTopToInvest = -1.;
-        if (tubeMaxPercent > 0 && Math.abs(deltaTubePercent) < tubeMaxPercent * 2) {
+        if (strategy.isTubeTopBlur() && tubeMaxPercent > 0 && Math.abs(deltaTubePercent) < tubeMaxPercent * 2) {
             var delta = smaSlowestCur * tubeMaxPercent * 2 / 100.0;
             var factor = (smaTubeCur - smaSlowestCur) / delta;
             //if (deltaTubePercent < 0f) {
@@ -254,11 +252,13 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         }
         if (Math.abs(deltaTubePercent) < tubeMaxPercent) {
             // рядом
-            //var tubeTopToByNear = smaTubeCur - ((smaTubeCur * tubeMaxPercent) / 100);
-            //if (deadLineTop > tubeTopToByNear) {
-            //    deadLineTop = tubeTopToByNear;
-            //    tubeTopToBy = tubeTopToByNear;
-            //}
+            if (strategy.isTubeTopNear()) {
+                var tubeTopToByNear = smaTubeCur - ((smaTubeCur * tubeMaxPercent) / 100);
+                if (deadLineTop > tubeTopToByNear) {
+                    deadLineTop = tubeTopToByNear;
+                    tubeTopToBy = tubeTopToByNear;
+                }
+            }
         } else if (deltaTubePercent > 0) {
             // средняя выше
             var deadLineTopInBotton = Math.min(smaSlowestCur - ((smaSlowestCur * tubeMaxPercent * 2)/ 100), smaSlowestCur - (smaTubeCur - smaSlowestCur));

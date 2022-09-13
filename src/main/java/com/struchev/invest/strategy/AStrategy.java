@@ -41,7 +41,7 @@ public abstract class AStrategy {
 
     public Integer getDelayPlusBySL() { return null; }
 
-    public Double getDelayPlusBySLFactor() { return 1.; }
+    public Double getDelayPlusBySLFactor() { return 0.; }
 
     public String getInterval() { return "1min"; }
 

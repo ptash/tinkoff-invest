@@ -85,9 +85,14 @@ public abstract class AInstrumentByFiatCrossStrategy extends AStrategy {
     public Integer getTicksMoveUp() { return 2; }
     public Double getMinPercentMoveUp() { return 0.01; }
     public Double getMinPercentTubeMoveUp() { return -0.002; }
+    public Double getMinPercentTubeBottomMoveUp() { return 1.000; }
 
     public Double getInvestPercentFromFast() { return -1.0; }
     public Double getMinInvestMoveUp() { return -10.0; }
+
+    public Boolean isTubeTopNear() { return true; }
+
+    public Boolean isTubeTopBlur() { return false; }
 
     public Boolean isBuyInvestCrossSmaEma2() { return false; }
 

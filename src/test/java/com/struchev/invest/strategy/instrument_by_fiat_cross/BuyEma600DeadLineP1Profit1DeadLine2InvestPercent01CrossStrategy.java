@@ -30,6 +30,12 @@ public class BuyEma600DeadLineP1Profit1DeadLine2InvestPercent01CrossStrategy ext
 
     public Double getMinPercentTubeMoveUp() { return -0.020; }
 
+    public Boolean isTubeTopNear() { return false; }
+
+    public Boolean isTubeTopBlur() { return true; }
+
+    public Double getMinPercentTubeBottomMoveUp() { return getMinPercentTubeMoveUp(); }
+
     @Override
     public boolean isEnabled() { return true; }
 }
