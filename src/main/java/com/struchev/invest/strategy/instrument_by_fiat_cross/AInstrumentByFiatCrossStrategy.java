@@ -94,6 +94,8 @@ public abstract class AInstrumentByFiatCrossStrategy extends AStrategy {
 
     public Boolean isTubeTopBlur() { return false; }
 
+    public Boolean allowBuyUnderSmaTube() { return true; }
+
     public Boolean isBuyInvestCrossSmaEma2() { return false; }
 
     @Builder

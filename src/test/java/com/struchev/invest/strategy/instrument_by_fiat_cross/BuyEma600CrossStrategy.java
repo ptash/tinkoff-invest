@@ -12,7 +12,7 @@ public class BuyEma600CrossStrategy extends AInstrumentByFiatCrossStrategy {
     private static final Map FIGIES = new HashMap<String, Integer>();
     static {
         //FIGIES.put("BBG000LWVHN8", 1); // Дагестанская энергосбытовая компания
-        FIGIES.put("BBG004RVFCY3", 1); // Магнит
+        FIGIES.put("BBG004TC84Z8", 1); // Трубная Металлургическая Компания
         //FIGIES.put("BBG004S68696", 1); // Распадская
         /*
         FIGIES.put("BBG004730RP0", 1); // Газпром

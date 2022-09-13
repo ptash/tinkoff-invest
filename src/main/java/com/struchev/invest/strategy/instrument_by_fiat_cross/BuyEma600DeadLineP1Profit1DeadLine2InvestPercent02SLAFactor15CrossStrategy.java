@@ -8,6 +8,7 @@ import java.util.Map;
 public class BuyEma600DeadLineP1Profit1DeadLine2InvestPercent02SLAFactor15CrossStrategy extends BuyEma600DeadLineP1Profit1DeadLine2InvestPercent02CrossStrategy {
 
     private Map FIGIES = Map.of(
+            "BBG004TC84Z8", 1,   // Трубная Металлургическая Компания
             "BBG004S68CP5", 5,   // М.видео
             "BBG000QFH687", 1,   // ТГК-1
             "BBG004S683W7", 9,   // Аэрофлот

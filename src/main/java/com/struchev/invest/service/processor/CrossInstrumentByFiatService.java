@@ -138,6 +138,10 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
                 }
             }
         }
+        if (result && !strategy.allowBuyUnderSmaTube() && price.compareTo(BigDecimal.valueOf(smaTube.get(smaTube.size() - 1))) < 0) {
+            result = false;
+            annotation += " allowBuyUnderSmaTube = false";
+        }
 
         reportLog(
                 strategy,
