@@ -239,7 +239,9 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             //if (deltaTubePercent < 0f) {
             //    factor = -1f * factor;
             //}
-            factor = factor / Math.abs(factor) * Math.sqrt(Math.abs(factor));
+            if (factor != 0f) {
+                factor = factor / Math.abs(factor) * Math.sqrt(Math.abs(factor));
+            }
             var tubeTopToByBlur = smaSlowestCur - delta * factor;
             if (tubeTopToByBlur < deadLineTop) {
                 deadLineTop = tubeTopToByBlur;
