@@ -16,17 +16,6 @@ public class BuyEma600DeadLineP1Profit1DeadLine2InvestPercent02SLAFactor15CrossS
             "BBG004S68696", 10,    // Распадская
             "BBG00475KKY8", 2 // НОВАТЭК
 
-            /*
-            //"BBG005F1DK91", 1, // G1
-            "BBG0016XJ8S0", 4, // TAL Education Group
-            "BBG000GRZDV1", 1, // Strategic Education Inc
-            "BBG006G2JVL2", 1, // Alibaba
-            "BBG001KS9450", 3, // 2U Inc
-            "BBG003QBJKN0", 4, // Allakos Inc
-            "BBG004NLQHL0", 2, // Fastly Inc
-            "BBG005DXJS36", 1 // TCS Group (Tinkoff Bank holder)
-            //"BBG002NLDLV8", 2 // VIPS*/
-
     );
 
     public Map<String, Integer> getFigies() {
@@ -41,5 +30,5 @@ public class BuyEma600DeadLineP1Profit1DeadLine2InvestPercent02SLAFactor15CrossS
     public Double getMinPercentTubeMoveUp() { return -0.020; }
 
     @Override
-    public boolean isEnabled() { return true; }
+    public boolean isEnabled() { return false; }
 }

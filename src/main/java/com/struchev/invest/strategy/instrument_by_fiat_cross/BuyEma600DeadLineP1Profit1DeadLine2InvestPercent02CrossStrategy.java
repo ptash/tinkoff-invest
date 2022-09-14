@@ -7,7 +7,6 @@ import java.util.Map;
 @Component
 public class BuyEma600DeadLineP1Profit1DeadLine2InvestPercent02CrossStrategy extends BuyEma600DeadLineP1DeadLine2InvestPercent02DelaySLNullCrossStrategy {
     private Map FIGIES = Map.of(
-            /*
             //"BBG005F1DK91", 1, // G1
             "BBG0016XJ8S0", 4, // TAL Education Group
             "BBG000GRZDV1", 1, // Strategic Education Inc
@@ -16,7 +15,7 @@ public class BuyEma600DeadLineP1Profit1DeadLine2InvestPercent02CrossStrategy ext
             "BBG003QBJKN0", 4, // Allakos Inc
             "BBG004NLQHL0", 2, // Fastly Inc
             "BBG005DXJS36", 1 // TCS Group (Tinkoff Bank holder)
-            //"BBG002NLDLV8", 2 // VIPS*/
+            //"BBG002NLDLV8", 2 // VIPS
 
     );
 
@@ -29,5 +28,5 @@ public class BuyEma600DeadLineP1Profit1DeadLine2InvestPercent02CrossStrategy ext
     public Double getMinPercentTubeMoveUp() { return -0.020; }
 
     @Override
-    public boolean isEnabled() { return false; }
+    public boolean isEnabled() { return true; }
 }
