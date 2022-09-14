@@ -28,5 +28,5 @@ public class BuyEma600DeadLineP1Profit1DeadLine2InvestPercent02CrossStrategy ext
     public Double getMinPercentTubeMoveUp() { return -0.020; }
 
     @Override
-    public boolean isEnabled() { return true; }
+    public boolean isEnabled() { return false; }
 }
