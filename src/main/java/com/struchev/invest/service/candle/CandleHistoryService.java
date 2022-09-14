@@ -214,14 +214,14 @@ public class CandleHistoryService {
         if (candlesMax != null && candlesMin != null) {
             log.info("History {} candles {} has period from {} to {}. We need period from {} to {}", interval, figi, candlesMin.getDateTime(), candlesMax.getDateTime(), timeStart, timeEnd);
             if (candlesMin.getDateTime().isAfter(timeStart) && candlesMin.getDateTime().isBefore(timeEnd)) {
-                var dayEndChanged = dayStart + Duration.between(timeStart, candlesMin.getDateTime()).toMinutes() / minutesInInterval  + 1;
-                datesRange = LongStream.concat(datesRange, LongStream.range(dayStart, dayEndChanged));
-                log.info("History start {} candles {} from {} to {} already loaded. Load from {} to {}", interval, figi, timeStart, candlesMin.getDateTime(), dayStart, dayEndChanged);
+                var dayEndChanged = dayEnd - Duration.between(timeStart, candlesMin.getDateTime()).toMinutes() / minutesInInterval  + 1;
+                datesRange = LongStream.concat(datesRange, LongStream.range(dayEndChanged, dayEnd));
+                log.info("History start {} candles {} from {} to {} already loaded. Load from {} to {}", interval, figi, timeStart, candlesMin.getDateTime(), dayEndChanged, dayEnd);
             }
             if (candlesMax.getDateTime().isAfter(timeStart) && candlesMax.getDateTime().isBefore(timeEnd)) {
-                var dayStartChanged = dayEnd - (Duration.between(candlesMax.getDateTime(), timeEnd).toMinutes() / minutesInInterval) - 1;
-                datesRange = LongStream.concat(datesRange, LongStream.range(dayStartChanged, dayEnd));
-                log.info("History end {} candles {} from {} to {} already loaded. Load from {} to {}", interval, figi, candlesMax.getDateTime(), timeEnd, dayStartChanged, dayEnd);
+                var dayStartChanged = dayStart + (Duration.between(candlesMax.getDateTime(), timeEnd).toMinutes() / minutesInInterval) - 1;
+                datesRange = LongStream.concat(datesRange, LongStream.range(dayStart, dayStartChanged));
+                log.info("History end {} candles {} from {} to {} already loaded. Load from {} to {}", interval, figi, candlesMin.getDateTime(), candlesMax.getDateTime(), dayStart, dayStartChanged);
             }
             if (!candlesMin.getDateTime().isBefore(timeEnd) || !candlesMax.getDateTime().isAfter(timeStart)) {
                 datesRange = LongStream.range(dayStart, dayEnd);
@@ -236,7 +236,7 @@ public class CandleHistoryService {
             var end = now.minusMinutes(i * minutesInInterval);
             log.info("Request {} candles {}, {} day from {} to {}", interval, figi, i, start, end);
             var candles = requestCandles(figi, start, end, candleInterval, 12);
-            log.info("Save {} {} candles to DB {}, {} day", interval, candles.size(), figi, i);
+            log.info("Save {} {} candles to DB {}, {} day from {} to {} {}", interval, candles.size(), figi, i, start, end, candles.size() > 0 ? candles.get(0).getTime() : "");
             candles.forEach(c -> addOrReplaceCandles(c, figi, interval));
             log.info("Candles {} was saved to DB {}, {} day", interval, figi, i);
         });

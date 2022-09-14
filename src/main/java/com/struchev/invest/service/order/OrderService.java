@@ -86,11 +86,13 @@ public class OrderService {
     public synchronized OrderDomainEntity closeOrder(CandleDomainEntity candle, AStrategy strategy) {
         var instrument = instrumentService.getInstrument(candle.getFigi());
         var order = findActiveByFigiAndStrategy(candle.getFigi(), strategy);
+
+        var result = tinkoffOrderAPI.sell(instrument, candle.getClosingPrice(), order.getLots());
+
         order.setSellPrice(candle.getClosingPrice());
         order.setSellProfit(candle.getClosingPrice().subtract(order.getPurchasePrice()));
         order.setSellDateTime(candle.getDateTime());
 
-        var result = tinkoffOrderAPI.sell(instrument, candle.getClosingPrice(), order.getLots());
         order.setSellCommission(result.getCommission());
         order.setSellPrice(result.getPrice());
         order.setSellProfit(result.getPrice().subtract(order.getPurchasePrice()));
