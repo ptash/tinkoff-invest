@@ -12,6 +12,7 @@ public interface ITinkoffOrderAPI {
     @Data
     @Builder
     class OrderResult {
+        String orderId;
         BigDecimal commission;
         BigDecimal price;
     }

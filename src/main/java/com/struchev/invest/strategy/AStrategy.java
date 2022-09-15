@@ -37,6 +37,10 @@ public abstract class AStrategy {
         return false;
     }
 
+    public boolean isArchive() {
+        return false;
+    }
+
     public abstract Duration getDelayBySL();
 
     public Integer getDelayPlusBySL() { return null; }

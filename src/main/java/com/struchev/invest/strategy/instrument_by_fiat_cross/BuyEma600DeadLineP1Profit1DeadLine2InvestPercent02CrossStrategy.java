@@ -29,4 +29,8 @@ public class BuyEma600DeadLineP1Profit1DeadLine2InvestPercent02CrossStrategy ext
 
     @Override
     public boolean isEnabled() { return true; }
+
+    public boolean isArchive() {
+        return true;
+    }
 }

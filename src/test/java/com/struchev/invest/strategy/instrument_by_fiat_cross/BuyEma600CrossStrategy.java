@@ -37,8 +37,19 @@ public class BuyEma600CrossStrategy extends AInstrumentByFiatCrossStrategy {
         */
 
         //"BBG008NMBXN8", 1, // Robinhood
-        FIGIES.put("BBG001KS9450", 1); // 2U Inc
-/*
+
+        //FIGIES.put("BBG0016XJ8S0", 1); // TAL Education Group
+        FIGIES.put("BBG003QBJKN0", 1); // Allakos Inc
+        //FIGIES.put("BBG001KS9450", 1); // 2U Inc
+        //"BBG000GRZDV1", 1, // Strategic Education Inc
+        FIGIES.put("BBG006G2JVL2", 1); // Alibaba
+        //IGIES.put("BBG001KS9450", 1); // 2U Inc
+        //FIGIES.put("BBG003QBJKN0", 1); // Allakos Inc
+        FIGIES.put("BBG004NLQHL0", 1); // Fastly Inc
+        FIGIES.put("BBG005DXJS36", 1); // TCS Group (Tinkoff Bank holder)
+        FIGIES.put("BBG000BLY663", 1); // CROCS
+
+       /*
         FIGIES.put("BBG005DXJS36", 1); // TCS Group (Tinkoff Bank holder)
         FIGIES.put("BBG003QBJKN0", 1); // Allakos Inc
         FIGIES.put("BBG001KS9450", 1); // 2U Inc

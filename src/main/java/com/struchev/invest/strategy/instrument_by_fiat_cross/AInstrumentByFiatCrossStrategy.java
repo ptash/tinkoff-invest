@@ -85,6 +85,7 @@ public abstract class AInstrumentByFiatCrossStrategy extends AStrategy {
     public Integer getTicksMoveUp() { return 2; }
     public Double getMinPercentMoveUp() { return 0.01; }
     public Double getMinPercentTubeMoveUp() { return -0.009; }
+    public Double getMinPercentSmaSlowestMoveUp() { return -0.009; }
     public Double getMinPercentTubeBottomMoveUp() { return 1.000; }
 
     public Double getInvestPercentFromFast() { return -1.0; }
@@ -97,6 +98,9 @@ public abstract class AInstrumentByFiatCrossStrategy extends AStrategy {
     public Boolean allowBuyUnderSmaTube() { return true; }
 
     public Boolean isBuyInvestCrossSmaEma2() { return false; }
+
+    public Boolean isSellWithMaxProfit() { return false; }
+    public Boolean isSellEma2UpOnBottom() { return true; }
 
     @Builder
     @Data

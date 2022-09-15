@@ -64,27 +64,85 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
 
         var deadLine = calcDeadLineTop(strategy, smaTube, smaSlowest, smaFast);
         var deadLineBottom = BigDecimal.valueOf(deadLine.get(0));
+        var deadLineTopDecimal = deadLine.get(1);
         var deadLineTop = BigDecimal.valueOf(deadLine.get(1));
         var tubeTopToBy = BigDecimal.valueOf(deadLine.get(2));
         var tubeTopToInvest = BigDecimal.valueOf(deadLine.get(3));
         var ema2Cur = BigDecimal.valueOf(ema2.get(ema2.size() - 1));
 
         var price = ema2Cur.min(candle.getClosingPrice());
-        var result = price.compareTo(deadLineTop) < 0 && price.compareTo(deadLineBottom) > 0;
-        var annotation = " " + result;
+        var deltaMin = deadLineTop.subtract(deadLineBottom).divide(BigDecimal.valueOf(4), 2, RoundingMode.HALF_UP).max(BigDecimal.valueOf(0.01));
+
+        var annotation = "";
+        Boolean isBottomLevels = false;
+        if (strategy.isSellWithMaxProfit()
+                && emaFast.get(emaFast.size() - 1) <= smaFast.get(smaFast.size() - 1)
+                && smaFast.get(smaFast.size() - 1) <= smaSlow.get(smaSlow.size() - 1)
+                && smaSlow.get(smaSlow.size() - 1) <= smaSlowest.get(smaSlowest.size() - 1)
+                && price.compareTo(BigDecimal.valueOf(emaFast.get(emaFast.size() - 1))) < 0
+        ) {
+            annotation += " bottom levels";
+            var delta = Math.min(
+                    smaFast.get(smaFast.size() - 1) - emaFast.get(emaFast.size() - 1),
+                    smaSlow.get(smaSlow.size() - 1) - smaFast.get(smaFast.size() - 1)
+            );
+            var deltaMinBottom = deltaMin;//deadLineTop.subtract(deadLineBottom).divide(BigDecimal.valueOf(2), 2, RoundingMode.HALF_UP).max(BigDecimal.valueOf(0.01));
+            delta = Math.min(delta, smaSlowest.get(smaSlowest.size() - 1) - smaSlow.get(smaSlow.size() - 1));
+            if (deltaMinBottom.compareTo(BigDecimal.valueOf(delta)) < 0) {
+                annotation += " deltaMin < delta";
+                deadLineBottom = deadLineBottom.subtract(deadLineTop.subtract(deadLineBottom).multiply(BigDecimal.valueOf(1.2f)));
+                isBottomLevels = true;
+            } else {
+                annotation += " deltaMin < delta: " + deltaMinBottom + " < " + delta;
+            }
+        }
+
+        Boolean isInTube = false;
+        if (strategy.isSellWithMaxProfit()) {
+            var top = Math.max(
+                    emaFast.get(emaFast.size() - 1),
+                    smaFast.get(smaFast.size() - 1)
+            );
+            top = Math.max(top, smaSlow.get(smaSlow.size() - 1));
+            var bottom = Math.min(
+                    emaFast.get(emaFast.size() - 1),
+                    smaFast.get(smaFast.size() - 1)
+            );
+            bottom = Math.min(bottom, smaSlow.get(smaSlow.size() - 1));
+            var delta = top - bottom;
+            var tubeSize = deltaMin;
+            annotation += " tube: " + delta + " < " + tubeSize;
+            if (tubeSize.compareTo(BigDecimal.valueOf(delta)) > 0) {
+                isInTube = true;
+                if (tubeTopToBy.compareTo(BigDecimal.ZERO) < 0) {
+                    //tubeTopToBy = deadLineBottom.add(deltaMin.divide(BigDecimal.valueOf(4), 2, RoundingMode.HALF_UP));
+                    tubeTopToBy = deadLineBottom.add(deltaMin);
+                    annotation += " new tubeTopToBy = " + tubeTopToBy;
+                }
+                annotation += " = true";
+            }
+        } else {
+            isInTube = true;
+        }
+
+        Boolean result = price.compareTo(deadLineTop) < 0 && price.compareTo(deadLineBottom) > 0;
+        annotation += " " + result;
         Double investTubeBottom = null;
         Double smaSlowDelta = null;
-        if (result) {
+        if (result || isInTube) {
             var isTubeTopToBy = false;
+            annotation += " tubeTopToBy=" + tubeTopToBy;
             if (tubeTopToBy.compareTo(BigDecimal.ZERO) > 0 && price.compareTo(tubeTopToBy) < 0) {
                 if (getPercentMoveUp(smaTube) >= strategy.getMinPercentTubeMoveUp()) {
                     isTubeTopToBy = true;
-                    annotation += " tubeTopToBy " + getPercentMoveUp(smaTube) + " (" + smaTube + ")";
+                    annotation += " tubeTopToBy " + getPercentMoveUp(smaTube) + " >= " + strategy.getMinPercentTubeMoveUp() + " (" + smaTube + ")";
                 } else {
-                    annotation += " tubeTopToBy false " + getPercentMoveUp(smaTube) + " (" + smaTube + ")";
+                    annotation += " tubeTopToBy false " + getPercentMoveUp(smaTube) + " >= " + strategy.getMinPercentTubeMoveUp() + " (" + smaTube + ")";
                 }
             }
             if (isTubeTopToBy) {
+            } else if (strategy.isSellWithMaxProfit()) {
+                result = false;
             } else if (isCrossover(smaFast, smaSlow)) {
                 annotation += " smaFast/smaSlow";
                 //} else if (isCrossover(smaSlow, smaSlowest)) {
@@ -108,17 +166,100 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             } else {
                 result = false;
             }
+        } else {
+            result = false;
         }
         if (!result) {
             if (strategy.isBuyInvestCrossSmaEma2() && smaTube.get(smaTube.size() - 1) < smaSlowest.get(smaSlowest.size() - 1)
                     && isCrossover(smaTube, ema2)) {
                 annotation += " smaTube/ema2";
                 result = true;
-            } else if (price.compareTo(deadLineBottom) < 0
-                    && getPercentMoveUp(smaTube) >= strategy.getMinPercentTubeBottomMoveUp()) {
-                annotation += " deadLineBottom " + getPercentMoveUp(smaTube) + " (" + smaTube + ") :" + getPercentMoveUp(smaTube) + " >= " + strategy.getMinPercentTubeBottomMoveUp();
-                result = true;
-            } else if (strategy.getInvestPercentFromFast() > 0 && tubeTopToInvest.compareTo(BigDecimal.ZERO) > 0 && price.compareTo(tubeTopToInvest) > 0) {
+            } else if (!strategy.isSellWithMaxProfit() && price.compareTo(deadLineBottom) < 0) {
+                annotation += " deadLineBottom " + getPercentMoveUp(smaTube) + " (" + smaTube + ") : >= " + strategy.getMinPercentTubeBottomMoveUp();
+                if (getPercentMoveUp(smaTube) >= strategy.getMinPercentTubeBottomMoveUp()) {
+                    annotation += " = true ";
+                    result = true;
+                }
+            }
+            Boolean isInvestLevels = false;
+            if (!result && strategy.isSellWithMaxProfit()
+                    && smaFast.get(smaFast.size() - 1) > smaSlow.get(smaSlow.size() - 1)
+                    && smaSlow.get(smaSlow.size() - 1) > deadLineTopDecimal
+                    && deadLineTopDecimal > smaSlowest.get(smaSlowest.size() - 1)
+                    && smaSlowest.get(smaSlowest.size() - 1) > smaTube.get(smaTube.size() - 1)
+                    && getPercentMoveUp(smaSlowest) > 0
+            ) {
+                isInvestLevels = true;
+                annotation += " invest levels";
+                var delta = Math.min(
+                        smaSlow.get(smaSlow.size() - 1) - deadLineTopDecimal,
+                        deadLineTopDecimal - smaSlowest.get(smaSlowest.size() - 1)
+                );
+                delta = Math.min(delta, smaSlowest.get(smaSlowest.size() - 1) - smaTube.get(smaTube.size() - 1));
+                if (deltaMin.compareTo(BigDecimal.valueOf(delta)) < 0) {
+                    annotation += " deltaMin < delta";
+                    if (price.compareTo(BigDecimal.valueOf(smaFast.get(smaFast.size() - 1))) < 0) {
+                        annotation += " price < smaFast";
+                        if (isCrossover(smaFast, ema2)) {
+                            annotation += " smaFast/ema2 " + getCrossPercent(smaFast, ema2) + " < " + strategy.getMaxSmaFastCrossPercent();
+                            if (getCrossPercent(smaFast, ema2) < strategy.getMaxSmaFastCrossPercent()) {
+                                annotation += " = true";
+                                result = true;
+                            }
+                        }
+                        if (!result && isCrossover(emaFast, smaFast)) {
+                            annotation += " emaFast/smaFast";
+                            result = true;
+                        } else if (price.compareTo(BigDecimal.valueOf(smaSlow.get(smaSlow.size() - 1))) < 0) {
+                            annotation += " price < smaSlow";
+                            result = true;
+                        }
+                    } else {
+                        annotation += " price < smaFast";
+                        //if (isCrossover(ema2, smaFast)) {
+                        //    annotation += " ema2/smaFast";
+                        //    result = true;
+                        //}
+                    }
+                } else {
+                    annotation += " deltaMin < delta: " + deltaMin + " < " + delta;
+                }
+            }
+            if (!result && !isInvestLevels && strategy.isSellWithMaxProfit()
+                    && emaFast.get(emaFast.size() - 1) > smaFast.get(smaFast.size() - 1)
+                    && smaFast.get(smaFast.size() - 1) > smaSlow.get(smaSlow.size() - 1)
+                    && smaSlow.get(smaSlow.size() - 1) > smaSlowest.get(smaSlowest.size() - 1)
+                    && smaSlow.get(smaSlow.size() - 1) > smaTube.get(smaTube.size() - 1)
+                    && deadLineTop.compareTo(BigDecimal.valueOf(smaSlow.get(smaSlow.size() - 1))) < 0
+                    && price.compareTo(BigDecimal.valueOf(emaFast.get(emaFast.size() - 1))) > 0
+            ) {
+                annotation += " invest rocket";
+                var delta = Math.min(
+                        emaFast.get(emaFast.size() - 1) - smaFast.get(smaFast.size() - 1),
+                        smaFast.get(smaFast.size() - 1) - smaSlow.get(smaSlow.size() - 1)
+                        );
+                delta = Math.min(delta, smaSlow.get(smaSlow.size() - 1) - smaSlowest.get(smaSlowest.size() - 1));
+                if (deltaMin.compareTo(BigDecimal.valueOf(delta)) < 0) {
+                    annotation += " deltaMin < delta";
+                    result = true;
+                } else {
+                    annotation += " deltaMin < delta: " + deltaMin + " < " + delta;
+                }
+            }
+            if (!result && isBottomLevels
+            ) {
+                if (price.compareTo(deadLineBottom) < 0) {
+                    annotation += " deadLineBottom " + getPercentMoveUp(smaSlowest) + " (" + smaSlowest + ") : >= " + strategy.getMinPercentSmaSlowestMoveUp();
+                    if (getPercentMoveUp(smaSlowest) >= strategy.getMinPercentSmaSlowestMoveUp()) {
+                        annotation += " = true";
+                        result = true;
+                    }
+                } else {
+                    annotation += " false price: " + price + " >= " + deadLineBottom;
+                }
+            }
+
+            if (!result && strategy.getInvestPercentFromFast() > 0 && tubeTopToInvest.compareTo(BigDecimal.ZERO) > 0 && price.compareTo(tubeTopToInvest) > 0) {
                 Double smaFastCur = smaFast.get(smaFast.size() - 1);
                 Double emaFastCur = emaFast.get(emaFast.size() - 1);
                 Double smaSlowCur = smaSlow.get(smaSlow.size() - 1);
@@ -137,6 +278,10 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
                     }
                 }
             }
+        }
+        if (!result && strategy.isSellWithMaxProfit() && ema2Cur.compareTo(deadLineBottom) < 0 && isInTube) {
+            result = true;
+            annotation += " under Tube = true";
         }
         if (result && !strategy.allowBuyUnderSmaTube() && price.compareTo(BigDecimal.valueOf(smaTube.get(smaTube.size() - 1))) < 0) {
             result = false;
@@ -168,7 +313,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
 
     private Boolean calculateCellCriteria(CandleDomainEntity candle,
                                          Function<? super CandleDomainEntity, ? extends BigDecimal> keyExtractor,
-                                         AInstrumentByFiatCrossStrategy strategy) {
+                                         AInstrumentByFiatCrossStrategy strategy, BigDecimal profitPercent) {
         OffsetDateTime currentDateTime = candle.getDateTime();
         String figi = candle.getFigi();
 
@@ -193,18 +338,49 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         var deadLineBottom = BigDecimal.valueOf(deadLine.get(0));
         var deadLineTop = BigDecimal.valueOf(deadLine.get(1));
         var tubeTopToInvest = BigDecimal.valueOf(deadLine.get(3));
+        var price = BigDecimal.valueOf(ema2.get(ema2.size() - 1)).min(candle.getClosingPrice());
 
-        var result = isCrossover(smaSlowest, smaSlow)
-                || isCrossover(smaSlow, emaFast)
-                || isCrossover(ema2, emaFast)
-                || isCrossover(emaFast, ema2)
-                || isCrossover(ema2, smaSlowest)
-        ;
+        Boolean result = null;
+        String annotation = "";
+        if (strategy.isSellWithMaxProfit() && profitPercent.compareTo(BigDecimal.ZERO) > 0) {
+            if (price.compareTo(BigDecimal.valueOf(smaSlowest.get(smaSlowest.size() - 1))) > 0
+                    || (strategy.isSellEma2UpOnBottom() && price.compareTo(BigDecimal.valueOf(smaFast.get(smaFast.size() - 1))) > 0)
+            ) {
+                result = isCrossover(ema2, emaFast) || isCrossover(emaFast, ema2);
+                if (result) {
+                    annotation += " crossover in plus";
+                }
+            } else if (strategy.isSellEma2UpOnBottom()){
+                result = isCrossover(emaFast, ema2);
+                if (result) {
+                    annotation += " crossover in emaFast/ema2";
+                }
+            } else {
+                result = isCrossover(ema2, emaFast);
+                if (result) {
+                    annotation += " crossover in ema2/emaFast";
+                }
+            }
+        } else {
+            result = isCrossover(smaSlowest, smaSlow)
+                    || isCrossover(smaSlow, emaFast)
+                    || isCrossover(ema2, emaFast)
+                    || isCrossover(emaFast, ema2)
+                    || isCrossover(ema2, smaSlowest)
+            ;
+            if (result) {
+                annotation += " crossover in minus";
+            }
+            if (!result && strategy.isSellWithMaxProfit() && price.compareTo(deadLineBottom) < 0) {
+                annotation += " price under deadLine: " + price + " < " + deadLineBottom;
+                result = true;
+            }
+        }
 
         reportLog(
                 strategy,
                 figi,
-                "{} | {} | {} | {} | {} | {} | | {} | {} | {} | {} ||| {} | calculateCellCriteria",
+                "{} | {} | {} | {} | {} | {} | | {} | {} | {} | {} ||| {} | calculateCellCriteria {}",
                 notificationService.formatDateTime(currentDateTime),
                 smaSlowest.get(1),
                 smaSlow.get(1),
@@ -215,7 +391,8 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
                 candle.getClosingPrice(),
                 deadLineBottom,
                 deadLineTop,
-                smaTube.get(smaTube.size() - 1)
+                smaTube.get(smaTube.size() - 1),
+                annotation
         );
 
         return result;
@@ -282,6 +459,16 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         }
         //if (deadLineBottom >= deadLineTop) {
             deadLineBottom = deadLineTop - deadLineTop * strategy.getDeadLinePercentFromSmaSlowest() / b100;
+        //}
+        if (strategy.isSellWithMaxProfit() && getPercentMoveUp(smaSlowest) < strategy.getMinPercentSmaSlowestMoveUp()) {
+            deadLineTop = deadLineTop - (deadLineTop - deadLineBottom) / 2;
+            if (tubeTopToBy > 0) {
+                    tubeTopToBy = deadLineTop;
+            }
+        }
+        //if (strategy.isSellWithMaxProfit() && tubeTopToBy > 0 && deltaTubePercent > tubeMaxPercent) {
+        //    // средняя выше
+        //    tubeTopToBy = tubeTopToBy - (tubeTopToBy - deadLineBottom) / 2;
         //}
         return List.of(deadLineBottom, deadLineTop, tubeTopToBy, tubeTopToInvest);
     }
@@ -519,7 +706,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             return true;
         }
 
-        if (!calculateCellCriteria(candle, CandleDomainEntity::getClosingPrice, strategy)) {
+        if (!calculateCellCriteria(candle, CandleDomainEntity::getClosingPrice, strategy, profitPercent)) {
             return false;
         }
 

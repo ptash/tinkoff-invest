@@ -76,6 +76,7 @@ public class OrderService {
         var result = tinkoffOrderAPI.buy(instrument, candle.getClosingPrice(), order.getLots());
         order.setPurchaseCommission(result.getCommission());
         order.setPurchasePrice(result.getPrice());
+        order.setPurchaseOrderId(result.getOrderId());
         order = orderRepository.save(order);
 
         orders.add(order);
@@ -89,10 +90,11 @@ public class OrderService {
 
         var result = tinkoffOrderAPI.sell(instrument, candle.getClosingPrice(), order.getLots());
 
-        order.setSellPrice(candle.getClosingPrice());
-        order.setSellProfit(candle.getClosingPrice().subtract(order.getPurchasePrice()));
+        //order.setSellPrice(candle.getClosingPrice());
+        //order.setSellProfit(candle.getClosingPrice().subtract(order.getPurchasePrice()));
         order.setSellDateTime(candle.getDateTime());
 
+        order.setSellOrderId(result.getOrderId());
         order.setSellCommission(result.getCommission());
         order.setSellPrice(result.getPrice());
         order.setSellProfit(result.getPrice().subtract(order.getPurchasePrice()));

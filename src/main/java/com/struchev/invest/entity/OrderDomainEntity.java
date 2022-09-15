@@ -42,6 +42,9 @@ public class OrderDomainEntity {
     @Column(name = "figi_title", nullable = true)
     private String figiTitle;
 
+    @Column(name = "purchase_order_id", nullable = true)
+    private String purchaseOrderId;
+
     @Column(name = "purchase_price", nullable = false, scale = 8, precision = 19)
     private BigDecimal purchasePrice;
 
@@ -50,6 +53,9 @@ public class OrderDomainEntity {
 
     @Column(name = "purchase_date_time", nullable = false)
     private OffsetDateTime purchaseDateTime;
+
+    @Column(name = "sell_order_id", nullable = true)
+    private String sellOrderId;
 
     @Column(name = "sell_price", nullable = true, scale = 8, precision = 19)
     private BigDecimal sellPrice;
