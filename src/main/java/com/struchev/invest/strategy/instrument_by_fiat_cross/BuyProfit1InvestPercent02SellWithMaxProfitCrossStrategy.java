@@ -26,7 +26,7 @@ public class BuyProfit1InvestPercent02SellWithMaxProfitCrossStrategy extends Buy
     }
 
     public Integer getTicksMoveUp() { return 5; }
-    public Double getMinPercentTubeMoveUp() { return -0.009; }
+    public Double getMinPercentTubeMoveUp() { return -0.050; }
 
     public Double getInvestPercentFromFast() { return -1.0; }
 
@@ -39,6 +39,8 @@ public class BuyProfit1InvestPercent02SellWithMaxProfitCrossStrategy extends Buy
     public Double getMaxSmaFastCrossPercent() { return 0.005; }
 
     public Integer getDelayPlusBySL() { return null; }
+
+    public Boolean isTubeTopBlur() { return false; }
 
     @Override
     public boolean isEnabled() { return true; }

@@ -42,7 +42,7 @@
         "/strategy_dygraphs_by_fiat.csv?strategy=" + strategy + "&figi=" + figi, // path to CSV file
         {
             delimiter: '|',
-            visibility: [true,true,true,true,true,false,false,true,true,true,true,true,true,false],
+            visibility: [true,true,true,true,true,false,false,true,true,true,true,true,true,false,true,true,true],
             digitsAfterDecimal: 8,
             xValueParser: function(x) {
                 dateIndex.push(new Date(x.trim()));
@@ -79,13 +79,25 @@
                     strokeWidth: 5.0,
                     color: 'blue',
                 },
+                'average' : {
+                    strokeWidth: 4.0,
+                    color: 'navy',
+                },
+                'averageTop' : {
+                    strokeWidth: 2.0,
+                    color: 'turquoise',
+                },
+                'averageBottom' : {
+                    strokeWidth: 2.0,
+                    color: 'turquoise',
+                },
                 'investBottom' : {
                     strokeWidth: 2.0,
-                    color: 'navy',
+                    color: 'red',
                 },
                 'investTop' : {
                     strokeWidth: 2.0,
-                    color: 'grey',
+                    color: 'red',
                 },
                 'deadLineTop' : {
                     strokeWidth: 5.0,
@@ -298,7 +310,7 @@
                         if (line.length === 0) continue;
                         if (line[0] == '#') continue;
                         var inFields = line.split("|");
-                        annotationIndex[i - 1] = inFields[inFields.length - 1];
+                        annotationIndex[i - 1] = inFields.length > 14 ? inFields[14] : inFields[inFields.length - 1];
                     }
                 }
             }

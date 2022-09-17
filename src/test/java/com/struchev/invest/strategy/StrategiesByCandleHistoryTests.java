@@ -45,7 +45,7 @@ class StrategiesByCandleHistoryTests {
     private Duration historyDuration;
     //@Value("${test.candle.history.dateBefore}")
     //private OffsetDateTime dateBefore = OffsetDateTime.parse("2022-09-13T03:00:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
-    private OffsetDateTime dateBefore = OffsetDateTime.parse("2022-09-16T03:00:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+    private OffsetDateTime dateBefore = OffsetDateTime.parse("2022-09-16T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
 
     @Value("${tinkoff.emulator}")
     private Boolean isTinkoffEmulator;
@@ -75,7 +75,7 @@ class StrategiesByCandleHistoryTests {
                         return new ArrayList<CandleDomainEntity>().stream();
                     }
                     var startDateTime = candles.get(0).getDateTime().minusDays(days);
-                    return candleRepository.findByFigiAndIntervalAndDateTimeAfterOrderByDateTime(figi, "1min", startDateTime).stream();
+                    return candleRepository.findByFigiAndIntervalAndDateTimeAfterAndDateTimeBeforeOrderByDateTime(figi, "1min", startDateTime, dateBefore).stream();
                 })
                 .sorted(Comparator.comparing(CandleDomainEntity::getDateTime))
                 .forEach(c -> purchaseService.observeNewCandle(c));

@@ -86,6 +86,8 @@ public abstract class AInstrumentByFiatCrossStrategy extends AStrategy {
     public Double getMinPercentMoveUp() { return 0.01; }
     public Double getMinPercentTubeMoveUp() { return -0.009; }
     public Double getMinPercentSmaSlowestMoveUp() { return -0.009; }
+
+    public Double getPercentMoveUpError() { return 0.01; }
     public Double getMinPercentTubeBottomMoveUp() { return 1.000; }
 
     public Double getInvestPercentFromFast() { return -1.0; }

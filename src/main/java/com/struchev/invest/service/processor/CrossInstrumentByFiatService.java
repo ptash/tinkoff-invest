@@ -7,6 +7,7 @@ import com.struchev.invest.strategy.AStrategy;
 import com.struchev.invest.strategy.instrument_by_fiat_cross.AInstrumentByFiatCrossStrategy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.relational.core.sql.In;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -57,7 +58,9 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
 
         var ema2 = getEma(figi, currentDateTime, 2, strategy.getInterval(), keyExtractor);
 
-        if (null == smaTube || null == smaSlowest || null == smaSlow || null == smaFast || null == emaFast) {
+        var avgDelta = calculateAvgDelta(figi, currentDateTime, strategy, keyExtractor);
+
+        if (null == avgDelta || null == smaTube || null == smaSlowest || null == smaSlow || null == ema2 || null == emaFast) {
             log.info("There is not enough data for the interval: currentDateTime = {}, {}, {}, {}, {}, {}", currentDateTime, smaTube, smaSlowest, smaSlow, smaFast, emaFast);
             return false;
         }
@@ -99,27 +102,38 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
 
         Boolean isInTube = false;
         if (strategy.isSellWithMaxProfit()) {
-            var top = Math.max(
-                    emaFast.get(emaFast.size() - 1),
-                    smaFast.get(smaFast.size() - 1)
-            );
-            top = Math.max(top, smaSlow.get(smaSlow.size() - 1));
-            var bottom = Math.min(
-                    emaFast.get(emaFast.size() - 1),
-                    smaFast.get(smaFast.size() - 1)
-            );
-            bottom = Math.min(bottom, smaSlow.get(smaSlow.size() - 1));
-            var delta = top - bottom;
-            var tubeSize = deltaMin;
-            annotation += " tube: " + delta + " < " + tubeSize;
-            if (tubeSize.compareTo(BigDecimal.valueOf(delta)) > 0) {
+            if (price.compareTo(BigDecimal.valueOf(avgDelta.get(0))) < 0) {
                 isInTube = true;
-                if (tubeTopToBy.compareTo(BigDecimal.ZERO) < 0) {
-                    //tubeTopToBy = deadLineBottom.add(deltaMin.divide(BigDecimal.valueOf(4), 2, RoundingMode.HALF_UP));
-                    tubeTopToBy = deadLineBottom.add(deltaMin);
-                    annotation += " new tubeTopToBy = " + tubeTopToBy;
+                tubeTopToBy = BigDecimal.valueOf(avgDelta.get(0));
+                annotation += " new t = " + avgDelta.get(0);
+            } else if (false) {
+                var delta = Math.min(
+                        Math.abs(emaFast.get(emaFast.size() - 1) - smaSlow.get(smaSlow.size() - 1)),
+                        Math.abs(smaSlow.get(smaSlow.size() - 1) - smaFast.get(smaFast.size() - 1))
+                );
+                var deltaFast = Math.abs(emaFast.get(emaFast.size() - 1) - smaFast.get(smaFast.size() - 1));
+                var tubeSizeFast = deltaMin;
+                var tubeSize = deltaMin.multiply(BigDecimal.valueOf(2));
+                annotation += " t: (" + deltaFast + " < " + tubeSizeFast + "; " + delta + " < " + tubeSize + ")";
+                if (tubeSize.compareTo(BigDecimal.valueOf(delta)) > 0
+                        && tubeSizeFast.compareTo(BigDecimal.valueOf(deltaFast)) > 0
+                    //&& smaSlow.get(smaSlow.size() - 1) < smaFast.get(smaFast.size() - 1)
+                    //&& getPercentMoveUp(smaSlow) > -strategy.getPercentMoveUpError()
+                ) {
+                    isInTube = true;
+                    if (tubeTopToBy.compareTo(BigDecimal.ZERO) < 0) {
+                        //tubeTopToBy = deadLineBottom.add(deltaMin.divide(BigDecimal.valueOf(4), 2, RoundingMode.HALF_UP));
+                        //tubeTopToBy = deadLineBottom.add(deltaMin);
+                        if (smaSlow.get(smaSlow.size() - 1) < smaFast.get(smaFast.size() - 1)) {
+                            tubeTopToBy = BigDecimal.valueOf(smaSlow.get(smaSlow.size() - 1));
+                        } else {
+                            tubeTopToBy = deadLineBottom.add(deltaMin);
+                        }
+                        annotation += " new t = " + tubeTopToBy;
+                    } else {
+                        annotation += " = t";
+                    }
                 }
-                annotation += " = true";
             }
         } else {
             isInTube = true;
@@ -131,13 +145,14 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         Double smaSlowDelta = null;
         if (result || isInTube) {
             var isTubeTopToBy = false;
-            annotation += " tubeTopToBy=" + tubeTopToBy;
+            annotation += " " + price + " < ttb=" + tubeTopToBy;
             if (tubeTopToBy.compareTo(BigDecimal.ZERO) > 0 && price.compareTo(tubeTopToBy) < 0) {
                 if (getPercentMoveUp(smaTube) >= strategy.getMinPercentTubeMoveUp()) {
                     isTubeTopToBy = true;
-                    annotation += " tubeTopToBy " + getPercentMoveUp(smaTube) + " >= " + strategy.getMinPercentTubeMoveUp() + " (" + smaTube + ")";
+                    result = true;
+                    annotation += " tTB true " + getPercentMoveUp(smaTube) + " >= " + strategy.getMinPercentTubeMoveUp() + " (" + smaTube + ")";
                 } else {
-                    annotation += " tubeTopToBy false " + getPercentMoveUp(smaTube) + " >= " + strategy.getMinPercentTubeMoveUp() + " (" + smaTube + ")";
+                    annotation += " tTB false " + getPercentMoveUp(smaTube) + " >= " + strategy.getMinPercentTubeMoveUp() + " (" + smaTube + ")";
                 }
             }
             if (isTubeTopToBy) {
@@ -186,20 +201,26 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
                     && smaFast.get(smaFast.size() - 1) > smaSlow.get(smaSlow.size() - 1)
                     && smaSlow.get(smaSlow.size() - 1) > deadLineTopDecimal
                     && deadLineTopDecimal > smaSlowest.get(smaSlowest.size() - 1)
+                    && smaSlow.get(smaSlow.size() - 1) > smaSlowest.get(smaSlowest.size() - 1)
                     && smaSlowest.get(smaSlowest.size() - 1) > smaTube.get(smaTube.size() - 1)
                     && getPercentMoveUp(smaSlowest) > 0
             ) {
                 isInvestLevels = true;
-                annotation += " invest levels";
+                annotation += " investL";
                 var delta = Math.min(
                         smaSlow.get(smaSlow.size() - 1) - deadLineTopDecimal,
                         deadLineTopDecimal - smaSlowest.get(smaSlowest.size() - 1)
                 );
                 delta = Math.min(delta, smaSlowest.get(smaSlowest.size() - 1) - smaTube.get(smaTube.size() - 1));
+                //var delta = smaSlow.get(smaSlow.size() - 1) - smaSlowest.get(smaSlowest.size() - 1);
                 if (deltaMin.compareTo(BigDecimal.valueOf(delta)) < 0) {
-                    annotation += " deltaMin < delta";
-                    if (price.compareTo(BigDecimal.valueOf(smaFast.get(smaFast.size() - 1))) < 0) {
-                        annotation += " price < smaFast";
+                    annotation += " dMin < d";
+                    var smaFastBlur = smaFast.get(smaFast.size() - 1);
+//                    if (ema2.get(ema2.size() - 1) > smaFastBlur) {
+//
+//                    }
+                    if (price.compareTo(BigDecimal.valueOf(smaFastBlur)) < 0) {
+                        annotation += " p < sFast";
                         if (isCrossover(smaFast, ema2)) {
                             annotation += " smaFast/ema2 " + getCrossPercent(smaFast, ema2) + " < " + strategy.getMaxSmaFastCrossPercent();
                             if (getCrossPercent(smaFast, ema2) < strategy.getMaxSmaFastCrossPercent()) {
@@ -207,12 +228,21 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
                                 result = true;
                             }
                         }
-                        if (!result && isCrossover(emaFast, smaFast)) {
-                            annotation += " emaFast/smaFast";
+                        annotation += " eFast/sFast = " + isCrossover(emaFast, smaFast) + ": " + getPercentMoveUp(ema2) + " > " + getPercentMoveUp(emaFast) + " >= " + getPercentMoveUp(smaFast) + " > -" + strategy.getPercentMoveUpError();
+                        if (!result && (isCrossover(emaFast, smaFast) && (
+                                getPercentMoveUp(ema2) > strategy.getPercentMoveUpError()
+                                && getPercentMoveUp(smaFast) > -strategy.getPercentMoveUpError()
+                                && getPercentMoveUp(emaFast) >= getPercentMoveUp(smaFast)))) {
+                            annotation += " eFast/sFast";
                             result = true;
                         } else if (price.compareTo(BigDecimal.valueOf(smaSlow.get(smaSlow.size() - 1))) < 0) {
-                            annotation += " price < smaSlow";
-                            result = true;
+                            annotation += " p < sSlow";
+                            var deadLineInvest = deadLineTopDecimal + (smaSlow.get(smaSlow.size() - 1) - deadLineTopDecimal) * 0.75;
+                            annotation += " p < sSlow " + getPercentMoveUp(ema2) + ": (" + deadLineTop + " > " + price + " > " + deadLineInvest;
+                            if (getPercentMoveUp(ema2) > 0 && (price.compareTo(BigDecimal.valueOf(deadLineInvest)) > 0 || price.compareTo(deadLineTop) < 0)) {
+                                annotation += " = true";
+                                result = true;
+                            }
                         }
                     } else {
                         annotation += " price < smaFast";
@@ -222,14 +252,14 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
                         //}
                     }
                 } else {
-                    annotation += " deltaMin < delta: " + deltaMin + " < " + delta;
+                    annotation += " delta = false (" + deltaMin + " < " + delta + ")";
                 }
             }
             if (!result && !isInvestLevels && strategy.isSellWithMaxProfit()
                     && emaFast.get(emaFast.size() - 1) > smaFast.get(smaFast.size() - 1)
                     && smaFast.get(smaFast.size() - 1) > smaSlow.get(smaSlow.size() - 1)
                     && smaSlow.get(smaSlow.size() - 1) > smaSlowest.get(smaSlowest.size() - 1)
-                    && smaSlow.get(smaSlow.size() - 1) > smaTube.get(smaTube.size() - 1)
+                    //&& smaSlow.get(smaSlow.size() - 1) > smaTube.get(smaTube.size() - 1)
                     && deadLineTop.compareTo(BigDecimal.valueOf(smaSlow.get(smaSlow.size() - 1))) < 0
                     && price.compareTo(BigDecimal.valueOf(emaFast.get(emaFast.size() - 1))) > 0
             ) {
@@ -279,19 +309,25 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
                 }
             }
         }
-        if (!result && strategy.isSellWithMaxProfit() && ema2Cur.compareTo(deadLineBottom) < 0 && isInTube) {
-            result = true;
-            annotation += " under Tube = true";
-        }
-        if (result && !strategy.allowBuyUnderSmaTube() && price.compareTo(BigDecimal.valueOf(smaTube.get(smaTube.size() - 1))) < 0) {
+        //if (!result && strategy.isSellWithMaxProfit() && ema2Cur.compareTo(deadLineBottom) < 0 && isInTube) {
+        //    result = true;
+        //    annotation += " under Tube = true";
+        //}
+        if (result && !strategy.allowBuyUnderSmaTube()
+                && price.compareTo(BigDecimal.valueOf(smaTube.get(smaTube.size() - 1))) < 0
+                //&& price.compareTo(BigDecimal.valueOf(smaSlow.get(smaSlow.size() - 1))) < 0
+        ) {
             result = false;
             annotation += " allowBuyUnderSmaTube = false";
         }
 
+        //var smaFastest = getSma(figi, currentDateTime, strategy.getSmaFastLength() / 2, strategy.getInterval(), keyExtractor);
+        //var smaFastest2 = getSma(figi, currentDateTime, strategy.getSmaFastLength() / 4, strategy.getInterval(), keyExtractor);
+
         reportLog(
                 strategy,
                 figi,
-                "{} | {} | {} | {} | {} | {} | {} | | {} | {} | {} | {} | {} | {} |by{}",
+                "{} | {} | {} | {} | {} | {} | {} | | {} | {} | {} | {} | {} | {} |by {}|{}|{}|{}",
                 notificationService.formatDateTime(currentDateTime),
                 smaSlowest.get(1),
                 smaSlow.get(1),
@@ -302,10 +338,13 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
                 candle.getClosingPrice(),
                 deadLineBottom,
                 deadLineTop,
-                smaSlowDelta == null ? "" : smaSlowDelta,
-                investTubeBottom == null ? "" : investTubeBottom,
+                avgDelta.get(0), //smaSlowDelta == null ? "" : smaSlowDelta,
+                avgDelta.get(1), //investTubeBottom == null ? "" : investTubeBottom,
                 smaTube.get(smaTube.size() - 1),
-                annotation
+                annotation,
+                avgDelta.get(2),
+                avgDelta.get(2) - avgDelta.get(3),
+                avgDelta.get(2) + avgDelta.get(3)
         );
 
         return result;
@@ -329,7 +368,9 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
 
         var smaFast = getSma(figi, currentDateTime, strategy.getSmaFastLength(), strategy.getInterval(), keyExtractor);
 
-        if (null == smaTube || null == smaSlowest || null == smaSlow || null == ema2 || null == emaFast) {
+        var avgDelta = calculateAvgDelta(figi, currentDateTime, strategy, keyExtractor);
+
+        if (null == avgDelta || null == smaTube || null == smaSlowest || null == smaSlow || null == ema2 || null == emaFast) {
             log.info("There is not enough data for the interval: currentDateTime = {}, {}, {}, {}, {}, {}", currentDateTime, smaTube, smaSlowest, smaSlow, smaFast, emaFast);
             return false;
         }
@@ -342,23 +383,26 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
 
         Boolean result = null;
         String annotation = "";
-        if (strategy.isSellWithMaxProfit() && profitPercent.compareTo(BigDecimal.ZERO) > 0) {
+        if (false && strategy.isSellWithMaxProfit() && profitPercent.compareTo(BigDecimal.ZERO) > 0) {
             if (price.compareTo(BigDecimal.valueOf(smaSlowest.get(smaSlowest.size() - 1))) > 0
                     || (strategy.isSellEma2UpOnBottom() && price.compareTo(BigDecimal.valueOf(smaFast.get(smaFast.size() - 1))) > 0)
             ) {
+                annotation += " crossover in plus";
                 result = isCrossover(ema2, emaFast) || isCrossover(emaFast, ema2);
                 if (result) {
-                    annotation += " crossover in plus";
+                    annotation += " = t";
                 }
             } else if (strategy.isSellEma2UpOnBottom()){
+                annotation += " crossover in emaFast/ema2";
                 result = isCrossover(emaFast, ema2);
                 if (result) {
-                    annotation += " crossover in emaFast/ema2";
+                    annotation += " = t";
                 }
             } else {
+                annotation += " crossover in ema2/emaFast";
                 result = isCrossover(ema2, emaFast);
                 if (result) {
-                    annotation += " crossover in ema2/emaFast";
+                    annotation += " = t";
                 }
             }
         } else {
@@ -376,11 +420,25 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
                 result = true;
             }
         }
+        if (!result && strategy.isSellWithMaxProfit() && profitPercent.compareTo(BigDecimal.ZERO) > 0) {
+            if (price.compareTo(BigDecimal.valueOf(avgDelta.get(0))) > 0) {
+                annotation += " > avg";
+                result = true;
+            }
+        } else {
+            if (price.compareTo(BigDecimal.valueOf(avgDelta.get(1))) < 0) {
+                annotation += " < avg";
+                result = true;
+            }
+        }
+
+        //var smaFastest = getSma(figi, currentDateTime, strategy.getSmaFastLength() / 2, strategy.getInterval(), keyExtractor);
+        //var smaFastest2 = getSma(figi, currentDateTime, strategy.getSmaFastLength() / 4, strategy.getInterval(), keyExtractor);
 
         reportLog(
                 strategy,
                 figi,
-                "{} | {} | {} | {} | {} | {} | | {} | {} | {} | {} ||| {} | calculateCellCriteria {}",
+                "{} | {} | {} | {} | {} | {} | | {} | {} | {} | {} |{}|{}| {} | cell {}|{}|{}|{}",
                 notificationService.formatDateTime(currentDateTime),
                 smaSlowest.get(1),
                 smaSlow.get(1),
@@ -391,8 +449,13 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
                 candle.getClosingPrice(),
                 deadLineBottom,
                 deadLineTop,
+                avgDelta.get(0),
+                avgDelta.get(1), //investTubeBottom == null ? "" : investTubeBottom,
                 smaTube.get(smaTube.size() - 1),
-                annotation
+                annotation,
+                avgDelta.get(2),
+                avgDelta.get(2) - avgDelta.get(3),
+                avgDelta.get(2) + avgDelta.get(3)
         );
 
         return result;
@@ -471,6 +534,129 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         //    tubeTopToBy = tubeTopToBy - (tubeTopToBy - deadLineBottom) / 2;
         //}
         return List.of(deadLineBottom, deadLineTop, tubeTopToBy, tubeTopToInvest);
+    }
+
+    private List<Double> calculateAvgDelta(String figi, OffsetDateTime currentDateTime, AInstrumentByFiatCrossStrategy strategy, Function<? super CandleDomainEntity, ? extends BigDecimal> keyExtractor)
+    {
+        var length = strategy.getSmaFastLength();
+        var smaFastAvg = getSma(figi, currentDateTime, strategy.getSmaFastLength(), strategy.getInterval(), keyExtractor, length * 2);
+        var smaFast2Avg = getSma(figi, currentDateTime, 2, strategy.getInterval(), keyExtractor, length * 2);
+        if (smaFastAvg == null || smaFast2Avg == null) {
+            return null;
+        }
+        Double avgDelta = 0.;
+        Double avgDeltaAbs = 0.;
+        List<Double> avgList = new ArrayList<Double>();
+        List<Double> avgListMPlus = new ArrayList<Double>();
+        List<Double> avgListMMinus = new ArrayList<Double>();
+        //List<Double> avgListD = new ArrayList<Double>();
+        for (var i = 0; i < length; i++) {
+            var point = i + length;
+            Double a = 0.;
+            Double aPlus = 0.;
+            Double aMinus = 0.;
+            Integer aPlusNumber = 0;
+            Integer aMinusNumber = 0;
+            for (var j = 0; j < length; j++) {
+                var delta = smaFast2Avg.get(point - j) - smaFastAvg.get(point - j);
+                a += delta;
+                if (delta >= 0) {
+                    aPlus += delta;
+                    aPlusNumber++;
+                } else {
+                    aMinus += delta;
+                    aMinusNumber++;
+                }
+                //aAbs += Math.abs(smaFast2Avg.get(point - j) - smaFastAvg.get(point - j));
+            }
+            if (i == (length - 1)) {
+                avgDelta = a / length;
+            }
+            var aCur = smaFastAvg.get(point) + a / length;
+            avgList.add(aCur);
+            avgListMPlus.add(aPlusNumber > 0 ? (aPlus / aPlusNumber) : 0.);
+            avgListMMinus.add(aMinusNumber > 0 ? (aMinus / aMinusNumber): 0.);
+        }
+
+        for (var i = 0; i < length; i++) {
+            var point = i + length;
+            Double avgDPlus = 0.;
+            Double avgDMinus = 0.;
+            Integer aPlusNumber = 0;
+            Integer aMinusNumber = 0;
+            for (var j = 0; j < length; j++) {
+                var delta = smaFast2Avg.get(point - j) - smaFastAvg.get(point - j);
+                if (delta > 0) {
+                    avgDPlus += (delta - avgListMPlus.get(i)) * (delta - avgListMPlus.get(i));
+                    aPlusNumber++;
+                } else {
+                    avgDMinus += (delta - avgListMMinus.get(i)) * (delta - avgListMMinus.get(i));
+                    aMinusNumber++;
+                }
+            }
+            if (aPlusNumber > 0) {
+                avgDPlus = Math.sqrt(avgDPlus / aPlusNumber); // среднее квадратичное отклонение средней и smaFast
+            }
+            if (aMinusNumber > 0) {
+                avgDMinus = Math.sqrt(avgDMinus / aMinusNumber); // среднее квадратичное отклонение средней и smaFast
+            }
+
+            Double a = 0.;
+            var num = 0;
+            for (var j = 0; j < length; j++) {
+                var delta = smaFast2Avg.get(point - j) - smaFastAvg.get(point - j);
+                if (delta > 0) {
+                    if (delta <= avgListMPlus.get(i) + avgDPlus) {
+                        a += delta;
+                        num++;
+                    }
+                } else {
+                    if (delta >= avgListMMinus.get(i) - avgDMinus) {
+                        a += delta;
+                        num++;
+                    }
+                }
+            }
+            var aCur = avgList.get(i);
+            if (num > 0) {
+                aCur = smaFastAvg.get(point) + a / num;
+                avgList.set(i, aCur);
+                if (i == (length - 1)) {
+                    avgDelta = a / num;
+                }
+            }
+            var smaFast2Cur = smaFast2Avg.get(point);
+            var delta = Math.abs(smaFast2Cur - aCur);
+            avgDeltaAbs += delta;
+
+        }
+        avgDeltaAbs = avgDeltaAbs / length;
+
+        Double d = 0.;
+        for (var i = 0; i < length; i++) {
+            var point = i + length;
+            var delta = Math.abs(smaFast2Avg.get(point) - avgList.get(i));
+            d += (delta - avgDeltaAbs) * (delta - avgDeltaAbs);
+        }
+        d = Math.sqrt(d / length); // среднее квадратичное отклонение дельты от средней
+        var avgDeltaAbsD = 0.;
+        var num = 0;
+        for (var i = 0; i < length; i++) {
+            var point = i + length;
+            var delta = Math.abs(smaFast2Avg.get(point) - avgList.get(i));
+            //if (delta >= d) {
+            if (delta >= avgDeltaAbs + d) {
+                avgDeltaAbsD += delta;
+                num++;
+            }
+        }
+        if (num > 0) {
+            avgDeltaAbsD = avgDeltaAbsD / num;
+            avgDeltaAbs = avgDeltaAbsD;
+        }
+        var smaFastCur = smaFastAvg.get(smaFastAvg.size() - 1);
+        var avg = smaFastCur + avgDelta;
+        return List.of(avg - avgDeltaAbs, avg + avgDeltaAbs, avg, d);
     }
 
     /**
@@ -735,7 +921,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         notificationService.reportStrategy(
                 strategy,
                 figi,
-                "Date|smaSlowest|smaSlow|smaFast|emaFast|ema2|bye|sell|position|deadLineBottom|deadLineTop|investBottom|investTop|smaTube|strategy",
+                "Date|smaSlowest|smaSlow|smaFast|emaFast|ema2|bye|sell|position|deadLineBottom|deadLineTop|investBottom|investTop|smaTube|strategy|average|averageBottom|averageTop",
                 format,
                 arguments
         );

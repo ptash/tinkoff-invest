@@ -29,6 +29,8 @@ public interface CandleRepository extends JpaRepository<CandleDomainEntity, Long
 
     List<CandleDomainEntity> findByFigiAndIntervalAndDateTimeAfterOrderByDateTime(String figi, String interval, OffsetDateTime startDateTime);
 
+    List<CandleDomainEntity> findByFigiAndIntervalAndDateTimeAfterAndDateTimeBeforeOrderByDateTime(String figi, String interval, OffsetDateTime startDateTime, OffsetDateTime endDateTime);
+
     @Query("select c from CandleDomainEntity c where c.figi = :figi AND c.interval = :interval " +
             "AND c.dateTime <= :dateTime ORDER BY c.dateTime DESC")
     List<CandleDomainEntity> findByFigiAndIntervalAndBeforeDateTimeLimit(String figi, String interval, OffsetDateTime dateTime, Pageable pageable);
