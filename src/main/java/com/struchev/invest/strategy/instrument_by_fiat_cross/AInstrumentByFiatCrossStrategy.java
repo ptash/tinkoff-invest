@@ -56,6 +56,9 @@ public abstract class AInstrumentByFiatCrossStrategy extends AStrategy {
         return 20;
     }
 
+    public Integer getAvgLength() {
+        return getSmaFastLength();
+    }
     /**
      * Количество бар у быстрой EMA
      * @return

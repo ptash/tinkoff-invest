@@ -15,7 +15,7 @@ public class BuyEma600CrossStrategy extends AInstrumentByFiatCrossStrategy {
         //FIGIES.put("BBG004TC84Z8", 1); // Трубная Металлургическая Компания
         //FIGIES.put("BBG006L8G4H1", 1); // Yandex
 
-        /*
+
         FIGIES.put("BBG004730RP0", 1); // Газпром
         FIGIES.put("BBG004S683W7", 1);   // Аэрофлот
         FIGIES.put("BBG00178PGX3", 1);    // VK
@@ -35,7 +35,7 @@ public class BuyEma600CrossStrategy extends AInstrumentByFiatCrossStrategy {
         FIGIES.put("BBG004S68CP5", 1); // М.видео
         FIGIES.put("BBG002W2FT69", 1); // АбрауДюрсо
         FIGIES.put("BBG006L8G4H1", 1); // Yandex
-        */
+
 
 
         //"BBG008NMBXN8", 1, // Robinhood
@@ -67,6 +67,7 @@ public class BuyEma600CrossStrategy extends AInstrumentByFiatCrossStrategy {
 
 
 
+/*
         FIGIES.put("BBG005F1DK91", 1); // G1
         FIGIES.put("BBG000BLY663", 1); // CROCS
         FIGIES.put("BBG005DXJS36", 1); // TCS Group (Tinkoff Bank holder)
@@ -74,13 +75,19 @@ public class BuyEma600CrossStrategy extends AInstrumentByFiatCrossStrategy {
         FIGIES.put("BBG001KS9450", 1); // 2U Inc
         FIGIES.put("BBG000GRZDV1", 1); // Strategic Education Inc
 
-/*        FIGIES.put("BBG004NLQHL0", 1); // Fastly Inc
+ */
+
+
+        //FIGIES.put("BBG006G2JVL2", 1); // Alibaba
+
+/*
+        FIGIES.put("BBG004NLQHL0", 1); // Fastly Inc
         FIGIES.put("BBG000BPWXK1", 1); // Newmont Goldcorp Corporation
         FIGIES.put("BBG000QGWY50", 1); // Bluebird Bio Inc
         FIGIES.put("BBG006G2JVL2", 1); // Alibaba
-        FIGIES.put("BBG005F1DK91", 1); // G1
+        //FIGIES.put("BBG005F1DK91", 1); // G1
         FIGIES.put("BBG002NLDLV8", 1); // VIPS
-        FIGIES.put("BBG000BLY663", 1); // CROCS
+        //FIGIES.put("BBG000BLY663", 1); // CROCS
         FIGIES.put("BBG000J3D1Y8", 1); // OraSure Technologies Inc")
         FIGIES.put("BBG0016XJ8S0", 1); // TAL Education Group
         //FIGIES.put("BBG000BR85F1", 1); // PetroChina

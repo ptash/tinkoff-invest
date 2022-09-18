@@ -536,10 +536,15 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         return List.of(deadLineBottom, deadLineTop, tubeTopToBy, tubeTopToInvest);
     }
 
+    private List<Double> calculateTubeAvgDelta(String figi, OffsetDateTime currentDateTime, AInstrumentByFiatCrossStrategy strategy, Function<? super CandleDomainEntity, ? extends BigDecimal> keyExtractor)
+    {
+
+    }
+
     private List<Double> calculateAvgDelta(String figi, OffsetDateTime currentDateTime, AInstrumentByFiatCrossStrategy strategy, Function<? super CandleDomainEntity, ? extends BigDecimal> keyExtractor)
     {
-        var length = strategy.getSmaFastLength();
-        var smaFastAvg = getSma(figi, currentDateTime, strategy.getSmaFastLength(), strategy.getInterval(), keyExtractor, length * 2);
+        var length = strategy.getAvgLength();
+        var smaFastAvg = getSma(figi, currentDateTime, length, strategy.getInterval(), keyExtractor, length * 2);
         var smaFast2Avg = getSma(figi, currentDateTime, 2, strategy.getInterval(), keyExtractor, length * 2);
         if (smaFastAvg == null || smaFast2Avg == null) {
             return null;

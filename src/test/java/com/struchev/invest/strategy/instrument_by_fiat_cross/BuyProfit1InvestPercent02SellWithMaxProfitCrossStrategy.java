@@ -25,6 +25,10 @@ public class BuyProfit1InvestPercent02SellWithMaxProfitCrossStrategy extends Buy
 
     public Boolean isTubeTopBlur() { return true; }
 
+    //public SellCriteria getSellCriteria() {
+    //    return SellCriteria.builder().takeProfitPercent(1f).stopLossPercent(1f).build();
+    //}
+
     @Override
     public boolean isEnabled() { return true; }
 }
