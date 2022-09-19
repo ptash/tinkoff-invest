@@ -16,7 +16,7 @@ public class BuyProfit1InvestPercent02SellWithMaxProfitPercentFromSma1CrossStrat
             */
             "BBG005DXJS36", 1, // TCS Group (Tinkoff Bank holder)
             "BBG000QGWY50", 3, // Bluebird Bio Inc
-            "BBG001KS9450", 3, // 2U Inc
+            //"BBG001KS9450", 3, // 2U Inc
             "BBG000BPWXK1", 1 // Newmont Goldcorp Corporation
 
 
