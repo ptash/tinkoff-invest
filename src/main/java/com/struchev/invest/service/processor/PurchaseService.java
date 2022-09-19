@@ -59,7 +59,10 @@ public class PurchaseService {
             var order = orderService.findActiveByFigiAndStrategy(figiSuitableForOrder, strategy);
 
             // Нет активного ордера, возможно можем купить, если нет ограничений по задержке после stop loss
-            if (order == null && !strategy.isArchive()) {
+            if (order == null) {
+                if (strategy.isArchive()) {
+                    return;
+                }
                 var isShouldBuy = calculator.isShouldBuy(strategy, candleDomainEntity);
                 if (isShouldBuy) {
                     OrderDomainEntity lastOrder = null;
