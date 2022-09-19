@@ -207,7 +207,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         Boolean isTubeAvgDeltaResult = false;
         if (strategy.isTubeAvgDelta()) {
             isTubeAvgDeltaResult = result;
-            result = false;
+            result = true;
         }
         if (!result) {
             if (strategy.isBuyInvestCrossSmaEma2() && smaTube.get(smaTube.size() - 1) < smaSlowest.get(smaSlowest.size() - 1)
@@ -346,8 +346,8 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             annotation += " allowBuyUnderSmaTube = false";
         }
 
-        if (strategy.isTubeAvgDelta() && isTubeAvgDeltaResult) {
-            result = true;
+        if (strategy.isTubeAvgDelta()) {
+            result = isTubeAvgDeltaResult;
         }
 
         //var smaFastest = getSma(figi, currentDateTime, strategy.getSmaFastLength() / 2, strategy.getInterval(), keyExtractor);
@@ -638,6 +638,10 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             var s = avgDeltaMinus;
             avgDeltaMinus = avgDeltaPlus;
             avgDeltaPlus = avgDeltaMinus;
+            delta = BigDecimal.valueOf(-1);
+        } else if (avg.divide(keyExtractor.apply(candle), 8, RoundingMode.HALF_UP).compareTo(BigDecimal.valueOf(0.01)) < 0) {
+            avgDeltaMinus = avgDeltaMinus.subtract(delta);
+            avgDeltaPlus = avgDeltaPlus.add(delta);
             delta = BigDecimal.valueOf(-1);
         }
         return List.of(

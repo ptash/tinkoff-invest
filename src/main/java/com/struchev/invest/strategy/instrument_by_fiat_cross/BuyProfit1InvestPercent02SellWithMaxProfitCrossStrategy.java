@@ -8,16 +8,16 @@ import java.util.Map;
 public class BuyProfit1InvestPercent02SellWithMaxProfitCrossStrategy extends BuyEma600DeadLineP1Profit1DeadLine2InvestPercent02CrossStrategy {
 
     private Map FIGIES = Map.of(
-            //"BBG005F1DK91", 1, // G1
-            "BBG000BLY663", 4, // CROCS
+            "BBG005F1DK91", 2, // G1
+            "BBG002NLDLV8", 2, // VIPS
+            //"BBG00W0KZD98", 1,  //LI ?
+            "BBG000BLY663", 1, // CROCS
+            "BBG000J3D1Y8", 6, // OraSure Technologies Inc
             "BBG0016XJ8S0", 4, // TAL Education Group
             //"BBG000GRZDV1", 1, // Strategic Education Inc
             "BBG006G2JVL2", 1, // Alibaba
-            "BBG001KS9450", 3, // 2U Inc
-            "BBG003QBJKN0", 4, // Allakos Inc
-            "BBG004NLQHL0", 2, // Fastly Inc
-            "BBG005DXJS36", 1 // TCS Group (Tinkoff Bank holder)
-            //"BBG002NLDLV8", 2 // VIPS
+            "BBG003QBJKN0", 4 // Allakos Inc
+            //"BBG004NLQHL0", 2 // Fastly Inc
 
     );
 

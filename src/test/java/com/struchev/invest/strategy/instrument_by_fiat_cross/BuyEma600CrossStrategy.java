@@ -80,7 +80,9 @@ public class BuyEma600CrossStrategy extends AInstrumentByFiatCrossStrategy {
  */
 
 
-        FIGIES.put("BBG006G2JVL2", 1); // Alibaba
+        //FIGIES.put("BBG002NLDLV8", 1); // VIPS
+        FIGIES.put("BBG00W0KZD98", 1); //LI
+        //FIGIES.put("BBG005F1DK91", 1); // G1
 
 /*
         FIGIES.put("BBG004NLQHL0", 1); // Fastly Inc

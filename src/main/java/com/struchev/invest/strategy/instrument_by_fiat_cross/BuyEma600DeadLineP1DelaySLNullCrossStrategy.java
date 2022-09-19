@@ -32,4 +32,6 @@ public class BuyEma600DeadLineP1DelaySLNullCrossStrategy extends BuyEma600DeadLi
     public Integer getDelayPlusBySL() { return 60; }
 
     public boolean isEnabled() { return true; }
+
+    public boolean isArchive() { return true; }
 }
