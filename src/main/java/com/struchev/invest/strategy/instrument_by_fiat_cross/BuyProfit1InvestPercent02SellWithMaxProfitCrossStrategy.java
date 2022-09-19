@@ -25,7 +25,7 @@ public class BuyProfit1InvestPercent02SellWithMaxProfitCrossStrategy extends Buy
             "BBG006G2JVL2", 1, // Alibaba
             "BBG003QBJKN0", 4 // Allakos Inc
             //"BBG004NLQHL0", 2 // Fastly Inc
-             
+
 
     );
 

@@ -3,6 +3,7 @@ package com.struchev.invest.strategy;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.util.Map;
 
@@ -48,6 +49,8 @@ public abstract class AStrategy {
     public Double getDelayPlusBySLFactor() { return 0.; }
 
     public String getInterval() { return "1min"; }
+
+    public BigDecimal getPriceError() { return BigDecimal.valueOf(0.003); }
 
     @AllArgsConstructor
     public enum Type {

@@ -363,7 +363,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
                 smaFast.get(1),
                 emaFast.get(1),
                 ema2.get(1),
-                result ? candle.getClosingPrice() : "",
+                price,
                 candle.getClosingPrice(),
                 deadLineBottom,
                 deadLineTop,
@@ -486,7 +486,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
                 smaFast.get(1),
                 emaFast.get(1),
                 ema2.get(1),
-                result ? candle.getClosingPrice() : "",
+                price,
                 candle.getClosingPrice(),
                 deadLineBottom,
                 deadLineTop,
@@ -997,6 +997,11 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         var profitPercent = candle.getClosingPrice().subtract(purchaseRate)
                 .multiply(BigDecimal.valueOf(100))
                 .divide(purchaseRate, 4, RoundingMode.HALF_DOWN);
+        if (profitPercent.compareTo(BigDecimal.ZERO) > 0) {
+            profitPercent = profitPercent.subtract(strategy.getPriceError().multiply(BigDecimal.valueOf(100)));
+        } else {
+            profitPercent = profitPercent.add(strategy.getPriceError().multiply(BigDecimal.valueOf(100)));
+        }
 
         if (sellCriteria.getStopLossPercent() != null && profitPercent.floatValue() < -2 * sellCriteria.getStopLossPercent()) {
             return true;
@@ -1016,6 +1021,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         // profit % > take profit %, profit % > 0.1%
         if (sellCriteria.getTakeProfitPercent() != null
                 && profitPercent.floatValue() > sellCriteria.getTakeProfitPercent()
+                && strategy.getPriceError().compareTo(profitPercent) < 0
                 && profitPercent.floatValue() > 0.1f) {
             return true;
         }

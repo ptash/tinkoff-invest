@@ -38,7 +38,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                     .build();
         } else {
             var result = getApi().getOrdersService().postOrderSync(instrument.getFigi(), quantity, quotation,
-                    OrderDirection.ORDER_DIRECTION_BUY, getAccountId(), OrderType.ORDER_TYPE_LIMIT, uuid);
+                    OrderDirection.ORDER_DIRECTION_BUY, getAccountId(), OrderType.ORDER_TYPE_MARKET, uuid);
             return OrderResult.builder()
                     .orderId(result.getOrderId())
                     .commission(getCommission(result))
@@ -68,7 +68,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                     .build();
         } else {
             var result = getApi().getOrdersService().postOrderSync(instrument.getFigi(), quantity, quotation,
-                    OrderDirection.ORDER_DIRECTION_SELL, getAccountId(), OrderType.ORDER_TYPE_LIMIT, uuid);
+                    OrderDirection.ORDER_DIRECTION_SELL, getAccountId(), OrderType.ORDER_TYPE_MARKET, uuid);
             return OrderResult.builder()
                     .orderId(result.getOrderId())
                     .commission(getCommission(result))
