@@ -38,7 +38,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                     .build();
         } else {
             var result = getApi().getOrdersService().postOrderSync(instrument.getFigi(), quantity, quotation,
-                    OrderDirection.ORDER_DIRECTION_BUY, getAccountId(), OrderType.ORDER_TYPE_MARKET, uuid);
+                    OrderDirection.ORDER_DIRECTION_BUY, getAccountId(), OrderType.ORDER_TYPE_LIMIT, uuid);
             return OrderResult.builder()
                     .orderId(result.getOrderId())
                     .commission(getCommission(result))
@@ -51,7 +51,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
         long quantity = count / instrument.getLot();
         var quotation = Quotation.newBuilder()
                 .setUnits(price.longValue())
-                .setUnits(price.remainder(BigDecimal.ONE).movePointRight(9).intValue())
+                .setNano(price.remainder(BigDecimal.ONE).movePointRight(9).intValue())
                 .build();
         var uuid = UUID.randomUUID().toString();
         log.info("Send postOrderSync with: figi {}, quantity {}, quotation {}, direction {}, acc {}, type {}, id {}",
@@ -68,7 +68,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                     .build();
         } else {
             var result = getApi().getOrdersService().postOrderSync(instrument.getFigi(), quantity, quotation,
-                    OrderDirection.ORDER_DIRECTION_SELL, getAccountId(), OrderType.ORDER_TYPE_MARKET, uuid);
+                    OrderDirection.ORDER_DIRECTION_SELL, getAccountId(), OrderType.ORDER_TYPE_LIMIT, uuid);
             return OrderResult.builder()
                     .orderId(result.getOrderId())
                     .commission(getCommission(result))
