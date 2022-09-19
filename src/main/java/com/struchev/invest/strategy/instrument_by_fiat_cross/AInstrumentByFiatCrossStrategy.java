@@ -56,6 +56,10 @@ public abstract class AInstrumentByFiatCrossStrategy extends AStrategy {
         return 20;
     }
 
+    public Integer getAvgTubeLength() {
+        return getSmaTubeLength();
+    }
+
     public Integer getAvgLength() {
         return getSmaFastLength();
     }
@@ -106,6 +110,7 @@ public abstract class AInstrumentByFiatCrossStrategy extends AStrategy {
 
     public Boolean isSellWithMaxProfit() { return false; }
     public Boolean isSellEma2UpOnBottom() { return true; }
+    public Boolean isTubeAvgDelta() { return false; }
 
     @Builder
     @Data

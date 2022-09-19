@@ -16,6 +16,7 @@ public class BuyEma600CrossStrategy extends AInstrumentByFiatCrossStrategy {
         //FIGIES.put("BBG006L8G4H1", 1); // Yandex
 
 
+        /*
         FIGIES.put("BBG004730RP0", 1); // Газпром
         FIGIES.put("BBG004S683W7", 1);   // Аэрофлот
         FIGIES.put("BBG00178PGX3", 1);    // VK
@@ -35,6 +36,7 @@ public class BuyEma600CrossStrategy extends AInstrumentByFiatCrossStrategy {
         FIGIES.put("BBG004S68CP5", 1); // М.видео
         FIGIES.put("BBG002W2FT69", 1); // АбрауДюрсо
         FIGIES.put("BBG006L8G4H1", 1); // Yandex
+         */
 
 
 
@@ -78,7 +80,7 @@ public class BuyEma600CrossStrategy extends AInstrumentByFiatCrossStrategy {
  */
 
 
-        //FIGIES.put("BBG006G2JVL2", 1); // Alibaba
+        FIGIES.put("BBG006G2JVL2", 1); // Alibaba
 
 /*
         FIGIES.put("BBG004NLQHL0", 1); // Fastly Inc

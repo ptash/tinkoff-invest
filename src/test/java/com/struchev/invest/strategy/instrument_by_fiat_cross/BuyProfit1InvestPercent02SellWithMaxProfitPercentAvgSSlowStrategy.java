@@ -8,4 +8,5 @@ public class BuyProfit1InvestPercent02SellWithMaxProfitPercentAvgSSlowStrategy e
     public Integer getAvgLength() {
         return getSmaSlowLength();
     }
+    public boolean isEnabled() { return false; }
 }
