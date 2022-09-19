@@ -14,5 +14,5 @@ public class BuyProfit1InvestPercent02SellWithMaxProfitCrossTubeStrategy extends
         return getSmaTubeLength() * 2;
     }
 
-    public boolean isEnabled() { return false; }
+    public boolean isEnabled() { return true; }
 }
