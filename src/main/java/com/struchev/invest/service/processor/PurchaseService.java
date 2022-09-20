@@ -141,7 +141,7 @@ public class PurchaseService {
                             }
                     }
 
-                    var currentPrices = strategy.getType() == AStrategy.Type.instrumentByInstrument
+                    var currentPrices = (strategy.getType() == AStrategy.Type.instrumentByInstrument || strategy.getType() == AStrategy.Type.instrumentCrossByFiat)
                             ? calculatorInstrumentByInstrumentService.getCurrentPrices() : null;
                     order = orderService.openOrder(candleDomainEntity, strategy, currentPrices);
 

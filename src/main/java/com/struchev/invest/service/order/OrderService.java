@@ -65,15 +65,20 @@ public class OrderService {
                 .currency(instrument.getCurrency())
                 .figi(instrument.getFigi())
                 .figiTitle(instrument.getName())
-                .purchasePrice(candle.getClosingPrice())
+                .purchasePriceWanted(candle.getClosingPrice())
                 .strategy(strategy.getName())
                 .purchaseDateTime(candle.getDateTime())
                 .lots(strategy.getCount(candle.getFigi()))
-                .purchaseCommission(BigDecimal.ZERO)
+                .purchaseCommissionInitial(BigDecimal.ZERO)
                 .details(OrderDetails.builder().currentPrices(currentPrices).build())
                 .build();
 
+        if (strategy.isCheckBook()
+                && !tinkoffOrderAPI.checkGoodBuy(instrument, candle.getClosingPrice(), order.getLots(), strategy.getPriceError())) {
+            throw new RuntimeException("checkGoodBuy return false for figi " + instrument.getFigi());
+        }
         var result = tinkoffOrderAPI.buy(instrument, candle.getClosingPrice(), order.getLots());
+        order.setPurchaseCommissionInitial(result.getCommissionInitial());
         order.setPurchaseCommission(result.getCommission());
         order.setPurchasePrice(result.getPrice());
         order.setPurchaseOrderId(result.getOrderId());
@@ -88,13 +93,20 @@ public class OrderService {
         var instrument = instrumentService.getInstrument(candle.getFigi());
         var order = findActiveByFigiAndStrategy(candle.getFigi(), strategy);
 
+        order.setSellPriceWanted(candle.getClosingPrice());
+        order.setSellProfitWanted(order.getSellPriceWanted().subtract(order.getPurchasePrice()));
+
+        if (strategy.isCheckBook() && order.getSellProfitWanted().compareTo(BigDecimal.ZERO) > 0
+                && !tinkoffOrderAPI.checkGoodSell(instrument, candle.getClosingPrice(), order.getLots(), strategy.getPriceError())) {
+            throw new RuntimeException("checkGoodSell return false for figi " + instrument.getFigi());
+        }
+
         var result = tinkoffOrderAPI.sell(instrument, candle.getClosingPrice(), order.getLots());
 
-        //order.setSellPrice(candle.getClosingPrice());
-        //order.setSellProfit(candle.getClosingPrice().subtract(order.getPurchasePrice()));
         order.setSellDateTime(candle.getDateTime());
 
         order.setSellOrderId(result.getOrderId());
+        order.setSellCommissionInitial(result.getCommissionInitial());
         order.setSellCommission(result.getCommission());
         order.setSellPrice(result.getPrice());
         order.setSellProfit(result.getPrice().subtract(order.getPurchasePrice()));

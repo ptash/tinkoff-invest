@@ -20,6 +20,7 @@ public class TinkoffMockAPI extends ATinkoffAPI {
     @Override
     public OrderResult buy(InstrumentService.Instrument instrument, BigDecimal price, Integer count) {
         return OrderResult.builder()
+                .commissionInitial(calculateCommission(price, count))
                 .commission(calculateCommission(price, count))
                 .price(price)
                 .build();
@@ -28,9 +29,20 @@ public class TinkoffMockAPI extends ATinkoffAPI {
     @Override
     public OrderResult sell(InstrumentService.Instrument instrument, BigDecimal price, Integer count) {
         return OrderResult.builder()
+                .commissionInitial(calculateCommission(price, count))
                 .commission(calculateCommission(price, count))
                 .price(price)
                 .build();
+    }
+
+    @Override
+    public Boolean checkGoodSell(InstrumentService.Instrument instrument, BigDecimal price, Integer count, BigDecimal priceError) {
+        return true;
+    }
+
+    @Override
+    public Boolean checkGoodBuy(InstrumentService.Instrument instrument, BigDecimal price, Integer count, BigDecimal priceError) {
+        return true;
     }
 
     private BigDecimal calculateCommission(BigDecimal price, Integer count) {

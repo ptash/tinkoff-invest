@@ -33,6 +33,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                     OrderDirection.ORDER_DIRECTION_BUY, getAccountId(), OrderType.ORDER_TYPE_MARKET, uuid);
             return OrderResult.builder()
                     .orderId(result.getOrderId())
+                    .commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
                     .commission(toBigDecimal(result.getInitialCommission(), 8))
                     .price(toBigDecimal(result.getExecutedOrderPrice(), 8, price))
                     .build();
@@ -41,7 +42,8 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                     OrderDirection.ORDER_DIRECTION_BUY, getAccountId(), OrderType.ORDER_TYPE_MARKET, uuid);
             return OrderResult.builder()
                     .orderId(result.getOrderId())
-                    .commission(getCommission(result))
+                    .commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
+                    .commission(getExecutedCommission(result))
                     .price(toBigDecimal(result.getExecutedOrderPrice(), 8, price))
                     .build();
         }
@@ -63,6 +65,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
             result.getOrderId();
             return OrderResult.builder()
                     .orderId(result.getOrderId())
+                    .commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
                     .commission(toBigDecimal(result.getInitialCommission(), 8))
                     .price(toBigDecimal(result.getExecutedOrderPrice(), 8, price))
                     .build();
@@ -71,17 +74,62 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                     OrderDirection.ORDER_DIRECTION_SELL, getAccountId(), OrderType.ORDER_TYPE_MARKET, uuid);
             return OrderResult.builder()
                     .orderId(result.getOrderId())
-                    .commission(getCommission(result))
+                    .commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
+                    .commission(getExecutedCommission(result))
                     .price(toBigDecimal(result.getExecutedOrderPrice(), 8, price))
                     .build();
         }
+    }
+
+    public Boolean checkGoodSell(InstrumentService.Instrument instrument, BigDecimal price, Integer count, BigDecimal priceError) {
+        if (getIsSandboxMode()) {
+            return true;
+        }
+        if (priceError.compareTo(BigDecimal.ZERO) <= 0) {
+            return true;
+        }
+        var orderBook = getApi().getMarketDataService().getOrderBookSync(instrument.getFigi(), 1);
+        var askPrice = toBigDecimal(orderBook.getAsks(0).getPrice(), 8);
+        var bidPrice = toBigDecimal(orderBook.getBids(0).getPrice(), 8);
+        var currentDelta = askPrice.subtract(bidPrice).divide(price);
+        if (currentDelta.compareTo(priceError) > 0) {
+            log.info("Sell " + instrument.getFigi() + " error: the ask price " + askPrice + " differs from the bid " + bidPrice + " price by more than " + priceError + " < " + currentDelta);
+            return false;
+        }
+        if (price.compareTo(bidPrice) > 0) {
+            log.info("Sell " + instrument.getFigi() + " error: the bid price " + bidPrice + " price by less than wanted price " + price);
+            return false;
+        }
+        return true;
+    }
+
+    public Boolean checkGoodBuy(InstrumentService.Instrument instrument, BigDecimal price, Integer count, BigDecimal priceError) {
+        if (getIsSandboxMode()) {
+            return true;
+        }
+        if (priceError.compareTo(BigDecimal.ZERO) <= 0) {
+            return true;
+        }
+        var orderBook = getApi().getMarketDataService().getOrderBookSync(instrument.getFigi(), 1);
+        var askPrice = toBigDecimal(orderBook.getAsks(0).getPrice(), 8);
+        var bidPrice = toBigDecimal(orderBook.getBids(0).getPrice(), 8);
+        var currentDelta = askPrice.subtract(bidPrice).divide(price);
+        if (currentDelta.compareTo(priceError) > 0) {
+            log.info("Buy " + instrument.getFigi() + " error: the ask price " + askPrice + " differs from the bid " + bidPrice + " price by more than " + priceError + " < " + currentDelta);
+            return false;
+        }
+        if (price.compareTo(askPrice) < 0) {
+            log.info("Buy " + instrument.getFigi() + " error: the ask price " + askPrice + " price by more than wanted price " + price);
+            return false;
+        }
+        return true;
     }
 
     private Boolean isZero(MoneyValue money) {
         return money.getNano() == 0 && money.getUnits() == 0;
     }
 
-    private BigDecimal getCommission(PostOrderResponse postOrderResponse) {
+    private BigDecimal getExecutedCommission(PostOrderResponse postOrderResponse) {
         if (postOrderResponse.hasExecutedCommission()) {
             if (!isZero(postOrderResponse.getExecutedCommission())) {
                 var commission = toBigDecimal(postOrderResponse.getExecutedCommission(), 8);
@@ -106,8 +154,8 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                 break;
             }
         }
-        var commission = toBigDecimal(postOrderResponse.getInitialCommission(), 8);
-        log.info("Failed to receive commission {} for order {} figi {}. Set initial commission {}", commission, postOrderResponse.getOrderId(), postOrderResponse.getFigi(), postOrderResponse.getInitialCommission());
+        var commission = BigDecimal.ZERO;
+        log.info("Failed to receive commission {} for order {} figi {}. Set zero commission {}", commission, postOrderResponse.getOrderId(), postOrderResponse.getFigi(), postOrderResponse.getInitialCommission());
         return commission;
     }
 
@@ -115,6 +163,14 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
         if (value == null) {
             return BigDecimal.ZERO;
         }
+        var result = BigDecimal.valueOf(value.getUnits()).add(BigDecimal.valueOf(value.getNano(), 9));
+        if (scale != null) {
+            return result.setScale(scale, RoundingMode.HALF_EVEN);
+        }
+        return result;
+    }
+
+    public static BigDecimal toBigDecimal(Quotation value, Integer scale) {
         var result = BigDecimal.valueOf(value.getUnits()).add(BigDecimal.valueOf(value.getNano(), 9));
         if (scale != null) {
             return result.setScale(scale, RoundingMode.HALF_EVEN);

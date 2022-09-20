@@ -46,11 +46,13 @@ public abstract class AStrategy {
 
     public Integer getDelayPlusBySL() { return null; }
 
+    public Boolean isCheckBook() { return true; }
+
     public Double getDelayPlusBySLFactor() { return 0.; }
 
     public String getInterval() { return "1min"; }
 
-    public BigDecimal getPriceError() { return BigDecimal.valueOf(0.003); }
+    public BigDecimal getPriceError() { return BigDecimal.valueOf(0.002); }
 
     @AllArgsConstructor
     public enum Type {

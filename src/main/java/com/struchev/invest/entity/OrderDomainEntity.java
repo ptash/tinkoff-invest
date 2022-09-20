@@ -45,8 +45,14 @@ public class OrderDomainEntity {
     @Column(name = "purchase_order_id", nullable = true)
     private String purchaseOrderId;
 
+    @Column(name = "purchase_price_wanted", nullable = true, scale = 8, precision = 19)
+    private BigDecimal purchasePriceWanted;
+
     @Column(name = "purchase_price", nullable = false, scale = 8, precision = 19)
     private BigDecimal purchasePrice;
+
+    @Column(name = "purchase_commission_initial", nullable = true, scale = 8, precision = 19)
+    private BigDecimal purchaseCommissionInitial;
 
     @Column(name = "purchase_commission", nullable = false, scale = 8, precision = 19)
     private BigDecimal purchaseCommission;
@@ -60,11 +66,20 @@ public class OrderDomainEntity {
     @Column(name = "sell_price", nullable = true, scale = 8, precision = 19)
     private BigDecimal sellPrice;
 
+    @Column(name = "sell_price_wanted", nullable = true, scale = 8, precision = 19)
+    private BigDecimal sellPriceWanted;
+
     @Column(name = "sell_date_time", nullable = true)
     private OffsetDateTime sellDateTime;
 
     @Column(name = "sell_profit", nullable = true, scale = 8, precision = 19)
     private BigDecimal sellProfit;
+
+    @Column(name = "sell_profit_wanted", nullable = true, scale = 8, precision = 19)
+    private BigDecimal sellProfitWanted;
+
+    @Column(name = "sell_commission_initial", nullable = true, scale = 8, precision = 19)
+    private BigDecimal sellCommissionInitial;
 
     @Column(name = "sell_commission", nullable = true, scale = 8, precision = 19)
     private BigDecimal sellCommission;

@@ -5,6 +5,7 @@ import com.struchev.invest.service.candle.CandleHistoryService;
 import com.struchev.invest.service.notification.NotificationService;
 import com.struchev.invest.strategy.AStrategy;
 import com.struchev.invest.strategy.instrument_by_fiat_cross.AInstrumentByFiatCrossStrategy;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.relational.core.sql.In;
@@ -15,6 +16,7 @@ import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 /**
@@ -31,6 +33,9 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
 
     private Integer cashSize = 1000;
     private Map<String, Double> smaCashMap = new HashMap<>();
+
+    @Getter
+    private final Map<String, BigDecimal> currentPrices = new ConcurrentHashMap<>();
 
     /**
      * Расчет перцентиля по цене инструмента за определенный промежуток
@@ -78,7 +83,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         var tubeTopToInvest = BigDecimal.valueOf(deadLine.get(3));
         var ema2Cur = BigDecimal.valueOf(ema2.get(ema2.size() - 1));
 
-        var price = ema2Cur.min(candle.getClosingPrice());
+        var price = ema2Cur.min(candle.getClosingPrice().min(candle.getOpenPrice()));
         var deltaMin = deadLineTop.subtract(deadLineBottom).divide(BigDecimal.valueOf(4), 2, RoundingMode.HALF_UP).max(BigDecimal.valueOf(0.01));
 
         var annotation = "";
@@ -356,7 +361,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         reportLog(
                 strategy,
                 figi,
-                "{} | {} | {} | {} | {} | {} | {} | | {} | {} | {} | {} | {} | {} |by {}|{}|{}|{}",
+                "{} | {} | {} | {} | {} | {} | {} | | {} | {} | {} | {} | {} | {} |by {}|{}|{}|{}|{}",
                 notificationService.formatDateTime(currentDateTime),
                 smaSlowest.get(1),
                 smaSlow.get(1),
@@ -373,7 +378,8 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
                 annotation,
                 avgDelta.get(2),
                 avgDelta.get(2) - avgDelta.get(3),
-                avgDelta.get(2) + avgDelta.get(3)
+                avgDelta.get(2) + avgDelta.get(3),
+                candle.getOpenPrice()
         );
 
         return result;
@@ -413,7 +419,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         var deadLineBottom = BigDecimal.valueOf(deadLine.get(0));
         var deadLineTop = BigDecimal.valueOf(deadLine.get(1));
         var tubeTopToInvest = BigDecimal.valueOf(deadLine.get(3));
-        var price = BigDecimal.valueOf(ema2.get(ema2.size() - 1)).min(candle.getClosingPrice());
+        var price = BigDecimal.valueOf(ema2.get(ema2.size() - 1)).min(candle.getClosingPrice().min(candle.getOpenPrice()));
 
         Boolean result = false;
         String annotation = "";
@@ -479,7 +485,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         reportLog(
                 strategy,
                 figi,
-                "{} | {} | {} | {} | {} | {} | | {} | {} | {} | {} |{}|{}| {} | cell {}|{}|{}|{}",
+                "{} | {} | {} | {} | {} | {} | | {} | {} | {} | {} |{}|{}| {} | cell {}|{}|{}|{}|{}",
                 notificationService.formatDateTime(currentDateTime),
                 smaSlowest.get(1),
                 smaSlow.get(1),
@@ -496,7 +502,8 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
                 annotation,
                 avgDelta.get(2),
                 avgDelta.get(2) - avgDelta.get(3),
-                avgDelta.get(2) + avgDelta.get(3)
+                avgDelta.get(2) + avgDelta.get(3),
+                candle.getOpenPrice()
         );
 
         return result;
@@ -604,6 +611,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         }
         Integer beginI = Math.max(beginIMax, beginIMin);
         beginI = Math.max(beginI - lengthAvg / 2, 0);
+        beginI = Math.min(beginI, lengthTube - 2 * lengthAvg);
         BigDecimal beginMin = keyExtractor.apply(candleList.get(beginI));
         BigDecimal beginMax = keyExtractor.apply(candleList.get(beginI));
         Integer endIMax = lengthTube - 1;
@@ -975,6 +983,8 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
      */
     @Override
     public boolean isShouldBuy(AInstrumentByFiatCrossStrategy strategy, CandleDomainEntity candle) {
+        currentPrices.put("buyClosingPrice", candle.getClosingPrice());
+        currentPrices.put("buyOpenPrice", candle.getOpenPrice());
         return calculateBuyCriteria(candle,
                 CandleDomainEntity::getClosingPrice, strategy);
     }
@@ -1043,7 +1053,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         notificationService.reportStrategy(
                 strategy,
                 figi,
-                "Date|smaSlowest|smaSlow|smaFast|emaFast|ema2|bye|sell|position|deadLineBottom|deadLineTop|investBottom|investTop|smaTube|strategy|average|averageBottom|averageTop",
+                "Date|smaSlowest|smaSlow|smaFast|emaFast|ema2|bye|sell|position|deadLineBottom|deadLineTop|investBottom|investTop|smaTube|strategy|average|averageBottom|averageTop|openPrice",
                 format,
                 arguments
         );

@@ -13,6 +13,7 @@ public interface ITinkoffOrderAPI {
     @Builder
     class OrderResult {
         String orderId;
+        BigDecimal commissionInitial;
         BigDecimal commission;
         BigDecimal price;
     }
@@ -20,4 +21,8 @@ public interface ITinkoffOrderAPI {
     OrderResult buy(InstrumentService.Instrument instrument, BigDecimal price, Integer count);
 
     OrderResult sell(InstrumentService.Instrument instrument, BigDecimal price, Integer count);
+
+    public Boolean checkGoodSell(InstrumentService.Instrument instrument, BigDecimal price, Integer count, BigDecimal priceError);
+
+    public Boolean checkGoodBuy(InstrumentService.Instrument instrument, BigDecimal price, Integer count, BigDecimal priceError);
 }
