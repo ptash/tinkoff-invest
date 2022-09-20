@@ -30,6 +30,8 @@ public class PurchaseService {
     private final CalculatorFacade calculator;
     private final CalculatorInstrumentByInstrumentService calculatorInstrumentByInstrumentService;
 
+    private final CrossInstrumentByFiatService crossInstrumentByFiatService;
+
     private final CandleHistoryService candleHistoryService;
 
     /**
@@ -141,8 +143,11 @@ public class PurchaseService {
                             }
                     }
 
-                    var currentPrices = (strategy.getType() == AStrategy.Type.instrumentByInstrument || strategy.getType() == AStrategy.Type.instrumentCrossByFiat)
+                    var currentPrices = (strategy.getType() == AStrategy.Type.instrumentByInstrument)
                             ? calculatorInstrumentByInstrumentService.getCurrentPrices() : null;
+                    if (strategy.getType() == AStrategy.Type.instrumentCrossByFiat) {
+                        currentPrices = crossInstrumentByFiatService.getCurrentPrices();
+                    }
                     order = orderService.openOrder(candleDomainEntity, strategy, currentPrices);
 
                     notificationService.sendBuyInfo(strategy, order, candleDomainEntity);

@@ -112,6 +112,8 @@ public abstract class AInstrumentByFiatCrossStrategy extends AStrategy {
     public Boolean isSellEma2UpOnBottom() { return true; }
     public Boolean isTubeAvgDelta() { return false; }
 
+    public Boolean isNotCellIfBuy() { return false; }
+
     @Builder
     @Data
     public static class BuyCriteria {

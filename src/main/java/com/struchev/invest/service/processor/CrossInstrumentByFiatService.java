@@ -47,7 +47,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
      */
     private Boolean calculateBuyCriteria(CandleDomainEntity candle,
                                          Function<? super CandleDomainEntity, ? extends BigDecimal> keyExtractor,
-                                         AInstrumentByFiatCrossStrategy strategy) {
+                                         AInstrumentByFiatCrossStrategy strategy, Boolean isDygraphs) {
         OffsetDateTime currentDateTime = candle.getDateTime();
         String figi = candle.getFigi();
 
@@ -357,6 +357,10 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
 
         //var smaFastest = getSma(figi, currentDateTime, strategy.getSmaFastLength() / 2, strategy.getInterval(), keyExtractor);
         //var smaFastest2 = getSma(figi, currentDateTime, strategy.getSmaFastLength() / 4, strategy.getInterval(), keyExtractor);
+
+        if (!isDygraphs) {
+            return result;
+        }
 
         reportLog(
                 strategy,
@@ -986,7 +990,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         currentPrices.put("buyClosingPrice", candle.getClosingPrice());
         currentPrices.put("buyOpenPrice", candle.getOpenPrice());
         return calculateBuyCriteria(candle,
-                CandleDomainEntity::getClosingPrice, strategy);
+                CandleDomainEntity::getClosingPrice, strategy, true);
     }
 
 
@@ -1021,6 +1025,10 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
                 && profitPercent.floatValue() > sellCriteria.getExitProfitPercent()
         ) {
             return true;
+        }
+
+        if (strategy.isNotCellIfBuy() && calculateBuyCriteria(candle, CandleDomainEntity::getClosingPrice, strategy, false)) {
+            return false;
         }
 
         if (!calculateCellCriteria(candle, CandleDomainEntity::getClosingPrice, strategy, profitPercent)) {

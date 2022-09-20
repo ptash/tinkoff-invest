@@ -91,7 +91,8 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
         var orderBook = getApi().getMarketDataService().getOrderBookSync(instrument.getFigi(), 1);
         var askPrice = toBigDecimal(orderBook.getAsks(0).getPrice(), 8);
         var bidPrice = toBigDecimal(orderBook.getBids(0).getPrice(), 8);
-        var currentDelta = askPrice.subtract(bidPrice).divide(price);
+        log.info("Order book sell {}: bid = {} ask = {} response = {}", price, bidPrice, askPrice, orderBook);
+        var currentDelta = askPrice.subtract(bidPrice).divide(price, 8, RoundingMode.HALF_UP);
         if (currentDelta.compareTo(priceError) > 0) {
             log.info("Sell " + instrument.getFigi() + " error: the ask price " + askPrice + " differs from the bid " + bidPrice + " price by more than " + priceError + " < " + currentDelta);
             return false;
@@ -113,7 +114,8 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
         var orderBook = getApi().getMarketDataService().getOrderBookSync(instrument.getFigi(), 1);
         var askPrice = toBigDecimal(orderBook.getAsks(0).getPrice(), 8);
         var bidPrice = toBigDecimal(orderBook.getBids(0).getPrice(), 8);
-        var currentDelta = askPrice.subtract(bidPrice).divide(price);
+        log.info("Order book buy {}: bid = {} ask = {} response = {}", price, bidPrice, askPrice, orderBook);
+        var currentDelta = askPrice.subtract(bidPrice).divide(price, 8, RoundingMode.HALF_UP);
         if (currentDelta.compareTo(priceError) > 0) {
             log.info("Buy " + instrument.getFigi() + " error: the ask price " + askPrice + " differs from the bid " + bidPrice + " price by more than " + priceError + " < " + currentDelta);
             return false;
