@@ -391,7 +391,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
 
     private Boolean calculateCellCriteria(CandleDomainEntity candle,
                                          Function<? super CandleDomainEntity, ? extends BigDecimal> keyExtractor,
-                                         AInstrumentByFiatCrossStrategy strategy, BigDecimal profitPercent) {
+                                         AInstrumentByFiatCrossStrategy strategy, BigDecimal profitPercent, Boolean isDygraphs) {
         OffsetDateTime currentDateTime = candle.getDateTime();
         String figi = candle.getFigi();
 
@@ -449,7 +449,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
                     annotation += " = t";
                 }
             }
-        } else if (strategy.isTubeAvgDelta()) {
+        } else if (strategy.isTubeAvgDelta() || strategy.isNotCellIfBuy()) {
             if (price.compareTo(BigDecimal.valueOf(avgDelta.get(0))) < 0 || price.compareTo(BigDecimal.valueOf(avgDelta.get(1))) > 0) {
                 annotation += " isTubeAvgDelta";
                 result = true;
@@ -469,7 +469,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
                 result = true;
             }
         }
-        if (!strategy.isTubeAvgDelta()) {
+        if (!(strategy.isTubeAvgDelta() || strategy.isNotCellIfBuy())) {
             if (!result && strategy.isSellWithMaxProfit() && profitPercent.compareTo(BigDecimal.ZERO) > 0) {
                 if (price.compareTo(BigDecimal.valueOf(avgDelta.get(0))) > 0) {
                     annotation += " > avg";
@@ -485,6 +485,10 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
 
         //var smaFastest = getSma(figi, currentDateTime, strategy.getSmaFastLength() / 2, strategy.getInterval(), keyExtractor);
         //var smaFastest2 = getSma(figi, currentDateTime, strategy.getSmaFastLength() / 4, strategy.getInterval(), keyExtractor);
+
+        if (!isDygraphs) {
+            return result;
+        }
 
         reportLog(
                 strategy,
@@ -1027,11 +1031,11 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             return true;
         }
 
-        if (strategy.isNotCellIfBuy() && calculateBuyCriteria(candle, CandleDomainEntity::getClosingPrice, strategy, false)) {
-            return false;
-        }
+        //if (strategy.isNotCellIfBuy() && calculateBuyCriteria(candle, CandleDomainEntity::getClosingPrice, strategy, false)) {
+        //    return false;
+        //}
 
-        if (!calculateCellCriteria(candle, CandleDomainEntity::getClosingPrice, strategy, profitPercent)) {
+        if (!calculateCellCriteria(candle, CandleDomainEntity::getClosingPrice, strategy, profitPercent, true)) {
             return false;
         }
 

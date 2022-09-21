@@ -80,10 +80,11 @@ public class BuyEma600CrossStrategy extends AInstrumentByFiatCrossStrategy {
  */
 
 
+        FIGIES.put("BBG00178PGX3", 1);    // VK
         FIGIES.put("BBG0016XJ8S0", 1); // TAL Education Group
         //FIGIES.put("BBG006G2JVL2", 1); // Alibaba
         //FIGIES.put("BBG000BPWXK1", 1); // Newmont Goldcorp Corporation
-        //FIGIES.put("BBG005DXJS36", 1); // TCS Group (Tinkoff Bank holder)
+        FIGIES.put("BBG005DXJS36", 1); // TCS Group (Tinkoff Bank holder)
 
 /*
         FIGIES.put("BBG004NLQHL0", 1); // Fastly Inc
