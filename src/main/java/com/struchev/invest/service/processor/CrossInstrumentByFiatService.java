@@ -832,12 +832,12 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
                 && */ema < avg - error
         ) {
             top = avg + d + error;
-            //if (!isMoveUp) {
+            if (!isMoveUp) {
                 bottom -= d;
                 if (ema < avg - d) {
                     bottom -= (avg - d - ema);
                 }
-            //}
+            }
         }
 
         if (ema < avg - d - error) {
