@@ -65,7 +65,8 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
 
         List<Double> avgDelta;
         if (strategy.isTubeAvgDelta()) {
-            avgDelta = calculateTubeAvgDelta(figi, currentDateTime, strategy, keyExtractor);
+            //avgDelta = calculateTubeAvgDelta(figi, currentDateTime, strategy, keyExtractor);
+            avgDelta = calculateAvgDeltaAdvance(figi, currentDateTime, strategy, keyExtractor, emaFast, smaSlow);
         } else {
             avgDelta = calculateAvgDelta(figi, currentDateTime, strategy, keyExtractor);
         }
@@ -156,13 +157,18 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         if (strategy.isTubeAvgDelta()) {
             var investTop = BigDecimal.valueOf(avgDelta.get(1) + 3 * avgDelta.get(3));
             if (avgDelta.get(3) > 0 && price.compareTo(BigDecimal.valueOf(avgDelta.get(0))) < 0) {
-                isInTube = true;
-                tubeTopToBy = BigDecimal.valueOf(avgDelta.get(0));
-                annotation += " new t = " + tubeTopToBy;
-            } else if (avgDelta.get(3) > 0 && price.compareTo(investTop) > 0) {
+                //annotation += " moveUp: " + getPercentMoveUp(smaTube) + " + " + getPercentMoveUp(smaSlowest) + " + " + getPercentMoveUp(smaSlow) + " >= 0";
+                var p = getPercentMoveUp(smaTube) + getPercentMoveUp(smaSlowest);
+                annotation += " moveUp: " + p;
+                if (p <= strategy.getMinPercentTubeMoveUp() || p >= - strategy.getPriceError().doubleValue()) {
+                    isInTube = true;
+                    tubeTopToBy = BigDecimal.valueOf(avgDelta.get(0));
+                    annotation += " new t = " + tubeTopToBy;
+                }
+            /*} else if (avgDelta.get(3) > 0 && price.compareTo(investTop) > 0) {
                 isInTube = true;
                 tubeTopToBy = investTop;
-                annotation += " new tt = " + tubeTopToBy;
+                annotation += " new tt = " + tubeTopToBy;*/
             } else {
                 isInTube = false;
             }
@@ -409,7 +415,8 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
 
         List<Double> avgDelta;
         if (strategy.isTubeAvgDelta()) {
-            avgDelta = calculateTubeAvgDelta(figi, currentDateTime, strategy, keyExtractor);
+            //avgDelta = calculateTubeAvgDelta(figi, currentDateTime, strategy, keyExtractor);
+            avgDelta = calculateAvgDeltaAdvance(figi, currentDateTime, strategy, keyExtractor, emaFast, smaSlow);
         } else {
             avgDelta = calculateAvgDelta(figi, currentDateTime, strategy, keyExtractor);
         }
@@ -668,8 +675,12 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         );
     }
 
-    private List<Double> calculateAvgDelta(String figi, OffsetDateTime currentDateTime, AInstrumentByFiatCrossStrategy strategy, Function<? super CandleDomainEntity, ? extends BigDecimal> keyExtractor)
-    {
+    private List<Double> calculateAvgDelta(
+            String figi,
+            OffsetDateTime currentDateTime,
+            AInstrumentByFiatCrossStrategy strategy,
+            Function<? super CandleDomainEntity, ? extends BigDecimal> keyExtractor
+    ) {
         var length = strategy.getAvgLength();
         var smaFastAvg = getSma(figi, currentDateTime, length, strategy.getInterval(), keyExtractor, length * 2);
         var smaFast2Avg = getSma(figi, currentDateTime, 2, strategy.getInterval(), keyExtractor, length * 2);
@@ -707,7 +718,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             var aCur = smaFastAvg.get(point) + a / length;
             avgList.add(aCur);
             avgListMPlus.add(aPlusNumber > 0 ? (aPlus / aPlusNumber) : 0.);
-            avgListMMinus.add(aMinusNumber > 0 ? (aMinus / aMinusNumber): 0.);
+            avgListMMinus.add(aMinusNumber > 0 ? (aMinus / aMinusNumber) : 0.);
         }
 
         for (var i = 0; i < length; i++) {
@@ -788,7 +799,60 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         }
         var smaFastCur = smaFastAvg.get(smaFastAvg.size() - 1);
         var avg = smaFastCur + avgDelta;
-        return List.of(avg - avgDeltaAbs, avg + avgDeltaAbs, avg, d);
+        return List.of(avg - avgDeltaAbs, avg + avgDeltaAbs, avg, d, smaFastCur, getPercentMoveUp(avgList));
+    }
+
+    private List<Double> calculateAvgDeltaAdvance(
+            String figi,
+            OffsetDateTime currentDateTime,
+            AInstrumentByFiatCrossStrategy strategy,
+            Function<? super CandleDomainEntity, ? extends BigDecimal> keyExtractor,
+            List<Double> emaFast,
+            List<Double> smaSlow
+    ) {
+        var res = calculateAvgDelta(figi, currentDateTime, strategy, keyExtractor);
+        var bottom = res.get(0);
+        var top = res.get(1);
+        var avg = res.get(2);
+        var d = res.get(3);
+        var smaFastCur = res.get(4);
+        var avgListPercentMoveUp = res.get(5);
+        var isMoveUp = avgListPercentMoveUp > strategy.getPercentMoveUpError()
+                && getPercentMoveUp(emaFast) > -strategy.getPercentMoveUpError();
+        if (isMoveUp) {
+            bottom += d;
+        } else {
+            top -= d;
+            bottom -= d;
+        }
+        var ema = emaFast.get(emaFast.size() - 1);
+        var smaSlowCur = smaSlow.get(smaSlow.size() - 1);
+        var error = d * 0.05;
+        if (/*ema < avg - d + error
+                && */ema < avg - error
+        ) {
+            top = avg + d + error;
+            if (!isMoveUp) {
+                bottom -= d;
+                if (ema < avg - d) {
+                    bottom -= (avg - d - ema);
+                }
+            }
+        }
+
+        if (ema < avg - d - error) {
+            top = avg + d + error;
+            bottom -= avg - bottom;
+            bottom = Math.min(smaSlowCur, bottom) - error;
+
+        } else if (ema > avg + error) {
+            top += top - avg;
+            bottom = avg - d + error;
+            if (smaSlowCur > smaFastCur) {
+                bottom = Math.min(bottom, smaFastCur - (smaSlowCur - smaFastCur));
+            }
+        }
+        return List.of(bottom, top, avg, d);
     }
 
     /**
