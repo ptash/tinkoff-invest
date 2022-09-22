@@ -158,13 +158,13 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             var investTop = BigDecimal.valueOf(avgDelta.get(1) + 3 * avgDelta.get(3));
             if (avgDelta.get(3) > 0 && price.compareTo(BigDecimal.valueOf(avgDelta.get(0))) < 0) {
                 //annotation += " moveUp: " + getPercentMoveUp(smaTube) + " + " + getPercentMoveUp(smaSlowest) + " + " + getPercentMoveUp(smaSlow) + " >= 0";
-                var p = getPercentMoveUp(smaTube) + getPercentMoveUp(smaSlowest);
-                annotation += " moveUp: " + p;
-                if (p <= strategy.getMinPercentTubeMoveUp() || p >= - strategy.getPriceError().doubleValue()) {
+                //var p = getPercentMoveUp(smaTube) + getPercentMoveUp(smaSlowest);
+                //annotation += " moveUp: " + p;
+                //if (p <= strategy.getMinPercentTubeMoveUp() || p >= - strategy.getPriceError().doubleValue()) {
                     isInTube = true;
                     tubeTopToBy = BigDecimal.valueOf(avgDelta.get(0));
                     annotation += " new t = " + tubeTopToBy;
-                }
+                //}
             /*} else if (avgDelta.get(3) > 0 && price.compareTo(investTop) > 0) {
                 isInTube = true;
                 tubeTopToBy = investTop;
@@ -821,7 +821,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
                 && getPercentMoveUp(emaFast) > -strategy.getPercentMoveUpError();
         if (isMoveUp) {
             bottom += d;
-        } else {
+        } else if (false) {
             top -= d;
             bottom -= d;
         }
@@ -832,12 +832,12 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
                 && */ema < avg - error
         ) {
             top = avg + d + error;
-            if (!isMoveUp) {
+            //if (!isMoveUp) {
                 bottom -= d;
                 if (ema < avg - d) {
                     bottom -= (avg - d - ema);
                 }
-            }
+            //}
         }
 
         if (ema < avg - d - error) {
@@ -848,9 +848,9 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         } else if (ema > avg + error) {
             top += top - avg;
             bottom = avg - d + error;
-            if (smaSlowCur > smaFastCur) {
-                bottom = Math.min(bottom, smaFastCur - (smaSlowCur - smaFastCur));
-            }
+            //if (smaSlowCur > smaFastCur) {
+            //    bottom = Math.min(bottom, smaFastCur - (smaSlowCur - smaFastCur));
+            //}
         }
         return List.of(bottom, top, avg, d);
     }
