@@ -823,7 +823,6 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
                 && */ema < avg - error
                 && avgListPercentMoveUp < strategy.getPercentMoveUpError()
         ) {
-            top = avg + d + error;
             bottom -= d;
             if (ema < avg - d) {
                 bottom -= (avg - d - ema);
