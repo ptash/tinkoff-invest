@@ -819,12 +819,19 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         var ema = emaFast.get(emaFast.size() - 1);
         var avgListPercentMoveUp = res.get(5);
         var error = d * 0.05;
-        if (ema < avg - d) {
+        var isMoveUp = avgListPercentMoveUp > strategy.getPercentMoveUpError();
+        if (isMoveUp) {
+            bottom += d;
+        } else {
+            top -= d;
             bottom -= d;
         }
-        if (/*ema < avg - d + error
-                && */ema < avg - error
-                && avgListPercentMoveUp < strategy.getPercentMoveUpError()
+        if (ema < avg) {
+            bottom -= d;
+        }
+        if (ema < avg - d + error
+                && ema < avg - error
+                //&& !isMoveUp
         ) {
             bottom -= d;
             if (ema < avg - d) {
