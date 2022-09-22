@@ -826,7 +826,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             top -= d;
             bottom -= d;
         }
-        if (ema < avg) {
+        if (ema < avg - d) {
             bottom -= d;
         }
         if (ema < avg - d + error
