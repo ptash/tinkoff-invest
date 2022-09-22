@@ -821,7 +821,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
                 && getPercentMoveUp(emaFast) > -strategy.getPercentMoveUpError();
         if (isMoveUp) {
             bottom += d;
-        } else if (false) {
+        } else {
             top -= d;
             bottom -= d;
         }
