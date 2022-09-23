@@ -11,6 +11,7 @@ import java.util.Map;
 public class BuyEma600CrossStrategy extends AInstrumentByFiatCrossStrategy {
     private static final Map FIGIES = new HashMap<String, Integer>();
     static {
+        FIGIES.put("BBG00178PGX3", 1);    // VK
         /*
         FIGIES.put("BBG000LWVHN8", 1); // Дагестанская энергосбытовая компания
         FIGIES.put("BBG00178PGX3", 1);    // VK
@@ -86,7 +87,7 @@ public class BuyEma600CrossStrategy extends AInstrumentByFiatCrossStrategy {
 
  */
 
-
+/*
         FIGIES.put("BBG005F1DK91", 1); // G1
         FIGIES.put("BBG002NLDLV8", 1); // VIPS
         FIGIES.put("BBG0016XJ8S0", 1); // TAL Education Group
@@ -95,7 +96,7 @@ public class BuyEma600CrossStrategy extends AInstrumentByFiatCrossStrategy {
         FIGIES.put("BBG003QBJKN0", 1); // Allakos Inc
         FIGIES.put("BBG000BPWXK1", 1); // Newmont Goldcorp Corporation
         FIGIES.put("BBG005DXJS36", 1); // TCS Group (Tinkoff Bank holder)
-        FIGIES.put("BBG000QGWY50", 1); // Bluebird Bio Inc
+        FIGIES.put("BBG000QGWY50", 1); // Bluebird Bio Inc*/
 
 /*
         FIGIES.put("BBG004NLQHL0", 1); // Fastly Inc

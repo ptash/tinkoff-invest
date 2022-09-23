@@ -10,6 +10,9 @@ public class BuyProfit1InvestPercent02SellWithMaxProfitCrossSimpleStrategy exten
     private Map FIGIES = Map.of(
             "BBG000LWVHN8", 60000 // Дагестанская энергосбытовая компания
     );
+    public Map<String, Integer> getFigies() {
+        return FIGIES;
+    }
 
     public Boolean isTubeAvgDeltaSimple() { return true; }
 
