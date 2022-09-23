@@ -901,9 +901,12 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             //    bottom = Math.min(bottom, smaFastCur - (smaSlowCur - smaFastCur));
             //}
         }
-        //if (smaSlowCur > smaFastCur && (smaSlowCur - smaFastCur) > d) {
-        //    top = avg + error;
-        //}
+        if (smaSlowCur > smaFastCur && (smaSlowCur - smaFastCur) > d) {
+            top = avg + error;
+        }
+        if (smaSlowCur < smaFastCur && (smaFastCur - smaSlowCur) > d) {
+            bottom = Math.max(bottom, avg - error);
+        }
         return List.of(bottom, top, avg, d);
     }
 
