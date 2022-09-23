@@ -141,7 +141,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
                         } else {
                             tubeTopToBy = deadLineBottom.add(deltaMin);
                         }
-                        annotation += " new t = " + tubeTopToBy;
+                        annotation += " new tft = " + tubeTopToBy;
                     } else {
                         annotation += " = t";
                     }

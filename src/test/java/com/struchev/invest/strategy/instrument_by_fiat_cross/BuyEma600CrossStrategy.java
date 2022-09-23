@@ -11,6 +11,7 @@ import java.util.Map;
 public class BuyEma600CrossStrategy extends AInstrumentByFiatCrossStrategy {
     private static final Map FIGIES = new HashMap<String, Integer>();
     static {
+        /*
         FIGIES.put("BBG000LWVHN8", 1); // Дагестанская энергосбытовая компания
         FIGIES.put("BBG00178PGX3", 1);    // VK
         FIGIES.put("BBG004TC84Z8", 1); // Трубная Металлургическая Компания
@@ -20,7 +21,7 @@ public class BuyEma600CrossStrategy extends AInstrumentByFiatCrossStrategy {
         FIGIES.put("BBG00475KKY8", 1); // НОВАТЭК
         FIGIES.put("BBG000QFH687", 1); // ТГК-1
         FIGIES.put("BBG004S683W7", 1);   // Аэрофлот
-        FIGIES.put("BBG000LNHHJ9", 1); // КАМАЗ
+        FIGIES.put("BBG000LNHHJ9", 1); // КАМАЗ*/
 
         /*
         FIGIES.put("BBG004730RP0", 1); // Газпром
@@ -85,14 +86,13 @@ public class BuyEma600CrossStrategy extends AInstrumentByFiatCrossStrategy {
 
  */
 
-/*
+
         FIGIES.put("BBG00178PGX3", 1);    // VK
         FIGIES.put("BBG0016XJ8S0", 1); // TAL Education Group
         //FIGIES.put("BBG006G2JVL2", 1); // Alibaba
         //FIGIES.put("BBG000BPWXK1", 1); // Newmont Goldcorp Corporation
         FIGIES.put("BBG005DXJS36", 1); // TCS Group (Tinkoff Bank holder)
 
- */
 
 /*
         FIGIES.put("BBG004NLQHL0", 1); // Fastly Inc
