@@ -85,7 +85,8 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         var tubeTopToInvest = BigDecimal.valueOf(deadLine.get(3));
         var ema2Cur = BigDecimal.valueOf(ema2.get(ema2.size() - 1));
 
-        var price = ema2Cur.min(candle.getClosingPrice().min(candle.getOpenPrice()));
+        //var price = ema2Cur.min(candle.getClosingPrice().min(candle.getOpenPrice()));
+        var price = candle.getClosingPrice();
         var deltaMin = deadLineTop.subtract(deadLineBottom).divide(BigDecimal.valueOf(4), 2, RoundingMode.HALF_UP).max(BigDecimal.valueOf(0.01));
 
         var annotation = "";
@@ -156,22 +157,30 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         Double investTubeBottom = null;
         Double smaSlowDelta = null;
         if (strategy.isTubeAvgDeltaAdvance()) {
+            isInTube = false;
             var investTop = BigDecimal.valueOf(avgDelta.get(1) + 3 * avgDelta.get(3));
-            if (avgDelta.get(3) > 0 && price.compareTo(BigDecimal.valueOf(avgDelta.get(0))) < 0) {
-                //annotation += " moveUp: " + getPercentMoveUp(smaTube) + " + " + getPercentMoveUp(smaSlowest) + " + " + getPercentMoveUp(smaSlow) + " >= 0";
-                //var p = getPercentMoveUp(smaTube) + getPercentMoveUp(smaSlowest);
-                //annotation += " moveUp: " + p;
-                //if (p <= strategy.getMinPercentTubeMoveUp() || p >= - strategy.getPriceError().doubleValue()) {
+            var tubeSize = avgDelta.get(1) - avgDelta.get(0);
+            var expectProfit = (price.doubleValue() * strategy.getSellCriteria().getTakeProfitPercent()) / 100.0;
+            //var expectTubeTop = avgDelta.get(1) + strategy.getEmaFastLength() * ((emaFast.get(emaFast.size() - 1) - emaFast.get(0)) / emaFast.size() - (smaFast.get(smaFast.size() - 1) - smaFast.get(0)) / smaFast.size());
+            var expectTubeTop = avgDelta.get(1) + strategy.getEmaFastLength() * ((smaSlowest.get(smaSlowest.size() - 1) - smaSlowest.get(0)) / smaSlowest.size());
+            var expectTubeSize = expectTubeTop - avgDelta.get(0);
+            annotation += " profit: " + tubeSize + ", " + expectTubeSize + ">" + expectProfit;
+            if (tubeSize > expectProfit && expectTubeSize > expectProfit) {
+                annotation += "=t";
+                if (avgDelta.get(3) > 0 && price.compareTo(BigDecimal.valueOf(avgDelta.get(0))) < 0) {
+                    //annotation += " moveUp: " + getPercentMoveUp(smaTube) + " + " + getPercentMoveUp(smaSlowest) + " + " + getPercentMoveUp(smaSlow) + " >= 0";
+                    //var p = getPercentMoveUp(smaTube) + getPercentMoveUp(smaSlowest);
+                    //annotation += " moveUp: " + p;
+                    //if (p <= strategy.getMinPercentTubeMoveUp() || p >= - strategy.getPriceError().doubleValue()) {
                     isInTube = true;
                     tubeTopToBy = BigDecimal.valueOf(avgDelta.get(0));
                     annotation += " new t = " + tubeTopToBy;
-                //}
+                    //}
             /*} else if (avgDelta.get(3) > 0 && price.compareTo(investTop) > 0) {
                 isInTube = true;
                 tubeTopToBy = investTop;
                 annotation += " new tt = " + tubeTopToBy;*/
-            } else {
-                isInTube = false;
+                }
             }
             result = false;
         }
@@ -861,7 +870,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
                 && getPercentMoveUp(emaFast) > -strategy.getPercentMoveUpError();
         if (isMoveUp) {
             bottom += d;
-        } else if (false) {
+        } else if (!isMoveUp) {
             top -= d;
             bottom -= d;
         }
