@@ -867,7 +867,8 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         var smaFastCur = res.get(4);
         var avgListPercentMoveUp = res.get(5);
         var isMoveUp = avgListPercentMoveUp > strategy.getPercentMoveUpError()
-                && getPercentMoveUp(emaFast) > -strategy.getPercentMoveUpError();
+                //&& getPercentMoveUp(emaFast) > -strategy.getPercentMoveUpError()
+                ;
         if (isMoveUp) {
             bottom += d;
         } else if (!isMoveUp) {
@@ -893,6 +894,9 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             top = avg + d + error;
             bottom -= avg - bottom;
             bottom = Math.min(smaSlowCur, bottom) - error;
+            if (!isMoveUp && smaSlowCur > smaFastCur && (smaSlowCur - smaFastCur) > d) {
+                top = avg + error;
+            }
 
         } else if (ema > avg + error && isMoveUp) {
             top += top - avg;
@@ -902,8 +906,6 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             //}
         } else if (isMoveUp && smaSlowCur < smaFastCur && (smaFastCur - smaSlowCur) > d) {
             bottom = Math.max(bottom, avg - d - error);
-        } else if (!isMoveUp && smaSlowCur > smaFastCur && (smaSlowCur - smaFastCur) > d) {
-            top = avg + error;
         }
         return List.of(bottom, top, avg, d);
     }
