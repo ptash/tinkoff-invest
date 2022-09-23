@@ -4,7 +4,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class BuyProfit1InvestPercent02SellWithMaxProfitCrossTubeStrategy extends BuyProfit1InvestPercent02SellWithMaxProfitCrossStrategy {
-    public Boolean isTubeAvgDelta() { return true; }
+    public Boolean isTubeAvgDeltaAdvance() { return true; }
 
     /*
     public Integer getAvgLength() {

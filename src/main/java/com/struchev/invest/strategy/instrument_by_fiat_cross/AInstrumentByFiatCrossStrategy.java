@@ -110,7 +110,8 @@ public abstract class AInstrumentByFiatCrossStrategy extends AStrategy {
 
     public Boolean isSellWithMaxProfit() { return false; }
     public Boolean isSellEma2UpOnBottom() { return true; }
-    public Boolean isTubeAvgDelta() { return false; }
+    public Boolean isTubeAvgDeltaAdvance() { return false; }
+    public Boolean isTubeAvgDeltaSimple() { return false; }
 
     public Boolean isNotCellIfBuy() { return false; }
 

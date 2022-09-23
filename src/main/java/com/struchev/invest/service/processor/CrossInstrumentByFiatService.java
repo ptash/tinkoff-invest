@@ -8,7 +8,6 @@ import com.struchev.invest.strategy.instrument_by_fiat_cross.AInstrumentByFiatCr
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.relational.core.sql.In;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -64,12 +63,13 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         var ema2 = getEma(figi, currentDateTime, 2, strategy.getInterval(), keyExtractor);
 
         List<Double> avgDelta;
-        if (strategy.isTubeAvgDelta()) {
+        if (strategy.isTubeAvgDeltaAdvance()) {
             //avgDelta = calculateTubeAvgDelta(figi, currentDateTime, strategy, keyExtractor);
             avgDelta = calculateAvgDeltaAdvance(figi, currentDateTime, strategy, keyExtractor, emaFast, smaSlow);
-        } else {
-            //avgDelta = calculateTubeAvgDelta(figi, currentDateTime, strategy, keyExtractor);
+        } else if (strategy.isTubeAvgDeltaSimple()) {
             avgDelta = calculateAvgDeltaSimple(figi, currentDateTime, strategy, keyExtractor, emaFast, smaSlow);
+        } else {
+            avgDelta = calculateTubeAvgDelta(figi, currentDateTime, strategy, keyExtractor);
         }
 
         if (null == avgDelta || null == smaTube || null == smaSlowest || null == smaSlow || null == ema2 || null == emaFast) {
@@ -90,7 +90,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
 
         var annotation = "";
         Boolean isBottomLevels = false;
-        if (strategy.isSellWithMaxProfit() && !strategy.isTubeAvgDelta()
+        if (strategy.isSellWithMaxProfit() && !strategy.isTubeAvgDeltaAdvance()
                 && emaFast.get(emaFast.size() - 1) <= smaFast.get(smaFast.size() - 1)
                 && smaFast.get(smaFast.size() - 1) <= smaSlow.get(smaSlow.size() - 1)
                 && smaSlow.get(smaSlow.size() - 1) <= smaSlowest.get(smaSlowest.size() - 1)
@@ -113,7 +113,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         }
 
         Boolean isInTube = false;
-        if (strategy.isSellWithMaxProfit() && !strategy.isTubeAvgDelta()) {
+        if (strategy.isSellWithMaxProfit() && !strategy.isTubeAvgDeltaAdvance()) {
             if (price.compareTo(BigDecimal.valueOf(avgDelta.get(0))) < 0) {
                 isInTube = true;
                 tubeTopToBy = BigDecimal.valueOf(avgDelta.get(0));
@@ -155,7 +155,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         annotation += " " + result;
         Double investTubeBottom = null;
         Double smaSlowDelta = null;
-        if (strategy.isTubeAvgDelta()) {
+        if (strategy.isTubeAvgDeltaAdvance()) {
             var investTop = BigDecimal.valueOf(avgDelta.get(1) + 3 * avgDelta.get(3));
             if (avgDelta.get(3) > 0 && price.compareTo(BigDecimal.valueOf(avgDelta.get(0))) < 0) {
                 //annotation += " moveUp: " + getPercentMoveUp(smaTube) + " + " + getPercentMoveUp(smaSlowest) + " + " + getPercentMoveUp(smaSlow) + " >= 0";
@@ -175,10 +175,10 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             }
             result = false;
         }
-        if ((strategy.isTubeAvgDelta() && isInTube) || (!strategy.isTubeAvgDelta() && (result || isInTube))) {
+        if ((strategy.isTubeAvgDeltaAdvance() && isInTube) || (!strategy.isTubeAvgDeltaAdvance() && (result || isInTube))) {
             var isTubeTopToBy = false;
             annotation += " " + price + " < ttb=" + tubeTopToBy;
-            if (tubeTopToBy.compareTo(BigDecimal.ZERO) > 0 && (price.compareTo(tubeTopToBy) < 0 || strategy.isTubeAvgDelta())) {
+            if (tubeTopToBy.compareTo(BigDecimal.ZERO) > 0 && (price.compareTo(tubeTopToBy) < 0 || strategy.isTubeAvgDeltaAdvance())) {
                 if (getPercentMoveUp(smaTube) >= strategy.getMinPercentTubeMoveUp()) {
                     isTubeTopToBy = true;
                     result = true;
@@ -217,7 +217,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             result = false;
         }
         Boolean isTubeAvgDeltaResult = false;
-        if (strategy.isTubeAvgDelta()) {
+        if (strategy.isTubeAvgDeltaAdvance()) {
             isTubeAvgDeltaResult = result;
             result = true;
         }
@@ -358,7 +358,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             annotation += " allowBuyUnderSmaTube = false";
         }
 
-        if (strategy.isTubeAvgDelta()) {
+        if (strategy.isTubeAvgDeltaAdvance()) {
             result = isTubeAvgDeltaResult;
         }
 
@@ -415,12 +415,13 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         var smaFast = getSma(figi, currentDateTime, strategy.getSmaFastLength(), strategy.getInterval(), keyExtractor);
 
         List<Double> avgDelta;
-        if (strategy.isTubeAvgDelta()) {
+        if (strategy.isTubeAvgDeltaAdvance()) {
             //avgDelta = calculateTubeAvgDelta(figi, currentDateTime, strategy, keyExtractor);
             avgDelta = calculateAvgDeltaAdvance(figi, currentDateTime, strategy, keyExtractor, emaFast, smaSlow);
-        } else {
-            //avgDelta = calculateAvgDelta(figi, currentDateTime, strategy, keyExtractor);
+        } else if (strategy.isTubeAvgDeltaSimple()) {
             avgDelta = calculateAvgDeltaSimple(figi, currentDateTime, strategy, keyExtractor, emaFast, smaSlow);
+        } else {
+            avgDelta = calculateAvgDelta(figi, currentDateTime, strategy, keyExtractor);
         }
 
         if (null == avgDelta || null == smaTube || null == smaSlowest || null == smaSlow || null == ema2 || null == emaFast) {
@@ -458,7 +459,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
                     annotation += " = t";
                 }
             }
-        } else if (strategy.isTubeAvgDelta() || strategy.isNotCellIfBuy()) {
+        } else if (strategy.isTubeAvgDeltaAdvance() || strategy.isNotCellIfBuy()) {
             if (price.compareTo(BigDecimal.valueOf(avgDelta.get(0))) < 0 || price.compareTo(BigDecimal.valueOf(avgDelta.get(1))) > 0) {
                 annotation += " isTubeAvgDelta";
                 result = true;
@@ -478,7 +479,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
                 result = true;
             }
         }
-        if (!(strategy.isTubeAvgDelta() || strategy.isNotCellIfBuy())) {
+        if (!(strategy.isTubeAvgDeltaAdvance() || strategy.isNotCellIfBuy())) {
             if (!result && strategy.isSellWithMaxProfit() && profitPercent.compareTo(BigDecimal.ZERO) > 0) {
                 if (price.compareTo(BigDecimal.valueOf(avgDelta.get(0))) > 0) {
                     annotation += " > avg";
@@ -831,7 +832,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         }
         if (ema < avg - d + error
                 && ema < avg - error
-                //&& !isMoveUp
+                && !isMoveUp
         ) {
             bottom -= d;
             if (ema < avg - d) {
