@@ -69,7 +69,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         } else if (strategy.isTubeAvgDeltaSimple()) {
             avgDelta = calculateAvgDeltaSimple(figi, currentDateTime, strategy, keyExtractor, emaFast, smaSlow);
         } else {
-            avgDelta = calculateTubeAvgDelta(figi, currentDateTime, strategy, keyExtractor);
+            avgDelta = calculateAvgDelta(figi, currentDateTime, strategy, keyExtractor);
         }
 
         if (null == avgDelta || null == smaTube || null == smaSlowest || null == smaSlow || null == ema2 || null == emaFast) {
