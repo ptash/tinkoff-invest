@@ -10,7 +10,7 @@ public class BuyEma600DeadLineP1DelaySLNullCrossStrategy extends BuyEma600DeadLi
     private Map FIGIES = Map.of(
             //"BBG004730RP0", 10, // Газпром
             //"BBG004S683W7", 10,   // Аэрофлот
-            "BBG00178PGX3", 12    // VK
+            //"BBG00178PGX3", 12    // VK
             /*
             //"BBG008NMBXN8", 1, // Robinhood
             //"BBG004NLQHL0", 1, // Fastly Inc

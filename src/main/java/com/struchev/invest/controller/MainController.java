@@ -71,7 +71,7 @@ public class MainController {
             return name.contains(strategy + figi + suffix);
         });
         Arrays.sort(fileList);
-        int max = 10;
+        int max = 5;
         for (int i = Math.max(0, fileList.length - max); i < fileList.length; i++) {
             File file = fileList[i];
             try {
