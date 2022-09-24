@@ -934,7 +934,8 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         if (true //isMoveUp
                 //&& getPercentMoveUp(emaFast) > strategy.getPercentMoveUpError()
                 //&& getPercentMoveUp(smaSlow) > strategy.getPercentMoveUpError()
-                && (avgListPercentMoveUp + smaFastPercentMoveUp + getPercentMoveUp(emaFast, ticksMoveUp) + getPercentMoveUp(smaSlow, ticksMoveUp)) / 4 > strategy.getPercentMoveUpError()
+                && (avgListPercentMoveUp + smaFastPercentMoveUp + getPercentMoveUp(emaFast, ticksMoveUp) + getPercentMoveUp(smaSlow, ticksMoveUp)) / 4
+                    > 0//strategy.getPercentMoveUpError()
                 && smaFastCur < avg - d
                 && smaSlowCur < smaFastCur
                 && (smaFastCur - smaSlowCur) > 2 * d) {
