@@ -823,7 +823,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         }
         var smaFastCur = smaFastAvg.get(smaFastAvg.size() - 1);
         var avg = smaFastCur + avgDelta;
-        return List.of(avg - avgDeltaAbs, avg + avgDeltaAbs, avg, d, smaFastCur, getPercentMoveUp(avgList, strategy.getTicksMoveUp()), getPercentMoveUp(smaFastAvg, strategy.getTicksMoveUp()));
+        return List.of(avg - avgDeltaAbs, avg + avgDeltaAbs, avg, d, smaFastCur, getPercentMoveUp(avgList, strategy.getTicksMoveUp()), getPercentMoveUp(smaFastAvg, strategy.getTicksMoveUp()), strategy.getTicksMoveUp().doubleValue());
     }
 
     private List<Double> calculateAvgDeltaSimple(String figi,
@@ -879,6 +879,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         var smaFastCur = res.get(4);
         var avgListPercentMoveUp = res.get(5);
         var smaFastPercentMoveUp = res.get(6);
+        Integer ticksMoveUp = res.get(6).intValue();
         var isMoveUp = avgListPercentMoveUp > strategy.getPercentMoveUpError()
                 //&& smaFastPercentMoveUp > strategy.getPercentMoveUpError()
                 //&& getPercentMoveUp(emaFast) > -strategy.getPercentMoveUpError()
@@ -930,9 +931,10 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             //    bottom = Math.min(bottom, smaFastCur - (smaSlowCur - smaFastCur));
             //}
         }
-        if (isMoveUp
-                && getPercentMoveUp(emaFast) > strategy.getPercentMoveUpError()
-                && getPercentMoveUp(smaSlow) > strategy.getPercentMoveUpError()
+        if (true //isMoveUp
+                //&& getPercentMoveUp(emaFast) > strategy.getPercentMoveUpError()
+                //&& getPercentMoveUp(smaSlow) > strategy.getPercentMoveUpError()
+                && (avgListPercentMoveUp + smaFastPercentMoveUp + getPercentMoveUp(emaFast, ticksMoveUp) + getPercentMoveUp(smaSlow, ticksMoveUp)) / 4 > strategy.getPercentMoveUpError()
                 && smaFastCur < avg - d
                 && smaSlowCur < smaFastCur
                 && (smaFastCur - smaSlowCur) > 2 * d) {
@@ -980,7 +982,8 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
     private Double getPercentMoveUp(List<Double> x, Integer ticks) {
         int xPrev = Math.max(0, x.size() - 1 - ticks);
         int xCur = x.size() - 1;
-        return ((x.get(xCur) - x.get(xPrev)) * 100) / x.get(xPrev);
+        int actualTicks = xCur - xPrev;
+        return ((x.get(xCur) - x.get(xPrev)) * 100) * ticks / actualTicks / x.get(xPrev);
     }
 
     private List<Double> getSma(
