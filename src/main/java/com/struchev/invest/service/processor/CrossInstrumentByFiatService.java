@@ -165,7 +165,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             //var expectTubeTop = avgDelta.get(1) + strategy.getEmaFastLength() * ((emaFast.get(emaFast.size() - 1) - emaFast.get(0)) / emaFast.size() - (smaFast.get(smaFast.size() - 1) - smaFast.get(0)) / smaFast.size());
             var d = (smaSlowest.get(smaSlowest.size() - 1) - smaSlowest.get(0)) / smaSlowest.size();
             //d += (emaFast.get(emaFast.size() - 1) - emaFast.get(0)) / emaFast.size();
-            d += (smaFast.get(smaFast.size() - 1) - smaFast.get(0)) / smaFast.size();
+            //d += (smaFast.get(smaFast.size() - 1) - smaFast.get(0)) / smaFast.size();
             d += (smaSlow.get(smaSlow.size() - 1) - smaSlow.get(0)) / smaSlow.size();
             d += (smaTube.get(smaTube.size() - 1) - smaTube.get(0)) / smaTube.size();
             var expectTubeTop = avgDelta.get(1) + strategy.getEmaFastLength() * d;
