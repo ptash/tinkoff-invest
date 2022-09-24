@@ -815,7 +815,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         }
         var smaFastCur = smaFastAvg.get(smaFastAvg.size() - 1);
         var avg = smaFastCur + avgDelta;
-        return List.of(avg - avgDeltaAbs, avg + avgDeltaAbs, avg, d, smaFastCur, getPercentMoveUp(avgList), getPercentMoveUp(smaFastAvg));
+        return List.of(avg - avgDeltaAbs, avg + avgDeltaAbs, avg, d, smaFastCur, getPercentMoveUp(avgList, strategy.getTicksMoveUp()), getPercentMoveUp(smaFastAvg, strategy.getTicksMoveUp()));
     }
 
     private List<Double> calculateAvgDeltaSimple(String figi,
@@ -952,6 +952,12 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
 
     private Double getPercentMoveUp(List<Double> x) {
         int xPrev = 0;
+        int xCur = x.size() - 1;
+        return ((x.get(xCur) - x.get(xPrev)) * 100) / x.get(xPrev);
+    }
+
+    private Double getPercentMoveUp(List<Double> x, Integer ticks) {
+        int xPrev = Math.max(0, x.size() - 1 - ticks);
         int xCur = x.size() - 1;
         return ((x.get(xCur) - x.get(xPrev)) * 100) / x.get(xPrev);
     }
