@@ -900,7 +900,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             }
         }
 
-        if (ema < avg - d - error) {
+        if (ema < avg - d + error) {
             top = avg + d + error;
             bottom -= avg - bottom;
             bottom = Math.min(smaSlowCur, bottom) - error;
@@ -908,7 +908,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
                 top = avg + error;
             }
 
-        } else if (ema > avg + error && isMoveUp) {
+        } else if (ema > avg + error && isMoveUpInvest) {
             top += top - avg;
             bottom = avg - d + error;
             //if (smaSlowCur > smaFastCur) {
