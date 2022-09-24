@@ -28,5 +28,7 @@ public class BuyProfit1InvestPercent02SellWithMaxProfitCrossTubeStrategy extends
     }
     public Integer getDelayPlusBySL() { return 30; }
 
+    public Double getPercentMoveUpError() { return 0.05; }
+
     public boolean isEnabled() { return true; }
 }
