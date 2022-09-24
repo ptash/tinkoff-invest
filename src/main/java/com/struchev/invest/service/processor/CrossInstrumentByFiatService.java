@@ -159,7 +159,8 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         if (strategy.isTubeAvgDeltaAdvance()) {
             isInTube = false;
             var investTop = BigDecimal.valueOf(avgDelta.get(1) + 3 * avgDelta.get(3));
-            var tubeSize = avgDelta.get(1) - price.doubleValue();
+            var tubeSize = avgDelta.get(1) - avgDelta.get(0);
+            var tubeSizePrice = avgDelta.get(1) - price.doubleValue();
             var expectProfit = (price.doubleValue() * strategy.getSellCriteria().getTakeProfitPercent()) / 100.0;
             //var expectTubeTop = avgDelta.get(1) + strategy.getEmaFastLength() * ((emaFast.get(emaFast.size() - 1) - emaFast.get(0)) / emaFast.size() - (smaFast.get(smaFast.size() - 1) - smaFast.get(0)) / smaFast.size());
             var d = (smaSlowest.get(smaSlowest.size() - 1) - smaSlowest.get(0)) / smaSlowest.size();
@@ -172,6 +173,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             annotation += " profit: " + tubeSize + ", " + expectTubeSize + ">" + expectProfit;
             if (/*tubeSize > expectProfit && */expectTubeSize > expectProfit
                     && expectTubeSize > tubeSize * strategy.getTubeAvgAdvanceDown()
+                    && !(tubeSize < expectProfit && tubeSizePrice * strategy.getTubeAvgAdvanceDown() > tubeSize)
             ) {
                 annotation += "=t";
                 if (avgDelta.get(3) > 0 && price.compareTo(BigDecimal.valueOf(avgDelta.get(0))) < 0) {
