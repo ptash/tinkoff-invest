@@ -20,7 +20,7 @@ public class BuyProfit1InvestPercent02SellWithMaxProfitCrossTubeStrategy extends
 
     @Override
     public SellCriteria getSellCriteria() {
-        return SellCriteria.builder().takeProfitPercent(1f).stopLossPercent(1f).build();
+        return SellCriteria.builder().takeProfitPercent(0.5f).stopLossPercent(1f).build();
     }
 
     public Duration getDelayBySL() {
