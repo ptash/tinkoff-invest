@@ -170,12 +170,13 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             d += (smaTube.get(smaTube.size() - 1) - smaTube.get(0)) / smaTube.size();
             var expectTubeTop = avgDelta.get(1) + strategy.getEmaFastLength() * d;
             var expectTubeSize = expectTubeTop - price.doubleValue();
-            annotation += " profit (" + avgDelta.get(4) + "): " + tubeSize + ", " + tubeSizePrice + ", " + expectTubeSize + ">" + expectProfit;
+            var moveUp = avgDelta.get(4);
+            annotation += " profit (" + moveUp + "): " + tubeSize + ", " + tubeSizePrice + ", " + expectTubeSize + ">" + expectProfit;
             if (/*tubeSize > expectProfit && */expectTubeSize > expectProfit
                     && expectTubeSize > tubeSizePrice * strategy.getTubeAvgAdvanceDown()
                     && expectTubeSize * strategy.getTubeAvgAdvanceDown() < tubeSizePrice
                     && !(tubeSize < expectProfit * strategy.getTubeAvgAdvanceDown()
-                        //&& getPercentMoveUp(smaSlow) < strategy.getPercentMoveUpError()
+                        && moveUp < 0
                         && tubeSizePrice * strategy.getTubeAvgAdvanceDown() > tubeSize)
             ) {
                 annotation += "=t";
@@ -932,7 +933,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             //}
         }
         var moveUp = (avgListPercentMoveUp + smaFastPercentMoveUp + getPercentMoveUp(emaFast, ticksMoveUp) + getPercentMoveUp(smaSlow, ticksMoveUp)) / 4;
-        if (moveUp > 0//strategy.getPercentMoveUpError()
+        if (moveUp > strategy.getPercentMoveUpError()
                 && smaFastCur < avg - d
                 && smaSlowCur < smaFastCur
                 && (smaFastCur - smaSlowCur) > 2 * d) {
