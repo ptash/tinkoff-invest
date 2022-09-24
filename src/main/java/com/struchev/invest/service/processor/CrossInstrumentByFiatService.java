@@ -906,6 +906,9 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
                     bottom -= (avg - d - ema);
                 }
             }
+            if (!isMoveUpInvest) {
+                top -= d;
+            }
             if (!isMoveUp && smaFastCur < (avg - d) &&  smaSlowCur > smaFastCur && (smaSlowCur - smaFastCur) > d) {
                 top -= d;
             }
