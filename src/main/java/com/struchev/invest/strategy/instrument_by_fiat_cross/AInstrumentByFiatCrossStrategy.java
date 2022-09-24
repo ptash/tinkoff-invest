@@ -115,6 +115,10 @@ public abstract class AInstrumentByFiatCrossStrategy extends AStrategy {
 
     public Boolean isNotCellIfBuy() { return false; }
 
+    public Double getTubeAvgAdvanceDown() {
+        return 0.75;
+    }
+
     @Builder
     @Data
     public static class BuyCriteria {
