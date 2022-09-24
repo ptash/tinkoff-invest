@@ -170,7 +170,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             d += (smaTube.get(smaTube.size() - 1) - smaTube.get(0)) / smaTube.size();
             var expectTubeTop = avgDelta.get(1) + strategy.getEmaFastLength() * d;
             var expectTubeSize = expectTubeTop - price.doubleValue();
-            annotation += " profit: " + tubeSize + ", " + tubeSizePrice + ", " + expectTubeSize + ">" + expectProfit;
+            annotation += " profit (" + avgDelta.get(4) + "): " + tubeSize + ", " + tubeSizePrice + ", " + expectTubeSize + ">" + expectProfit;
             if (/*tubeSize > expectProfit && */expectTubeSize > expectProfit
                     && expectTubeSize > tubeSizePrice * strategy.getTubeAvgAdvanceDown()
                     && expectTubeSize * strategy.getTubeAvgAdvanceDown() < tubeSizePrice
@@ -879,7 +879,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         var smaFastCur = res.get(4);
         var avgListPercentMoveUp = res.get(5);
         var smaFastPercentMoveUp = res.get(6);
-        Integer ticksMoveUp = res.get(6).intValue();
+        Integer ticksMoveUp = res.get(7).intValue();
         var isMoveUp = avgListPercentMoveUp > strategy.getPercentMoveUpError()
                 //&& smaFastPercentMoveUp > strategy.getPercentMoveUpError()
                 //&& getPercentMoveUp(emaFast) > -strategy.getPercentMoveUpError()
@@ -931,17 +931,14 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             //    bottom = Math.min(bottom, smaFastCur - (smaSlowCur - smaFastCur));
             //}
         }
-        if (true //isMoveUp
-                //&& getPercentMoveUp(emaFast) > strategy.getPercentMoveUpError()
-                //&& getPercentMoveUp(smaSlow) > strategy.getPercentMoveUpError()
-                && (avgListPercentMoveUp + smaFastPercentMoveUp + getPercentMoveUp(emaFast, ticksMoveUp) + getPercentMoveUp(smaSlow, ticksMoveUp)) / 4
-                    > 0//strategy.getPercentMoveUpError()
+        var moveUp = (avgListPercentMoveUp + smaFastPercentMoveUp + getPercentMoveUp(emaFast, ticksMoveUp) + getPercentMoveUp(smaSlow, ticksMoveUp)) / 4;
+        if (moveUp > 0//strategy.getPercentMoveUpError()
                 && smaFastCur < avg - d
                 && smaSlowCur < smaFastCur
                 && (smaFastCur - smaSlowCur) > 2 * d) {
             bottom = Math.max(bottom, avg - d - error);
         }
-        return List.of(bottom, top, avg, d);
+        return List.of(bottom, top, avg, d, moveUp);
     }
 
     /**
@@ -984,7 +981,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         int xPrev = Math.max(0, x.size() - 1 - ticks);
         int xCur = x.size() - 1;
         int actualTicks = xCur - xPrev;
-        return ((x.get(xCur) - x.get(xPrev)) * 100) * ticks / actualTicks / x.get(xPrev);
+        return ((x.get(xCur) - x.get(xPrev)) * 100) / actualTicks / x.get(xPrev);
     }
 
     private List<Double> getSma(
