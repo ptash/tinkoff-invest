@@ -163,12 +163,13 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             var expectProfit = (price.doubleValue() * strategy.getSellCriteria().getTakeProfitPercent()) / 100.0;
             //var expectTubeTop = avgDelta.get(1) + strategy.getEmaFastLength() * ((emaFast.get(emaFast.size() - 1) - emaFast.get(0)) / emaFast.size() - (smaFast.get(smaFast.size() - 1) - smaFast.get(0)) / smaFast.size());
             var d = (smaSlowest.get(smaSlowest.size() - 1) - smaSlowest.get(0)) / smaSlowest.size();
-            d += ((emaFast.get(emaFast.size() - 1) - emaFast.get(0)) / emaFast.size() - (smaFast.get(smaFast.size() - 1) - smaFast.get(0)) / smaFast.size());
+            //d += (emaFast.get(emaFast.size() - 1) - emaFast.get(0)) / emaFast.size();
+            d += (smaFast.get(smaFast.size() - 1) - smaFast.get(0)) / smaFast.size();
             d += (smaSlow.get(smaSlow.size() - 1) - smaSlow.get(0)) / smaSlow.size();
             var expectTubeTop = avgDelta.get(1) + strategy.getEmaFastLength() * d;
             var expectTubeSize = expectTubeTop - price.doubleValue();
             annotation += " profit: " + tubeSize + ", " + expectTubeSize + ">" + expectProfit;
-            if (tubeSize > expectProfit && expectTubeSize > expectProfit) {
+            if (/*tubeSize > expectProfit && */expectTubeSize > expectProfit) {
                 annotation += "=t";
                 if (avgDelta.get(3) > 0 && price.compareTo(BigDecimal.valueOf(avgDelta.get(0))) < 0) {
                     //annotation += " moveUp: " + getPercentMoveUp(smaTube) + " + " + getPercentMoveUp(smaSlowest) + " + " + getPercentMoveUp(smaSlow) + " >= 0";
@@ -814,7 +815,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         }
         var smaFastCur = smaFastAvg.get(smaFastAvg.size() - 1);
         var avg = smaFastCur + avgDelta;
-        return List.of(avg - avgDeltaAbs, avg + avgDeltaAbs, avg, d, smaFastCur, getPercentMoveUp(avgList));
+        return List.of(avg - avgDeltaAbs, avg + avgDeltaAbs, avg, d, smaFastCur, getPercentMoveUp(avgList), getPercentMoveUp(smaFastAvg));
     }
 
     private List<Double> calculateAvgDeltaSimple(String figi,
@@ -869,7 +870,13 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         var d = res.get(3);
         var smaFastCur = res.get(4);
         var avgListPercentMoveUp = res.get(5);
+        var smaFastPercentMoveUp = res.get(6);
         var isMoveUp = avgListPercentMoveUp > strategy.getPercentMoveUpError()
+                //&& smaFastPercentMoveUp > strategy.getPercentMoveUpError()
+                //&& getPercentMoveUp(emaFast) > -strategy.getPercentMoveUpError()
+                ;
+        var isMoveUpInvest = avgListPercentMoveUp > 2 * strategy.getPercentMoveUpError()
+                && smaFastPercentMoveUp > 2 * strategy.getPercentMoveUpError()
                 //&& getPercentMoveUp(emaFast) > -strategy.getPercentMoveUpError()
                 ;
         if (isMoveUp) {
@@ -907,7 +914,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             //if (smaSlowCur > smaFastCur) {
             //    bottom = Math.min(bottom, smaFastCur - (smaSlowCur - smaFastCur));
             //}
-        } else if (isMoveUp && smaSlowCur < smaFastCur && (smaFastCur - smaSlowCur) > d) {
+        } else if (isMoveUpInvest && smaSlowCur < smaFastCur && (smaFastCur - smaSlowCur) > d) {
             bottom = Math.max(bottom, avg - d - error);
         }
         return List.of(bottom, top, avg, d);
