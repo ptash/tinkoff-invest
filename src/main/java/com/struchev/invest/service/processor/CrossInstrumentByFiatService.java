@@ -174,7 +174,8 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             if (/*tubeSize > expectProfit && */expectTubeSize > expectProfit
                     && expectTubeSize > tubeSizePrice * strategy.getTubeAvgAdvanceDown()
                     && expectTubeSize * strategy.getTubeAvgAdvanceDown() < tubeSizePrice
-                    && !(tubeSize < expectProfit && tubeSizePrice * strategy.getTubeAvgAdvanceDown() > tubeSize)
+                    && !(tubeSize < expectProfit * strategy.getTubeAvgAdvanceDown()
+                        && tubeSizePrice * strategy.getTubeAvgAdvanceDown() > tubeSize)
             ) {
                 annotation += "=t";
                 if (avgDelta.get(3) > 0 && price.compareTo(BigDecimal.valueOf(avgDelta.get(0))) < 0) {
@@ -900,9 +901,13 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             top = avg + d + error;
             if (!isMoveUp) {
                 bottom -= d;
+                top -= d;
                 if (ema < avg - d) {
                     bottom -= (avg - d - ema);
                 }
+            }
+            if (!isMoveUp && smaFastCur < (avg - d) &&  smaSlowCur > smaFastCur && (smaSlowCur - smaFastCur) > d) {
+                top -= d;
             }
         }
 
