@@ -933,8 +933,9 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             //    bottom = Math.min(bottom, smaFastCur - (smaSlowCur - smaFastCur));
             //}
         }
-        var moveUp = (avgListPercentMoveUp + smaFastPercentMoveUp + getPercentMoveUp(emaFast, ticksMoveUp) + getPercentMoveUp(smaSlow, ticksMoveUp)) / 4;
-        if (moveUp > strategy.getPercentMoveUpError()
+        var moveUp = (avgListPercentMoveUp + smaFastPercentMoveUp + getPercentMoveUp(emaFast, ticksMoveUp) + getPercentMoveUp(smaSlow, ticksMoveUp)) / ticksMoveUp / 4;
+        if (false
+                && moveUp > strategy.getPercentMoveUpError()
                 && smaFastCur < avg - d
                 && smaSlowCur < smaFastCur
                 && (smaFastCur - smaSlowCur) > 2 * d) {
