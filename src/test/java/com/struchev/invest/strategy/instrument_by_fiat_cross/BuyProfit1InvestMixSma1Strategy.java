@@ -1,15 +1,19 @@
 package com.struchev.invest.strategy.instrument_by_fiat_cross;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import java.time.Duration;
 import java.util.Map;
 
 @Component
 public class BuyProfit1InvestMixSma1Strategy extends BuyEma600CrossStrategy {
 
-    AInstrumentByFiatCrossStrategy investStrategy = new BuyProfit1InvestPercent02SellWithMaxProfitPercentFromSma1CrossSimpleStrategy();
-    AInstrumentByFiatCrossStrategy crisisStrategy = new BuyProfit1InvestPercent02SellWithMaxProfitCrossTubeStrategy();
+    @Autowired
+    BuyProfit1InvestPercent02SellWithMaxProfitPercentFromSma1CrossSimpleStrategy investStrategy;
+    @Autowired
+    BuyProfit1InvestPercent02SellWithMaxProfitCrossTubeStrategy crisisStrategy;
 
     public Boolean isTubeAvgDeltaAdvance() {
         if (isInvestStrategy) {
@@ -47,6 +51,7 @@ public class BuyProfit1InvestMixSma1Strategy extends BuyEma600CrossStrategy {
         }
         return crisisStrategy.getDelayBySL();
     }
+
     public Integer getDelayPlusBySL() {
         if (isInvestStrategy) {
             return investStrategy.getDelayPlusBySL();
@@ -56,10 +61,11 @@ public class BuyProfit1InvestMixSma1Strategy extends BuyEma600CrossStrategy {
 
     public Integer getTicksMoveUp() {
         if (isInvestStrategy) {
-            return investStrategy.getDelayPlusBySL();
+            return investStrategy.getTicksMoveUp();
         }
-        return crisisStrategy.getDelayPlusBySL();
+        return crisisStrategy.getTicksMoveUp();
     }
+
     public Double getMinPercentTubeMoveUp() {
         if (isInvestStrategy) {
             return investStrategy.getMinPercentTubeMoveUp();
@@ -117,9 +123,9 @@ public class BuyProfit1InvestMixSma1Strategy extends BuyEma600CrossStrategy {
         if (isInvestStrategy) { return investStrategy.getDeadLinePercent(); }
         return crisisStrategy.getDeadLinePercent();
     }
-
     public Double getDeadLinePercentFromSmaSlowest() {
         if (isInvestStrategy) { return investStrategy.getDeadLinePercentFromSmaSlowest(); }
         return crisisStrategy.getDeadLinePercentFromSmaSlowest();
     }
+    public boolean isEnabled() { return true; }
 }
