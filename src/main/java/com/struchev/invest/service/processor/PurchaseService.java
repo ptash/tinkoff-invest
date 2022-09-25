@@ -55,20 +55,22 @@ public class PurchaseService {
         log.debug("Observe candle event: {}", candleDomainEntity);
         var strategies = strategySelector.suitableByFigi(candleDomainEntity.getFigi(), null);
         strategies.parallelStream().forEach(strategy -> {
-            if (strategy instanceof AInstrumentByFiatCrossStrategy) {
-                strategy = ((AInstrumentByFiatCrossStrategy)strategy).getFigiStrategy(candleDomainEntity.getFigi());
-            }
             // Ищем открытый ордер
             // Для стратегии instrumentByInstrument нужен ордер по инструменту свечки (торгуется стратегия в разрезе инструмента)
             // Для стратегии instrumentByInstrument нужен ордер по любому инструменту (торгуется вся стратегия целиком)
             var figiSuitableForOrder = strategy.getType() == AStrategy.Type.instrumentByInstrument ? null : candleDomainEntity.getFigi();
             var order = orderService.findActiveByFigiAndStrategy(figiSuitableForOrder, strategy);
 
+            if (order == null && strategy.isArchive()) {
+                return;
+            }
+
+            if (strategy instanceof AInstrumentByFiatCrossStrategy) {
+                strategy = ((AInstrumentByFiatCrossStrategy)strategy).getFigiStrategy(candleDomainEntity.getFigi());
+            }
+
             // Нет активного ордера, возможно можем купить, если нет ограничений по задержке после stop loss
             if (order == null) {
-                if (strategy.isArchive()) {
-                    return;
-                }
                 var isShouldBuy = calculator.isShouldBuy(strategy, candleDomainEntity);
                 if (isShouldBuy) {
                     OrderDomainEntity lastOrder = null;

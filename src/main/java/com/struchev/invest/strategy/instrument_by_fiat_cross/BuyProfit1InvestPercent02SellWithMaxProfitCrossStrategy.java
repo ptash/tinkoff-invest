@@ -8,14 +8,13 @@ import java.util.Map;
 public class BuyProfit1InvestPercent02SellWithMaxProfitCrossStrategy extends BuyEma600DeadLineP1Profit1DeadLine2InvestPercent02CrossStrategy {
 
     private Map FIGIES = Map.of(
-
+/*
             "BBG006L8G4H1", 1,   // Yandex
             "BBG00178PGX3", 6,    // VK ??
             "BBG004S68696", 10,    // Распадская
             "BBG002W2FT69", 10, // АбрауДюрсо
             "BBG00475KKY8", 2 // НОВАТЭК
-
-/*
+*/
             "BBG005F1DK91", 2, // G1
             "BBG002NLDLV8", 2, // VIPS
             //"BBG00W0KZD98", 1,  //LI ?
@@ -26,7 +25,6 @@ public class BuyProfit1InvestPercent02SellWithMaxProfitCrossStrategy extends Buy
             "BBG006G2JVL2", 1, // Alibaba
             "BBG003QBJKN0", 4 // Allakos Inc
             //"BBG004NLQHL0", 2 // Fastly Inc
-*/
 
     );
 
