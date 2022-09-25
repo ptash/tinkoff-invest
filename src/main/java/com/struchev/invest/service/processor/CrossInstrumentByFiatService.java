@@ -175,7 +175,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             annotation += " profit (" + moveUp + "): " + tubeSize + ", " + tubeSizePrice + ", " + expectTubeSize + ">" + expectProfit;
             if (/*tubeSize > expectProfit && */expectTubeSize > expectProfit
                     && expectTubeSize > tubeSizePrice * strategy.getTubeAvgAdvanceDown()
-                    && expectTubeSize * strategy.getTubeAvgAdvanceDown() < tubeSizePrice
+                    //&& expectTubeSize * strategy.getTubeAvgAdvanceDown() < tubeSizePrice
                     && !(tubeSize < expectProfit * strategy.getTubeAvgAdvanceDown()
                         //&& getPercentMoveUp(smaSlow) < strategy.getPercentMoveUpError()
                         && moveUp < 0//strategy.getPercentMoveUpError()
