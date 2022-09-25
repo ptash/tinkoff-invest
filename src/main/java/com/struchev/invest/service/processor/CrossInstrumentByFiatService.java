@@ -169,7 +169,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             d += (smaSlow.get(smaSlow.size() - 1) - smaSlow.get(0)) / smaSlow.size();
             d += (smaTube.get(smaTube.size() - 1) - smaTube.get(0)) / smaTube.size();
             var moveUp = avgDelta.get(4);
-            d = moveUp * price.doubleValue() / 100;
+            //d = moveUp * price.doubleValue() / 100;
             var expectTubeTop = avgDelta.get(1) + strategy.getEmaFastLength() * d;
             var expectTubeSize = expectTubeTop - price.doubleValue();
             annotation += " profit (" + moveUp + "): " + tubeSize + ", " + tubeSizePrice + ", " + expectTubeSize + ">" + expectProfit;
@@ -941,7 +941,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
                 + getPercentMoveUp(smaSlowest, ticksMoveUp)
                 + getPercentMoveUp(smaTube, ticksMoveUp)
         ) / ticksMoveUp / 4;
-        if (true
+        if (false
                 && moveUp > 0//strategy.getPercentMoveUpError()
                 && smaFastCur < avg// - d
                 && smaSlowCur < smaFastCur
