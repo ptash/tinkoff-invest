@@ -10,6 +10,7 @@ import java.util.Map;
 public class BuyProfit1InvestMixStrategy extends ABuyEma600CrossStrategy {
 
     private Map FIGIES = Map.of(
+            "BBG000BLY663", 1, // CROCS
             "BBG0016XJ8S0", 7    // TAL Education Group
     );
 

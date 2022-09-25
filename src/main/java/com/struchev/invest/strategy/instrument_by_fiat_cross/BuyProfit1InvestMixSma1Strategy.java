@@ -8,6 +8,7 @@ import java.util.Map;
 @Component
 public class BuyProfit1InvestMixSma1Strategy extends BuyProfit1InvestMixStrategy {
     private Map FIGIES = Map.of(
+            "BBG005DXJS36", 1, // TCS Group (Tinkoff Bank holder)
             "BBG001KS9450", 10    // 2U Inc
     );
 
