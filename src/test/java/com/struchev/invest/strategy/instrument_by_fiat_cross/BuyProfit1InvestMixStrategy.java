@@ -9,121 +9,129 @@ import java.time.Duration;
 public class BuyProfit1InvestMixStrategy extends BuyEma600CrossStrategy {
 
     @Autowired
-    BuyProfit1InvestPercent02SellWithMaxProfitCrossSimpleStrategy investStrategy;
+    private BuyProfit1InvestPercent02SellWithMaxProfitCrossSimpleStrategy investStrategy;
     @Autowired
-    BuyProfit1InvestPercent02SellWithMaxProfitCrossTubeStrategy crisisStrategy;
+    private BuyProfit1InvestPercent02SellWithMaxProfitCrossTubeStrategy crisisStrategy;
+
+    public AInstrumentByFiatCrossStrategy getInvestStrategy() {
+        return investStrategy;
+    }
+
+    public AInstrumentByFiatCrossStrategy getCrisisStrategy() {
+        return crisisStrategy;
+    }
 
     public Boolean isTubeAvgDeltaAdvance() {
         if (isInvestStrategy) {
-            return investStrategy.isTubeAvgDeltaAdvance();
+            return getInvestStrategy().isTubeAvgDeltaAdvance();
         }
-        return crisisStrategy.isTubeAvgDeltaAdvance();
+        return getCrisisStrategy().isTubeAvgDeltaAdvance();
     }
 
     public Boolean isTubeAvgDeltaSimple() {
         if (isInvestStrategy) {
-            return investStrategy.isTubeAvgDeltaSimple();
+            return getInvestStrategy().isTubeAvgDeltaSimple();
         }
-        return crisisStrategy.isTubeAvgDeltaAdvance();
+        return getCrisisStrategy().isTubeAvgDeltaAdvance();
     }
 
     @Override
     public BuyCriteria getBuyCriteria() {
         if (isInvestStrategy) {
-            return investStrategy.getBuyCriteria();
+            return getInvestStrategy().getBuyCriteria();
         }
-        return crisisStrategy.getBuyCriteria();
+        return getCrisisStrategy().getBuyCriteria();
     }
 
     @Override
     public SellCriteria getSellCriteria() {
         if (isInvestStrategy) {
-            return investStrategy.getSellCriteria();
+            return getInvestStrategy().getSellCriteria();
         }
-        return crisisStrategy.getSellCriteria();
+        return getCrisisStrategy().getSellCriteria();
     }
 
     public Duration getDelayBySL() {
         if (isInvestStrategy) {
-            return investStrategy.getDelayBySL();
+            return getInvestStrategy().getDelayBySL();
         }
-        return crisisStrategy.getDelayBySL();
+        return getCrisisStrategy().getDelayBySL();
     }
 
     public Integer getDelayPlusBySL() {
         if (isInvestStrategy) {
-            return investStrategy.getDelayPlusBySL();
+            return getInvestStrategy().getDelayPlusBySL();
         }
-        return crisisStrategy.getDelayPlusBySL();
+        return getCrisisStrategy().getDelayPlusBySL();
     }
 
     public Integer getTicksMoveUp() {
         if (isInvestStrategy) {
-            return investStrategy.getTicksMoveUp();
+            return getInvestStrategy().getTicksMoveUp();
         }
-        return crisisStrategy.getTicksMoveUp();
+        return getCrisisStrategy().getTicksMoveUp();
     }
 
     public Double getMinPercentTubeMoveUp() {
         if (isInvestStrategy) {
-            return investStrategy.getMinPercentTubeMoveUp();
+            return getInvestStrategy().getMinPercentTubeMoveUp();
         }
-        return crisisStrategy.getMinPercentTubeMoveUp();
+        return getCrisisStrategy().getMinPercentTubeMoveUp();
     }
 
     public Double getInvestPercentFromFast() {
-        if (isInvestStrategy) { return investStrategy.getInvestPercentFromFast(); }
-        return crisisStrategy.getInvestPercentFromFast();
+        if (isInvestStrategy) { return getInvestStrategy().getInvestPercentFromFast(); }
+        return getCrisisStrategy().getInvestPercentFromFast();
     }
     //public Double getInvestPercentFromFast() { return 0.2; }
 
     public Boolean isSellWithMaxProfit() {
-        if (isInvestStrategy) { return investStrategy.isSellWithMaxProfit(); }
-        return crisisStrategy.isSellWithMaxProfit();
+        if (isInvestStrategy) { return getInvestStrategy().isSellWithMaxProfit(); }
+        return getCrisisStrategy().isSellWithMaxProfit();
     }
 
     public Boolean isBuyInvestCrossSmaEma2() {
-        if (isInvestStrategy) { return investStrategy.isBuyInvestCrossSmaEma2(); }
-        return crisisStrategy.isBuyInvestCrossSmaEma2();
+        if (isInvestStrategy) { return getInvestStrategy().isBuyInvestCrossSmaEma2(); }
+        return getCrisisStrategy().isBuyInvestCrossSmaEma2();
     }
 
     public Double getMinPercentSmaSlowestMoveUp() {
-        if (isInvestStrategy) { return investStrategy.getMinPercentSmaSlowestMoveUp(); }
-        return crisisStrategy.getMinPercentSmaSlowestMoveUp();
+        if (isInvestStrategy) { return getInvestStrategy().getMinPercentSmaSlowestMoveUp(); }
+        return getCrisisStrategy().getMinPercentSmaSlowestMoveUp();
     }
 
     public Double getMaxSmaFastCrossPercent() {
-        if (isInvestStrategy) { return investStrategy.getMaxSmaFastCrossPercent(); }
-        return crisisStrategy.getMaxSmaFastCrossPercent();
+        if (isInvestStrategy) { return getInvestStrategy().getMaxSmaFastCrossPercent(); }
+        return getCrisisStrategy().getMaxSmaFastCrossPercent();
     }
 
     public Boolean isTubeTopBlur() {
-        if (isInvestStrategy) { return investStrategy.isTubeTopBlur(); }
-        return crisisStrategy.isTubeTopBlur();
+        if (isInvestStrategy) { return getInvestStrategy().isTubeTopBlur(); }
+        return getCrisisStrategy().isTubeTopBlur();
     }
 
     public Double getDelayPlusBySLFactor() {
-        if (isInvestStrategy) { return investStrategy.getDelayPlusBySLFactor(); }
-        return crisisStrategy.getDelayPlusBySLFactor();
+        if (isInvestStrategy) { return getInvestStrategy().getDelayPlusBySLFactor(); }
+        return getCrisisStrategy().getDelayPlusBySLFactor();
     }
 
     public Boolean isTubeTopNear() {
-        if (isInvestStrategy) { return investStrategy.isTubeTopNear(); }
-        return crisisStrategy.isTubeTopNear();
+        if (isInvestStrategy) { return getInvestStrategy().isTubeTopNear(); }
+        return getCrisisStrategy().isTubeTopNear();
     }
 
     public Double getMinPercentTubeBottomMoveUp() {
-        if (isInvestStrategy) { return investStrategy.getMinPercentTubeBottomMoveUp(); }
-        return crisisStrategy.getMinPercentTubeBottomMoveUp();
+        if (isInvestStrategy) { return getInvestStrategy().getMinPercentTubeBottomMoveUp(); }
+        return getCrisisStrategy().getMinPercentTubeBottomMoveUp();
     }
 
     public Double getDeadLinePercent() {
-        if (isInvestStrategy) { return investStrategy.getDeadLinePercent(); }
-        return crisisStrategy.getDeadLinePercent();
+        if (isInvestStrategy) { return getInvestStrategy().getDeadLinePercent(); }
+        return getCrisisStrategy().getDeadLinePercent();
     }
     public Double getDeadLinePercentFromSmaSlowest() {
-        if (isInvestStrategy) { return investStrategy.getDeadLinePercentFromSmaSlowest(); }
-        return crisisStrategy.getDeadLinePercentFromSmaSlowest();
+        if (isInvestStrategy) { return getInvestStrategy().getDeadLinePercentFromSmaSlowest(); }
+        return getCrisisStrategy().getDeadLinePercentFromSmaSlowest();
     }
     public boolean isEnabled() { return true; }
 }

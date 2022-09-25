@@ -11,9 +11,17 @@ import java.util.Map;
 public class BuyProfit1InvestMixSma1Strategy extends BuyProfit1InvestMixStrategy {
 
     @Autowired
-    BuyProfit1InvestPercent02SellWithMaxProfitPercentFromSma1CrossSimpleStrategy investStrategy;
+    private BuyProfit1InvestPercent02SellWithMaxProfitPercentFromSma1CrossSimpleStrategy investStrategy;
     @Autowired
-    BuyProfit1InvestPercent02SellWithMaxProfitCrossTubeStrategy crisisStrategy;
+    private BuyProfit1InvestPercent02SellWithMaxProfitCrossTubeStrategy crisisStrategy;
+
+    public AInstrumentByFiatCrossStrategy getInvestStrategy() {
+        return investStrategy;
+    }
+
+    public AInstrumentByFiatCrossStrategy getCrisisStrategy() {
+        return crisisStrategy;
+    }
 
     public boolean isEnabled() { return true; }
 }
