@@ -176,7 +176,8 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
                     && expectTubeSize > tubeSizePrice * strategy.getTubeAvgAdvanceDown()
                     && expectTubeSize * strategy.getTubeAvgAdvanceDown() < tubeSizePrice
                     && !(tubeSize < expectProfit * strategy.getTubeAvgAdvanceDown()
-                        && moveUp < strategy.getPercentMoveUpError()
+                        && getPercentMoveUp(smaSlow) < strategy.getPercentMoveUpError()
+                        //&& moveUp < strategy.getPercentMoveUpError()
                         && tubeSizePrice * strategy.getTubeAvgAdvanceDown() > tubeSize)
             ) {
                 annotation += "=t";
@@ -982,7 +983,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         int xPrev = Math.max(0, x.size() - 1 - ticks);
         int xCur = x.size() - 1;
         int actualTicks = xCur - xPrev;
-        return ((x.get(xCur) - x.get(xPrev)) * 100) / actualTicks / x.get(xPrev);
+        return ((x.get(xCur) - x.get(xPrev)) * 100) * ticks / actualTicks / x.get(xPrev);
     }
 
     private List<Double> getSma(
