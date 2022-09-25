@@ -65,7 +65,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         List<Double> avgDelta;
         if (strategy.isTubeAvgDeltaAdvance()) {
             //avgDelta = calculateTubeAvgDelta(figi, currentDateTime, strategy, keyExtractor);
-            avgDelta = calculateAvgDeltaAdvance(figi, currentDateTime, strategy, keyExtractor, emaFast, smaSlow);
+            avgDelta = calculateAvgDeltaAdvance(figi, currentDateTime, strategy, keyExtractor, emaFast, smaSlow, smaSlowest, smaTube);
         } else if (strategy.isTubeAvgDeltaSimple()) {
             avgDelta = calculateAvgDeltaSimple(figi, currentDateTime, strategy, keyExtractor, emaFast, smaSlow);
         } else {
@@ -440,7 +440,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         List<Double> avgDelta;
         if (strategy.isTubeAvgDeltaAdvance()) {
             //avgDelta = calculateTubeAvgDelta(figi, currentDateTime, strategy, keyExtractor);
-            avgDelta = calculateAvgDeltaAdvance(figi, currentDateTime, strategy, keyExtractor, emaFast, smaSlow);
+            avgDelta = calculateAvgDeltaAdvance(figi, currentDateTime, strategy, keyExtractor, emaFast, smaSlow, smaSlowest, smaTube);
         } else if (strategy.isTubeAvgDeltaSimple()) {
             avgDelta = calculateAvgDeltaSimple(figi, currentDateTime, strategy, keyExtractor, emaFast, smaSlow);
         } else {
@@ -871,7 +871,9 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             AInstrumentByFiatCrossStrategy strategy,
             Function<? super CandleDomainEntity, ? extends BigDecimal> keyExtractor,
             List<Double> emaFast,
-            List<Double> smaSlow
+            List<Double> smaSlow,
+            List<Double> smaSlowest,
+            List<Double> smaTube
     ) {
         var res = calculateAvgDelta(figi, currentDateTime, strategy, keyExtractor);
         var bottom = res.get(0);
@@ -933,8 +935,12 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             //    bottom = Math.min(bottom, smaFastCur - (smaSlowCur - smaFastCur));
             //}
         }
-        var moveUp = (avgListPercentMoveUp + smaFastPercentMoveUp + getPercentMoveUp(emaFast, ticksMoveUp) + getPercentMoveUp(smaSlow, ticksMoveUp)) / ticksMoveUp / 4;
-        if (false
+        var moveUp = ((avgListPercentMoveUp + smaFastPercentMoveUp + getPercentMoveUp(emaFast, ticksMoveUp)) / 3
+                + getPercentMoveUp(smaSlow, ticksMoveUp)
+                + getPercentMoveUp(smaSlowest, ticksMoveUp)
+                + getPercentMoveUp(smaTube, ticksMoveUp)
+        ) / ticksMoveUp / 4;
+        if (true
                 && moveUp > strategy.getPercentMoveUpError()
                 && smaFastCur < avg - d
                 && smaSlowCur < smaFastCur
