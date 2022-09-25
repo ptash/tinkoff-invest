@@ -556,7 +556,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
     private void chooseStrategy(AInstrumentByFiatCrossStrategy strategy, List<Double> smaTube, List<Double> smaSlowest)
     {
         var smaTubeCurDouble = smaTube.get(smaTube.size() - 1);
-        smaTubeCurDouble += smaTubeCurDouble * strategy.getDeadLinePercentFromSmaSlowest() / 100;
+        smaTubeCurDouble += smaTubeCurDouble * strategy.getInvestPercentFromSmaSlowest() / 100;
         if (smaTubeCurDouble > smaSlowest.get(smaSlowest.size() - 1)) {
             strategy.setInvestStrategy(false);
         } else {

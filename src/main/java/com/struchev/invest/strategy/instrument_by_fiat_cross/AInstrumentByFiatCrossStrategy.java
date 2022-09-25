@@ -85,6 +85,8 @@ public abstract class AInstrumentByFiatCrossStrategy extends AStrategy implement
      */
     public Double getDeadLinePercentFromSmaSlowest() { return 5.0; }
 
+    public Double getInvestPercentFromSmaSlowest() { return getDeadLinePercentFromSmaSlowest(); }
+
     /**
      * Максимально допустимый процент изменения при пересечения с smaFast
      * @return
