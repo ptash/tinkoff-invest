@@ -62,6 +62,8 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
 
         var ema2 = getEma(figi, currentDateTime, 2, strategy.getInterval(), keyExtractor);
 
+        strategy = chooseStrategy(strategy, smaTube, smaSlowest);
+
         List<Double> avgDelta;
         if (strategy.isTubeAvgDeltaAdvance()) {
             //avgDelta = calculateTubeAvgDelta(figi, currentDateTime, strategy, keyExtractor);
@@ -438,6 +440,8 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
 
         var smaFast = getSma(figi, currentDateTime, strategy.getSmaFastLength(), strategy.getInterval(), keyExtractor);
 
+        strategy = chooseStrategy(strategy, smaTube, smaSlowest);
+
         List<Double> avgDelta;
         if (strategy.isTubeAvgDeltaAdvance()) {
             //avgDelta = calculateTubeAvgDelta(figi, currentDateTime, strategy, keyExtractor);
@@ -549,6 +553,16 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         );
 
         return result;
+    }
+
+    private AInstrumentByFiatCrossStrategy chooseStrategy(AInstrumentByFiatCrossStrategy strategy, List<Double> smaTube, List<Double> smaSlowest)
+    {
+        var smaTubeCurDouble = smaTube.get(smaTube.size() - 1);
+        smaTubeCurDouble += smaTubeCurDouble * strategy.getDeadLinePercentFromSmaSlowest() / 100;
+        if (smaTubeCurDouble > smaSlowest.get(smaSlowest.size() - 1) && strategy.getInvestStrategy() != null) {
+            return strategy.getInvestStrategy();
+        }
+        return strategy;
     }
 
     private List<Double> calcDeadLineTop(AInstrumentByFiatCrossStrategy strategy, List<Double> smaTube, List<Double> smaSlowest, List<Double> smaFast)
