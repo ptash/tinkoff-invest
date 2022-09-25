@@ -168,9 +168,10 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             //d += (smaFast.get(smaFast.size() - 1) - smaFast.get(0)) / smaFast.size();
             d += (smaSlow.get(smaSlow.size() - 1) - smaSlow.get(0)) / smaSlow.size();
             d += (smaTube.get(smaTube.size() - 1) - smaTube.get(0)) / smaTube.size();
+            var moveUp = avgDelta.get(4);
+            d = moveUp * price.doubleValue() / 100;
             var expectTubeTop = avgDelta.get(1) + strategy.getEmaFastLength() * d;
             var expectTubeSize = expectTubeTop - price.doubleValue();
-            var moveUp = avgDelta.get(4);
             annotation += " profit (" + moveUp + "): " + tubeSize + ", " + tubeSizePrice + ", " + expectTubeSize + ">" + expectProfit;
             if (/*tubeSize > expectProfit && */expectTubeSize > expectProfit
                     && expectTubeSize > tubeSizePrice * strategy.getTubeAvgAdvanceDown()
@@ -941,7 +942,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
                 + getPercentMoveUp(smaTube, ticksMoveUp)
         ) / ticksMoveUp / 4;
         if (true
-                && moveUp > 0//strategy.getPercentMoveUpError()
+                && moveUp > strategy.getPercentMoveUpError()
                 && smaFastCur < avg// - d
                 && smaSlowCur < smaFastCur
                 && (smaFastCur - smaSlowCur) > d) {
@@ -990,7 +991,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         int xPrev = Math.max(0, x.size() - 1 - ticks);
         int xCur = x.size() - 1;
         int actualTicks = xCur - xPrev;
-        return ((x.get(xCur) - x.get(xPrev)) * 100) * ticks / actualTicks / x.get(xPrev);
+        return ((x.get(xCur) - x.get(xPrev)) * 100) * actualTicks / x.get(xPrev);
     }
 
     private List<Double> getSma(
