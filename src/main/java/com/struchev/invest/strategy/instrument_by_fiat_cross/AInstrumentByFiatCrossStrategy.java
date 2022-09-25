@@ -117,8 +117,9 @@ public abstract class AInstrumentByFiatCrossStrategy extends AStrategy {
 
     public Double getTubeAvgAdvanceDown() { return 0.5; }
 
-    public AInstrumentByFiatCrossStrategy getInvestStrategy() {
-        return null;
+    protected Boolean isInvestStrategy = false;
+    public void setInvestStrategy(Boolean isInvestStrategy) {
+        this.isInvestStrategy = isInvestStrategy;
     }
 
     @Builder
