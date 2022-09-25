@@ -7,6 +7,7 @@ import com.struchev.invest.service.notification.NotificationService;
 import com.struchev.invest.service.order.OrderService;
 import com.struchev.invest.strategy.AStrategy;
 import com.struchev.invest.strategy.StrategySelector;
+import com.struchev.invest.strategy.instrument_by_fiat_cross.AInstrumentByFiatCrossStrategy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -54,6 +55,9 @@ public class PurchaseService {
         log.debug("Observe candle event: {}", candleDomainEntity);
         var strategies = strategySelector.suitableByFigi(candleDomainEntity.getFigi(), null);
         strategies.parallelStream().forEach(strategy -> {
+            if (strategy instanceof AInstrumentByFiatCrossStrategy) {
+                strategy = ((AInstrumentByFiatCrossStrategy)strategy).getFigiStrategy(candleDomainEntity.getFigi());
+            }
             // Ищем открытый ордер
             // Для стратегии instrumentByInstrument нужен ордер по инструменту свечки (торгуется стратегия в разрезе инструмента)
             // Для стратегии instrumentByInstrument нужен ордер по любому инструменту (торгуется вся стратегия целиком)

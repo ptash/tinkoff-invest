@@ -5,12 +5,14 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.time.Duration;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Стратегии торговли, зарабатывающие на изменении стоимости торговых инструментов, относительно фиатной валюты
  * Пример: продажа/покупка акций Apple за USD
  */
-public abstract class AInstrumentByFiatCrossStrategy extends AStrategy {
+public abstract class AInstrumentByFiatCrossStrategy extends AStrategy implements Cloneable {
     /**
      * Период паузы в торговле, если продали по stop loss критерию
      * @return
@@ -117,9 +119,23 @@ public abstract class AInstrumentByFiatCrossStrategy extends AStrategy {
 
     public Double getTubeAvgAdvanceDown() { return 0.5; }
 
+    private Map<String, AInstrumentByFiatCrossStrategy> investStrategyMap = new HashMap<>();
     protected Boolean isInvestStrategy = false;
     public void setInvestStrategy(Boolean isInvestStrategy) {
         this.isInvestStrategy = isInvestStrategy;
+    }
+
+    public Object clone() throws CloneNotSupportedException { return super.clone(); }
+
+    public AInstrumentByFiatCrossStrategy getFigiStrategy(String figi) {
+        if (!investStrategyMap.containsKey(figi)) {
+            try {
+                investStrategyMap.put(figi, (AInstrumentByFiatCrossStrategy)this.clone());
+            } catch (CloneNotSupportedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return investStrategyMap.get(figi);
     }
 
     @Builder
