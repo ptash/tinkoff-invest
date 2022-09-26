@@ -77,7 +77,8 @@ public class BuyEma600CrossStrategy extends AInstrumentByFiatCrossStrategy {
          */
 
 
-        FIGIES.put("BBG003QBJKN0", 1); // Allakos Inc
+        FIGIES.put("BBG000QGWY50", 1); // Bluebird Bio Inc
+        FIGIES.put("BBG000J3D1Y8", 1); // OraSure Technologies Inc")
         //FIGIES.put("BBG00W0KZD98", 1); // LI
         //FIGIES.put("BBG000BLY663", 1); // CROCS
         //FIGIES.put("BBG000BPWXK1", 1); // Newmont Goldcorp Corporation

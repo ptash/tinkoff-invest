@@ -8,7 +8,7 @@ import java.util.Map;
 public class BuyProfit1InvestPercent02SellWithMaxProfitCrossTubeStrategy extends BuyProfit1InvestPercent02SellWithMaxProfitCrossStrategy {
     private Map FIGIES = Map.of(
             //"BBG002NLDLV8", 4 // VIPS
-            "BBG00178PGX3", 12    // VK
+            //"BBG00178PGX3", 12    // VK
     );
 
     public Map<String, Integer> getFigies() {
@@ -16,7 +16,7 @@ public class BuyProfit1InvestPercent02SellWithMaxProfitCrossTubeStrategy extends
     }
     public Boolean isTubeAvgDeltaAdvance() { return true; }
 
-    public boolean isEnabled() { return true; }
+    public boolean isEnabled() { return false; }
 
     public boolean isArchive() {return true;}
 }

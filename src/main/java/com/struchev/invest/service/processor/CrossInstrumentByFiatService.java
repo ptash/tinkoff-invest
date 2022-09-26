@@ -62,6 +62,11 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
 
         var ema2 = getEma(figi, currentDateTime, 2, strategy.getInterval(), keyExtractor);
 
+        if (null == smaTube || null == smaSlowest || null == smaSlow || null == ema2 || null == emaFast) {
+            log.info("There is not enough data for the interval: currentDateTime = {}, {}, {}, {}, {}, {}", currentDateTime, smaTube, smaSlowest, smaSlow, smaFast, emaFast);
+            return false;
+        }
+
         chooseStrategy(strategy, smaTube, smaSlowest);
 
         List<Double> avgDelta;
@@ -74,8 +79,8 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             avgDelta = calculateAvgDelta(figi, currentDateTime, strategy, keyExtractor);
         }
 
-        if (null == avgDelta || null == smaTube || null == smaSlowest || null == smaSlow || null == ema2 || null == emaFast) {
-            log.info("There is not enough data for the interval: currentDateTime = {}, {}, {}, {}, {}, {}", currentDateTime, smaTube, smaSlowest, smaSlow, smaFast, emaFast);
+        if (null == avgDelta) {
+            log.info("There is not enough data for the interval: avgDelta = {}", avgDelta);
             return false;
         }
 
