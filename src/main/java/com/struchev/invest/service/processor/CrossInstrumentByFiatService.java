@@ -873,8 +873,8 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         var length = strategy.getAvgLength();
         var ticksFromAvg = length / 2;
 
-        //var lengthPrev = ticksFromAvg;
-        var lengthPrev = strategy.getTicksMoveUp();
+        var lengthPrev = ticksFromAvg;
+        //var lengthPrev = strategy.getTicksMoveUp();
         var candleList = getCandlesByFigiByLength(figi,
                 currentDateTime, lengthPrev + 1, strategy.getInterval());
         var resPrev = calculateAvgDelta2Handler(figi, candleList.get(0).getDateTime(), strategy, keyExtractor);
@@ -946,6 +946,9 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         var top = avg + avgDeltaAbsPlus;
         var error = Math.max(avgDeltaAbsMinus, avgDeltaAbsPlus) * 0.05;
         var needBuy = -1.;
+        if (avgMoveUpWithPrev < 0) {
+            bottom -= avgDeltaAbsPlus;
+        }
         /*
         if (avgMoveUpWithPrev > 0 && avgMoveUpWithPrevPrev < 0) {
             //bottom = avg - error;
