@@ -178,6 +178,11 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             var moveUp = avgDelta.get(4);
             //d = moveUp * price.doubleValue() / 100;
             var needBuy = true;
+            if (strategy.isTubeAvgDeltaAdvance2()) {
+                annotation += " profit2 (" + moveUp + ")";
+            } else {
+                annotation += " profit (" + moveUp + ")";
+            }
             if (false && strategy.isTubeAvgDeltaAdvance2()) {
                 var moveUpPrev = avgDelta.get(6);
                 d = moveUp * price.doubleValue() / 100;
@@ -191,7 +196,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             } else {
                 var expectTubeTop = avgDelta.get(1) + strategy.getEmaFastLength() * d;
                 var expectTubeSize = expectTubeTop - price.doubleValue();
-                annotation += " profit (" + moveUp + "): " + tubeSize + ", " + tubeSizePrice + ", " + expectTubeSize + ">" + expectProfit;
+                annotation += " " + tubeSize + ", " + tubeSizePrice + ", " + expectTubeSize + ">" + expectProfit;
                 if (/*tubeSize > expectProfit && */expectTubeSize > expectProfit
                         && expectTubeSize > tubeSizePrice * strategy.getTubeAvgAdvanceDown()
                         && expectTubeSize * strategy.getTubeAvgAdvanceDown() < tubeSizePrice
