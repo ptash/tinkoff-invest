@@ -9,9 +9,8 @@ import java.time.Duration;
 @Component
 public class BuyProfit1InvestMixStrategy extends BuyEma600CrossStrategy {
 
-    @Qualifier("buyProfit1InvestPercent02SellWithMaxProfitCrossTube2Strategy")
     @Autowired
-    private BuyProfit1InvestPercent02SellWithMaxProfitCrossTube2Strategy investStrategy;
+    private BuyProfit1InvestPercent02SellWithMaxProfitCrossSimpleStrategy investStrategy;
     @Qualifier("buyProfit1InvestPercent02SellWithMaxProfitCrossTubeStrategy")
     @Autowired
     private BuyProfit1InvestPercent02SellWithMaxProfitCrossTubeStrategy crisisStrategy;
