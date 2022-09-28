@@ -12,7 +12,7 @@ public class BuyEma600CrossStrategy extends AInstrumentByFiatCrossStrategy {
     private static final Map FIGIES = new HashMap<String, Integer>();
     static {
         //FIGIES.put("BBG000LWVHN8", 1); // Дагестанская энергосбытовая компания
-        //FIGIES.put("BBG00178PGX3", 1);    // VK
+        FIGIES.put("BBG00178PGX3", 1);    // VK
         /*
         FIGIES.put("BBG000LWVHN8", 1); // Дагестанская энергосбытовая компания
         FIGIES.put("BBG00178PGX3", 1);    // VK
@@ -77,8 +77,8 @@ public class BuyEma600CrossStrategy extends AInstrumentByFiatCrossStrategy {
          */
 
 
-        FIGIES.put("BBG000QGWY50", 1); // Bluebird Bio Inc
-        FIGIES.put("BBG000J3D1Y8", 1); // OraSure Technologies Inc")
+        //FIGIES.put("BBG000QGWY50", 1); // Bluebird Bio Inc
+        //FIGIES.put("BBG000J3D1Y8", 1); // OraSure Technologies Inc")
         //FIGIES.put("BBG00W0KZD98", 1); // LI
         //FIGIES.put("BBG000BLY663", 1); // CROCS
         //FIGIES.put("BBG000BPWXK1", 1); // Newmont Goldcorp Corporation

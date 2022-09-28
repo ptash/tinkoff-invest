@@ -10,6 +10,8 @@ public class BuyProfit1InvestMixDelaySLNullStrategy extends BuyProfit1InvestMixS
     @Qualifier("buyEma600DeadLineP1DeadLine2InvestPercent01DelaySLNullCrossStrategy")
     @Autowired
     private BuyEma600DeadLineP1DeadLine2InvestPercent01DelaySLNullCrossStrategy investStrategy;
+
+    @Qualifier("buyProfit1InvestPercent02SellWithMaxProfitCrossTubeStrategy")
     @Autowired
     private BuyProfit1InvestPercent02SellWithMaxProfitCrossTubeStrategy crisisStrategy;
 

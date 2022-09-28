@@ -2,6 +2,7 @@ package com.struchev.invest.strategy.instrument_by_fiat_cross;
 
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
 import java.util.Map;
 
 @Component
@@ -15,6 +16,15 @@ public class BuyProfit1InvestPercent02SellWithMaxProfitCrossTubeStrategy extends
         return FIGIES;
     }
     public Boolean isTubeAvgDeltaAdvance() { return true; }
+
+    public SellCriteria getSellCriteria() {
+        return SellCriteria.builder().takeProfitPercent(0.5f).stopLossPercent(1f).build();
+    }
+
+    public Duration getDelayBySL() {
+        return null;
+    }
+    public Integer getDelayPlusBySL() { return 30; }
 
     public boolean isEnabled() { return true; }
 

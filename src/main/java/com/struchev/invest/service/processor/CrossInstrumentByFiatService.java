@@ -177,31 +177,44 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             d += (smaTube.get(smaTube.size() - 1) - smaTube.get(0)) / smaTube.size();
             var moveUp = avgDelta.get(4);
             //d = moveUp * price.doubleValue() / 100;
-            var expectTubeTop = avgDelta.get(1) + strategy.getEmaFastLength() * d;
-            var expectTubeSize = expectTubeTop - price.doubleValue();
-            annotation += " profit (" + moveUp + "): " + tubeSize + ", " + tubeSizePrice + ", " + expectTubeSize + ">" + expectProfit;
-            if (/*tubeSize > expectProfit && */expectTubeSize > expectProfit
-                    && expectTubeSize > tubeSizePrice * strategy.getTubeAvgAdvanceDown()
-                    && expectTubeSize * strategy.getTubeAvgAdvanceDown() < tubeSizePrice
-                    && !(tubeSize < expectProfit * strategy.getTubeAvgAdvanceDown()
+            var needBuy = true;
+            if (false && strategy.isTubeAvgDeltaAdvance2()) {
+                var moveUpPrev = avgDelta.get(6);
+                d = moveUp * price.doubleValue() / 100;
+                needBuy = avgDelta.get(5) > 0;
+                annotation += " moveUp = " + moveUp + " moveUpPrev = " + moveUpPrev + " needBuy = " + needBuy;
+                if (needBuy /*&& price.doubleValue() < avgDelta.get(0)*/) {
+                    isInTube = true;
+                    tubeTopToBy = BigDecimal.valueOf(avgDelta.get(0));
+                    annotation += " needBuy ";
+                }
+            } else {
+                var expectTubeTop = avgDelta.get(1) + strategy.getEmaFastLength() * d;
+                var expectTubeSize = expectTubeTop - price.doubleValue();
+                annotation += " profit (" + moveUp + "): " + tubeSize + ", " + tubeSizePrice + ", " + expectTubeSize + ">" + expectProfit;
+                if (/*tubeSize > expectProfit && */expectTubeSize > expectProfit
+                        && expectTubeSize > tubeSizePrice * strategy.getTubeAvgAdvanceDown()
+                        && expectTubeSize * strategy.getTubeAvgAdvanceDown() < tubeSizePrice
+                        && !(tubeSize < expectProfit * strategy.getTubeAvgAdvanceDown()
                         //&& getPercentMoveUp(smaSlow) < strategy.getPercentMoveUpError()
                         //&& moveUp < 0//strategy.getPercentMoveUpError()
                         && tubeSizePrice * strategy.getTubeAvgAdvanceDown() > tubeSize)
-            ) {
-                annotation += "=t";
-                if (avgDelta.get(3) > 0 && price.compareTo(BigDecimal.valueOf(avgDelta.get(0))) < 0) {
-                    //annotation += " moveUp: " + getPercentMoveUp(smaTube) + " + " + getPercentMoveUp(smaSlowest) + " + " + getPercentMoveUp(smaSlow) + " >= 0";
-                    //var p = getPercentMoveUp(smaTube) + getPercentMoveUp(smaSlowest);
-                    //annotation += " moveUp: " + p;
-                    //if (p <= strategy.getMinPercentTubeMoveUp() || p >= - strategy.getPriceError().doubleValue()) {
-                    isInTube = true;
-                    tubeTopToBy = BigDecimal.valueOf(avgDelta.get(0));
-                    annotation += " new t = " + tubeTopToBy;
-                    //}
+                ) {
+                    annotation += "=t";
+                    if (avgDelta.get(3) > 0 && price.compareTo(BigDecimal.valueOf(avgDelta.get(0))) < 0) {
+                        //annotation += " moveUp: " + getPercentMoveUp(smaTube) + " + " + getPercentMoveUp(smaSlowest) + " + " + getPercentMoveUp(smaSlow) + " >= 0";
+                        //var p = getPercentMoveUp(smaTube) + getPercentMoveUp(smaSlowest);
+                        //annotation += " moveUp: " + p;
+                        //if (p <= strategy.getMinPercentTubeMoveUp() || p >= - strategy.getPriceError().doubleValue()) {
+                        isInTube = true;
+                        tubeTopToBy = BigDecimal.valueOf(avgDelta.get(0));
+                        annotation += " new t = " + tubeTopToBy;
+                        //}
             /*} else if (avgDelta.get(3) > 0 && price.compareTo(investTop) > 0) {
                 isInTube = true;
                 tubeTopToBy = investTop;
                 annotation += " new tt = " + tubeTopToBy;*/
+                    }
                 }
             }
             result = false;
@@ -468,6 +481,11 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
 
         Boolean result = false;
         String annotation = "";
+        //d = moveUp * price.doubleValue() / 100;
+        if (strategy.isTubeAvgDeltaAdvance2()) {
+            var moveUp = avgDelta.get(4);
+            annotation += "moveUp = " + moveUp + " moveUpPrev = " + avgDelta.get(6);
+        }
         if (false && strategy.isSellWithMaxProfit() && profitPercent.compareTo(BigDecimal.ZERO) > 0) {
             if (price.compareTo(BigDecimal.valueOf(smaSlowest.get(smaSlowest.size() - 1))) > 0
                     || (strategy.isSellEma2UpOnBottom() && price.compareTo(BigDecimal.valueOf(smaFast.get(smaFast.size() - 1))) > 0)
@@ -720,6 +738,244 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         );
     }
 
+    private List<List<Double>> calculateAvgDelta2Handler(
+            String figi,
+            OffsetDateTime currentDateTime,
+            AInstrumentByFiatCrossStrategy strategy,
+            Function<? super CandleDomainEntity, ? extends BigDecimal> keyExtractor
+    ) {
+        var length = strategy.getAvgLength();
+        var smaFastAvg = getSma(figi, currentDateTime, length, strategy.getInterval(), keyExtractor, length * 2);
+        var smaFast2Avg = getSma(figi, currentDateTime, 2, strategy.getInterval(), keyExtractor, length * 2);
+        if (smaFastAvg == null || smaFast2Avg == null) {
+            return null;
+        }
+        Double avgDelta = 0.;
+        Double avgDeltaAbsPlus = 0.;
+        Double avgDeltaAbsMinus = 0.;
+        List<Double> avgList = new ArrayList<Double>();
+        List<Double> avgListMPlus = new ArrayList<Double>();
+        List<Double> avgListMMinus = new ArrayList<Double>();
+        //List<Double> avgListD = new ArrayList<Double>();
+        for (var i = 0; i < length; i++) {
+            var point = i + length;
+            Double a = 0.;
+            Double aPlus = 0.;
+            Double aMinus = 0.;
+            Integer aPlusNumber = 0;
+            Integer aMinusNumber = 0;
+            for (var j = 0; j < length; j++) {
+                var delta = smaFast2Avg.get(point - j) - smaFastAvg.get(point - j);
+                a += delta;
+                if (delta >= 0) {
+                    aPlus += delta;
+                    aPlusNumber++;
+                } else {
+                    aMinus += delta;
+                    aMinusNumber++;
+                }
+                //aAbs += Math.abs(smaFast2Avg.get(point - j) - smaFastAvg.get(point - j));
+            }
+            if (i == (length - 1)) {
+                avgDelta = a / length;
+            }
+            var aCur = smaFastAvg.get(point) + a / length;
+            avgList.add(aCur);
+            avgListMPlus.add(aPlusNumber > 0 ? (aPlus / aPlusNumber) : 0.);
+            avgListMMinus.add(aMinusNumber > 0 ? (aMinus / aMinusNumber) : 0.);
+        }
+
+        Integer lengthPlus = 0;
+        Integer lengthMinus = 0;
+        for (var i = 0; i < length; i++) {
+            var point = i + length;
+            Double avgDPlus = 0.;
+            Double avgDMinus = 0.;
+            Integer aPlusNumber = 0;
+            Integer aMinusNumber = 0;
+            for (var j = 0; j < length; j++) {
+                var delta = smaFast2Avg.get(point - j) - smaFastAvg.get(point - j);
+                if (delta > 0) {
+                    avgDPlus += (delta - avgListMPlus.get(i)) * (delta - avgListMPlus.get(i));
+                    aPlusNumber++;
+                } else {
+                    avgDMinus += (delta - avgListMMinus.get(i)) * (delta - avgListMMinus.get(i));
+                    aMinusNumber++;
+                }
+            }
+            if (aPlusNumber > 0) {
+                avgDPlus = Math.sqrt(avgDPlus / aPlusNumber); // среднее квадратичное отклонение средней и smaFast
+            }
+            if (aMinusNumber > 0) {
+                avgDMinus = Math.sqrt(avgDMinus / aMinusNumber); // среднее квадратичное отклонение средней и smaFast
+            }
+
+            Double a = 0.;
+            var num = 0;
+            for (var j = 0; j < length; j++) {
+                var delta = smaFast2Avg.get(point - j) - smaFastAvg.get(point - j);
+                if (delta > 0) {
+                    if (delta <= avgListMPlus.get(i) + avgDPlus) {
+                        a += delta;
+                        num++;
+                    }
+                } else {
+                    if (delta >= avgListMMinus.get(i) - avgDMinus) {
+                        a += delta;
+                        num++;
+                    }
+                }
+            }
+            var aCur = avgList.get(i);
+            if (num > 0) {
+                aCur = smaFastAvg.get(point) + a / num;
+                avgList.set(i, aCur);
+                if (i == (length - 1)) {
+                    avgDelta = a / num;
+                }
+            }
+            var smaFast2Cur = smaFast2Avg.get(point);
+            var delta = smaFast2Cur - aCur;
+            if (delta > 0) {
+                avgDeltaAbsPlus += delta;
+                lengthPlus++;
+            } else {
+                avgDeltaAbsMinus += delta;
+                lengthMinus++;
+            }
+
+        }
+        if (lengthPlus > 0) {
+            avgDeltaAbsPlus = avgDeltaAbsPlus / lengthPlus;
+        }
+        if (lengthMinus > 0) {
+            avgDeltaAbsMinus = avgDeltaAbsMinus / lengthMinus;
+        }
+        return List.of(smaFastAvg, smaFast2Avg, avgList, List.of(avgDeltaAbsPlus, avgDeltaAbsMinus));
+    }
+
+    private Map<String, Double> avgPrevByFigi = new HashMap<>();
+    private Map<String, Double> avgMoveUpWithPrevByFigi = new HashMap<>();
+
+    private List<Double> calculateAvgDelta2(
+            String figi,
+            OffsetDateTime currentDateTime,
+            AInstrumentByFiatCrossStrategy strategy,
+            Function<? super CandleDomainEntity, ? extends BigDecimal> keyExtractor
+    ) {
+        var res = calculateAvgDelta2Handler(figi, currentDateTime, strategy, keyExtractor);
+        var smaFastAvg = res.get(0);
+        var smaFast2Avg = res.get(1);
+        var avgList = res.get(2);
+        var avgDeltaAbsPlus = res.get(3).get(0);
+        var avgDeltaAbsMinus = res.get(3).get(1);
+
+        var length = strategy.getAvgLength();
+        var ticksFromAvg = length / 2;
+
+        var lengthPrev = ticksFromAvg;
+        var candleList = getCandlesByFigiByLength(figi,
+                currentDateTime, lengthPrev + 1, strategy.getInterval());
+        var resPrev = calculateAvgDelta2Handler(figi, candleList.get(0).getDateTime(), strategy, keyExtractor);
+        var avgMoveUpPrev = getPercentMoveUpAvg(resPrev.get(2), ticksFromAvg);
+
+        var candleListPrev = getCandlesByFigiByLength(figi,
+                currentDateTime, lengthPrev * 2 + 1, strategy.getInterval());
+        var resPrevPrev = calculateAvgDelta2Handler(figi, candleListPrev.get(0).getDateTime(), strategy, keyExtractor);
+        var avgMoveUpPrevPrev = getPercentMoveUpAvg(resPrevPrev.get(2), ticksFromAvg);
+
+        Double dPlus = 0.;
+        Double dMinus = 0.;
+        var lengthPlus = 0;
+        var lengthMinus = 0;
+        for (var i = 0; i < length; i++) {
+            var point = i + length;
+            var delta = smaFast2Avg.get(point) - avgList.get(i);
+            if (delta > 0) {
+                dPlus += (delta - avgDeltaAbsPlus) * (delta - avgDeltaAbsPlus);
+                lengthPlus++;
+            } else {
+                dMinus += (delta - avgDeltaAbsMinus) * (delta - avgDeltaAbsMinus);
+                lengthMinus++;
+            }
+        }
+        if (lengthPlus > 0) {
+            dPlus = Math.sqrt(dPlus / lengthPlus); // среднее квадратичное отклонение дельты от средней
+        }
+        if (lengthMinus > 0) {
+            dMinus = Math.sqrt(dMinus / lengthMinus); // среднее квадратичное отклонение дельты от средней
+        }
+        var avgDeltaAbsDPlus = 0.;
+        var avgDeltaAbsDMinus = 0.;
+        var num = 0;
+        lengthPlus = 0;
+        lengthMinus = 0;
+        for (var i = 0; i < length; i++) {
+            var point = i + length;
+            var delta = smaFast2Avg.get(point) - avgList.get(i);
+            if (delta > 0) {
+                if (delta >= avgDeltaAbsPlus + dPlus) {
+                    avgDeltaAbsDPlus += delta;
+                    lengthPlus++;
+                }
+            } else {
+                if (delta <= avgDeltaAbsMinus - dMinus) {
+                    avgDeltaAbsDMinus += delta;
+                    lengthMinus++;
+                }
+            }
+        }
+        if (lengthPlus > 0) {
+            avgDeltaAbsDPlus = avgDeltaAbsDPlus / lengthPlus;
+            avgDeltaAbsPlus = avgDeltaAbsDPlus;
+        }
+        if (lengthMinus > 0) {
+            avgDeltaAbsDMinus = avgDeltaAbsDMinus / lengthMinus;
+            avgDeltaAbsMinus = avgDeltaAbsDMinus;
+        }
+        var smaFastCur = smaFastAvg.get(smaFastAvg.size() - 1);
+        //var avg = smaFastCur + avgDelta;
+        var avgMoveUp = getPercentMoveUpAvg(avgList, ticksFromAvg);
+        var smaFastMoveUp = getPercentMoveUpAvg(smaFastAvg, ticksFromAvg);
+        var avgMoveUpWithPrev = (avgMoveUp - avgMoveUpPrev) / lengthPrev;
+        var avgMoveUpWithPrevPrev = (avgMoveUpPrev - avgMoveUpPrevPrev) / lengthPrev;
+        var avg = avgList.get(length - 1);
+        avg += avgMoveUpWithPrev * avg * ticksFromAvg / 100;
+        var bottom = avg + avgDeltaAbsMinus;
+        var top = avg + avgDeltaAbsPlus;
+        var error = Math.max(avgDeltaAbsMinus, avgDeltaAbsPlus) * 0.05;
+        var needBuy = -1.;
+        if (avgMoveUpWithPrev > 0 && avgMoveUpWithPrevPrev < 0) {
+            //bottom = avg - error;
+            //needBuy = 1.;
+        } else {
+            //top = avg + error;
+        }
+        var bottomPrev = avgPrevByFigi.getOrDefault(figi, -1.);
+        var avgMoveUpWithPrevPrev1 = avgMoveUpWithPrevByFigi.getOrDefault(figi, -1.);
+        var price = smaFast2Avg.get(smaFast2Avg.size() - 1);
+        var expectProfit = price * strategy.getSellCriteria().getTakeProfitPercent() / 100.;
+        if ((top - bottom) > expectProfit) {
+            if (bottomPrev > 0
+                    && avgMoveUpWithPrev < 0
+                    && avgMoveUpWithPrevPrev > 0
+                    && avgMoveUpWithPrevPrev1 < avgMoveUpWithPrev
+                    && isCrossover(
+                    List.of(smaFast2Avg.get(smaFast2Avg.size() - 2), price),
+                    List.of(bottomPrev, bottom)
+            )
+            ) {
+                needBuy = 1.;
+            }
+        } else if (price < bottom && (top - price) > expectProfit){
+            needBuy = 1.;
+        }
+        avgPrevByFigi.put(figi, bottom);
+        avgMoveUpWithPrevByFigi.put(figi, avgMoveUpWithPrev);
+        return List.of(bottom, top, avg, Math.max(dPlus, dMinus), smaFastCur, avgMoveUpWithPrev, smaFastMoveUp, strategy.getTicksMoveUp().doubleValue(), needBuy, avgMoveUpWithPrevPrev);
+    }
+
+
     private List<Double> calculateAvgDelta(
             String figi,
             OffsetDateTime currentDateTime,
@@ -894,7 +1150,12 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             List<Double> smaSlowest,
             List<Double> smaTube
     ) {
-        var res = calculateAvgDelta(figi, currentDateTime, strategy, keyExtractor);
+        List<Double> res;
+        if (strategy.isTubeAvgDeltaAdvance2()) {
+            res = calculateAvgDelta2(figi, currentDateTime, strategy, keyExtractor);
+        } else {
+            res = calculateAvgDelta(figi, currentDateTime, strategy, keyExtractor);
+        }
         var bottom = res.get(0);
         var top = res.get(1);
         var avg = res.get(2);
@@ -903,6 +1164,17 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         var avgListPercentMoveUp = res.get(5);
         var smaFastPercentMoveUp = res.get(6);
         Integer ticksMoveUp = res.get(7).intValue();
+        var moveUp = ((avgListPercentMoveUp + smaFastPercentMoveUp + getPercentMoveUp(emaFast, ticksMoveUp)) / 3
+                + getPercentMoveUp(smaSlow, ticksMoveUp)
+                + getPercentMoveUp(smaSlowest, ticksMoveUp)
+                + getPercentMoveUp(smaTube, ticksMoveUp)
+        ) / ticksMoveUp / 4;
+
+        if (strategy.isTubeAvgDeltaAdvance2()) {
+            moveUp = (avgListPercentMoveUp);
+            return List.of(bottom, top, avg, d, moveUp, res.get(8), res.get(9));
+        }
+
         var isMoveUp = avgListPercentMoveUp > strategy.getPercentMoveUpError()
                 //&& smaFastPercentMoveUp > strategy.getPercentMoveUpError()
                 //&& getPercentMoveUp(emaFast) > -strategy.getPercentMoveUpError()
@@ -954,11 +1226,6 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             //    bottom = Math.min(bottom, smaFastCur - (smaSlowCur - smaFastCur));
             //}
         }
-        var moveUp = ((avgListPercentMoveUp + smaFastPercentMoveUp + getPercentMoveUp(emaFast, ticksMoveUp)) / 3
-                + getPercentMoveUp(smaSlow, ticksMoveUp)
-                + getPercentMoveUp(smaSlowest, ticksMoveUp)
-                + getPercentMoveUp(smaTube, ticksMoveUp)
-        ) / ticksMoveUp / 4;
         if (false
                 && moveUp > 0//strategy.getPercentMoveUpError()
                 && smaFastCur < avg// - d
@@ -1011,6 +1278,17 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         int xCur = x.size() - 1;
         int actualTicks = xCur - xPrev;
         return ((x.get(xCur) - x.get(xPrev)) * 100) * ticks / actualTicks / x.get(xPrev);
+    }
+
+    private Double getPercentMoveUpAvg(List<Double> x, Integer ticks) {
+        int xPrev = Math.max(0, x.size() - 1 - ticks);
+        int xCur = x.size() - 1;
+        int actualTicks = xCur - xPrev;
+        Double sum = 0.;
+        for (var i = xPrev; i < xCur; i++) {
+            sum += x.get(i + 1) - x.get(i);
+        }
+        return (sum * 100) / actualTicks / x.get(xPrev);
     }
 
     private List<Double> getSma(
