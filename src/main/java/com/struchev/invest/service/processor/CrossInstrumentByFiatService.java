@@ -947,7 +947,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         var error = Math.max(avgDeltaAbsMinus, avgDeltaAbsPlus) * 0.05;
         var needBuy = -1.;
         if (avgMoveUpWithPrev < 0) {
-            bottom -= avgDeltaAbsPlus;
+            //bottom -= avgDeltaAbsPlus;
             //bottom -= dPlus;
             top = Math.max(avg - avgDeltaAbsPlus, avg - dMinus + error);
         }
