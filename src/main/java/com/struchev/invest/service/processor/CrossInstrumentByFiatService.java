@@ -873,8 +873,8 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         var length = strategy.getAvgLength();
         var ticksFromAvg = length / 2;
 
-        var lengthPrev = ticksFromAvg;
-        //var lengthPrev = strategy.getTicksMoveUp();
+        //var lengthPrev = ticksFromAvg;
+        var lengthPrev = strategy.getTicksMoveUp();
         var candleList = getCandlesByFigiByLength(figi,
                 currentDateTime, lengthPrev + 1, strategy.getInterval());
         var resPrev = calculateAvgDelta2Handler(figi, candleList.get(0).getDateTime(), strategy, keyExtractor);
