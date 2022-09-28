@@ -873,16 +873,17 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         var length = strategy.getAvgLength();
         var ticksFromAvg = length / 2;
 
-        var lengthPrev = ticksFromAvg;
+        //var lengthPrev = ticksFromAvg;
+        var lengthPrev = strategy.getTicksMoveUp();
         var candleList = getCandlesByFigiByLength(figi,
                 currentDateTime, lengthPrev + 1, strategy.getInterval());
         var resPrev = calculateAvgDelta2Handler(figi, candleList.get(0).getDateTime(), strategy, keyExtractor);
         var avgMoveUpPrev = getPercentMoveUpAvg(resPrev.get(2), ticksFromAvg);
 
-        var candleListPrev = getCandlesByFigiByLength(figi,
-                currentDateTime, lengthPrev * 2 + 1, strategy.getInterval());
-        var resPrevPrev = calculateAvgDelta2Handler(figi, candleListPrev.get(0).getDateTime(), strategy, keyExtractor);
-        var avgMoveUpPrevPrev = getPercentMoveUpAvg(resPrevPrev.get(2), ticksFromAvg);
+        //var candleListPrev = getCandlesByFigiByLength(figi,
+        //        currentDateTime, lengthPrev * 2 + 1, strategy.getInterval());
+        //var resPrevPrev = calculateAvgDelta2Handler(figi, candleListPrev.get(0).getDateTime(), strategy, keyExtractor);
+        //var avgMoveUpPrevPrev = getPercentMoveUpAvg(resPrevPrev.get(2), ticksFromAvg);
 
         Double dPlus = 0.;
         Double dMinus = 0.;
@@ -938,13 +939,14 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         var avgMoveUp = getPercentMoveUpAvg(avgList, ticksFromAvg);
         var smaFastMoveUp = getPercentMoveUpAvg(smaFastAvg, ticksFromAvg);
         var avgMoveUpWithPrev = (avgMoveUp - avgMoveUpPrev) / lengthPrev;
-        var avgMoveUpWithPrevPrev = (avgMoveUpPrev - avgMoveUpPrevPrev) / lengthPrev;
+        //var avgMoveUpWithPrevPrev = (avgMoveUpPrev - avgMoveUpPrevPrev) / lengthPrev;
         var avg = avgList.get(length - 1);
         avg += avgMoveUpWithPrev * avg * ticksFromAvg / 100;
         var bottom = avg + avgDeltaAbsMinus;
         var top = avg + avgDeltaAbsPlus;
         var error = Math.max(avgDeltaAbsMinus, avgDeltaAbsPlus) * 0.05;
         var needBuy = -1.;
+        /*
         if (avgMoveUpWithPrev > 0 && avgMoveUpWithPrevPrev < 0) {
             //bottom = avg - error;
             //needBuy = 1.;
@@ -969,10 +971,10 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             }
         } else if (price < bottom && (top - price) > expectProfit){
             needBuy = 1.;
-        }
+        }*/
         avgPrevByFigi.put(figi, bottom);
         avgMoveUpWithPrevByFigi.put(figi, avgMoveUpWithPrev);
-        return List.of(bottom, top, avg, Math.max(dPlus, dMinus), smaFastCur, avgMoveUpWithPrev, smaFastMoveUp, strategy.getTicksMoveUp().doubleValue(), needBuy, avgMoveUpWithPrevPrev);
+        return List.of(bottom, top, avg, Math.max(dPlus, dMinus), smaFastCur, avgMoveUpWithPrev, smaFastMoveUp, strategy.getTicksMoveUp().doubleValue(), needBuy, -1./*avgMoveUpWithPrevPrev*/);
     }
 
 
