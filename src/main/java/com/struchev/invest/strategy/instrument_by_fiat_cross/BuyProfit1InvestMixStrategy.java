@@ -1,6 +1,7 @@
 package com.struchev.invest.strategy.instrument_by_fiat_cross;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
@@ -25,8 +26,24 @@ public class BuyProfit1InvestMixStrategy extends ABuyEma600CrossStrategy {
 
     @Autowired
     private BuyProfit1InvestPercent02SellWithMaxProfitCrossSimpleStrategy investStrategy;
+
+    @Qualifier("buyProfit1InvestPercent02SellWithMaxProfitCrossTubeStrategy")
     @Autowired
     private BuyProfit1InvestPercent02SellWithMaxProfitCrossTubeStrategy crisisStrategy;
+
+    public Integer getAvgLength() {
+        if (isInvestStrategy) {
+            return getInvestStrategy().getAvgLength();
+        }
+        return getCrisisStrategy().getAvgLength();
+    }
+
+    public Boolean isTubeAvgDeltaAdvance2() {
+        if (isInvestStrategy) {
+            return getInvestStrategy().isTubeAvgDeltaAdvance2();
+        }
+        return getCrisisStrategy().isTubeAvgDeltaAdvance2();
+    }
 
     public AInstrumentByFiatCrossStrategy getInvestStrategy() {
         return investStrategy;

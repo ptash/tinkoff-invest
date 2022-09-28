@@ -9,8 +9,9 @@ import java.time.Duration;
 @Component
 public class BuyProfit1InvestMixStrategy extends BuyEma600CrossStrategy {
 
+    @Qualifier("buyProfit1InvestPercent02SellWithMaxProfitCrossTube2Strategy")
     @Autowired
-    private BuyProfit1InvestPercent02SellWithMaxProfitCrossSimpleStrategy investStrategy;
+    private BuyProfit1InvestPercent02SellWithMaxProfitCrossTube2Strategy investStrategy;
     @Qualifier("buyProfit1InvestPercent02SellWithMaxProfitCrossTubeStrategy")
     @Autowired
     private BuyProfit1InvestPercent02SellWithMaxProfitCrossTubeStrategy crisisStrategy;
@@ -21,6 +22,20 @@ public class BuyProfit1InvestMixStrategy extends BuyEma600CrossStrategy {
 
     public AInstrumentByFiatCrossStrategy getCrisisStrategy() {
         return crisisStrategy;
+    }
+
+    public Integer getAvgLength() {
+        if (isInvestStrategy) {
+            return getInvestStrategy().getAvgLength();
+        }
+        return getCrisisStrategy().getAvgLength();
+    }
+
+    public Boolean isTubeAvgDeltaAdvance2() {
+        if (isInvestStrategy) {
+            return getInvestStrategy().isTubeAvgDeltaAdvance2();
+        }
+        return getCrisisStrategy().isTubeAvgDeltaAdvance2();
     }
 
     public Boolean isTubeAvgDeltaAdvance() {
