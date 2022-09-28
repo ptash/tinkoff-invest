@@ -1,7 +1,7 @@
 select a.figi_title                                                   figi,
        a.strategy                                                     strategy,
-       round(100 * a.total / (a.first_price * a.lots), 2)             profit_by_robot,
-       round(100 * (a.last_price - a.first_price) / a.first_price, 2) profit_by_invest,
+       coalesce(round(100 * a.total / (a.first_price * a.lots), 2), -555)             profit_by_robot,
+       coalesce(round(100 * (a.last_price - a.first_price) / a.first_price, 2), -555) profit_by_invest,
        a.offers                                                       offers,
        a.first_price                                                  first_price,
        a.last_price                                                   last_price
@@ -17,7 +17,7 @@ from (select o.figi_title,
                                                      AND c.date_time <= (select max(sell_date_time) FROM offer where figi = o.figi AND strategy=o.strategy)
                                                      AND c.date_time >= (select min(sell_date_time) FROM offer  where figi = o.figi AND strategy=o.strategy)
               order by c.date_time desc limit 1) last_price,
-             (select oi.purchase_price from offer oi where oi.figi = o.figi order by oi.id limit 1)         first_price
+             (select oi.purchase_price from offer oi where oi.figi = o.figi AND oi.strategy = o.strategy order by oi.id limit 1)         first_price
       from offer o
       group by figi_title, figi, strategy, lots) a
 order by figi_title, profit_by_robot desc, strategy
