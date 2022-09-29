@@ -11,13 +11,13 @@ import java.util.Map;
 public class BuyProfit1InvestMixStrategy extends ABuyEma600CrossStrategy {
 
     private Map FIGIES = Map.of(
-            "BBG00178PGX3", 12    // VK
-            /*
+            //"BBG00178PGX3", 12    // VK
+
             "BBG000J3D1Y8", 6, // OraSure Technologies Inc
             "BBG005F1DK91", 2, // G1
-            "BBG004NLQHL0", 2, // Fastly Inc
-            "BBG000BLY663", 1, // CROCS
-            "BBG0016XJ8S0", 7    // TAL Education Group*/
+            //"BBG004NLQHL0", 2, // Fastly Inc
+            "BBG000BLY663", 1, // CROCS // в архив
+            "BBG0016XJ8S0", 7    // TAL Education Group
     );
 
     public Map<String, Integer> getFigies() {

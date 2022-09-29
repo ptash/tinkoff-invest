@@ -7,8 +7,11 @@ import java.util.Map;
 @Component
 public class BuyProfit1InvestPercent02SellWithMaxProfitCrossTube2Strategy extends BuyProfit1InvestPercent02SellWithMaxProfitCrossTubeStrategy {
     private Map FIGIES = Map.of(
+            /*
             "BBG004S681W1", 20,    // МТС
-            "BBG00178PGX3", 12    // VK
+            "BBG00178PGX3", 12    // VK */
+            "BBG000BLY663", 1, // CROCS
+            "BBG004NLQHL0", 2 // Fastly Inc
     );
 
     public Map<String, Integer> getFigies() {
