@@ -15,8 +15,8 @@ public class BuyEma600CrossStrategy extends AInstrumentByFiatCrossStrategy {
         //FIGIES.put("BBG004S681W1", 1); // МТС
         //FIGIES.put("BBG00Y29RP99", 1); // OZON
         //FIGIES.put("BBG004730N88", 1); // Sberbank Of Russia
-        FIGIES.put("BBG004S68696", 1); // Распадская
-        FIGIES.put("BBG002W2FT69", 1); // АбрауДюрсо
+        //FIGIES.put("BBG004S68696", 1); // Распадская
+        //FIGIES.put("BBG002W2FT69", 1); // АбрауДюрсо
         FIGIES.put("BBG000LNHHJ9", 1); // КАМАЗ
         FIGIES.put("BBG004S68BH6", 1); // ПИК
         /*
