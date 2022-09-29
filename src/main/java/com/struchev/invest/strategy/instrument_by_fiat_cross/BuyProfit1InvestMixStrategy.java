@@ -16,7 +16,7 @@ public class BuyProfit1InvestMixStrategy extends ABuyEma600CrossStrategy {
             "BBG000J3D1Y8", 6, // OraSure Technologies Inc
             "BBG005F1DK91", 2, // G1
             //"BBG004NLQHL0", 2, // Fastly Inc
-            "BBG000BLY663", 1, // CROCS // в архив
+            //"BBG000BLY663", 1, // CROCS // в архив
             "BBG0016XJ8S0", 7    // TAL Education Group
     );
 
