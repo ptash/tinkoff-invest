@@ -63,6 +63,15 @@ public class OrderDomainEntity {
     @Column(name = "sell_order_id", nullable = true)
     private String sellOrderId;
 
+    @Column(name = "sell_limit_order_id", nullable = true)
+    private String sellLimitOrderId;
+
+    @Column(name = "sell_limit_order_uuid", nullable = true)
+    private String sellLimitOrderUuid;
+
+    @Column(name = "sell_price_limit_wanted", nullable = true, scale = 8, precision = 19)
+    private BigDecimal sellPriceLimitWanted;
+
     @Column(name = "sell_price", nullable = true, scale = 8, precision = 19)
     private BigDecimal sellPrice;
 
@@ -91,6 +100,7 @@ public class OrderDomainEntity {
     private String currency;
 
     private Integer lots;
+    private Integer cellLots;
 
     @Type(type = "jsonb")
     @Column(name = "details", columnDefinition = "jsonb")

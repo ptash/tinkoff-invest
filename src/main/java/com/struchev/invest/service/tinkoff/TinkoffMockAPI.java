@@ -35,6 +35,14 @@ public class TinkoffMockAPI extends ATinkoffAPI {
                 .build();
     }
 
+    public OrderResult sellLimit(InstrumentService.Instrument instrument, BigDecimal price, Integer count, String uuid, String orderId) {
+        return OrderResult.builder().build();
+    }
+
+    public OrderResult closeSellLimit(InstrumentService.Instrument instrument, String orderId) {
+        return OrderResult.builder().build();
+    }
+
     @Override
     public Boolean checkGoodSell(InstrumentService.Instrument instrument, BigDecimal price, Integer count, BigDecimal priceError) {
         return true;

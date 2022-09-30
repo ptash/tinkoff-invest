@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.PostConstruct;
 import javax.transaction.Transactional;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -84,7 +84,43 @@ public class OrderService {
         order.setPurchaseOrderId(result.getOrderId());
         order = orderRepository.save(order);
 
+        order = openLimitOrder(order, strategy);
+
         orders.add(order);
+        return order;
+    }
+
+    @Transactional
+    public synchronized OrderDomainEntity openLimitOrder(OrderDomainEntity order, AStrategy strategy) {
+        if (strategy.getSellLimitCriteria() == null) {
+            return order;
+        }
+        if (strategy.getSellLimitCriteria().getExitProfitPercent() == null || strategy.getSellLimitCriteria().getExitProfitPercent() <= 0) {
+            return order;
+        }
+        var instrument = instrumentService.getInstrument(order.getFigi());
+        var limitPrice = order.getPurchasePrice().multiply(BigDecimal.valueOf((strategy.getSellLimitCriteria().getExitProfitPercent() + 100.)/100.));
+        var lots = order.getLots();
+        if (order.getCellLots() != null) {
+            lots -= order.getCellLots().intValue();
+        }
+        var result = tinkoffOrderAPI.sellLimit(instrument, limitPrice, lots, order.getSellLimitOrderUuid(), order.getSellLimitOrderId());
+        if (null != result.getOrderUuid() && (null == order.getSellLimitOrderUuid() || !result.getOrderUuid().equals(order.getSellLimitOrderUuid()))) {
+            order.setSellLimitOrderUuid(result.getOrderUuid());
+            order = orderRepository.save(order);
+        }
+        if (null != result.getOrderId() && (null == order.getSellLimitOrderId() || !result.getOrderId().equals(order.getSellLimitOrderId()))) {
+            order.setSellLimitOrderId(result.getOrderId());
+            order = orderRepository.save(order);
+        }
+        if (order.getSellPriceLimitWanted() == null || !order.getSellPriceLimitWanted().equals(limitPrice)) {
+            order.setSellPriceLimitWanted(limitPrice);
+            order = orderRepository.save(order);
+        }
+        if (null != result.getLots() && result.getLots() > 0) {
+            order.setSellDateTime(OffsetDateTime.now());
+            order = setOrderInfo(order, result);
+        }
         return order;
     }
 
@@ -101,14 +137,38 @@ public class OrderService {
             throw new RuntimeException("checkGoodSell return false for figi " + instrument.getFigi());
         }
 
-        var result = tinkoffOrderAPI.sell(instrument, candle.getClosingPrice(), order.getLots());
+        var lots = order.getLots();
+        if (order.getCellLots() != null) {
+            lots -= order.getCellLots().intValue();
+        }
+        if (order.getSellLimitOrderId() != null) {
+            var closeResult = tinkoffOrderAPI.closeSellLimit(instrument, order.getSellLimitOrderId());
+            if (null != closeResult.getLots() && closeResult.getLots() > 0) {
+                order.setSellDateTime(OffsetDateTime.now());
+                order = setOrderInfo(order, closeResult);
+                lots -= closeResult.getLots().intValue();
+            }
+        }
+        if (lots > 0) {
+            var result = tinkoffOrderAPI.sell(instrument, candle.getClosingPrice(), lots);
 
-        order.setSellDateTime(candle.getDateTime());
+            order.setSellDateTime(candle.getDateTime());
+            order = setOrderInfo(order, result);
+        }
 
+        return order;
+    }
+
+    private OrderDomainEntity setOrderInfo(OrderDomainEntity order, ITinkoffOrderAPI.OrderResult result) {
         order.setSellOrderId(result.getOrderId());
         order.setSellCommissionInitial(result.getCommissionInitial());
         order.setSellCommission(result.getCommission());
         order.setSellPrice(result.getPrice());
+        if (result.getLots() != null) {
+            var lots = order.getCellLots() == null ? 0 : order.getCellLots();
+            lots += result.getLots().intValue();
+            order.setCellLots(lots);
+        }
         order.setSellProfit(result.getPrice().subtract(order.getPurchasePrice()));
         order = orderRepository.save(order);
 

@@ -13,8 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 
 /**
  * Сервис обрабатывает поток свечей
@@ -157,6 +155,9 @@ public class PurchaseService {
                     order = orderService.openOrder(candleDomainEntity, strategy, currentPrices);
 
                     notificationService.sendBuyInfo(strategy, order, candleDomainEntity);
+
+                    //order = orderService.openLimitOrder(order, strategy);
+                    notificationService.sendSellLimitInfo(strategy, order, candleDomainEntity);
                 }
                 return;
             }
@@ -173,6 +174,12 @@ public class PurchaseService {
                 order = orderService.closeOrder(candleDomainEntity, strategy);
                 notificationService.sendSellInfo(strategy, order, candleDomainEntity);
                 return;
+            } else {
+                var orderId = order.getSellOrderId();
+                order = orderService.openLimitOrder(order, strategy);
+                if (orderId != order.getSellOrderId() || order.getSellDateTime() != null) {
+                    notificationService.sendSellLimitInfo(strategy, order, candleDomainEntity);
+                }
             }
         });
     }

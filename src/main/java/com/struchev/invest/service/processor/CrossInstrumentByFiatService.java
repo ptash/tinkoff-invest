@@ -63,7 +63,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         var ema2 = getEma(figi, currentDateTime, 2, strategy.getInterval(), keyExtractor);
 
         if (null == smaTube || null == smaSlowest || null == smaSlow || null == ema2 || null == emaFast) {
-            log.info("There is not enough data for the interval: currentDateTime = {}, {}, {}, {}, {}, {}", currentDateTime, smaTube, smaSlowest, smaSlow, smaFast, emaFast);
+            log.info("Buy: there is not enough data for the interval: currentDateTime = {}, {}, {}, {}, {}, {}", currentDateTime, smaTube, smaSlowest, smaSlow, smaFast, emaFast);
             return false;
         }
 
@@ -463,6 +463,11 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
 
         var smaFast = getSma(figi, currentDateTime, strategy.getSmaFastLength(), strategy.getInterval(), keyExtractor);
 
+        if (null == smaTube || null == smaSlowest || null == smaSlow || null == ema2 || null == emaFast) {
+            log.info("Cell: there is not enough data for the interval: currentDateTime = {}, {}, {}, {}, {}, {}", currentDateTime, smaTube, smaSlowest, smaSlow, smaFast, emaFast);
+            return false;
+        }
+
         List<Double> avgDelta;
         if (strategy.isTubeAvgDeltaAdvance()) {
             //avgDelta = calculateTubeAvgDelta(figi, currentDateTime, strategy, keyExtractor);
@@ -472,9 +477,8 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         } else {
             avgDelta = calculateAvgDelta(figi, currentDateTime, strategy, keyExtractor);
         }
-
-        if (null == avgDelta || null == smaTube || null == smaSlowest || null == smaSlow || null == ema2 || null == emaFast) {
-            log.info("There is not enough data for the interval: currentDateTime = {}, {}, {}, {}, {}, {}", currentDateTime, smaTube, smaSlowest, smaSlow, smaFast, emaFast);
+        if (null == avgDelta) {
+            log.info("Cell: there is not enough data for the interval: currentDateTime = {}, {}", currentDateTime, avgDelta);
             return false;
         }
 

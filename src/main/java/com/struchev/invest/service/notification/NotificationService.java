@@ -100,6 +100,28 @@ public class NotificationService {
         this.sendMessageAndLog(msg);
     }
 
+    public void sendSellLimitInfo(AStrategy strategy, OrderDomainEntity order, CandleDomainEntity candle) {
+        if (order.getSellLimitOrderId() == null) {
+            return;
+        }
+        if (order.getCellLots() == null || order.getCellLots() != order.getLots()) {
+            var msg = String.format("Sell limit open %s (%s), %s (%s) %s. Wanted: %s", candle.getFigi(), order.getFigiTitle(),
+                    order.getSellLimitOrderId(), order.getCellLots(), order.getStrategy(), order.getSellPriceLimitWanted());
+            this.sendMessageAndLog(msg);
+            return;
+        }
+        log.info(
+                getOfferReportLogMarker(strategy, candle.getFigi()),
+                "{} | S | {}",
+                formatDateTime(order.getSellDateTime()),
+                order.getSellPrice(),
+                order.getSellPrice()
+        );
+        var msg = String.format("Sell limit success %s (%s), %s (%s), %s, %s. Wanted: %s", candle.getFigi(), order.getFigiTitle(),
+                order.getSellPrice(), order.getSellProfit(), order.getSellDateTime(), order.getStrategy(), order.getSellPriceLimitWanted());
+        this.sendMessageAndLog(msg);
+    }
+
     public String formatDateTime(OffsetDateTime date) {
         return date.atZoneSimilarLocal(ZoneId.systemDefault()).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
     }

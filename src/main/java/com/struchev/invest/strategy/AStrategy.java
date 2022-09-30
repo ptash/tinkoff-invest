@@ -1,6 +1,9 @@
 package com.struchev.invest.strategy;
 
+import com.struchev.invest.strategy.instrument_by_fiat_cross.AInstrumentByFiatCrossStrategy;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
 import lombok.Getter;
 
 import java.math.BigDecimal;
@@ -63,6 +66,15 @@ public abstract class AStrategy {
         @Getter
         String title;
     }
+
+    @Builder
+    @Data
+    public static class SellLimitCriteria {
+        // Процент (take profit), если цена покупки растет на него, продаем в любом случае
+        Float exitProfitPercent;
+    }
+
+    public AStrategy.SellLimitCriteria getSellLimitCriteria() { return null; }
 
     public abstract Type getType();
 

@@ -14,6 +14,8 @@
             <th>Lots</th>
             <th>Purchase price</th>
             <th>Purchase time</th>
+            <th>Sell limit price</th>
+            <th>Sell lots</th>
             <th>Sell price</th>
             <th>Sell time</th>
             <th>Commission</th>
@@ -30,6 +32,8 @@
             <td th:text="${o.lots}"/>
             <td th:text="${#numbers.formatDecimal(o.purchasePrice, 1, 4, 'DEFAULT')}"/>
             <td th:text="${{o.purchaseDateTime}}"/>
+            <td th:text="${o.sellPriceLimitWanted == null ? null : #numbers.formatDecimal(o.sellPriceLimitWanted, 1, 4, 'DEFAULT')}"/>
+            <td th:text="${o.cellLots}"/>
             <td th:text="${o.sellPrice == null ? null : #numbers.formatDecimal(o.sellPrice, 1, 4, 'DEFAULT')}"/>
             <td th:text="${{o.sellDateTime}}"/>
             <td th:text="${#numbers.formatDecimal(o.purchaseCommission.add(o.sellCommission == null ? 0 : o.sellCommission), 1, 2, 'DEFAULT')}"/>

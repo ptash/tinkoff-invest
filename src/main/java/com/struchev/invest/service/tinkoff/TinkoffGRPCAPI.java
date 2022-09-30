@@ -36,6 +36,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                     .commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
                     .commission(toBigDecimal(result.getInitialCommission(), 8))
                     .price(toBigDecimal(result.getExecutedOrderPrice(), 8, price))
+                    .lots(result.getLotsExecuted())
                     .build();
         } else {
             var result = getApi().getOrdersService().postOrderSync(instrument.getFigi(), quantity, quotation,
@@ -45,8 +46,152 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                     .commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
                     .commission(getExecutedCommission(result))
                     .price(toBigDecimal(result.getExecutedOrderPrice(), 8, price))
+                    .lots(result.getLotsExecuted())
                     .build();
         }
+    }
+
+    public OrderResult closeSellLimit(InstrumentService.Instrument instrument, String orderId) {
+        var orderResultBuilder = OrderResult.builder();
+        if (null == orderId) {
+            orderResultBuilder.build();
+        }
+        log.info("Close sell limit with: figi {}, acc {}, orderId {}",
+                instrument.getFigi(), getAccountId(), orderId);
+        try {
+            if (getIsSandboxMode()) {
+                getApi().getSandboxService().cancelOrderSync(getAccountId(), orderId);
+            } else {
+                getApi().getOrdersService().cancelOrderSync(getAccountId(), orderId);
+            }
+            return checkSellLimit(instrument, orderId);
+        } catch (Exception e) {
+            log.warn("Error in close sellLimit {}", instrument.getFigi(), e);
+            orderResultBuilder.exception(e);
+        }
+        return OrderResult.builder().build();
+    }
+
+    private OrderResult checkSellLimit(InstrumentService.Instrument instrument, String orderId) {
+        var orderResultBuilder = OrderResult.builder();
+        if (null == orderId) {
+            orderResultBuilder.build();
+        }
+        log.info("Check limit postOrderSync with: figi {}, acc {}, orderId {}",
+                instrument.getFigi(), getAccountId(), orderId);
+
+        try {
+            orderResultBuilder.active(true);
+            if (getIsSandboxMode()) {
+                var result = getApi().getSandboxService().getOrderStateSync(getAccountId(), orderId);
+                orderResultBuilder
+                        .orderId(result.getOrderId());
+                if (result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_FILL_VALUE
+                        || result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_PARTIALLYFILL_VALUE
+                ) {
+                    if (result.hasExecutedOrderPrice() && !isZero(result.getExecutedOrderPrice())) {
+                        orderResultBuilder.commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
+                                .commission(toBigDecimal(result.getInitialCommission(), 8))
+                                .lots(result.getLotsExecuted())
+                                .price(toBigDecimal(result.getExecutedOrderPrice(), 8));
+                    }
+                } else if (result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_REJECTED_VALUE
+                        || result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_CANCELLED_VALUE
+                ) {
+                    orderResultBuilder.active(false);
+                }
+            } else {
+                var result = getApi().getOrdersService().getOrderStateSync(getAccountId(), orderId);
+                orderResultBuilder
+                        .orderId(result.getOrderId());
+                if (result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_FILL_VALUE
+                        || result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_PARTIALLYFILL_VALUE
+                ) {
+                    if (result.hasExecutedOrderPrice() && !isZero(result.getExecutedOrderPrice())) {
+                        orderResultBuilder.commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
+                                .commission(getExecutedCommission(result))
+                                .lots(result.getLotsExecuted())
+                                .price(toBigDecimal(result.getExecutedOrderPrice(), 8));
+                    }
+                } else if (result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_REJECTED_VALUE
+                        || result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_CANCELLED_VALUE
+                ) {
+                    orderResultBuilder.active(false);
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Error in check sellLimit {}", instrument.getFigi(), e);
+            orderResultBuilder.exception(e);
+        }
+        return orderResultBuilder.build();
+    }
+
+    public OrderResult sellLimit(InstrumentService.Instrument instrument, BigDecimal price, Integer count, String uuid, String orderId) {
+        var orderResultBuilder = OrderResult.builder();
+        if (orderId != null) {
+            var res = checkSellLimit(instrument, orderId);
+            if (res.getActive()) {
+                return res;
+            }
+            if (res.getLots() > 0) {
+                orderResultBuilder
+                        .lots(res.lots)
+                        .price(res.getPrice())
+                        .commission(res.getCommission());
+            }
+            // новую будем создавать
+            uuid = null;
+        }
+
+        long quantity = count / instrument.getLot();
+        var quotation = Quotation.newBuilder()
+                .setUnits(price.longValue())
+                .setNano(price.remainder(BigDecimal.ONE).movePointRight(9).intValue())
+                .build();
+        if (uuid == null) {
+            uuid = UUID.randomUUID().toString();
+            orderResultBuilder.orderUuid(uuid);
+        }
+        log.info("Send limit postOrderSync with: figi {}, quantity {}, quotation {}, direction {}, acc {}, type {}, id {}",
+                instrument.getFigi(), quantity, quotation, OrderDirection.ORDER_DIRECTION_SELL, getAccountId(), OrderType.ORDER_TYPE_LIMIT, uuid);
+
+        try {
+            if (getIsSandboxMode()) {
+                var result = getApi().getSandboxService().postOrderSync(instrument.getFigi(), quantity, quotation,
+                        OrderDirection.ORDER_DIRECTION_SELL, getAccountId(), OrderType.ORDER_TYPE_LIMIT, uuid);
+                orderResultBuilder
+                        .orderId(result.getOrderId());
+                if (result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_FILL_VALUE
+                        || result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_PARTIALLYFILL_VALUE
+                ) {
+                    if (result.hasExecutedOrderPrice() && !isZero(result.getExecutedOrderPrice())) {
+                        orderResultBuilder.commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
+                                .commission(toBigDecimal(result.getInitialCommission(), 8))
+                                .lots(result.getLotsExecuted())
+                                .price(toBigDecimal(result.getExecutedOrderPrice(), 8));
+                    }
+                }
+            } else {
+                var result = getApi().getOrdersService().postOrderSync(instrument.getFigi(), quantity, quotation,
+                        OrderDirection.ORDER_DIRECTION_SELL, getAccountId(), OrderType.ORDER_TYPE_MARKET, uuid);
+                orderResultBuilder
+                        .orderId(result.getOrderId());
+                if (result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_FILL_VALUE
+                        || result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_PARTIALLYFILL_VALUE
+                ) {
+                    if (result.hasExecutedOrderPrice() && !isZero(result.getExecutedOrderPrice())) {
+                        orderResultBuilder.commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
+                                .commission(getExecutedCommission(result))
+                                .lots(result.getLotsExecuted())
+                                .price(toBigDecimal(result.getExecutedOrderPrice(), 8));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Error in sellLimit {}", instrument.getFigi(), e);
+            orderResultBuilder.exception(e);
+        }
+        return orderResultBuilder.build();
     }
 
     public OrderResult sell(InstrumentService.Instrument instrument, BigDecimal price, Integer count) {
@@ -68,6 +213,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                     .commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
                     .commission(toBigDecimal(result.getInitialCommission(), 8))
                     .price(toBigDecimal(result.getExecutedOrderPrice(), 8, price))
+                    .lots(result.getLotsExecuted())
                     .build();
         } else {
             var result = getApi().getOrdersService().postOrderSync(instrument.getFigi(), quantity, quotation,
@@ -77,6 +223,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                     .commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
                     .commission(getExecutedCommission(result))
                     .price(toBigDecimal(result.getExecutedOrderPrice(), 8, price))
+                    .lots(result.getLotsExecuted())
                     .build();
         }
     }
@@ -130,33 +277,40 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
         return money.getNano() == 0 && money.getUnits() == 0;
     }
 
+    private BigDecimal getExecutedCommission(OrderState orderState) {
+        return getExecutedCommission(orderState.getFigi(), orderState.getOrderId(), orderState.getInitialCommission(), orderState.getExecutedCommission());
+    }
     private BigDecimal getExecutedCommission(PostOrderResponse postOrderResponse) {
-        if (postOrderResponse.hasExecutedCommission()) {
-            if (!isZero(postOrderResponse.getExecutedCommission())) {
-                var commission = toBigDecimal(postOrderResponse.getExecutedCommission(), 8);
-                log.info("Receive commission {} for order {} figi {} from postOrderResponse {}", commission, postOrderResponse.getOrderId(), postOrderResponse.getFigi(), postOrderResponse.getExecutedCommission());
+        return getExecutedCommission(postOrderResponse.getFigi(), postOrderResponse.getOrderId(), postOrderResponse.getInitialCommission(), postOrderResponse.getExecutedCommission());
+    }
+
+    private BigDecimal getExecutedCommission(String figi, String orderId, MoneyValue initialCommission, MoneyValue executedCommission) {
+        if (null != executedCommission) {
+            if (!isZero(executedCommission)) {
+                var commission = toBigDecimal(executedCommission, 8);
+                log.info("Receive commission {} for order {} figi {} from postOrderResponse {}", commission, orderId, figi, executedCommission);
                 return commission;
             }
         }
         for (var i = 0; i < 10; i++) {
             try {
-                log.info("Try number {} to request commission for order {} figi {}", i + 1, postOrderResponse.getOrderId(), postOrderResponse.getFigi());
-                var orderState = getApi().getOrdersService().getOrderStateSync(getAccountId(), postOrderResponse.getOrderId());
+                log.info("Try number {} to request commission for order {} figi {}", i + 1, orderId, figi);
+                var orderState = getApi().getOrdersService().getOrderStateSync(getAccountId(), orderId);
                 if (orderState.hasExecutedCommission()) {
                     if (!isZero(orderState.getExecutedCommission())) {
                         var commission = toBigDecimal(orderState.getExecutedCommission(), 8);
-                        log.info("Receive commission {} for order {} figi {} from postOrderState {}", commission, postOrderResponse.getOrderId(), postOrderResponse.getFigi(), orderState.getExecutedCommission());
+                        log.info("Receive commission {} for order {} figi {} from postOrderState {}", commission, orderId, figi, orderState.getExecutedCommission());
                         return commission;
                     }
                 }
                 TimeUnit.SECONDS.sleep(i + 1);
             } catch (Exception e) {
-                log.info("Exception during request commission for order {} figi {}", postOrderResponse.getOrderId(), postOrderResponse.getFigi(), e);
+                log.info("Exception during request commission for order {} figi {}", orderId, figi, e);
                 break;
             }
         }
         var commission = BigDecimal.ZERO;
-        log.info("Failed to receive commission {} for order {} figi {}. Set zero commission {}", commission, postOrderResponse.getOrderId(), postOrderResponse.getFigi(), postOrderResponse.getInitialCommission());
+        log.info("Failed to receive commission {} for order {} figi {}. Set zero commission {}", commission, orderId, figi, initialCommission);
         return commission;
     }
 
