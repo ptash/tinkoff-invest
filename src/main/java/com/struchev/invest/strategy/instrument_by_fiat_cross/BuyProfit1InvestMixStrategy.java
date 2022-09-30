@@ -85,6 +85,13 @@ public class BuyProfit1InvestMixStrategy extends ABuyEma600CrossStrategy {
         return getCrisisStrategy().getSellCriteria();
     }
 
+    public SellLimitCriteria getSellLimitCriteria() {
+        if (isInvestStrategy) {
+            return getInvestStrategy().getSellLimitCriteria();
+        }
+        return getCrisisStrategy().getSellLimitCriteria();
+    }
+
     public Duration getDelayBySL() {
         if (isInvestStrategy) {
             return getInvestStrategy().getDelayBySL();

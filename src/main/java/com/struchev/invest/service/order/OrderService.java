@@ -175,13 +175,17 @@ public class OrderService {
         order.setSellOrderId(result.getOrderId());
         order.setSellCommissionInitial(result.getCommissionInitial());
         order.setSellCommission(result.getCommission());
-        order.setSellPrice(result.getPrice());
+        if (result.getOrderPrice() != null) {
+            order.setSellPrice(result.getOrderPrice().divide(BigDecimal.valueOf(result.getLots()), 8, RoundingMode.HALF_DOWN));
+        } else {
+            order.setSellPrice(result.getPrice());
+        }
         if (result.getLots() != null) {
             var lots = order.getCellLots() == null ? 0 : order.getCellLots();
             lots += result.getLots().intValue();
             order.setCellLots(lots);
         }
-        order.setSellProfit(result.getPrice().subtract(order.getPurchasePrice()));
+        order.setSellProfit(order.getSellPrice().subtract(order.getPurchasePrice()));
         return saveOrder(order);
     }
 

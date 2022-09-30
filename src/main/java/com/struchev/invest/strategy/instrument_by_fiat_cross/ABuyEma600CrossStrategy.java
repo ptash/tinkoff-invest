@@ -52,6 +52,10 @@ public abstract class ABuyEma600CrossStrategy extends AInstrumentByFiatCrossStra
         return SellCriteria.builder().takeProfitPercent(2f).stopLossPercent(3f).build();
     }
 
+    public SellLimitCriteria getSellLimitCriteria() {
+        return SellLimitCriteria.builder().exitProfitPercent(3f).build();
+    }
+
     @Override
     public boolean isEnabled() { return false; }
 }

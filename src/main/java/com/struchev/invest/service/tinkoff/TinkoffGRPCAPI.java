@@ -36,7 +36,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                     .commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
                     .commission(toBigDecimal(result.getInitialCommission(), 8))
                     .price(toBigDecimal(result.getExecutedOrderPrice(), 8, price))
-                    .lots(result.getLotsExecuted())
+                    .lots(result.getLotsRequested() * instrument.getLot())
                     .build();
         } else {
             var result = getApi().getOrdersService().postOrderSync(instrument.getFigi(), quantity, quotation,
@@ -46,7 +46,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                     .commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
                     .commission(getExecutedCommission(result))
                     .price(toBigDecimal(result.getExecutedOrderPrice(), 8, price))
-                    .lots(result.getLotsExecuted())
+                    .lots(result.getLotsRequested() * instrument.getLot())
                     .build();
         }
     }
@@ -92,8 +92,8 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                     if (result.hasExecutedOrderPrice() && !isZero(result.getExecutedOrderPrice())) {
                         orderResultBuilder.commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
                                 .commission(toBigDecimal(result.getInitialCommission(), 8))
-                                .lots(result.getLotsExecuted())
-                                .price(toBigDecimal(result.getExecutedOrderPrice(), 8));
+                                .lots(result.getLotsExecuted() * instrument.getLot())
+                                .orderPrice(toBigDecimal(result.getExecutedOrderPrice(), 8));
                     }
                 } else if (result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_REJECTED_VALUE
                         || result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_CANCELLED_VALUE
@@ -110,8 +110,8 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                     if (result.hasExecutedOrderPrice() && !isZero(result.getExecutedOrderPrice())) {
                         orderResultBuilder.commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
                                 .commission(getExecutedCommission(result))
-                                .lots(result.getLotsExecuted())
-                                .price(toBigDecimal(result.getExecutedOrderPrice(), 8));
+                                .lots(result.getLotsExecuted() * instrument.getLot())
+                                .orderPrice(toBigDecimal(result.getExecutedOrderPrice(), 8));
                     }
                 } else if (result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_REJECTED_VALUE
                         || result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_CANCELLED_VALUE
@@ -167,8 +167,8 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                     if (result.hasExecutedOrderPrice() && !isZero(result.getExecutedOrderPrice())) {
                         orderResultBuilder.commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
                                 .commission(toBigDecimal(result.getInitialCommission(), 8))
-                                .lots(result.getLotsExecuted())
-                                .price(toBigDecimal(result.getExecutedOrderPrice(), 8));
+                                .lots(result.getLotsExecuted() * instrument.getLot())
+                                .orderPrice(toBigDecimal(result.getExecutedOrderPrice(), 8));
                     }
                 }
             } else {
@@ -182,8 +182,8 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                     if (result.hasExecutedOrderPrice() && !isZero(result.getExecutedOrderPrice())) {
                         orderResultBuilder.commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
                                 .commission(getExecutedCommission(result))
-                                .lots(result.getLotsExecuted())
-                                .price(toBigDecimal(result.getExecutedOrderPrice(), 8));
+                                .lots(result.getLotsExecuted() * instrument.getLot())
+                                .orderPrice(toBigDecimal(result.getExecutedOrderPrice(), 8));
                     }
                 }
             }
@@ -213,7 +213,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                     .commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
                     .commission(toBigDecimal(result.getInitialCommission(), 8))
                     .price(toBigDecimal(result.getExecutedOrderPrice(), 8, price))
-                    .lots(result.getLotsExecuted())
+                    .lots(result.getLotsRequested() * instrument.getLot())
                     .build();
         } else {
             var result = getApi().getOrdersService().postOrderSync(instrument.getFigi(), quantity, quotation,
@@ -223,7 +223,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                     .commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
                     .commission(getExecutedCommission(result))
                     .price(toBigDecimal(result.getExecutedOrderPrice(), 8, price))
-                    .lots(result.getLotsExecuted())
+                    .lots(result.getLotsRequested() * instrument.getLot())
                     .build();
         }
     }

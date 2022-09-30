@@ -25,6 +25,10 @@ public class BuyEma600DeadLineP1DeadLine2InvestPercent02CrossStrategy extends AB
         return AInstrumentByFiatCrossStrategy.SellCriteria.builder().takeProfitPercent(1f).stopLossPercent(2f).build();
     }
 
+    public SellLimitCriteria getSellLimitCriteria() {
+        return SellLimitCriteria.builder().exitProfitPercent(1.5f).build();
+    }
+
     @Override
     public boolean isEnabled() { return false; }
 }
