@@ -78,6 +78,7 @@ public class PurchaseService {
                     }
                     if (strategy.getDelayBySL() != null
                             && lastOrder != null
+                            && lastOrder.getSellProfit() != null
                             && lastOrder.getSellProfit().compareTo(BigDecimal.ZERO) < 0) {
                         var length = strategy.getDelayBySL().getSeconds() / 60;
                         var candles = candleHistoryService.getCandlesByFigiAndIntervalAndBeforeDateTimeLimit(
@@ -102,6 +103,8 @@ public class PurchaseService {
 
                     if (strategy.getDelayPlusBySL() != null
                             && lastOrder != null
+                            && lastOrder.getSellProfit() != null
+                            && lastOrder.getSellPrice() != null
                             && lastOrder.getSellProfit().compareTo(BigDecimal.ZERO) < 0
                     ) {
                         log.info("Buy by DelayPlusBySL {} {} {} - {}",

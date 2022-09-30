@@ -133,7 +133,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
             if (res.getActive()) {
                 return res;
             }
-            if (res.getLots() > 0) {
+            if (res.getLots() != null && res.getLots() > 0) {
                 orderResultBuilder
                         .lots(res.lots)
                         .price(res.getPrice())

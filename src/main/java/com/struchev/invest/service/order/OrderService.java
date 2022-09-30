@@ -85,15 +85,20 @@ public class OrderService {
         order.setPurchasePrice(result.getPrice());
         order.setPurchaseOrderId(result.getOrderId());
         order = orderRepository.save(order);
+        orders.add(order);
 
         order = openLimitOrder(order, strategy);
 
-        orders.add(order);
         return order;
     }
 
     @Transactional
     public synchronized OrderDomainEntity openLimitOrder(OrderDomainEntity order, AStrategy strategy) {
+        var orderFresh = findActiveByFigiAndStrategy(order.getFigi(), strategy);
+        if (orderFresh.getId() != order.getId()) {
+            return order;
+        }
+        order = orderFresh;
         if (strategy.getSellLimitCriteria() == null) {
             return order;
         }
@@ -108,17 +113,21 @@ public class OrderService {
             lots -= order.getCellLots().intValue();
         }
         var result = tinkoffOrderAPI.sellLimit(instrument, limitPrice, lots, order.getSellLimitOrderUuid(), order.getSellLimitOrderId());
+        var needSave = false;
         if (null != result.getOrderUuid() && (null == order.getSellLimitOrderUuid() || !result.getOrderUuid().equals(order.getSellLimitOrderUuid()))) {
             order.setSellLimitOrderUuid(result.getOrderUuid());
-            order = orderRepository.save(order);
+            needSave = true;
         }
         if (null != result.getOrderId() && (null == order.getSellLimitOrderId() || !result.getOrderId().equals(order.getSellLimitOrderId()))) {
             order.setSellLimitOrderId(result.getOrderId());
-            order = orderRepository.save(order);
+            needSave = true;
         }
         if (order.getSellPriceLimitWanted() == null || !order.getSellPriceLimitWanted().equals(limitPrice)) {
             order.setSellPriceLimitWanted(limitPrice);
-            order = orderRepository.save(order);
+            needSave = true;
+        }
+        if (needSave) {
+            order = saveOrder(order);
         }
         if (null != result.getLots() && result.getLots() > 0) {
             order.setSellDateTime(OffsetDateTime.now());
@@ -173,6 +182,10 @@ public class OrderService {
             order.setCellLots(lots);
         }
         order.setSellProfit(result.getPrice().subtract(order.getPurchasePrice()));
+        return saveOrder(order);
+    }
+
+    private OrderDomainEntity saveOrder(OrderDomainEntity order) {
         order = orderRepository.save(order);
 
         var orderId = order.getId();
