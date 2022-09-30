@@ -1,12 +1,15 @@
 package com.struchev.invest.service.dictionary;
 
 import com.struchev.invest.service.tinkoff.ITinkoffCommonAPI;
+import com.struchev.invest.service.tinkoff.TinkoffGRPCAPI;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
+import ru.tinkoff.piapi.contract.v1.Quotation;
 
 import javax.annotation.PostConstruct;
+import java.math.BigDecimal;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -29,6 +32,7 @@ public class InstrumentService {
         String currency;
         String name;
         int lot;
+        BigDecimal minPriceIncrement;
     }
 
     public Instrument getInstrument(String figi) {
@@ -47,18 +51,18 @@ public class InstrumentService {
         instrumentByFigi = new ConcurrentHashMap<>();
 
         var shares = tinkoffCommonAPI.getApi().getInstrumentsService().getAllSharesSync();
-        shares.forEach(i -> instrumentByFigi.put(i.getFigi(), new Instrument(i.getFigi(), i.getCurrency(), i.getName(), i.getLot())));
+        shares.forEach(i -> instrumentByFigi.put(i.getFigi(), new Instrument(i.getFigi(), i.getCurrency(), i.getName(), i.getLot(), TinkoffGRPCAPI.toBigDecimal(i.getMinPriceIncrement(), 8))));
 
         var futures = tinkoffCommonAPI.getApi().getInstrumentsService().getAllFuturesSync();
-        futures.forEach(i -> instrumentByFigi.put(i.getFigi(), new Instrument(i.getFigi(), i.getCurrency(), i.getName(), i.getLot())));
+        futures.forEach(i -> instrumentByFigi.put(i.getFigi(), new Instrument(i.getFigi(), i.getCurrency(), i.getName(), i.getLot(), TinkoffGRPCAPI.toBigDecimal(i.getMinPriceIncrement(), 8))));
 
         var bounds = tinkoffCommonAPI.getApi().getInstrumentsService().getAllBondsSync();
-        bounds.forEach(i -> instrumentByFigi.put(i.getFigi(), new Instrument(i.getFigi(), i.getCurrency(), i.getName(), i.getLot())));
+        bounds.forEach(i -> instrumentByFigi.put(i.getFigi(), new Instrument(i.getFigi(), i.getCurrency(), i.getName(), i.getLot(), TinkoffGRPCAPI.toBigDecimal(i.getMinPriceIncrement(), 8))));
 
         var etfs = tinkoffCommonAPI.getApi().getInstrumentsService().getAllEtfsSync();
-        etfs.forEach(i -> instrumentByFigi.put(i.getFigi(), new Instrument(i.getFigi(), i.getCurrency(), i.getName(), i.getLot())));
+        etfs.forEach(i -> instrumentByFigi.put(i.getFigi(), new Instrument(i.getFigi(), i.getCurrency(), i.getName(), i.getLot(), TinkoffGRPCAPI.toBigDecimal(i.getMinPriceIncrement(), 8))));
 
         var currencies = tinkoffCommonAPI.getApi().getInstrumentsService().getAllCurrenciesSync();
-        currencies.forEach(i -> instrumentByFigi.put(i.getFigi(), new Instrument(i.getFigi(), i.getCurrency(), i.getName(), i.getLot())));
+        currencies.forEach(i -> instrumentByFigi.put(i.getFigi(), new Instrument(i.getFigi(), i.getCurrency(), i.getName(), i.getLot(), TinkoffGRPCAPI.toBigDecimal(i.getMinPriceIncrement(), 8))));
     }
 }

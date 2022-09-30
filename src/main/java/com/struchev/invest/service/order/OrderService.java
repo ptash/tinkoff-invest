@@ -14,6 +14,8 @@ import org.springframework.stereotype.Service;
 import javax.annotation.PostConstruct;
 import javax.transaction.Transactional;
 import java.math.BigDecimal;
+import java.math.MathContext;
+import java.math.RoundingMode;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
@@ -100,6 +102,7 @@ public class OrderService {
         }
         var instrument = instrumentService.getInstrument(order.getFigi());
         var limitPrice = order.getPurchasePrice().multiply(BigDecimal.valueOf((strategy.getSellLimitCriteria().getExitProfitPercent() + 100.)/100.));
+        limitPrice = limitPrice.divide(instrument.getMinPriceIncrement(), 0, RoundingMode.HALF_UP).multiply(instrument.getMinPriceIncrement());
         var lots = order.getLots();
         if (order.getCellLots() != null) {
             lots -= order.getCellLots().intValue();

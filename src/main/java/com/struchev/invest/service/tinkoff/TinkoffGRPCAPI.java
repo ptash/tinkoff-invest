@@ -148,10 +148,10 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                 .setUnits(price.longValue())
                 .setNano(price.remainder(BigDecimal.ONE).movePointRight(9).intValue())
                 .build();
-        if (uuid == null) {
+        //if (uuid == null) {
             uuid = UUID.randomUUID().toString();
             orderResultBuilder.orderUuid(uuid);
-        }
+        //}
         log.info("Send limit postOrderSync with: figi {}, quantity {}, quotation {}, direction {}, acc {}, type {}, id {}",
                 instrument.getFigi(), quantity, quotation, OrderDirection.ORDER_DIRECTION_SELL, getAccountId(), OrderType.ORDER_TYPE_LIMIT, uuid);
 
@@ -173,7 +173,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                 }
             } else {
                 var result = getApi().getOrdersService().postOrderSync(instrument.getFigi(), quantity, quotation,
-                        OrderDirection.ORDER_DIRECTION_SELL, getAccountId(), OrderType.ORDER_TYPE_MARKET, uuid);
+                        OrderDirection.ORDER_DIRECTION_SELL, getAccountId(), OrderType.ORDER_TYPE_LIMIT, uuid);
                 orderResultBuilder
                         .orderId(result.getOrderId());
                 if (result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_FILL_VALUE
