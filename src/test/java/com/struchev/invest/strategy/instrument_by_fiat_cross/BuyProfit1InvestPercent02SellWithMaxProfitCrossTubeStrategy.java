@@ -18,6 +18,10 @@ public class BuyProfit1InvestPercent02SellWithMaxProfitCrossTubeStrategy extends
     }
      */
 
+    public SellLimitCriteria getSellLimitCriteria() {
+        return SellLimitCriteria.builder().exitProfitPercent(1f).build();
+    }
+
     @Override
     public SellCriteria getSellCriteria() {
         return SellCriteria.builder().takeProfitPercent(0.5f).stopLossPercent(1f).build();

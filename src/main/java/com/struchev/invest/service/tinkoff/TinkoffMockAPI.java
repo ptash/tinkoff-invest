@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.UUID;
 
 @Service
 @Slf4j
@@ -37,8 +38,10 @@ public class TinkoffMockAPI extends ATinkoffAPI {
     }
 
     public OrderResult sellLimit(InstrumentService.Instrument instrument, BigDecimal price, Integer count, String uuid, String orderId, CandleDomainEntity candle) {
-        if (candle.getClosingPrice().max(candle.getOpenPrice()).compareTo(price) >= 0) {
+        if (candle.getClosingPrice().compareTo(price) >= 0) {
             return OrderResult.builder()
+                    .orderUuid(UUID.randomUUID().toString())
+                    .orderId(UUID.randomUUID().toString())
                     .commission(calculateCommission(price, count))
                     .lots(count.longValue())
                     .orderPrice(price.multiply(BigDecimal.valueOf(count)))
