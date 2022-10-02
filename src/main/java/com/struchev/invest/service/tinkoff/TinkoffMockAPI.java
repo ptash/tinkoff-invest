@@ -1,5 +1,6 @@
 package com.struchev.invest.service.tinkoff;
 
+import com.struchev.invest.entity.CandleDomainEntity;
 import com.struchev.invest.service.dictionary.InstrumentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,7 +36,15 @@ public class TinkoffMockAPI extends ATinkoffAPI {
                 .build();
     }
 
-    public OrderResult sellLimit(InstrumentService.Instrument instrument, BigDecimal price, Integer count, String uuid, String orderId) {
+    public OrderResult sellLimit(InstrumentService.Instrument instrument, BigDecimal price, Integer count, String uuid, String orderId, CandleDomainEntity candle) {
+        if (candle.getClosingPrice().max(candle.getOpenPrice()).compareTo(price) >= 0) {
+            return OrderResult.builder()
+                    .commission(calculateCommission(price, count))
+                    .lots(count.longValue())
+                    .orderPrice(price.multiply(BigDecimal.valueOf(count)))
+                    .price(price)
+                    .build();
+        }
         return OrderResult.builder().build();
     }
 

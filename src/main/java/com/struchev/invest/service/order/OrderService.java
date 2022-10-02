@@ -87,13 +87,13 @@ public class OrderService {
         order = orderRepository.save(order);
         orders.add(order);
 
-        order = openLimitOrder(order, strategy);
+        order = openLimitOrder(order, strategy, candle);
 
         return order;
     }
 
     @Transactional
-    public synchronized OrderDomainEntity openLimitOrder(OrderDomainEntity order, AStrategy strategy) {
+    public synchronized OrderDomainEntity openLimitOrder(OrderDomainEntity order, AStrategy strategy, CandleDomainEntity candle) {
         var orderFresh = findActiveByFigiAndStrategy(order.getFigi(), strategy);
         if (orderFresh.getId() != order.getId()) {
             return order;
@@ -112,7 +112,7 @@ public class OrderService {
         if (order.getCellLots() != null) {
             lots -= order.getCellLots().intValue();
         }
-        var result = tinkoffOrderAPI.sellLimit(instrument, limitPrice, lots, order.getSellLimitOrderUuid(), order.getSellLimitOrderId());
+        var result = tinkoffOrderAPI.sellLimit(instrument, limitPrice, lots, order.getSellLimitOrderUuid(), order.getSellLimitOrderId(), candle);
         var needSave = false;
         if (null != result.getOrderUuid() && (null == order.getSellLimitOrderUuid() || !result.getOrderUuid().equals(order.getSellLimitOrderUuid()))) {
             order.setSellLimitOrderUuid(result.getOrderUuid());

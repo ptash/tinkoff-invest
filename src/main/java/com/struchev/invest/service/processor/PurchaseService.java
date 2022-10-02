@@ -179,7 +179,7 @@ public class PurchaseService {
                 return;
             } else {
                 var orderId = order.getSellOrderId();
-                order = orderService.openLimitOrder(order, strategy);
+                order = orderService.openLimitOrder(order, strategy, candleDomainEntity);
                 if (orderId != order.getSellOrderId() || order.getSellDateTime() != null) {
                     notificationService.sendSellLimitInfo(strategy, order, candleDomainEntity);
                 }

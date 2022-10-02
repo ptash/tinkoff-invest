@@ -9,6 +9,8 @@ import ch.qos.logback.core.FileAppender;
 import ch.qos.logback.core.UnsynchronizedAppenderBase;
 import ch.qos.logback.core.filter.Filter;
 import ch.qos.logback.core.spi.FilterReply;
+import com.google.common.base.Splitter;
+import com.google.common.collect.Lists;
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.UpdatesListener;
 import com.pengrad.telegrambot.request.SendMessage;
@@ -34,7 +36,9 @@ import java.nio.file.Paths;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -166,7 +170,7 @@ public class NotificationService {
         }
     }
 
-    private void buildDygraphsPage(String instanceName)
+    private void buildDygraphsPage(String instanceName, String headerLine)
     {
         String fileName = loggingPath + "/" + instanceName + "Dygraphs-" + dateTime.toString() + ".html";
         File f = new File(fileName);
@@ -177,6 +181,15 @@ public class NotificationService {
         try {
             Path filePath = fTemplate.toPath();
             String content = Files.readString(filePath);
+            var visibility = "true";
+            List<String> items = Lists.newArrayList(Splitter.on("|").split(headerLine));
+            for (var i = 1; i < items.size(); i++) {
+                if (items.get(i).equals("strategy")) {
+                    visibility += ",false";
+                }
+                visibility += ",true";
+            }
+            content = content.replace("'%visibility%'", visibility);
             content = content.replace("s.csv", instanceName + "Strategy-" + dateTime.toString() + ".csv");
             content = content.replace("a.csv",  instanceName + "Offer-" + dateTime.toString() + ".csv");
 
@@ -217,7 +230,7 @@ public class NotificationService {
                         instanceName + "Strategy",
                         headerLine
                 ));
-                buildDygraphsPage(instanceName);
+                buildDygraphsPage(instanceName, headerLine);
             }
         }
         return reportStrategyLoggerMap.get(instanceName);

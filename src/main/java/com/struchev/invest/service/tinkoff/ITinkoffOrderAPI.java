@@ -1,5 +1,6 @@
 package com.struchev.invest.service.tinkoff;
 
+import com.struchev.invest.entity.CandleDomainEntity;
 import com.struchev.invest.service.dictionary.InstrumentService;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -27,7 +28,7 @@ public interface ITinkoffOrderAPI {
 
     OrderResult sell(InstrumentService.Instrument instrument, BigDecimal price, Integer count);
 
-    public OrderResult sellLimit(InstrumentService.Instrument instrument, BigDecimal price, Integer count, String uuid, String orderId);
+    public OrderResult sellLimit(InstrumentService.Instrument instrument, BigDecimal price, Integer count, String uuid, String orderId, CandleDomainEntity candle);
 
     public OrderResult closeSellLimit(InstrumentService.Instrument instrument, String orderId);
 

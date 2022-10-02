@@ -60,7 +60,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
 
         var emaFast = getEma(figi, currentDateTime, strategy.getEmaFastLength(), strategy.getInterval(), keyExtractor);
 
-        var ema2 = getEma(figi, currentDateTime, 2, strategy.getInterval(), keyExtractor);
+        var ema2 = getEma(figi, currentDateTime, 2, strategy.getInterval(), keyExtractor, strategy.getTicksMoveUp());
 
         if (null == smaTube || null == smaSlowest || null == smaSlow || null == ema2 || null == emaFast) {
             log.info("Buy: there is not enough data for the interval: currentDateTime = {}, {}, {}, {}, {}, {}", currentDateTime, smaTube, smaSlowest, smaSlow, smaFast, emaFast);
@@ -163,6 +163,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         annotation += " " + result;
         Double investTubeBottom = null;
         Double smaSlowDelta = null;
+        Map<String, Double> pointToGraph = new HashMap<>();
         if (strategy.isTubeAvgDeltaAdvance()) {
             isInTube = false;
             var investTop = BigDecimal.valueOf(avgDelta.get(1) + 3 * avgDelta.get(3));
@@ -176,18 +177,24 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             d += (smaSlow.get(smaSlow.size() - 1) - smaSlow.get(0)) / smaSlow.size();
             d += (smaTube.get(smaTube.size() - 1) - smaTube.get(0)) / smaTube.size();
             var moveUp = avgDelta.get(4);
-            //d = moveUp * price.doubleValue() / 100;
+            //d = (d / 3 + moveUp * price.doubleValue() / 100) / 2;
             var needBuy = true;
             if (strategy.isTubeAvgDeltaAdvance2()) {
-                annotation += " profit2 (" + moveUp + ")";
+                annotation += " profit2 (" + moveUp + ", " + d + ")";
             } else {
-                annotation += " profit (" + moveUp + ")";
+                annotation += " profit (" + moveUp + ", " + d + ")";
             }
             if (false && strategy.isTubeAvgDeltaAdvance2()) {
                 var moveUpPrev = avgDelta.get(6);
                 d = moveUp * price.doubleValue() / 100;
                 needBuy = avgDelta.get(5) > 0;
-                annotation += " moveUp = " + moveUp + " moveUpPrev = " + moveUpPrev + " needBuy = " + needBuy;
+                moveUp = avgDelta.get(7);
+                var moveUpSma = getPercentMoveUpAvg(ema2, strategy.getTicksMoveUp());
+                needBuy = moveUpSma > moveUp
+                        && price.compareTo(BigDecimal.valueOf(avgDelta.get(0))) < 0
+                ;
+                //annotation += " moveUp = " + moveUp + " moveUpPrev = " + moveUpPrev + " needBuy = " + needBuy;
+                annotation += " moveUpSma = " + moveUpSma + " needBuy = " + needBuy;
                 if (needBuy /*&& price.doubleValue() < avgDelta.get(0)*/) {
                     isInTube = true;
                     tubeTopToBy = BigDecimal.valueOf(avgDelta.get(0));
@@ -197,15 +204,24 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
                 var expectTubeTop = avgDelta.get(1) + strategy.getEmaFastLength() * d;
                 var expectTubeSize = expectTubeTop - price.doubleValue();
                 annotation += " " + tubeSize + ", " + tubeSizePrice + ", " + expectTubeSize + ">" + expectProfit;
+                var from = price.doubleValue();
+                pointToGraph.put("expectTubeSize", from + expectTubeSize);
+                pointToGraph.put("expectTubeSizeP", from + expectTubeSize * strategy.getTubeAvgAdvanceDown());
+                pointToGraph.put("tubeSizePrice", from + tubeSizePrice);
+                pointToGraph.put("tubeSizePriceP", from + tubeSizePrice * strategy.getTubeAvgAdvanceDown());
+                pointToGraph.put("expectProfit", from + expectProfit);
+                pointToGraph.put("expectProfitP", from + expectProfit * strategy.getTubeAvgAdvanceDown());
+                pointToGraph.put("true", null);
                 if (/*tubeSize > expectProfit && */expectTubeSize > expectProfit
-                        && expectTubeSize > tubeSizePrice * strategy.getTubeAvgAdvanceDown()
-                        && expectTubeSize * strategy.getTubeAvgAdvanceDown() < tubeSizePrice
+                        && expectTubeSize > (tubeSizePrice * strategy.getTubeAvgAdvanceDown())
+                        && tubeSizePrice > (expectTubeSize * strategy.getTubeAvgAdvanceDown())
                         && !(tubeSize < expectProfit * strategy.getTubeAvgAdvanceDown()
                         //&& getPercentMoveUp(smaSlow) < strategy.getPercentMoveUpError()
                         //&& moveUp < 0//strategy.getPercentMoveUpError()
-                        && tubeSizePrice * strategy.getTubeAvgAdvanceDown() > tubeSize)
+                        && (tubeSizePrice * strategy.getTubeAvgAdvanceDown()) > tubeSize)
                 ) {
                     annotation += "=t";
+                    //annotation += " " + (tubeSizePrice * strategy.getTubeAvgAdvanceDown()) + " > " + tubeSize;
                     if (avgDelta.get(3) > 0 && price.compareTo(BigDecimal.valueOf(avgDelta.get(0))) < 0) {
                         //annotation += " moveUp: " + getPercentMoveUp(smaTube) + " + " + getPercentMoveUp(smaSlowest) + " + " + getPercentMoveUp(smaSlow) + " >= 0";
                         //var p = getPercentMoveUp(smaTube) + getPercentMoveUp(smaSlowest);
@@ -214,6 +230,9 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
                         isInTube = true;
                         tubeTopToBy = BigDecimal.valueOf(avgDelta.get(0));
                         annotation += " new t = " + tubeTopToBy;
+
+                        //pointToGraph.put("true", smaTube.get(smaTube.size() - 1) + price.doubleValue() * 0.01);
+                        pointToGraph.put("true", from + tubeSize);
                         //}
             /*} else if (avgDelta.get(3) > 0 && price.compareTo(investTop) > 0) {
                 isInTube = true;
@@ -228,6 +247,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             var isTubeTopToBy = false;
             annotation += " " + price + " < ttb=" + tubeTopToBy;
             if (tubeTopToBy.compareTo(BigDecimal.ZERO) > 0 && (price.compareTo(tubeTopToBy) < 0 || strategy.isTubeAvgDeltaAdvance())) {
+                //if (strategy.isTubeAvgDeltaAdvance() || getPercentMoveUp(smaTube) >= strategy.getMinPercentTubeMoveUp()) {
                 if (getPercentMoveUp(smaTube) >= strategy.getMinPercentTubeMoveUp()) {
                     isTubeTopToBy = true;
                     result = true;
@@ -418,16 +438,27 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             return result;
         }
 
+        var header = "";
+        var values = "";
+        SortedSet<String> keys = new TreeSet<>(pointToGraph.keySet());
+        for (String key : keys) {
+        //for (var pointToGraphItem : pointToGraph.entrySet()) {
+            header += "|" + key;
+            values += "|" + pointToGraph.get(key);
+        }
+
         reportLog(
                 strategy,
                 figi,
+                header,
+                values,
                 "{} | {} | {} | {} | {} | {} | {} | | {} | {} | {} | {} | {} | {} |by {}|{}|{}|{}|{}",
                 notificationService.formatDateTime(currentDateTime),
                 smaSlowest.get(1),
                 smaSlow.get(1),
                 smaFast.get(1),
-                emaFast.get(1),
-                ema2.get(1),
+                emaFast.get(emaFast.size() - 1),
+                ema2.get(ema2.size() - 1),
                 price,
                 candle.getClosingPrice(),
                 deadLineBottom,
@@ -567,7 +598,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
                 smaSlow.get(1),
                 smaFast.get(1),
                 emaFast.get(1),
-                ema2.get(1),
+                ema2.get(ema2.size() - 1),
                 price,
                 candle.getClosingPrice(),
                 deadLineBottom,
@@ -1187,8 +1218,9 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         ) / ticksMoveUp / 4;
 
         if (strategy.isTubeAvgDeltaAdvance2()) {
-            moveUp = (avgListPercentMoveUp);
-            return List.of(bottom, top, avg, d, moveUp, res.get(8), res.get(9));
+            var moveUpWithPrev = (avgListPercentMoveUp);
+            moveUp = smaFastPercentMoveUp;
+            return List.of(bottom, top, avg, d, moveUpWithPrev, res.get(8), res.get(9), moveUp);
         }
 
         var isMoveUp = avgListPercentMoveUp > strategy.getPercentMoveUpError()
@@ -1399,6 +1431,17 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             String interval,
             Function<? super CandleDomainEntity, ? extends BigDecimal> keyExtractor
     ) {
+        return getEma(figi, currentDateTime, length, interval, keyExtractor, 2);
+    }
+
+    private List<Double> getEma(
+            String figi,
+            OffsetDateTime currentDateTime,
+            Integer length,
+            String interval,
+            Function<? super CandleDomainEntity, ? extends BigDecimal> keyExtractor,
+            Integer prevTicks
+    ) {
         var candleList = getCandlesByFigiByLength(figi,
                 currentDateTime, 1 + 1, interval);
         if (candleList == null) {
@@ -1409,12 +1452,22 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         var indentPrev = "ema" + figi + notificationService.formatDateTime(candleList.get(0).getDateTime()) + interval + length + getMethodKey(keyExtractor);
         var emaPrev = getCashedValue(indentPrev);
 
+        List<Double> ret = new ArrayList<Double>();
         if (ema == null || emaPrev == null) {
             candleList = getCandlesByFigiByLength(figi,
-                    currentDateTime, length + 1, interval);
+                    currentDateTime, length + prevTicks - 1, interval);
             if (candleList == null) {
                 return null;
             }
+            for (var j = 0; j < prevTicks; j++) {
+                ema = Optional.ofNullable(candleList.get(j)).map(keyExtractor).orElse(null).doubleValue();
+                for (int i = 1 + j; i < (length + j); i++) {
+                    var alpha = 2f / (3 + i - (1 + j));
+                    ema = alpha * Optional.ofNullable(candleList.get(i)).map(keyExtractor).orElse(null).doubleValue() + (1 - alpha) * ema;
+                }
+                ret.add(ema);
+            }
+            /*
             if (ema == null) {
                 ema = Optional.ofNullable(candleList.get(1)).map(keyExtractor).orElse(null).doubleValue();
                 for (int i = 2; i < (length + 1); i++) {
@@ -1432,8 +1485,11 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
                 }
                 addCashedValue(indentPrev, emaPrev);
             }
+             */
         }
-        return List.of(emaPrev, ema);
+        //return List.of(emaPrev, ema);
+        //Collections.reverse(ret);
+        return ret;
     }
 
     private List<CandleDomainEntity> getCandlesByFigiBetweenDateTimes(String figi, OffsetDateTime currentDateTime, Duration duration, String interval)
@@ -1538,6 +1594,17 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
     @Override
     public AStrategy.Type getStrategyType() {
         return AStrategy.Type.instrumentCrossByFiat;
+    }
+
+    private void reportLog(AInstrumentByFiatCrossStrategy strategy, String figi, String header, String values, String format, Object... arguments)
+    {
+        notificationService.reportStrategy(
+                strategy,
+                figi,
+                "Date|smaSlowest|smaSlow|smaFast|emaFast|ema2|bye|sell|position|deadLineBottom|deadLineTop|investBottom|investTop|smaTube|strategy|average|averageBottom|averageTop|openPrice" + header,
+                format + values,
+                arguments
+        );
     }
 
     private void reportLog(AInstrumentByFiatCrossStrategy strategy, String figi, String format, Object... arguments)
