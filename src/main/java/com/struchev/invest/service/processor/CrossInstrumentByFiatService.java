@@ -184,13 +184,13 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             } else {
                 annotation += " profit (" + moveUp + ", " + d + ")";
             }
-            if (false && strategy.isTubeAvgDeltaAdvance2()) {
+            if (strategy.isTubeAvgDeltaAdvance3()) {
                 var moveUpPrev = avgDelta.get(6);
                 d = moveUp * price.doubleValue() / 100;
                 needBuy = avgDelta.get(5) > 0;
                 moveUp = avgDelta.get(7);
                 var moveUpSma = getPercentMoveUpAvg(ema2, strategy.getTicksMoveUp());
-                needBuy = moveUpSma > moveUp
+                needBuy = true//moveUpSma > moveUp
                         && price.compareTo(BigDecimal.valueOf(avgDelta.get(0))) < 0
                 ;
                 //annotation += " moveUp = " + moveUp + " moveUpPrev = " + moveUpPrev + " needBuy = " + needBuy;
@@ -986,7 +986,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         var top = avg + avgDeltaAbsPlus;
         var error = Math.max(avgDeltaAbsMinus, avgDeltaAbsPlus) * 0.05;
         var needBuy = -1.;
-        if (avgMoveUpWithPrev < 0) {
+        if (!strategy.isTubeAvgDeltaAdvance3() && avgMoveUpWithPrev < 0) {
             //bottom -= avgDeltaAbsPlus;
             //bottom -= dPlus;
             top = Math.max(avg - avgDeltaAbsPlus, avg - dMinus + error);
