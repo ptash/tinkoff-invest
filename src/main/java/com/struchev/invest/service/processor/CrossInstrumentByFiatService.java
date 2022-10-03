@@ -185,10 +185,10 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
                 annotation += " profit (" + moveUp + ", " + d + ")";
             }
             if (strategy.isTubeAvgDeltaAdvance3()) {
-                var moveUpPrev = avgDelta.get(6);
+                //var moveUpPrev = avgDelta.get(6);
                 d = moveUp * price.doubleValue() / 100;
-                needBuy = avgDelta.get(5) > 0;
-                moveUp = avgDelta.get(7);
+                //needBuy = avgDelta.get(5) > 0;
+                //moveUp = avgDelta.get(7);
                 var moveUpSma = getPercentMoveUpAvg(ema2, strategy.getTicksMoveUp());
                 needBuy = true//moveUpSma > moveUp
                         && price.compareTo(BigDecimal.valueOf(avgDelta.get(0))) < 0
@@ -524,7 +524,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         //d = moveUp * price.doubleValue() / 100;
         if (strategy.isTubeAvgDeltaAdvance2()) {
             var moveUp = avgDelta.get(4);
-            annotation += "moveUp = " + moveUp + " moveUpPrev = " + avgDelta.get(6);
+            annotation += "moveUp = " + moveUp;
         }
         if (false && strategy.isSellWithMaxProfit() && profitPercent.compareTo(BigDecimal.ZERO) > 0) {
             if (price.compareTo(BigDecimal.valueOf(smaSlowest.get(smaSlowest.size() - 1))) > 0
@@ -779,14 +779,11 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
     }
 
     private List<List<Double>> calculateAvgDelta2Handler(
-            String figi,
-            OffsetDateTime currentDateTime,
             AInstrumentByFiatCrossStrategy strategy,
-            Function<? super CandleDomainEntity, ? extends BigDecimal> keyExtractor
+            List<Double> smaFastAvg,
+            List<Double> smaFast2Avg
     ) {
         var length = strategy.getAvgLength();
-        var smaFastAvg = getSma(figi, currentDateTime, length, strategy.getInterval(), keyExtractor, length * 2);
-        var smaFast2Avg = getSma(figi, currentDateTime, 2, strategy.getInterval(), keyExtractor, length * 2);
         if (smaFastAvg == null || smaFast2Avg == null) {
             return null;
         }
@@ -883,7 +880,6 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
                 avgDeltaAbsMinus += delta;
                 lengthMinus++;
             }
-
         }
         if (lengthPlus > 0) {
             avgDeltaAbsPlus = avgDeltaAbsPlus / lengthPlus;
@@ -894,36 +890,49 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         return List.of(smaFastAvg, smaFast2Avg, avgList, List.of(avgDeltaAbsPlus, avgDeltaAbsMinus));
     }
 
-    private Map<String, Double> avgPrevByFigi = new HashMap<>();
-    private Map<String, Double> avgMoveUpWithPrevByFigi = new HashMap<>();
-
-    private List<Double> calculateAvgDelta2(
-            String figi,
-            OffsetDateTime currentDateTime,
+    private List<Double> calculateAvgDelta2HandlerSimple(
             AInstrumentByFiatCrossStrategy strategy,
-            Function<? super CandleDomainEntity, ? extends BigDecimal> keyExtractor
+            List<Double> smaFastAvg,
+            List<Double> smaFast2Avg
     ) {
-        var res = calculateAvgDelta2Handler(figi, currentDateTime, strategy, keyExtractor);
-        var smaFastAvg = res.get(0);
-        var smaFast2Avg = res.get(1);
-        var avgList = res.get(2);
-        var avgDeltaAbsPlus = res.get(3).get(0);
-        var avgDeltaAbsMinus = res.get(3).get(1);
-
         var length = strategy.getAvgLength();
-        var ticksFromAvg = length / 2;
+        if (smaFastAvg == null || smaFast2Avg == null) {
+            return null;
+        }
+        Double avgDeltaAbsPlus = 0.;
+        Double avgDeltaAbsMinus = 0.;
+        Integer lengthPlus = 0;
+        Integer lengthMinus = 0;
+        for (var i = 0; i < length; i++) {
+            var point = i + length;
+            var aCur = smaFastAvg.get(point);
+            var smaFast2Cur = smaFast2Avg.get(point);
+            var delta = smaFast2Cur - aCur;
+            if (delta > 0) {
+                avgDeltaAbsPlus += delta;
+                lengthPlus++;
+            } else {
+                avgDeltaAbsMinus += delta;
+                lengthMinus++;
+            }
+        }
+        if (lengthPlus > 0) {
+            avgDeltaAbsPlus = avgDeltaAbsPlus / lengthPlus;
+        }
+        if (lengthMinus > 0) {
+            avgDeltaAbsMinus = avgDeltaAbsMinus / lengthMinus;
+        }
+        return List.of(avgDeltaAbsPlus, avgDeltaAbsMinus);
+    }
 
-        //var lengthPrev = ticksFromAvg;
-        var lengthPrev = strategy.getTicksMoveUp();
-        var candleList = getCandlesByFigiByLength(figi,
-                currentDateTime, lengthPrev + 1, strategy.getInterval());
-        var resPrev = calculateAvgDelta2Handler(figi, candleList.get(0).getDateTime(), strategy, keyExtractor);
-        var avgMoveUpPrev = getPercentMoveUpAvg(resPrev.get(2), ticksFromAvg);
-
-        //var candleListPrev = getCandlesByFigiByLength(figi,
-        //        currentDateTime, lengthPrev * 2 + 1, strategy.getInterval());
-        //var resPrevPrev = calculateAvgDelta2Handler(figi, candleListPrev.get(0).getDateTime(), strategy, keyExtractor);
-        //var avgMoveUpPrevPrev = getPercentMoveUpAvg(resPrevPrev.get(2), ticksFromAvg);
+    private List<Double> calculateAvgDelta2Handler2(
+            AInstrumentByFiatCrossStrategy strategy,
+            List<Double> avgList,
+            List<Double> smaFast2Avg,
+            Double avgDeltaAbsPlus,
+            Double avgDeltaAbsMinus
+    ) {
+        var length = strategy.getAvgLength();
 
         Double dPlus = 0.;
         Double dMinus = 0.;
@@ -974,6 +983,50 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             avgDeltaAbsDMinus = avgDeltaAbsDMinus / lengthMinus;
             avgDeltaAbsMinus = avgDeltaAbsDMinus;
         }
+        return List.of(dPlus, dMinus, avgDeltaAbsPlus, avgDeltaAbsMinus);
+    }
+
+    private Map<String, Double> avgPrevByFigi = new HashMap<>();
+    private Map<String, Double> avgMoveUpWithPrevByFigi = new HashMap<>();
+
+    private List<Double> calculateAvgDelta2(
+            String figi,
+            OffsetDateTime currentDateTime,
+            AInstrumentByFiatCrossStrategy strategy,
+            Function<? super CandleDomainEntity, ? extends BigDecimal> keyExtractor
+    ) {
+        var length = strategy.getAvgLength();
+        var smaFastAvg = getSma(figi, currentDateTime, length, strategy.getInterval(), keyExtractor, length * 2);
+        var smaFast2Avg = getSma(figi, currentDateTime, 2, strategy.getInterval(), keyExtractor, length * 2);
+        var res = calculateAvgDelta2Handler(strategy, smaFastAvg, smaFast2Avg);
+        var avgList = res.get(2);
+        var avgDeltaAbsPlus = res.get(3).get(0);
+        var avgDeltaAbsMinus = res.get(3).get(1);
+
+        var ticksFromAvg = length / 2;
+
+        //var lengthPrev = ticksFromAvg;
+        var lengthPrev = strategy.getTicksMoveUp();
+        var candleList = getCandlesByFigiByLength(figi,
+                currentDateTime, lengthPrev + 1, strategy.getInterval());
+        var resPrev = calculateAvgDelta2Handler(
+                strategy,
+                getSma(figi, candleList.get(0).getDateTime(), length, strategy.getInterval(), keyExtractor, length * 2),
+                getSma(figi, candleList.get(0).getDateTime(), 2, strategy.getInterval(), keyExtractor, length * 2)
+        );
+        var avgMoveUpPrev = getPercentMoveUpAvg(resPrev.get(2), ticksFromAvg);
+
+        //var candleListPrev = getCandlesByFigiByLength(figi,
+        //        currentDateTime, lengthPrev * 2 + 1, strategy.getInterval());
+        //var resPrevPrev = calculateAvgDelta2Handler(figi, candleListPrev.get(0).getDateTime(), strategy, keyExtractor);
+        //var avgMoveUpPrevPrev = getPercentMoveUpAvg(resPrevPrev.get(2), ticksFromAvg);
+
+        var res2 = calculateAvgDelta2Handler2(strategy, avgList, smaFast2Avg, avgDeltaAbsPlus, avgDeltaAbsMinus);
+        var dPlus = res2.get(0);
+        var dMinus = res2.get(1);
+        avgDeltaAbsPlus = res2.get(2);
+        avgDeltaAbsMinus = res2.get(3);
+
         var smaFastCur = smaFastAvg.get(smaFastAvg.size() - 1);
         //var avg = smaFastCur + avgDelta;
         var avgMoveUp = getPercentMoveUpAvg(avgList, ticksFromAvg);
@@ -1022,6 +1075,32 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         return List.of(bottom, top, avg, Math.max(dPlus, dMinus), smaFastCur, avgMoveUpWithPrev, smaFastMoveUp, strategy.getTicksMoveUp().doubleValue(), needBuy, -1./*avgMoveUpWithPrevPrev*/);
     }
 
+    private List<Double> calculateAvgDelta3(
+            String figi,
+            OffsetDateTime currentDateTime,
+            AInstrumentByFiatCrossStrategy strategy,
+            Function<? super CandleDomainEntity, ? extends BigDecimal> keyExtractor
+    ) {
+        var length = strategy.getAvgLength();
+        var smaFastAvg = getSma(figi, currentDateTime, strategy.getSmaSlowLength(), strategy.getInterval(), keyExtractor, length * 2);
+        var smaFast2Avg = getEma(figi, currentDateTime, 2, strategy.getInterval(), keyExtractor, length * 2);
+        var res = calculateAvgDelta2HandlerSimple(strategy, smaFastAvg, smaFast2Avg);
+        var avgDeltaAbsPlus = res.get(0);
+        var avgDeltaAbsMinus = res.get(1);
+
+        var res2 = calculateAvgDelta2Handler2(strategy, smaFastAvg, smaFast2Avg, avgDeltaAbsPlus, avgDeltaAbsMinus);
+        var dPlus = res2.get(0);
+        var dMinus = res2.get(1);
+        avgDeltaAbsPlus = res2.get(2);
+        avgDeltaAbsMinus = res2.get(3);
+
+        var avg = smaFastAvg.get(length - 1);
+        var bottom = avg + avgDeltaAbsMinus;
+        var top = avg + avgDeltaAbsPlus;
+        var ticksFromAvg = length / 2;
+        var moveUp = getPercentMoveUpAvg(smaFastAvg, ticksFromAvg);
+        return List.of(bottom, top, avg, Math.max(dPlus, dMinus), moveUp, moveUp);
+    }
 
     private List<Double> calculateAvgDelta(
             String figi,
@@ -1198,7 +1277,11 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             List<Double> smaTube
     ) {
         List<Double> res;
-        if (strategy.isTubeAvgDeltaAdvance2()) {
+        if (strategy.isTubeAvgDeltaAdvance3()) {
+            var res3 = calculateAvgDelta3(figi, currentDateTime, strategy, keyExtractor);
+            res = calculateAvgDelta2(figi, currentDateTime, strategy, keyExtractor);
+            return List.of(Math.min(res.get(0), res3.get(0)), res.get(1), res.get(2), res.get(3), res.get(3));
+        } else if (strategy.isTubeAvgDeltaAdvance2()) {
             res = calculateAvgDelta2(figi, currentDateTime, strategy, keyExtractor);
         } else {
             res = calculateAvgDelta(figi, currentDateTime, strategy, keyExtractor);

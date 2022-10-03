@@ -130,7 +130,7 @@ public class OrderService {
             order = saveOrder(order);
         }
         if (null != result.getLots() && result.getLots() > 0) {
-            order.setSellDateTime(OffsetDateTime.now());
+            order.setSellDateTime(candle.getDateTime());
             order = setOrderInfo(order, result);
         }
         return order;
