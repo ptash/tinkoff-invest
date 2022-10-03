@@ -247,13 +247,18 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             var isTubeTopToBy = false;
             annotation += " " + price + " < ttb=" + tubeTopToBy;
             if (tubeTopToBy.compareTo(BigDecimal.ZERO) > 0 && (price.compareTo(tubeTopToBy) < 0 || strategy.isTubeAvgDeltaAdvance())) {
-                if (strategy.isTubeAvgDeltaAdvance3() || getPercentMoveUp(smaTube) >= strategy.getMinPercentTubeMoveUp()) {
+                if (strategy.isTubeAvgDeltaAdvance3() && getPercentMoveUp(smaSlow) >= strategy.getMinPercentTubeMoveUp()) {
+                    //if (getPercentMoveUp(smaTube) >= strategy.getMinPercentTubeMoveUp()) {
+                    isTubeTopToBy = true;
+                    result = true;
+                    annotation += " tTB true " + getPercentMoveUp(smaSlow) + " >= " + strategy.getMinPercentTubeMoveUp() + " (" + smaTube + ")";
+                } else if (!strategy.isTubeAvgDeltaAdvance3() && getPercentMoveUp(smaTube) >= strategy.getMinPercentTubeMoveUp()) {
                 //if (getPercentMoveUp(smaTube) >= strategy.getMinPercentTubeMoveUp()) {
                     isTubeTopToBy = true;
                     result = true;
                     annotation += " tTB true " + getPercentMoveUp(smaTube) + " >= " + strategy.getMinPercentTubeMoveUp() + " (" + smaTube + ")";
                 } else {
-                    annotation += " tTB false " + getPercentMoveUp(smaTube) + " >= " + strategy.getMinPercentTubeMoveUp() + " (" + smaTube + ")";
+                    annotation += " tTB false " + (strategy.isTubeAvgDeltaAdvance3() ? getPercentMoveUp(smaSlow) : getPercentMoveUp(smaTube)) + " >= " + strategy.getMinPercentTubeMoveUp() + " (" + smaTube + ")";
                 }
             }
             if (isTubeTopToBy) {
@@ -968,7 +973,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
                     avgDeltaAbsDPlus += delta;
                     lengthPlus++;
                 }
-                if (lengthMinus1 == 0 && delta <= avgDeltaAbsPlus - dPlus) {
+                if (false && strategy.isTubeAvgDeltaAdvance3() && lengthMinus1 == 0 && delta <= avgDeltaAbsPlus - dPlus) {
                     avgDeltaAbsDMinus += delta;
                     lengthMinus++;
                 }
@@ -977,7 +982,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
                     avgDeltaAbsDMinus += delta;
                     lengthMinus++;
                 }
-                if (lengthPlus1 == 0 && delta <= avgDeltaAbsMinus + dMinus) {
+                if (false && strategy.isTubeAvgDeltaAdvance3() && lengthPlus1 == 0 && delta <= avgDeltaAbsMinus + dMinus) {
                     avgDeltaAbsDPlus += delta;
                     lengthPlus++;
                 }
@@ -986,13 +991,13 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         if (lengthPlus > 0) {
             avgDeltaAbsDPlus = avgDeltaAbsDPlus / lengthPlus;
             avgDeltaAbsPlus = avgDeltaAbsDPlus;
-        } else if (lengthPlus1 == 0) {
+        } else if (false && strategy.isTubeAvgDeltaAdvance3() && lengthPlus1 == 0) {
             avgDeltaAbsPlus = dMinus;
         }
         if (lengthMinus > 0) {
             avgDeltaAbsDMinus = avgDeltaAbsDMinus / lengthMinus;
             avgDeltaAbsMinus = avgDeltaAbsDMinus;
-        } else if (lengthMinus1 == 0) {
+        } else if (false && strategy.isTubeAvgDeltaAdvance3() && lengthMinus1 == 0) {
             avgDeltaAbsMinus = dPlus;
         }
         return List.of(dPlus, dMinus, avgDeltaAbsPlus, avgDeltaAbsMinus);
@@ -1291,9 +1296,9 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         List<Double> res;
         if (strategy.isTubeAvgDeltaAdvance3()) {
             var res3 = calculateAvgDelta3(figi, currentDateTime, strategy, keyExtractor);
-            return res3;
-            //res = calculateAvgDelta2(figi, currentDateTime, strategy, keyExtractor);
-            //return List.of(Math.min(res.get(0), res3.get(0)), res.get(1), res.get(2), res.get(3), res.get(3));
+            //return res3;
+            res = calculateAvgDelta2(figi, currentDateTime, strategy, keyExtractor);
+            return List.of(Math.min(res.get(0), res3.get(0)), res.get(1), res.get(2), res.get(3), res.get(3));
         } else if (strategy.isTubeAvgDeltaAdvance2()) {
             res = calculateAvgDelta2(figi, currentDateTime, strategy, keyExtractor);
         } else {
