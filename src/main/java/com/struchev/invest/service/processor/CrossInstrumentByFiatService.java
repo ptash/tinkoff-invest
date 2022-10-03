@@ -247,8 +247,8 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             var isTubeTopToBy = false;
             annotation += " " + price + " < ttb=" + tubeTopToBy;
             if (tubeTopToBy.compareTo(BigDecimal.ZERO) > 0 && (price.compareTo(tubeTopToBy) < 0 || strategy.isTubeAvgDeltaAdvance())) {
-                //if (strategy.isTubeAvgDeltaAdvance() || getPercentMoveUp(smaTube) >= strategy.getMinPercentTubeMoveUp()) {
-                if (getPercentMoveUp(smaTube) >= strategy.getMinPercentTubeMoveUp()) {
+                if (strategy.isTubeAvgDeltaAdvance3() || getPercentMoveUp(smaTube) >= strategy.getMinPercentTubeMoveUp()) {
+                //if (getPercentMoveUp(smaTube) >= strategy.getMinPercentTubeMoveUp()) {
                     isTubeTopToBy = true;
                     result = true;
                     annotation += " tTB true " + getPercentMoveUp(smaTube) + " >= " + strategy.getMinPercentTubeMoveUp() + " (" + smaTube + ")";
@@ -936,52 +936,64 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
 
         Double dPlus = 0.;
         Double dMinus = 0.;
+        var lengthPlus1 = 0;
+        var lengthMinus1 = 0;
+        for (var i = 0; i < length; i++) {
+            var point = i + length;
+            var delta = smaFast2Avg.get(point) - avgList.get(i);
+            if (delta > 0) {
+                dPlus += (delta - avgDeltaAbsPlus) * (delta - avgDeltaAbsPlus);
+                lengthPlus1++;
+            } else {
+                dMinus += (delta - avgDeltaAbsMinus) * (delta - avgDeltaAbsMinus);
+                lengthMinus1++;
+            }
+        }
+        if (lengthPlus1 > 0) {
+            dPlus = Math.sqrt(dPlus / lengthPlus1); // среднее квадратичное отклонение дельты от средней
+        }
+        if (lengthMinus1 > 0) {
+            dMinus = Math.sqrt(dMinus / lengthMinus1); // среднее квадратичное отклонение дельты от средней
+        }
+        var avgDeltaAbsDPlus = 0.;
+        var avgDeltaAbsDMinus = 0.;
+        var num = 0;
         var lengthPlus = 0;
         var lengthMinus = 0;
         for (var i = 0; i < length; i++) {
             var point = i + length;
             var delta = smaFast2Avg.get(point) - avgList.get(i);
             if (delta > 0) {
-                dPlus += (delta - avgDeltaAbsPlus) * (delta - avgDeltaAbsPlus);
-                lengthPlus++;
-            } else {
-                dMinus += (delta - avgDeltaAbsMinus) * (delta - avgDeltaAbsMinus);
-                lengthMinus++;
-            }
-        }
-        if (lengthPlus > 0) {
-            dPlus = Math.sqrt(dPlus / lengthPlus); // среднее квадратичное отклонение дельты от средней
-        }
-        if (lengthMinus > 0) {
-            dMinus = Math.sqrt(dMinus / lengthMinus); // среднее квадратичное отклонение дельты от средней
-        }
-        var avgDeltaAbsDPlus = 0.;
-        var avgDeltaAbsDMinus = 0.;
-        var num = 0;
-        lengthPlus = 0;
-        lengthMinus = 0;
-        for (var i = 0; i < length; i++) {
-            var point = i + length;
-            var delta = smaFast2Avg.get(point) - avgList.get(i);
-            if (delta > 0) {
-                if (delta >= avgDeltaAbsPlus + dPlus) {
+                if (lengthPlus1 > 0 && delta >= avgDeltaAbsPlus + dPlus) {
                     avgDeltaAbsDPlus += delta;
                     lengthPlus++;
                 }
-            } else {
-                if (delta <= avgDeltaAbsMinus - dMinus) {
+                if (lengthMinus1 == 0 && delta <= avgDeltaAbsPlus - dPlus) {
                     avgDeltaAbsDMinus += delta;
                     lengthMinus++;
+                }
+            } else {
+                if (lengthMinus1 > 0 && delta <= avgDeltaAbsMinus - dMinus) {
+                    avgDeltaAbsDMinus += delta;
+                    lengthMinus++;
+                }
+                if (lengthPlus1 == 0 && delta <= avgDeltaAbsMinus + dMinus) {
+                    avgDeltaAbsDPlus += delta;
+                    lengthPlus++;
                 }
             }
         }
         if (lengthPlus > 0) {
             avgDeltaAbsDPlus = avgDeltaAbsDPlus / lengthPlus;
             avgDeltaAbsPlus = avgDeltaAbsDPlus;
+        } else if (lengthPlus1 == 0) {
+            //avgDeltaAbsPlus = dMinus;
         }
         if (lengthMinus > 0) {
             avgDeltaAbsDMinus = avgDeltaAbsDMinus / lengthMinus;
             avgDeltaAbsMinus = avgDeltaAbsDMinus;
+        } else if (lengthMinus1 == 0) {
+            //avgDeltaAbsMinus = dPlus;
         }
         return List.of(dPlus, dMinus, avgDeltaAbsPlus, avgDeltaAbsMinus);
     }
