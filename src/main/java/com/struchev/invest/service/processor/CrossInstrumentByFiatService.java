@@ -987,13 +987,13 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             avgDeltaAbsDPlus = avgDeltaAbsDPlus / lengthPlus;
             avgDeltaAbsPlus = avgDeltaAbsDPlus;
         } else if (lengthPlus1 == 0) {
-            //avgDeltaAbsPlus = dMinus;
+            avgDeltaAbsPlus = dMinus;
         }
         if (lengthMinus > 0) {
             avgDeltaAbsDMinus = avgDeltaAbsDMinus / lengthMinus;
             avgDeltaAbsMinus = avgDeltaAbsDMinus;
         } else if (lengthMinus1 == 0) {
-            //avgDeltaAbsMinus = dPlus;
+            avgDeltaAbsMinus = dPlus;
         }
         return List.of(dPlus, dMinus, avgDeltaAbsPlus, avgDeltaAbsMinus);
     }
