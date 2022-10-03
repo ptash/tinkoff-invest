@@ -247,18 +247,18 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             var isTubeTopToBy = false;
             annotation += " " + price + " < ttb=" + tubeTopToBy;
             if (tubeTopToBy.compareTo(BigDecimal.ZERO) > 0 && (price.compareTo(tubeTopToBy) < 0 || strategy.isTubeAvgDeltaAdvance())) {
-                if (strategy.isTubeAvgDeltaAdvance3() && getPercentMoveUp(smaSlow) >= strategy.getMinPercentTubeMoveUp()) {
+                if (strategy.isTubeAvgDeltaAdvance3() && getPercentMoveUp(smaTube) >= strategy.getMinPercentTubeMoveUp()) {
                     //if (getPercentMoveUp(smaTube) >= strategy.getMinPercentTubeMoveUp()) {
                     isTubeTopToBy = true;
                     result = true;
-                    annotation += " tTB true " + getPercentMoveUp(smaSlow) + " >= " + strategy.getMinPercentTubeMoveUp() + " (" + smaTube + ")";
+                    annotation += " tTB true " + getPercentMoveUp(smaTube) + " >= " + strategy.getMinPercentTubeMoveUp() + " (" + smaTube + ")";
                 } else if (!strategy.isTubeAvgDeltaAdvance3() && getPercentMoveUp(smaTube) >= strategy.getMinPercentTubeMoveUp()) {
                 //if (getPercentMoveUp(smaTube) >= strategy.getMinPercentTubeMoveUp()) {
                     isTubeTopToBy = true;
                     result = true;
                     annotation += " tTB true " + getPercentMoveUp(smaTube) + " >= " + strategy.getMinPercentTubeMoveUp() + " (" + smaTube + ")";
                 } else {
-                    annotation += " tTB false " + (strategy.isTubeAvgDeltaAdvance3() ? getPercentMoveUp(smaSlow) : getPercentMoveUp(smaTube)) + " >= " + strategy.getMinPercentTubeMoveUp() + " (" + smaTube + ")";
+                    annotation += " tTB false " + (strategy.isTubeAvgDeltaAdvance3() ? getPercentMoveUp(smaTube) : getPercentMoveUp(smaTube)) + " >= " + strategy.getMinPercentTubeMoveUp() + " (" + smaTube + ")";
                 }
             }
             if (isTubeTopToBy) {
