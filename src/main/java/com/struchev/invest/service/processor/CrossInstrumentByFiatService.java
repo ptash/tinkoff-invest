@@ -1094,7 +1094,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         avgDeltaAbsPlus = res2.get(2);
         avgDeltaAbsMinus = res2.get(3);
 
-        var avg = smaFastAvg.get(length - 1);
+        var avg = smaFastAvg.get(smaFastAvg.size() - 1);
         var bottom = avg + avgDeltaAbsMinus;
         var top = avg + avgDeltaAbsPlus;
         var ticksFromAvg = length / 2;
@@ -1279,8 +1279,9 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         List<Double> res;
         if (strategy.isTubeAvgDeltaAdvance3()) {
             var res3 = calculateAvgDelta3(figi, currentDateTime, strategy, keyExtractor);
-            res = calculateAvgDelta2(figi, currentDateTime, strategy, keyExtractor);
-            return List.of(Math.min(res.get(0), res3.get(0)), res.get(1), res.get(2), res.get(3), res.get(3));
+            return res3;
+            //res = calculateAvgDelta2(figi, currentDateTime, strategy, keyExtractor);
+            //return List.of(Math.min(res.get(0), res3.get(0)), res.get(1), res.get(2), res.get(3), res.get(3));
         } else if (strategy.isTubeAvgDeltaAdvance2()) {
             res = calculateAvgDelta2(figi, currentDateTime, strategy, keyExtractor);
         } else {
