@@ -247,7 +247,11 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             var isTubeTopToBy = false;
             annotation += " " + price + " < ttb=" + tubeTopToBy;
             if (tubeTopToBy.compareTo(BigDecimal.ZERO) > 0 && (price.compareTo(tubeTopToBy) < 0 || strategy.isTubeAvgDeltaAdvance())) {
-                if (strategy.isTubeAvgDeltaAdvance3() && getPercentMoveUp(smaTube) >= strategy.getMinPercentTubeMoveUp()) {
+                if (strategy.isTubeAvgDeltaAdvance3() &&
+                        ((getPercentMoveUp(smaTube) >= strategy.getMinPercentTubeMoveUp() && getPercentMoveUp(smaSlow) >= strategy.getMinPercentTubeMoveUp())
+                                || (getPercentMoveUp(smaTube) < strategy.getMinPercentTubeMoveUp() && getPercentMoveUp(smaSlow) < strategy.getMinPercentTubeMoveUp())
+                        )
+                ) {
                     //if (getPercentMoveUp(smaTube) >= strategy.getMinPercentTubeMoveUp()) {
                     isTubeTopToBy = true;
                     result = true;
