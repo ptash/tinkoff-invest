@@ -7,6 +7,7 @@ public class BuyProfit1InvestPercent02SellWithMaxProfitCrossTube3Strategy extend
     public Boolean isTubeAvgDeltaAdvance3() { return true; }
 
     //public Integer getAvgLength() {return getSmaFastLength();}
+    public Double getMinPercentMoveUp() { return 0.02; }
 
     public boolean isEnabled() { return true; }
 }
