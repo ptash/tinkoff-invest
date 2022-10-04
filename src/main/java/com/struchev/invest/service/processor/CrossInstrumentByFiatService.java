@@ -191,6 +191,9 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
                 //moveUp = avgDelta.get(7);
                 var moveUpSma = getPercentMoveUpAvg(ema2, strategy.getTicksMoveUp());
                 tubeSize = avgDelta.get(1) - avgDelta.get(0);
+                if (strategy.getSellLimitCriteria() != null && strategy.getSellLimitCriteria().getExitProfitPercent() != null) {
+                    expectProfit += (price.doubleValue() * strategy.getSellLimitCriteria().getExitProfitPercent()) / 100.0;
+                }
                 needBuy = true//moveUpSma > moveUp
                         && tubeSize > expectProfit
                         && price.compareTo(BigDecimal.valueOf(avgDelta.get(0))) < 0
