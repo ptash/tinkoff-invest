@@ -990,7 +990,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
                 if (delta > dMinus) {
                     avgDeltaAbsDMinusMin += delta;
                 }
-                if (strategy.isTubeAvgDeltaAdvance3() && lengthPlus1 == 0 && delta <= avgDeltaAbsMinus + dMinus) {
+                if (strategy.isTubeAvgDeltaAdvance3() && lengthPlus1 == 0 && delta >= avgDeltaAbsMinus + dMinus) {
                     avgDeltaAbsDPlus += delta;
                     lengthPlus++;
                 }
