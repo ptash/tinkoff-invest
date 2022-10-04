@@ -1008,7 +1008,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         } else if (strategy.isTubeAvgDeltaAdvance3() && lengthMinus1 == 0) {
             avgDeltaAbsMinus = dPlus;
         }
-        if (strategy.isTubeAvgDeltaAdvance3() && (avgDeltaAbsDMinusMin > 0 || avgDeltaAbsDPlusMin > 0)) {
+        if (strategy.isTubeAvgDeltaAdvance3() && (avgDeltaAbsDMinusMin < 0 || avgDeltaAbsDPlusMin > 0)) {
             avgDeltaAbsPlus = Math.max(Math.abs(avgDeltaAbsPlus), Math.abs(avgDeltaAbsMinus));
             avgDeltaAbsMinus = -avgDeltaAbsPlus;
         }
