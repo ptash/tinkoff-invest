@@ -1111,7 +1111,8 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         avgDeltaAbsPlus = res2.get(2);
         avgDeltaAbsMinus = res2.get(3);
 
-        var avg = smaFastAvg.get(smaFastAvg.size() - 1);
+        //var avg = smaFastAvg.get(smaFastAvg.size() - 1);
+        var avg = smaFastAvg.get(length - 1);
         var bottom = avg + avgDeltaAbsMinus;
         var top = avg + avgDeltaAbsPlus;
         var ticksFromAvg = length / 2;
