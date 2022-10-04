@@ -962,6 +962,8 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         }
         var avgDeltaAbsDPlus = 0.;
         var avgDeltaAbsDMinus = 0.;
+        var avgDeltaAbsDPlusMin = 0.;
+        var avgDeltaAbsDMinusMin = 0.;
         var num = 0;
         var lengthPlus = 0;
         var lengthMinus = 0;
@@ -973,7 +975,10 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
                     avgDeltaAbsDPlus += delta;
                     lengthPlus++;
                 }
-                if (false && strategy.isTubeAvgDeltaAdvance3() && lengthMinus1 == 0 && delta <= avgDeltaAbsPlus - dPlus) {
+                if (delta <= avgDeltaAbsPlus - dPlus) {
+                    avgDeltaAbsDPlusMin += delta;
+                }
+                if (strategy.isTubeAvgDeltaAdvance3() && lengthMinus1 == 0 && delta <= avgDeltaAbsPlus - dPlus) {
                     avgDeltaAbsDMinus += delta;
                     lengthMinus++;
                 }
@@ -982,7 +987,10 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
                     avgDeltaAbsDMinus += delta;
                     lengthMinus++;
                 }
-                if (false && strategy.isTubeAvgDeltaAdvance3() && lengthPlus1 == 0 && delta <= avgDeltaAbsMinus + dMinus) {
+                if (delta <= avgDeltaAbsMinus + dMinus) {
+                    avgDeltaAbsDMinusMin += delta;
+                }
+                if (strategy.isTubeAvgDeltaAdvance3() && lengthPlus1 == 0 && delta <= avgDeltaAbsMinus + dMinus) {
                     avgDeltaAbsDPlus += delta;
                     lengthPlus++;
                 }
@@ -991,14 +999,18 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         if (lengthPlus > 0) {
             avgDeltaAbsDPlus = avgDeltaAbsDPlus / lengthPlus;
             avgDeltaAbsPlus = avgDeltaAbsDPlus;
-        } else if (false && strategy.isTubeAvgDeltaAdvance3() && lengthPlus1 == 0) {
+        } else if (strategy.isTubeAvgDeltaAdvance3() && lengthPlus1 == 0) {
             avgDeltaAbsPlus = dMinus;
         }
         if (lengthMinus > 0) {
             avgDeltaAbsDMinus = avgDeltaAbsDMinus / lengthMinus;
             avgDeltaAbsMinus = avgDeltaAbsDMinus;
-        } else if (false && strategy.isTubeAvgDeltaAdvance3() && lengthMinus1 == 0) {
+        } else if (strategy.isTubeAvgDeltaAdvance3() && lengthMinus1 == 0) {
             avgDeltaAbsMinus = dPlus;
+        }
+        if (strategy.isTubeAvgDeltaAdvance3() && (avgDeltaAbsDMinusMin > 0 || avgDeltaAbsDPlusMin > 0)) {
+            avgDeltaAbsPlus = Math.max(Math.abs(avgDeltaAbsPlus), Math.abs(avgDeltaAbsMinus));
+            avgDeltaAbsMinus = -avgDeltaAbsPlus;
         }
         return List.of(dPlus, dMinus, avgDeltaAbsPlus, avgDeltaAbsMinus);
     }
@@ -1111,8 +1123,8 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         avgDeltaAbsPlus = res2.get(2);
         avgDeltaAbsMinus = res2.get(3);
 
-        //var avg = smaFastAvg.get(smaFastAvg.size() - 1);
-        var avg = smaFastAvg.get(length - 1);
+        var avg = smaFastAvg.get(smaFastAvg.size() - 1);
+        //var avg = smaFastAvg.get(length - 1);
         var bottom = avg + avgDeltaAbsMinus;
         var top = avg + avgDeltaAbsPlus;
         var ticksFromAvg = length / 2;
