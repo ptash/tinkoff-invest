@@ -190,11 +190,13 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
                 //needBuy = avgDelta.get(5) > 0;
                 //moveUp = avgDelta.get(7);
                 var moveUpSma = getPercentMoveUpAvg(ema2, strategy.getTicksMoveUp());
+                tubeSize = avgDelta.get(1) - avgDelta.get(0);
                 needBuy = true//moveUpSma > moveUp
+                        && tubeSize > expectProfit
                         && price.compareTo(BigDecimal.valueOf(avgDelta.get(0))) < 0
                 ;
                 //annotation += " moveUp = " + moveUp + " moveUpPrev = " + moveUpPrev + " needBuy = " + needBuy;
-                annotation += " moveUpSma = " + moveUpSma + " needBuy = " + needBuy;
+                annotation += " moveUpSma = " + moveUpSma + " tubeSize: " + tubeSize + " > " + expectProfit + " needBuy = " + needBuy;
                 if (needBuy /*&& price.doubleValue() < avgDelta.get(0)*/) {
                     isInTube = true;
                     tubeTopToBy = BigDecimal.valueOf(avgDelta.get(0));
