@@ -975,7 +975,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
                     avgDeltaAbsDPlus += delta;
                     lengthPlus++;
                 }
-                if (delta <= avgDeltaAbsPlus - dPlus) {
+                if (delta < dPlus) {
                     avgDeltaAbsDPlusMin += delta;
                 }
                 if (strategy.isTubeAvgDeltaAdvance3() && lengthMinus1 == 0 && delta <= avgDeltaAbsPlus - dPlus) {
@@ -987,7 +987,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
                     avgDeltaAbsDMinus += delta;
                     lengthMinus++;
                 }
-                if (delta <= avgDeltaAbsMinus + dMinus) {
+                if (delta > dMinus) {
                     avgDeltaAbsDMinusMin += delta;
                 }
                 if (strategy.isTubeAvgDeltaAdvance3() && lengthPlus1 == 0 && delta <= avgDeltaAbsMinus + dMinus) {
