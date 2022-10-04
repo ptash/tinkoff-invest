@@ -134,7 +134,7 @@ public class CandleHistoryService {
                 throw new RuntimeException("Candles not found in local cache for " + figi);
             }
 
-            var startDateTime = dateTime.minusDays(15).minusMinutes(interval.equals("1min") ? length : length * 60 * 24);
+            var startDateTime = dateTime.minusDays(20).minusMinutes(interval.equals("1min") ? length : length * 60 * 24);
             var candles = candlesByFigi.stream()
                     .filter(c -> c.getDateTime().isAfter(startDateTime))
                     .filter(c -> c.getDateTime().isBefore(dateTime) || c.getDateTime().isEqual(dateTime))
