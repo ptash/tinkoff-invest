@@ -97,7 +97,7 @@ public class BuyEma600CrossStrategy extends AInstrumentByFiatCrossStrategy {
         //FIGIES.put("BBG004NLQHL0", 1); // Fastly Inc
         //FIGIES.put("BBG006G2JVL2", 1); // Alibaba
         //FIGIES.put("BBG003QBJKN0", 1); // Allakos Inc
-        //FIGIES.put("BBG005DXJS36", 1); // TCS Group (Tinkoff Bank holder)
+        FIGIES.put("BBG005DXJS36", 1); // TCS Group (Tinkoff Bank holder)
 
 
 /*
