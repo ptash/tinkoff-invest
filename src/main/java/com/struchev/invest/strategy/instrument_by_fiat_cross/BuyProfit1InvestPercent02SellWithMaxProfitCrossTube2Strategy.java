@@ -15,8 +15,9 @@ public class BuyProfit1InvestPercent02SellWithMaxProfitCrossTube2Strategy extend
             "BBG004S681W1", 20,    // МТС
             "BBG00178PGX3", 12    // VK*/
 
+            /*
             "BBG000BLY663", 1, // CROCS
-            "BBG004NLQHL0", 2 // Fastly Inc
+            "BBG004NLQHL0", 2 // Fastly Inc*/
     );
 
     public Map<String, Integer> getFigies() {
@@ -26,6 +27,6 @@ public class BuyProfit1InvestPercent02SellWithMaxProfitCrossTube2Strategy extend
 
     public Integer getAvgLength() {return getSmaFastLength() / 2;}
 
-    public boolean isEnabled() { return true; }
+    public boolean isEnabled() { return false; }
     public boolean isArchive() {return false;}
 }

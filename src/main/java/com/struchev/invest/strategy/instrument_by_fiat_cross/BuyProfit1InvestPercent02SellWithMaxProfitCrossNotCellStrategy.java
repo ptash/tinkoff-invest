@@ -8,9 +8,9 @@ import java.util.Map;
 public class BuyProfit1InvestPercent02SellWithMaxProfitCrossNotCellStrategy extends BuyProfit1InvestPercent02SellWithMaxProfitCrossStrategy {
 
     private Map FIGIES = Map.of(
-            "BBG005DXJS36", 1   , // TCS Group (Tinkoff Bank holder)
-            "BBG005F1DK91", 2, // G1
-            "BBG000QGWY50", 6 // Bluebird Bio Inc
+            "BBG005DXJS36", 1    // TCS Group (Tinkoff Bank holder)
+            //"BBG005F1DK91", 2, // G1
+            //"BBG000QGWY50", 6 // Bluebird Bio Inc
     );
 
     public Map<String, Integer> getFigies() {
