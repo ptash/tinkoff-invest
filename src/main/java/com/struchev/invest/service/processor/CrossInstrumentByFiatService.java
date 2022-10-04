@@ -258,7 +258,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
                     result = true;
                     annotation += " tTB true " + getPercentMoveUp(smaTube) + " >= " + strategy.getMinPercentTubeMoveUp() + " (" + smaTube + ")";
                 } else {
-                    annotation += " tTB false " + (strategy.isTubeAvgDeltaAdvance3() ? getPercentMoveUp(smaTube) : getPercentMoveUp(smaTube)) + " >= " + strategy.getMinPercentTubeMoveUp() + " (" + smaTube + ")";
+                    annotation += " tTB false " + getPercentMoveUp(smaTube) + ", " + getPercentMoveUp(smaSlow) + " >= " + strategy.getMinPercentTubeMoveUp() + " (" + smaTube + ")";
                 }
             }
             if (isTubeTopToBy) {
@@ -1120,6 +1120,9 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         var avgDeltaAbsPlus = res.get(0);
         var avgDeltaAbsMinus = res.get(1);
 
+        for (var i = 0; i < length; i++) {
+            smaFastAvg.remove(0);
+        }
         var res2 = calculateAvgDelta2Handler2(strategy, smaFastAvg, smaFast2Avg, avgDeltaAbsPlus, avgDeltaAbsMinus);
         var dPlus = res2.get(0);
         var dMinus = res2.get(1);
