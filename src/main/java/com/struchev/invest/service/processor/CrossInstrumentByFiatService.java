@@ -1309,9 +1309,9 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         List<Double> res;
         if (strategy.isTubeAvgDeltaAdvance3()) {
             var res3 = calculateAvgDelta3(figi, currentDateTime, strategy, keyExtractor);
-            //return res3;
-            res = calculateAvgDelta2(figi, currentDateTime, strategy, keyExtractor);
-            return List.of(Math.min(res.get(0), res3.get(0)), res.get(1), res.get(2), res.get(3), res.get(3));
+            return res3;
+            //res = calculateAvgDelta2(figi, currentDateTime, strategy, keyExtractor);
+            //return List.of(Math.min(res.get(0), res3.get(0)), res.get(1), res.get(2), res.get(3), res.get(3));
         } else if (strategy.isTubeAvgDeltaAdvance2()) {
             res = calculateAvgDelta2(figi, currentDateTime, strategy, keyExtractor);
         } else {
