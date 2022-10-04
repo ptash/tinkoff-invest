@@ -251,7 +251,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
                     //if (getPercentMoveUp(smaTube) >= strategy.getMinPercentTubeMoveUp()) {
                     isTubeTopToBy = true;
                     result = true;
-                    annotation += " tTB true " + getPercentMoveUp(smaTube) + " >= " + strategy.getMinPercentTubeMoveUp() + " (" + smaTube + ")";
+                    annotation += " tTB true " + getPercentMoveUp(smaTube) + ", " + getPercentMoveUp(smaSlow) + " >= " + strategy.getMinPercentTubeMoveUp() + " (" + smaTube + ")";
                 } else if (!strategy.isTubeAvgDeltaAdvance3() && getPercentMoveUp(smaTube) >= strategy.getMinPercentTubeMoveUp()) {
                 //if (getPercentMoveUp(smaTube) >= strategy.getMinPercentTubeMoveUp()) {
                     isTubeTopToBy = true;
@@ -990,7 +990,10 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
                 if (delta > dMinus) {
                     avgDeltaAbsDMinusMin += delta;
                 }
-                if (strategy.isTubeAvgDeltaAdvance3() && lengthPlus1 == 0 && delta >= avgDeltaAbsMinus + dMinus) {
+                if (strategy.isTubeAvgDeltaAdvance3() && lengthPlus1 == 0
+                        && delta <= avgDeltaAbsMinus + dMinus
+                        && delta >= avgDeltaAbsMinus - dMinus
+                ) {
                     avgDeltaAbsDPlus += delta;
                     lengthPlus++;
                 }
@@ -1009,8 +1012,8 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             avgDeltaAbsMinus = dPlus;
         }
         if (strategy.isTubeAvgDeltaAdvance3() && (avgDeltaAbsDMinusMin < 0 || avgDeltaAbsDPlusMin > 0)) {
-            avgDeltaAbsPlus = Math.max(Math.abs(avgDeltaAbsPlus), Math.abs(avgDeltaAbsMinus));
-            avgDeltaAbsMinus = -avgDeltaAbsPlus;
+            //avgDeltaAbsPlus = Math.max(Math.abs(avgDeltaAbsPlus), Math.abs(avgDeltaAbsMinus));
+            avgDeltaAbsMinus = -Math.max(Math.abs(avgDeltaAbsPlus), Math.abs(avgDeltaAbsMinus));
         }
         return List.of(dPlus, dMinus, avgDeltaAbsPlus, avgDeltaAbsMinus);
     }
