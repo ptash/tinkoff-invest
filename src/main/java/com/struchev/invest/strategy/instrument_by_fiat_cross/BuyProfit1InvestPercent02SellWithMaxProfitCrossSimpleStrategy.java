@@ -21,7 +21,7 @@ public class BuyProfit1InvestPercent02SellWithMaxProfitCrossSimpleStrategy exten
     public Boolean isTubeAvgDeltaSimple() { return true; }
 
     @Override
-    public boolean isEnabled() { return false; }
+    public boolean isEnabled() { return true; }
 
     public boolean isArchive() { return false; }
 }
