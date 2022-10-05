@@ -1127,6 +1127,17 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
         return calculateAvgDeltaCustom(figi, currentDateTime, strategy, keyExtractor, smaFastAvg);
     }
 
+    private List<Double> calculateAvgDeltaEmaFast(
+            String figi,
+            OffsetDateTime currentDateTime,
+            AInstrumentByFiatCrossStrategy strategy,
+            Function<? super CandleDomainEntity, ? extends BigDecimal> keyExtractor
+    ) {
+        var length = strategy.getAvgLength();
+        var smaFastAvg = getEma(figi, currentDateTime, strategy.getEmaFastLength(), strategy.getInterval(), keyExtractor, length * 2);
+        return calculateAvgDeltaCustom(figi, currentDateTime, strategy, keyExtractor, smaFastAvg);
+    }
+
     private List<Double> calculateAvgDeltaSmaSlow(
             String figi,
             OffsetDateTime currentDateTime,
@@ -1345,11 +1356,11 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
     ) {
         List<Double> res;
         if (strategy.isTubeAvgDeltaAdvance3()) {
-            var res3 = calculateAvgDeltaSmaSlow(figi, currentDateTime, strategy, keyExtractor);
-            //return res3;
+            var res3 = calculateAvgDeltaEmaFast(figi, currentDateTime, strategy, keyExtractor);
+            return res3;
             //res = calculateAvgDelta2(figi, currentDateTime, strategy, keyExtractor);
-            res = calculateAvgDeltaSmaFast(figi, currentDateTime, strategy, keyExtractor);
-            return List.of(Math.min(res.get(0), res3.get(0)), Math.max(res.get(1), res3.get(1)), res3.get(2), res3.get(3), res3.get(3));
+            //res = calculateAvgDeltaSmaFast(figi, currentDateTime, strategy, keyExtractor);
+            //return List.of(Math.min(res.get(0), res3.get(0)), Math.max(res.get(1), res3.get(1)), res3.get(2), res3.get(3), res3.get(3));
         } else if (strategy.isTubeAvgDeltaAdvance2()) {
             res = calculateAvgDelta2(figi, currentDateTime, strategy, keyExtractor);
         } else {
