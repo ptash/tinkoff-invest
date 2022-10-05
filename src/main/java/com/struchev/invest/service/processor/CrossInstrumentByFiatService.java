@@ -1349,7 +1349,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             //return res3;
             //res = calculateAvgDelta2(figi, currentDateTime, strategy, keyExtractor);
             res = calculateAvgDeltaSmaFast(figi, currentDateTime, strategy, keyExtractor);
-            return List.of(Math.min(res.get(0), res3.get(0)), res3.get(1), res3.get(2), res3.get(3), res3.get(3));
+            return List.of(Math.min(res.get(0), res3.get(0)), Math.max(res.get(1), res3.get(1)), res3.get(2), res3.get(3), res3.get(3));
         } else if (strategy.isTubeAvgDeltaAdvance2()) {
             res = calculateAvgDelta2(figi, currentDateTime, strategy, keyExtractor);
         } else {
