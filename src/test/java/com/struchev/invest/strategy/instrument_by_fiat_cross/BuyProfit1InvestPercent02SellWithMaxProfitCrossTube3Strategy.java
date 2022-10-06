@@ -9,6 +9,8 @@ public class BuyProfit1InvestPercent02SellWithMaxProfitCrossTube3Strategy extend
     //public Integer getAvgLength() {return getSmaFastLength();}
     public Double getMinPercentMoveUp() { return 0.02; }
 
+    public Double getPercentMoveUpError() { return 0.005; }
+
     public Integer getDelayPlusBySL() { return 30; }
 
     public boolean isEnabled() { return true; }
