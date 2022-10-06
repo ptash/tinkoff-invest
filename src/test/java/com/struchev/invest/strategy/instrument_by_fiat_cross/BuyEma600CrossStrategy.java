@@ -19,7 +19,7 @@ public class BuyEma600CrossStrategy extends AInstrumentByFiatCrossStrategy {
         //FIGIES.put("BBG002W2FT69", 1); // АбрауДюрсо
         //FIGIES.put("BBG000LNHHJ9", 1); // КАМАЗ
         //FIGIES.put("BBG004S68BH6", 1); // ПИК
-        FIGIES.put("BBG00178PGX3", 1);    // VK
+        //FIGIES.put("BBG00178PGX3", 1);    // VK
         /*
         FIGIES.put("BBG000LWVHN8", 1); // Дагестанская энергосбытовая компания
         FIGIES.put("BBG00178PGX3", 1);    // VK
@@ -97,8 +97,8 @@ public class BuyEma600CrossStrategy extends AInstrumentByFiatCrossStrategy {
         //FIGIES.put("BBG004NLQHL0", 1); // Fastly Inc
         //FIGIES.put("BBG006G2JVL2", 1); // Alibaba
         //FIGIES.put("BBG003QBJKN0", 1); // Allakos Inc
-        //FIGIES.put("BBG005DXJS36", 1); // TCS Group (Tinkoff Bank holder)
-        //FIGIES.put("BBG000N625H8", 1); // Freedom Holding Corp/NV
+        FIGIES.put("BBG005DXJS36", 1); // TCS Group (Tinkoff Bank holder)
+        FIGIES.put("BBG000N625H8", 1); // Freedom Holding Corp/NV
 
 
 /*
