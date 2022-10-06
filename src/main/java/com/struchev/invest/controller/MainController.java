@@ -1,5 +1,7 @@
 package com.struchev.invest.controller;
 
+import com.google.common.base.Splitter;
+import com.google.common.collect.Lists;
 import com.struchev.invest.service.report.ReportService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -10,12 +12,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.HttpServletResponse;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 @Controller
@@ -53,7 +53,11 @@ public class MainController {
 
         @GetMapping(path = {"/strategy_dygraphs_by_fiat"})
     public ModelAndView strategyDygraphsByFiat(@RequestParam String strategy, @RequestParam String figi) {
-        return new ModelAndView("dygraphs", Map.of("strategy", strategy, "figi", figi));
+        return new ModelAndView("dygraphs", Map.of(
+                "strategy", strategy,
+                "figi", figi,
+                "visibility", getStrategyDygraphsVisibility(strategy, figi, "Strategy")
+        ));
     }
 
     @GetMapping(path = {"/strategy_dygraphs_by_fiat.csv"})
@@ -66,6 +70,30 @@ public class MainController {
         outputStrategyDygraphsCsvData(strategy, figi, response, "Offer");
     }
 
+    private String getStrategyDygraphsVisibility(String strategy, String figi, String suffix) {
+        File[] fileList = new File(loggingPath).listFiles((dir, name) -> {
+            return name.contains(strategy + figi + suffix);
+        });
+        Arrays.sort(fileList);
+        var file = fileList[fileList.length - 1];
+        var headerLine = "";
+        try {
+            BufferedReader fileReader = new BufferedReader(new FileReader(file.getPath()));
+            headerLine = fileReader.readLine();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        var visibility = "true";
+        List<String> items = Lists.newArrayList(Splitter.on("|").split(headerLine));
+        for (var i = 1; i < items.size(); i++) {
+            if (items.get(i).equals("strategy")) {
+                visibility += ",false";
+            }
+            visibility += ",true";
+        }
+        return visibility;
+    }
+
     private void outputStrategyDygraphsCsvData(String strategy, String figi, HttpServletResponse response, String suffix) {
         File[] fileList = new File(loggingPath).listFiles((dir, name) -> {
             return name.contains(strategy + figi + suffix);
@@ -76,9 +104,12 @@ public class MainController {
             File file = fileList[i];
             try {
                 // get your file as InputStream
-                InputStream is = new FileInputStream(file);
+                BufferedReader is = new BufferedReader(new FileReader(file));
+                if (i != Math.max(0, fileList.length - max)) {
+                    is.readLine();
+                }
                 // copy it to response's OutputStream
-                org.apache.commons.io.IOUtils.copy(is, response.getOutputStream());
+                org.apache.commons.io.IOUtils.copy(is, response.getOutputStream(), "UTF-8");
                 response.flushBuffer();
             } catch (IOException ex) {
                 log.info("Error writing file to output stream: {}", file, ex);

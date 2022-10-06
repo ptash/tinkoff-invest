@@ -36,5 +36,5 @@ public class BuyProfit1InvestPercent02SellWithMaxProfitCrossTubeStrategy extends
 
     public boolean isEnabled() { return true; }
 
-    public boolean isArchive() {return false;}
+    public boolean isArchive() {return true;}
 }

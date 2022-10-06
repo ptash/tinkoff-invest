@@ -175,5 +175,5 @@ public class BuyProfit1InvestMixStrategy extends ABuyEma600CrossStrategy {
         return getCrisisStrategy().getDeadLinePercentFromSmaSlowest();
     }
     public boolean isEnabled() { return true; }
-    public boolean isArchive() {return false;}
+    public boolean isArchive() {return true;}
 }

@@ -32,6 +32,8 @@
 /*<![CDATA[*/
     var strategy = /*[[${strategy}]]*/ 'Strategy';
     var figi = /*[[${figi}]]*/ 'figi';
+    var visibilityValue = /*[[${visibility}]]*/ 'visibility';
+    visibilityValue = visibilityValue.split(",");
     function nameAnnotation(ann) {
         return "(" + ann.series + ", " + ann.x + ")";
     }
@@ -42,7 +44,7 @@
         "/strategy_dygraphs_by_fiat.csv?strategy=" + strategy + "&figi=" + figi, // path to CSV file
         {
             delimiter: '|',
-            visibility: [true,true,true,true,true,false,false,true,true,true,true,true,true,false,true,true,true,true],
+            visibility: visibilityValue,
             digitsAfterDecimal: 8,
             xValueParser: function(x) {
                 dateIndex.push(new Date(x.trim()));
