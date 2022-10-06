@@ -10,9 +10,8 @@ public class BuyProfit1InvestPercent02SellWithMaxProfitCrossTubeStrategy extends
     private Map FIGIES = Map.of(
             //"BBG004S68CP5", 5   // М.видео
 
-            /*
             "BBG005F1DK91", 2, // G1
-            "BBG002NLDLV8", 4 // VIPS*/
+            "BBG002NLDLV8", 4 // VIPS
             //"BBG00178PGX3", 12    // VK
     );
 
@@ -35,7 +34,7 @@ public class BuyProfit1InvestPercent02SellWithMaxProfitCrossTubeStrategy extends
     }
     public Integer getDelayPlusBySL() { return 30; }
 
-    public boolean isEnabled() { return false; }
+    public boolean isEnabled() { return true; }
 
     public boolean isArchive() {return false;}
 }
