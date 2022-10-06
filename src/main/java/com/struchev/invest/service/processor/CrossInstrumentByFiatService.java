@@ -264,6 +264,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
                         ((getPercentMoveUpAvg(smaTube, ticks) >= pmu
                                 && getPercentMoveUpAvg(smaSlow, ticks) >= pmu
                                 && (getPercentMoveUpAvg(emaFast, ticks) + getPercentMoveUpAvg(smaFast, ticks)) >= pmu
+                                && (getPercentMoveUpAvg(smaSlow, ticks) + getPercentMoveUpAvg(emaFast, ticks) + getPercentMoveUpAvg(smaFast, ticks))/3 <= -pmu
                         )
                                 || (getPercentMoveUpAvg(smaTube, ticks) < pmu && getPercentMoveUpAvg(smaSlow, ticks) > pmu)
                         )
