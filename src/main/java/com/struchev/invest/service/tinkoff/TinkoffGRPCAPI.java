@@ -246,6 +246,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
         //    return false;
         //}
         var delta = price.multiply(priceError);
+        delta = moneyRound(instrument, delta);
         if (price.compareTo(bidPrice.add(delta)) > 0) {
             throw new RuntimeException("Sell " + instrument.getFigi() + " error: the bid price " + bidPrice + " + " + delta + " is less than wanted price " + price);
             //return false;
@@ -265,6 +266,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
         var bidPrice = toBigDecimal(orderBook.getBids(0).getPrice(), 8);
         log.info("Order book buy {}: bid = {} ask = {} response = {}", price, bidPrice, askPrice, orderBook);
         var delta = price.multiply(priceError);
+        delta = moneyRound(instrument, delta);
         if (price.compareTo(askPrice.subtract(delta)) < 0) {
             throw new RuntimeException("Buy " + instrument.getFigi() + " error: the ask price " + askPrice + " - " + delta + " is more than wanted price " + price);
         }
@@ -272,6 +274,10 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
         //    throw new RuntimeException("Buy " + instrument.getFigi() + " error: the ask price " + askPrice + " differs from the bid " + bidPrice + " price by more than " + priceError + " < " + currentDelta);
         //}
         return true;
+    }
+
+    private BigDecimal moneyRound(InstrumentService.Instrument instrument, BigDecimal price) {
+        return price.divide(instrument.getMinPriceIncrement(), 0, RoundingMode.HALF_UP).multiply(instrument.getMinPriceIncrement());
     }
 
     private Boolean isZero(MoneyValue money) {

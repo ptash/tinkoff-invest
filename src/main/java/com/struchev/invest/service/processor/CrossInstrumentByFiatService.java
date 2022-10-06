@@ -196,6 +196,7 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
                 }
                 needBuy = true//moveUpSma > moveUp
                         && tubeSize > expectProfit
+                        && price.compareTo(BigDecimal.valueOf(emaFast.get(0))) < 0
                         && price.compareTo(BigDecimal.valueOf(avgDelta.get(0))) < 0
                 ;
                 //annotation += " moveUp = " + moveUp + " moveUpPrev = " + moveUpPrev + " needBuy = " + needBuy;

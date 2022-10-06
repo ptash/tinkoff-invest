@@ -75,6 +75,9 @@ public class MainController {
             return name.contains(strategy + figi + suffix);
         });
         Arrays.sort(fileList);
+        if (fileList.length < 1) {
+            return "";
+        }
         var file = fileList[fileList.length - 1];
         var headerLine = "";
         try {
@@ -113,7 +116,7 @@ public class MainController {
                 response.flushBuffer();
             } catch (IOException ex) {
                 log.info("Error writing file to output stream: {}", file, ex);
-                throw new RuntimeException("IOError writing file to output stream");
+                //throw new RuntimeException("IOError writing file to output stream");
             }
         }
         response.setContentType("text/csv");
