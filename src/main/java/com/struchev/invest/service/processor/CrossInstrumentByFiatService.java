@@ -170,6 +170,9 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             var tubeSize = avgDelta.get(1) - avgDelta.get(0);
             var tubeSizePrice = avgDelta.get(1) - price.doubleValue();
             var expectProfit = (price.doubleValue() * strategy.getSellCriteria().getTakeProfitPercent()) / 100.0;
+            if (strategy.isTubeAvgDeltaAdvance3()) {
+                expectProfit = (price.doubleValue() * (strategy.getSellCriteria().getTakeProfitPercent() + strategy.getPriceError().doubleValue())) / 100.0;
+            }
             //var expectTubeTop = avgDelta.get(1) + strategy.getEmaFastLength() * ((emaFast.get(emaFast.size() - 1) - emaFast.get(0)) / emaFast.size() - (smaFast.get(smaFast.size() - 1) - smaFast.get(0)) / smaFast.size());
             var d = (smaSlowest.get(smaSlowest.size() - 1) - smaSlowest.get(0)) / smaSlowest.size();
             //d += (emaFast.get(emaFast.size() - 1) - emaFast.get(0)) / emaFast.size();
@@ -253,15 +256,23 @@ public class CrossInstrumentByFiatService implements ICalculatorService<AInstrum
             var isTubeTopToBy = false;
             annotation += " " + price + " < ttb=" + tubeTopToBy;
             if (tubeTopToBy.compareTo(BigDecimal.ZERO) > 0 && (price.compareTo(tubeTopToBy) < 0 || strategy.isTubeAvgDeltaAdvance())) {
-                if (strategy.isTubeAvgDeltaAdvance3() &&
-                        ((getPercentMoveUp(smaTube) >= strategy.getMinPercentTubeMoveUp() && getPercentMoveUp(smaSlow) >= strategy.getMinPercentTubeMoveUp())
-                                || (getPercentMoveUp(smaTube) < strategy.getMinPercentTubeMoveUp() && getPercentMoveUp(smaSlow) > strategy.getMinPercentMoveUp())
+
+                var ticks = strategy.getTicksMoveUp();
+                var pmu = strategy.getMinPercentTubeMoveUp() / ticks;
+                if (strategy.isTubeAvgDeltaAdvance3()) {
+                    if (
+                        ((getPercentMoveUpAvg(smaTube, ticks) >= pmu
+                                && getPercentMoveUpAvg(smaSlow, ticks) >= pmu
+                                && (getPercentMoveUpAvg(emaFast, ticks) + getPercentMoveUpAvg(smaFast, ticks)) >= pmu
+                        )
+                                || (getPercentMoveUpAvg(smaTube, ticks) < pmu && getPercentMoveUpAvg(smaSlow, ticks) > pmu)
                         )
                 ) {
-                    //if (getPercentMoveUp(smaTube) >= strategy.getMinPercentTubeMoveUp()) {
-                    isTubeTopToBy = true;
-                    result = true;
-                    annotation += " tTB true " + getPercentMoveUp(smaTube) + ", " + getPercentMoveUp(smaSlow) + " >= " + strategy.getMinPercentTubeMoveUp() + " (" + smaTube + ")";
+                        //if (getPercentMoveUp(smaTube) >= strategy.getMinPercentTubeMoveUp()) {
+                        isTubeTopToBy = true;
+                        result = true;
+                    }
+                    annotation += " tTB " + (result ? "true" : "false" ) + " " + getPercentMoveUpAvg(smaTube, ticks) + ", " + getPercentMoveUpAvg(smaSlow, ticks) + ", " + getPercentMoveUpAvg(emaFast, ticks) + ", " + getPercentMoveUpAvg(smaFast, ticks) + " >= " + pmu + " (" + smaTube + ")";
                 } else if (!strategy.isTubeAvgDeltaAdvance3() && getPercentMoveUp(smaTube) >= strategy.getMinPercentTubeMoveUp()) {
                 //if (getPercentMoveUp(smaTube) >= strategy.getMinPercentTubeMoveUp()) {
                     isTubeTopToBy = true;

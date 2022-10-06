@@ -34,5 +34,5 @@ public class BuyProfit1InvestPercent02SellWithMaxProfitCrossTubeStrategy extends
 
     //public Double getPercentMoveUpError() { return 0.05; }
 
-    public boolean isEnabled() { return true; }
+    public boolean isEnabled() { return false; }
 }
