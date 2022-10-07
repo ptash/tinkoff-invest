@@ -1,22 +1,30 @@
 package com.struchev.invest.strategy;
 
+import com.struchev.invest.service.dictionary.InstrumentService;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class StrategySelector {
+    private final InstrumentService instrumentService;
     @Getter
     private final List<AStrategy> allStrategies;
     private List<AStrategy> activeStrategies;
+
+    @Value("${invest.currency:RUB}")
+    private String currency;
 
     public List<AStrategy> suitableByFigi(String figi, AStrategy.Type type) {
         return activeStrategies.stream()
@@ -31,7 +39,18 @@ public class StrategySelector {
     }
 
     public Set<String> getFigiesForActiveStrategies() {
-        return getActiveStrategies().stream().flatMap(s -> s.getFigies().keySet().stream()).collect(Collectors.toSet());
+        return getActiveStrategies().stream().flatMap(s -> filterByCurrency(s.getFigies())).collect(Collectors.toSet());
+    }
+
+    public Stream<String> filterByCurrency(Map<String, Integer> figies) {
+        return figies.keySet().stream().filter(figi -> {
+            var instrument = instrumentService.getInstrument(figi);
+            log.info("Figi {} currency {}. Target currency {}", figi, instrument.getCurrency(), currency);
+            if (currency.equals("ALL")) {
+                return true;
+            }
+            return instrument.getCurrency().equalsIgnoreCase(currency);
+        });
     }
 
     public AStrategy.Type getStrategyType(String name, AStrategy.Type defaultValue) {
