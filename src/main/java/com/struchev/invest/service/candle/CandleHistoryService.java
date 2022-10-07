@@ -134,11 +134,14 @@ public class CandleHistoryService {
                 throw new RuntimeException("Candles not found in local cache for " + figi);
             }
 
-            var startDateTime = dateTime.minusDays(20).minusMinutes(interval.equals("1min") ? length : length * 60 * 24);
+            var startDateTime = dateTime.minusDays(30).minusMinutes(interval.equals("1min") ? length : length * 60 * 24);
             var candles = candlesByFigi.stream()
                     .filter(c -> c.getDateTime().isAfter(startDateTime))
                     .filter(c -> c.getDateTime().isBefore(dateTime) || c.getDateTime().isEqual(dateTime))
                     .collect(Collectors.toList());
+            if (length > candles.size()) {
+                log.info("candles figi {} from {} to {}. Expect length {}, real {}, total {}", figi, startDateTime, dateTime, length, candles.size(), candlesByFigi.size());
+            }
             candles.sort(Comparator.comparing(CandleDomainEntity::getDateTime));
             return candles.subList(Math.max(0, candles.size() - length), candles.size());
         }
@@ -266,6 +269,7 @@ public class CandleHistoryService {
 
         if (!isCandleListenerEnabled) {
             var figies = strategySelector.getFigiesForActiveStrategies();
+            log.info("Load candles for {} from {}", figies, OffsetDateTime.now().minusDays(days));
             var candles = candleRepository.findByByFigiesAndIntervalOrderByDateTime(figies, "1min", OffsetDateTime.now().minusDays(days));
             candlesLocalCacheMinute = candles.stream()
                     .peek(c -> entityManager.detach(c))
