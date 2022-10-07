@@ -73,8 +73,8 @@ class StrategiesByCandleHistoryTests {
                 .flatMap(figi -> {
                     var candles = candleRepository.findByFigiAndIntervalAndBeforeDateTimeLimit(figi,
                             "1min", dateBefore, PageRequest.of(0, 1));
-                    if (candles == null) {
-                        log.info("getFigiesForActiveStrategies cancel {}: getCandlesByFigiByLength return null", figi);
+                    if (candles == null || candles.size() == 0) {
+                        log.info("getFigiesForActiveStrategies cancel {}: getCandlesByFigiByLength return {}", figi, candles);
                         return new ArrayList<CandleDomainEntity>().stream();
                     }
                     var startDateTime = candles.get(0).getDateTime().minusDays(days);
