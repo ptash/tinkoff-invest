@@ -16,17 +16,27 @@
             <th>Orders</th>
             <th>First price</th>
             <th>Last price</th>
+            <th>Start date</th>
+            <th>End date</th>
         </tr>
         </thead>
         <tbody id="instr-vs-fiat-table">
         <tr th:each="r: ${reportInstrumentByFiat}">
-            <td th:text="${r.figiTitle}"/>
-            <td th:text="${r.strategy}"/>
+            <td>
+                <a th:href="'orders?figi=' + ${r.figi}"th:text="${r.figiTitle}"></a>
+            </td>
+            <td>
+                <a th:href="'orders?strategy=' + ${r.strategy}" th:text="${r.strategy}"></a>
+            </td>
             <td th:classappend="${r.profitByRobot >= r.profitByInvest} ? text-success" th:text="${#numbers.formatDecimal(r.profitByRobot, 1, 2, 'DEFAULT')}"/>
             <td th:text="${#numbers.formatDecimal(r.profitByInvest, 1, 2, 'DEFAULT')}"/>
-            <td th:text="${r.orders}"/>
+            <td>
+                <a th:href="'orders?strategy=' + ${r.strategy} + '&figi=' + ${r.figi}" th:text="${r.orders}"></a>
+            </td>
             <td th:text="${#numbers.formatDecimal(r.firstPrice, 1, 2, 'DEFAULT')}"/>
             <td th:text="${#numbers.formatDecimal(r.lastPrice, 1, 2, 'DEFAULT')}"/>
+            <td th:text="${r.startDate == null ? null : T(com.struchev.invest.expression.Date).formatDateTime(r.startDate)}"/>
+            <td th:text="${r.endDate == null ? null : T(com.struchev.invest.expression.Date).formatDateTime(r.endDate)}"/>
         </tr>
         </tbody>
     </table>

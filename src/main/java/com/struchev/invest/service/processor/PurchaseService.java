@@ -45,7 +45,6 @@ public class PurchaseService {
         } catch (Exception e) {
             var msg = String.format("An error during observe new candle %s, %s", candleDomainEntity, e.getMessage());
             log.error(msg, e);
-            notificationService.sendMessage(msg);
         }
     }
 

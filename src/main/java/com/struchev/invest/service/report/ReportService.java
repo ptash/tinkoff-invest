@@ -13,6 +13,7 @@ import com.struchev.invest.strategy.instrument_by_instrument.AInstrumentByInstru
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,10 @@ import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Duration;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -58,17 +63,27 @@ public class ReportService {
                 .collect(Collectors.toList());
     }
 
-    public List<OrderDomainEntity> getOrdersSortByIdDesc() {
-        return orderRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
+    public List<OrderDomainEntity> getOrdersSortByIdDesc(String strategy, String figi) {
+        var sort = Sort.by(Sort.Direction.DESC, "id");
+        if (strategy != null && !strategy.isEmpty() && figi != null && !figi.isEmpty()) {
+            return orderRepository.findByStrategyAndFigi(strategy, figi, sort);
+        } else if (strategy != null && !strategy.isEmpty()) {
+            return orderRepository.findByStrategy(strategy, sort);
+        } else if (figi != null && !figi.isEmpty()) {
+            return orderRepository.findByFigi(figi, sort);
+        }
+        return orderRepository.findAll(sort);
     }
 
     // FIXME rewrite report sql to java (example was in tests) or provide JPA mapping for sql report
     // FIXME in lots should be result value, for example 1000 instead of 1 (to fix issue fix crr diff strategies)
     public List<OrderReportInstrumentByFiatRow> buildReportInstrumentByFiat() {
         var query = entityManager.createNativeQuery(reportInstrumentByFiatSql);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss[.SSSSSSSSS][.SSSSSS][.SSS][.SS][.S]").withZone(ZoneId.of("Etc/UTC"));
         var rows = ((List<Object[]>) query.getResultList()).stream()
                 .filter(r -> strategySelector.getStrategyType(String.valueOf(r[1]), null) != AStrategy.Type.instrumentByInstrument)
                 .map(r -> OrderReportInstrumentByFiatRow.builder()
+                        .figi(String.valueOf(r[7]))
                         .figiTitle(String.valueOf(r[0]))
                         .strategy(String.valueOf(r[1]))
                         .profitByRobot(r[2] == null ? BigDecimal.ZERO : new BigDecimal(String.valueOf(r[2])).setScale(2, RoundingMode.HALF_UP))
@@ -76,6 +91,8 @@ public class ReportService {
                         .orders(Integer.valueOf(String.valueOf(r[4])))
                         .firstPrice(new BigDecimal(String.valueOf(r[5])).setScale(2, RoundingMode.HALF_UP))
                         .lastPrice(new BigDecimal(String.valueOf(r[6])).setScale(2, RoundingMode.HALF_UP))
+                        .startDate(r[8] == null ? null : ZonedDateTime.parse(String.valueOf(r[8]), formatter).toOffsetDateTime())
+                        .endDate(r[9] == null ? null : ZonedDateTime.parse(String.valueOf(r[9]), formatter).toOffsetDateTime())
                         .build()
                 )
                 .collect(Collectors.toList());

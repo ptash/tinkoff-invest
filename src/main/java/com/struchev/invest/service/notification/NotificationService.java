@@ -57,6 +57,7 @@ public class NotificationService {
     private String telegramBotToken;
     @Value("${telegram.bot.chat-id:}")
     private String telegramBotChatId;
+    private String lastMessage;
 
     @Value("${logging.file.path}")
     private String loggingPath;
@@ -68,9 +69,12 @@ public class NotificationService {
     private OffsetDateTime dateTime = OffsetDateTime.now();
 
     public void sendMessage(String content) {
-        if (bot != null && StringUtils.isNotEmpty(telegramBotChatId)) {
+        if (bot != null && StringUtils.isNotEmpty(telegramBotChatId)
+                && (this.lastMessage == null || !this.lastMessage.equals(content))
+        ) {
             var message = new SendMessage(telegramBotChatId, content);
             this.bot.execute(message);
+            this.lastMessage = content;
         }
     }
 
@@ -109,7 +113,7 @@ public class NotificationService {
             return;
         }
         if (order.getCellLots() == null || order.getCellLots() != order.getLots()) {
-            var msg = String.format("Sell limit open %s (%s), %s (%s) %s. Wanted: %s", candle.getFigi(), order.getFigiTitle(),
+            var msg = String.format("Bid limit open %s (%s), %s (%s) %s. Wanted: %s", candle.getFigi(), order.getFigiTitle(),
                     order.getSellLimitOrderId(), order.getCellLots(), order.getStrategy(), order.getSellPriceLimitWanted());
             this.sendMessageAndLog(msg);
             return;
@@ -121,7 +125,7 @@ public class NotificationService {
                 order.getSellPrice(),
                 order.getSellPrice()
         );
-        var msg = String.format("Sell limit success %s (%s), %s (%s), %s, %s. Wanted: %s", candle.getFigi(), order.getFigiTitle(),
+        var msg = String.format("Sell bid limit success %s (%s), %s (%s), %s, %s. Wanted: %s", candle.getFigi(), order.getFigiTitle(),
                 order.getSellPrice(), order.getSellProfit(), order.getSellDateTime(), order.getStrategy(), order.getSellPriceLimitWanted());
         this.sendMessageAndLog(msg);
     }

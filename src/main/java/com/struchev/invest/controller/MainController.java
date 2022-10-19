@@ -34,8 +34,8 @@ public class MainController {
     }
 
     @GetMapping(path = {"/orders"})
-    public ModelAndView orders() {
-        var orders = reportService.getOrdersSortByIdDesc();
+    public ModelAndView orders(String strategy, String figi) {
+        var orders = reportService.getOrdersSortByIdDesc(strategy, figi);
         return new ModelAndView("report_orders", Map.of("orders", orders));
     }
 
