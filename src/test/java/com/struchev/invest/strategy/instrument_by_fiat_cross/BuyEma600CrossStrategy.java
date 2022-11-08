@@ -14,16 +14,16 @@ public class BuyEma600CrossStrategy extends AInstrumentByFiatCrossStrategy {
         FIGIES.put("BBG000LWVHN8", 1); // Дагестанская энергосбытовая компания
         FIGIES.put("BBG004S681W1", 1); // МТС
         //FIGIES.put("BBG00Y29RP99", 1); // OZON
-        FIGIES.put("BBG004730N88", 1); // Sberbank Of Russia
-        FIGIES.put("BBG004S68696", 1); // Распадская
-        FIGIES.put("BBG002W2FT69", 1); // АбрауДюрсо
-        FIGIES.put("BBG000LNHHJ9", 1); // КАМАЗ
-        FIGIES.put("BBG004S68BH6", 1); // ПИК
-        FIGIES.put("BBG000QFH687", 1); // ТГК-1
+        //FIGIES.put("BBG004730N88", 1); // Sberbank Of Russia
+        //FIGIES.put("BBG004S68696", 1); // Распадская
+        //FIGIES.put("BBG002W2FT69", 1); // АбрауДюрсо
+        //FIGIES.put("BBG000LNHHJ9", 1); // КАМАЗ
+        //FIGIES.put("BBG004S68BH6", 1); // ПИК
+        //FIGIES.put("BBG000QFH687", 1); // ТГК-1
         FIGIES.put("BBG00475KKY8", 1); // НОВАТЭК
-        FIGIES.put("BBG004S683W7", 1);   // Аэрофлот
+        //FIGIES.put("BBG004S683W7", 1);   // Аэрофлот
         FIGIES.put("BBG006L8G4H1", 1); // Yandex
-        //FIGIES.put("BBG00178PGX3", 1);    // VK
+        FIGIES.put("BBG00178PGX3", 1);    // VK
         /*
         FIGIES.put("BBG000LWVHN8", 1); // Дагестанская энергосбытовая компания
         FIGIES.put("BBG00178PGX3", 1);    // VK
@@ -101,8 +101,8 @@ public class BuyEma600CrossStrategy extends AInstrumentByFiatCrossStrategy {
         //FIGIES.put("BBG004NLQHL0", 1); // Fastly Inc
         //FIGIES.put("BBG006G2JVL2", 1); // Alibaba
         //FIGIES.put("BBG003QBJKN0", 1); // Allakos Inc
-        //FIGIES.put("BBG005DXJS36", 1); // TCS Group (Tinkoff Bank holder)
-        FIGIES.put("BBG000N625H8", 1); // Freedom Holding Corp/NV
+        FIGIES.put("BBG005DXJS36", 1); // TCS Group (Tinkoff Bank holder)
+        //FIGIES.put("BBG000N625H8", 1); // Freedom Holding Corp/NV
 
 
 /*

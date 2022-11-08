@@ -46,8 +46,8 @@ class StrategiesByCandleHistoryTests {
     //@Value("${test.candle.history.dateBefore}")
     //private OffsetDateTime dateBefore = OffsetDateTime.parse("2022-09-13T03:00:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
     //private OffsetDateTime dateBefore = OffsetDateTime.parse("2022-09-16T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
-    private OffsetDateTime dateBefore = OffsetDateTime.parse("2022-09-23T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
-//    private OffsetDateTime dateBefore = OffsetDateTime.parse("2022-10-01T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+    //private OffsetDateTime dateBefore = OffsetDateTime.parse("2022-09-23T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+    private OffsetDateTime dateBefore = OffsetDateTime.parse("2022-11-08T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
 
 
     @Value("${tinkoff.emulator}")
