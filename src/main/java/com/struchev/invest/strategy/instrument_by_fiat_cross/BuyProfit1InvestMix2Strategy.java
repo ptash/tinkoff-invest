@@ -10,8 +10,8 @@ import java.util.Map;
 public class BuyProfit1InvestMix2Strategy extends BuyProfit1InvestMixStrategy {
 
     private Map FIGIES = Map.of(
-            //"BBG004730N88", 10, // Сбер
-            //"BBG00475KKY8", 2, // НОВАТЭК
+            "BBG004730N88", 10, // Сбер
+            "BBG00475KKY8", 2, // НОВАТЭК
             "BBG006L8G4H1", 3    // Yandex
             /*
             "BBG006G2JVL2", 1, // Alibaba
