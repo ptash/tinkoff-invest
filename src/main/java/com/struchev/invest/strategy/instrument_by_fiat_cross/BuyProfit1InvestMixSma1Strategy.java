@@ -36,5 +36,5 @@ public class BuyProfit1InvestMixSma1Strategy extends BuyProfit1InvestMixStrategy
     }
 
     public boolean isEnabled() { return true; }
-    public boolean isArchive() {return false;}
+    public boolean isArchive() {return true;}
 }
