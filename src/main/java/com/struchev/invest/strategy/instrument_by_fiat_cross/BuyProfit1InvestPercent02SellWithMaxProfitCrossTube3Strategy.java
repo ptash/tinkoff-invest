@@ -8,7 +8,7 @@ import java.util.Map;
 public class BuyProfit1InvestPercent02SellWithMaxProfitCrossTube3Strategy extends BuyProfit1InvestPercent02SellWithMaxProfitCrossTube2Strategy {
 
     private Map FIGIES = Map.of(
-            "BBG005DXJS36", 1 // TCS Group (Tinkoff Bank holder)
+            //"BBG005DXJS36", 1 // TCS Group (Tinkoff Bank holder)
     );
 
     public Map<String, Integer> getFigies() {

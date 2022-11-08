@@ -15,5 +15,5 @@ public class BuyProfit1InvestPercent02SellWithMaxProfitPercentFromSma1CrossSimpl
     }
     public Boolean isTubeAvgDeltaSimple() { return true; }
     public boolean isEnabled() { return true; }
-    public boolean isArchive() { return false; }
+    public boolean isArchive() { return true; }
 }
