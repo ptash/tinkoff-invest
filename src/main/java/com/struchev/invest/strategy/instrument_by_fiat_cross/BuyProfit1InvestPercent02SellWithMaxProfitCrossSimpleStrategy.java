@@ -8,10 +8,10 @@ import java.util.Map;
 public class BuyProfit1InvestPercent02SellWithMaxProfitCrossSimpleStrategy extends BuyProfit1InvestPercent02SellWithMaxProfitCrossStrategy {
 
     private Map FIGIES = Map.of(
-            "BBG005DXJS36", 1   , // TCS Group (Tinkoff Bank holder)
+            //"BBG005DXJS36", 1   , // TCS Group (Tinkoff Bank holder)
             /*"BBG003QBJKN0", 4, // Allakos Inc
             "BBG000J3D1Y8", 6 // OraSure Technologies Inc*/
-            "BBG000LWVHN8", 60000 // Дагестанская энергосбытовая компания
+            "BBG000LWVHN8", 20000 // Дагестанская энергосбытовая компания
     );
     public Map<String, Integer> getFigies() {
         return FIGIES;
@@ -22,5 +22,5 @@ public class BuyProfit1InvestPercent02SellWithMaxProfitCrossSimpleStrategy exten
     @Override
     public boolean isEnabled() { return true; }
 
-    public boolean isArchive() { return true; }
+    public boolean isArchive() { return false; }
 }
