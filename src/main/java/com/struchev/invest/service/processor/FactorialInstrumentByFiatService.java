@@ -176,14 +176,13 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             )
                             - ((testCandle.getHighestPrice().floatValue() - testCandle.getLowestPrice().floatValue())
                                     //- (testCandlePrev.getHighestPrice().floatValue() - testCandlePrev.getLowestPrice().floatValue())
-                            ));
+                            ));*/
                     curDiff +=
                             Math.abs(((modelCandle.getClosingPrice().floatValue() - modelCandlePrev.getClosingPrice().floatValue()))
                             - (testCandle.getClosingPrice().floatValue() - testCandlePrev.getClosingPrice().floatValue()));
                     curDiff +=
                             Math.abs(((modelCandle.getOpenPrice().floatValue() - modelCandlePrev.getOpenPrice().floatValue()))
                                     - (testCandle.getOpenPrice().floatValue() - testCandlePrev.getOpenPrice().floatValue()));
-                     */
 
                     curDiff +=
                             Math.abs(((modelCandle.getOpenPrice().floatValue() - modelCandle.getClosingPrice().floatValue()))
@@ -191,7 +190,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     curDiff +=
                             Math.abs(((modelCandle.getHighestPrice().floatValue() - modelCandle.getLowestPrice().floatValue()))
                                     - (testCandle.getHighestPrice().floatValue() - testCandle.getLowestPrice().floatValue()));
-                    diff += curDiff;// * j / strategy.getFactorialLength();
+                    diff += curDiff;// * (0.5f + j / 2 * strategy.getFactorialLength());
                     if (j == 1 || j == strategy.getFactorialLength() - 1) {
                         info += " + " + curDiff + "(" + testCandle.getDateTime() + " with " + modelCandle.getDateTime() + ")";
                     }
