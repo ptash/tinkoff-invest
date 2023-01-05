@@ -12,5 +12,5 @@ public class BuyEma600DeadLineP1DeadLine2InvestPercent01DelaySLNullCrossStrategy
     }
     public Integer getDelayPlusBySL() { return 4 * 60; }
 
-    public boolean isEnabled() { return true; }
+    public boolean isEnabled() { return false; }
 }

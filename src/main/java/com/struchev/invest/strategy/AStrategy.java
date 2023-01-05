@@ -61,7 +61,9 @@ public abstract class AStrategy {
     public enum Type {
         instrumentByFiat("Инструмент за фиат"),
         instrumentByInstrument("Инструмент за инструмент"),
-        instrumentCrossByFiat("Инструмент с каналами за фиат");
+        instrumentCrossByFiat("Инструмент с каналами за фиат"),
+
+        instrumentFactorialByFiat("Инструмент с факториалами за фиат");
 
         @Getter
         String title;

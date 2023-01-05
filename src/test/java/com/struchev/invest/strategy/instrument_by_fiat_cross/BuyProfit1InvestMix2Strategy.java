@@ -24,5 +24,5 @@ public class BuyProfit1InvestMix2Strategy extends BuyProfit1InvestMixStrategy {
 
     public Double getInvestPercentFromSmaSlowest() { return getDeadLinePercentFromSmaSlowest() / 2; }
 
-    public boolean isEnabled() { return true; }
+    public boolean isEnabled() { return false; }
 }

@@ -73,6 +73,8 @@ public class CandleHistoryService {
                     candleDomainEntity.setHighestPrice(highestPrice);
                     candleDomainEntity.setLowestPrice(lowestPrice);
                     candleDomainEntity.setOpenPrice(openPrice);
+                    candleDomainEntity.setVolume(newCandle.getVolume());
+                    candleDomainEntity.setIsComplete(newCandle.getIsComplete());
                     candleDomainEntity = candleRepository.save(candleDomainEntity);
                 }
                 return candleDomainEntity;
@@ -134,13 +136,13 @@ public class CandleHistoryService {
                 throw new RuntimeException("Candles not found in local cache for " + figi);
             }
 
-            var startDateTime = dateTime.minusDays(30).minusMinutes(interval.equals("1min") ? length : length * 60 * 24);
+            var startDateTime = dateTime.minusDays(30).minusMinutes((interval.equals("1min") ? length : length * 60 * 24) * 10);
             var candles = candlesByFigi.stream()
                     .filter(c -> c.getDateTime().isAfter(startDateTime))
                     .filter(c -> c.getDateTime().isBefore(dateTime) || c.getDateTime().isEqual(dateTime))
                     .collect(Collectors.toList());
             if (length > candles.size()) {
-                log.info("candles figi {} from {} to {}. Expect length {}, real {}, total {}", figi, startDateTime, dateTime, length, candles.size(), candlesByFigi.size());
+                log.info("candles figi {} from {} to {}. Expect length {}, real {}, total {}, begin {}, end {}", figi, startDateTime, dateTime, length, candles.size(), candlesByFigi.size(), candlesByFigi.get(0).getDateTime(), candlesByFigi.get(candlesByFigi.size() - 1).getDateTime());
             }
             candles.sort(Comparator.comparing(CandleDomainEntity::getDateTime));
             return candles.subList(Math.max(0, candles.size() - length), candles.size());
@@ -269,7 +271,7 @@ public class CandleHistoryService {
 
         if (!isCandleListenerEnabled) {
             var figies = strategySelector.getFigiesForActiveStrategies();
-            log.info("Load candles for {} from {}", figies, OffsetDateTime.now().minusDays(days));
+            log.info("Load candles for {} from {} days {} strategy days {}", figies, OffsetDateTime.now().minusDays(days), days, historyDurationByStrategies.toDays());
             var candles = candleRepository.findByByFigiesAndIntervalOrderByDateTime(figies, "1min", OffsetDateTime.now().minusDays(days));
             candlesLocalCacheMinute = candles.stream()
                     .peek(c -> entityManager.detach(c))

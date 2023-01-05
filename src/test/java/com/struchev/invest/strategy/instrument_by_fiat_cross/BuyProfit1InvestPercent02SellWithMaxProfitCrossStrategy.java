@@ -30,5 +30,5 @@ public class BuyProfit1InvestPercent02SellWithMaxProfitCrossStrategy extends Buy
     //}
 
     @Override
-    public boolean isEnabled() { return true; }
+    public boolean isEnabled() { return false; }
 }

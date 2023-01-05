@@ -25,5 +25,5 @@ public class BuyProfit1InvestMixDelaySLNullStrategy extends BuyProfit1InvestMixS
 
     //public Double getInvestPercentFromSmaSlowest() { return -getDeadLinePercentFromSmaSlowest(); }
 
-    public boolean isEnabled() { return true; }
+    public boolean isEnabled() { return false; }
 }

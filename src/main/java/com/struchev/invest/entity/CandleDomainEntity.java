@@ -21,7 +21,7 @@ import java.time.OffsetDateTime;
                 @Index(columnList = "interval"),
                 @Index(columnList = "date_time, figi, interval", unique = true)
         })
-public class CandleDomainEntity {
+public class CandleDomainEntity implements Cloneable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -47,6 +47,20 @@ public class CandleDomainEntity {
     @Column(name = "interval", nullable = false)
     private String interval;
 
+    @Column(name = "volude")
+    private Long volume;
+
+    @Column(name = "is_complete")
+    private Boolean isComplete;
+
     @Version
     private Integer version;
+
+    public CandleDomainEntity clone() {
+        try {
+            return (CandleDomainEntity)super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }
