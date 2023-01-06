@@ -61,7 +61,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     + " expectLoss=" + expectLoss
                     + "(from " + factorial.candleList.get(0).getDateTime() + " to " + factorial.candleList.get(factorial.candleList.size() - 1).getDateTime() + ")"
                     + "(from " + factorial.candleListFeature.get(0).getDateTime() + " to " + factorial.candleListFeature.get(factorial.candleListFeature.size() - 1).getDateTime() + ")";
-            if (minPrice > candle.getClosingPrice().doubleValue()) {
+            profit = profit * (1f + expectProfit / 100f);
+            loss = loss * (1f - expectLoss / 100f);
+            if (loss > candle.getClosingPrice().doubleValue()) {
                 annotation += " ok";
                 annotation += " info: " + factorial.getInfo();
                 var factorialPrev = findBestFactorialInPast(strategy, candle);
@@ -75,9 +77,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     annotation += " ok";
                     res = true;
                 }
+                profit = profit * (1f + expectProfitPrev / 100f);
+                loss = loss * (1f - expectLossPrev / 100f);
             }
-            profit = profit * (1f + expectProfit / 100f);
-            loss = loss * (1f - expectLoss / 100f);
             log.info("FactorialInstrumentByFiatService {} from {} to {} {} {} {}", candle.getFigi(), factorial.candleListPast.get(0).getDateTime(), candle.getDateTime(), maxPrice, minPrice, factorial.candleListFeature.size(), annotation);
         }
         notificationService.reportStrategy(
