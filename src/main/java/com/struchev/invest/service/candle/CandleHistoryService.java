@@ -85,6 +85,8 @@ public class CandleHistoryService {
                     .highestPrice(highestPrice)
                     .lowestPrice(lowestPrice)
                     .openPrice(openPrice)
+                    .volume(newCandle.getVolume())
+                    .isComplete(newCandle.getIsComplete())
                     .interval(interval)
                     .dateTime(dateTime)
                     .build();

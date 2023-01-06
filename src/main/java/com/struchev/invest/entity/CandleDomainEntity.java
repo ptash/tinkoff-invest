@@ -47,7 +47,7 @@ public class CandleDomainEntity implements Cloneable {
     @Column(name = "interval", nullable = false)
     private String interval;
 
-    @Column(name = "volude")
+    @Column(name = "volume")
     private Long volume;
 
     @Column(name = "is_complete")

@@ -13,7 +13,9 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.IntStream;
 
 @Service
 @Slf4j
@@ -26,9 +28,11 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
     @Builder
     @Data
     public static class FactorialData {
+        Integer i;
         Integer size;
         Integer length;
         Float diff;
+        Float diffValue;
         List<CandleDomainEntity> candleList;
         List<CandleDomainEntity> candleListFeature;
         List<CandleDomainEntity> candleListPast;
@@ -138,6 +142,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         Integer bestSize = 1;
         Float bestDiff = null;
         String bestInfo = "";
+        List<FactorialData> factorialDataList = new ArrayList<>();
         for (var iSize = 0; iSize < strategy.getFactorialSizes().size(); iSize++) {
             Integer size = strategy.getFactorialSizes().get(iSize);
             CandleDomainEntity modelStartCandle = candleList.get(candleList.size() - strategy.getFactorialLength());
@@ -145,13 +150,16 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 CandleDomainEntity testStartCandle = candleList.get(i);
                 if (size > 1) {
                     testStartCandle = testStartCandle.clone();
+                    testStartCandle.setVolume(testStartCandle.getVolume() / size);
                     for (var jSize = 1; jSize < size; jSize++) {
                         testStartCandle.setHighestPrice(testStartCandle.getHighestPrice().max(candleList.get(i + jSize).getHighestPrice()));
                         testStartCandle.setLowestPrice(testStartCandle.getLowestPrice().min(candleList.get(i + jSize).getLowestPrice()));
                         testStartCandle.setClosingPrice(candleList.get(i + jSize).getClosingPrice());
+                        testStartCandle.setVolume(testStartCandle.getVolume() +  candleList.get(i + jSize).getVolume() / size);
                     }
                 }
                 Float diff = 0f;
+                Float diffValue = 0f;
                 String info = "" + testStartCandle.getDateTime() + " price=" + testStartCandle.getClosingPrice() + " mPrice=" + modelStartCandle.getClosingPrice();
                 var testCandlePrev = testStartCandle;
                 var modelCandlePrev = modelStartCandle;
@@ -162,14 +170,17 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     CandleDomainEntity modelCandle = candleList.get(candleList.size() - strategy.getFactorialLength() + j);
                     CandleDomainEntity testCandle = candleList.get(i + j * size);
                     if (size > 1) {
-                        testStartCandle = testStartCandle.clone();
+                        testCandle = testCandle.clone();
+                        testCandle.setVolume(testCandle.getVolume() / size);
                         for (var jSize = 1; jSize < size; jSize++) {
-                            testStartCandle.setHighestPrice(testStartCandle.getHighestPrice().max(candleList.get(i + j * size + jSize).getHighestPrice()));
-                            testStartCandle.setLowestPrice(testStartCandle.getLowestPrice().min(candleList.get(i + j * size + jSize).getLowestPrice()));
-                            testStartCandle.setClosingPrice(candleList.get(i + j * size + jSize).getClosingPrice());
+                            testCandle.setHighestPrice(testCandle.getHighestPrice().max(candleList.get(i + j * size + jSize).getHighestPrice()));
+                            testCandle.setLowestPrice(testCandle.getLowestPrice().min(candleList.get(i + j * size + jSize).getLowestPrice()));
+                            testCandle.setClosingPrice(candleList.get(i + j * size + jSize).getClosingPrice());
+                            testCandle.setVolume(testCandle.getVolume() +  candleList.get(i + j * size + jSize).getVolume() / size);
                         }
                     }
                     Float curDiff = 0f;
+                    Float curDiffValue = 0f;
                     /*curDiff +=
                             Math.abs(((modelCandle.getHighestPrice().floatValue() - modelCandle.getLowestPrice().floatValue())
                                     //- (modelCandlePrev.getHighestPrice().floatValue() - modelCandlePrev.getLowestPrice().floatValue())
@@ -190,7 +201,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     curDiff +=
                             Math.abs(((modelCandle.getHighestPrice().floatValue() - modelCandle.getLowestPrice().floatValue())/modelCandle.getHighestPrice().floatValue())
                                     - (testCandle.getHighestPrice().floatValue() - testCandle.getLowestPrice().floatValue())/testCandle.getHighestPrice().floatValue());
-                    diff += curDiff * curDiff * (0.5f + j / (2f * strategy.getFactorialLength()));
+                    curDiffValue += Math.abs(modelCandle.getVolume() - testCandle.getVolume());
+                    diff += curDiff * (0.5f + j / (2f * strategy.getFactorialLength()));
+                    diffValue += curDiffValue * curDiffValue;
                     if (j == 1 || j == strategy.getFactorialLength() - 1) {
                         info += " + " + curDiff + "(" + testCandle.getDateTime() + " with " + modelCandle.getDateTime() + ")";
                     }
@@ -203,11 +216,37 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     bestDiff = diff;
                     bestInfo = info;
                 }
+                factorialDataList.add(FactorialData.builder()
+                        .i(i)
+                        .size(size)
+                        .length(strategy.getFactorialLength())
+                        .diff(diff)
+                        .diffValue(diffValue)
+                        .candleList(candleList.subList(i, i + 1))
+                        .candleListFeature(candleList.subList(i, i + 1))
+                        .candleListPast(candleList.subList(i, i + 1))
+                        .info(info)
+                        .build());
             }
         }
         if (null == bestDiff) {
             return null;
         }
+        var maxDiff = factorialDataList.stream().mapToDouble(value -> value.getDiff().doubleValue()).max().orElse(-1);
+        var maxDiffValue = factorialDataList.stream().mapToDouble(value -> value.getDiffValue().doubleValue()).max().orElse(-1);
+        var iBest = IntStream.range(0, factorialDataList.size()).reduce((i, j) ->
+                0.66 * factorialDataList.get(i).getDiff()/maxDiff + 0.66 * factorialDataList.get(i).getDiffValue()/maxDiffValue
+                        > 0.66 * factorialDataList.get(j).getDiff()/maxDiff + 0.66 * factorialDataList.get(j).getDiffValue()/maxDiffValue
+                ? j : i
+        ).getAsInt();
+
+        startCandleI = factorialDataList.get(iBest).getI();
+        bestSize = factorialDataList.get(iBest).getSize();
+        bestDiff = factorialDataList.get(iBest).getDiff();
+        bestInfo = factorialDataList.get(iBest).getInfo();
+
+        bestInfo += " diffAverage=" + (factorialDataList.stream().mapToDouble(value -> value.getDiff().doubleValue()).average().orElse(-1));
+
         log.info("Select from {} best diff={} i={}", candleList.get(0).getDateTime(), bestDiff, startCandleI);
         var res = FactorialData.builder()
                 .size(bestSize)
