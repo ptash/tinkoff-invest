@@ -51,7 +51,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     + " to " + factorial.getCandleList().get(factorial.getCandleList().size() - 1).getDateTime() + " size=" + factorial.getSize()
                     + " diff=" + factorial.diff
                     + " for from " + factorial.candleListPast.get(0).getDateTime();
-            Double maxPrice = (factorial.candleListFeature.stream().mapToDouble(value -> value.getLowestPrice().doubleValue()).max().orElse(-1));
+            Double maxPrice = (factorial.candleListFeature.stream().mapToDouble(value -> value.getHighestPrice().doubleValue()).max().orElse(-1));
             Double minPrice = factorial.candleListFeature.stream().mapToDouble(value -> value.getLowestPrice().doubleValue()).min().orElse(-1);
             var expectProfit = 100f * (maxPrice - factorial.candleList.get(factorial.candleList.size() - 1).getClosingPrice().doubleValue()) / maxPrice;
             var expectLoss = 100f * (factorial.candleList.get(factorial.candleList.size() - 1).getClosingPrice().doubleValue() - minPrice) / minPrice;
@@ -59,19 +59,19 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     + " expectLoss=" + expectLoss
                     + "(from " + factorial.candleList.get(0).getDateTime() + " to " + factorial.candleList.get(factorial.candleList.size() - 1).getDateTime() + ")"
                     + "(from " + factorial.candleListFeature.get(0).getDateTime() + " to " + factorial.candleListFeature.get(factorial.candleListFeature.size() - 1).getDateTime() + ")";
-            if (expectProfit > strategy.getSellCriteria().getTakeProfitPercent() && expectLoss < strategy.getSellCriteria().getStopLossPercent()) {
+            if (expectProfit > strategy.getBuyCriteria().getTakeProfitPercent() && expectLoss < strategy.getBuyCriteria().getStopLossPercent()) {
                 annotation += " ok";
                 annotation += " info: " + factorial.getInfo();
                 var candleList = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
                         candle.getDateTime(), 2, strategy.getInterval());
                 var factorialPrev = findBestFactorialInPast(strategy, candleList.get(0));
-                Double maxPricePrev = (factorialPrev.candleListFeature.stream().mapToDouble(value -> value.getLowestPrice().doubleValue()).max().orElse(-1));
+                Double maxPricePrev = (factorialPrev.candleListFeature.stream().mapToDouble(value -> value.getHighestPrice().doubleValue()).max().orElse(-1));
                 Double minPricePrev = factorialPrev.candleListFeature.stream().mapToDouble(value -> value.getLowestPrice().doubleValue()).min().orElse(-1);
                 var expectProfitPrev = 100f * (maxPricePrev - factorialPrev.candleList.get(factorialPrev.candleList.size() - 1).getClosingPrice().doubleValue()) / maxPricePrev;
                 var expectLossPrev = 100f * (factorialPrev.candleList.get(factorialPrev.candleList.size() - 1).getClosingPrice().doubleValue() - minPricePrev) / minPricePrev;
                 annotation += " expectProfitPrev=" + expectProfitPrev
                         + " expectLossPrev=" + expectLossPrev;
-                if (expectProfitPrev > strategy.getSellCriteria().getTakeProfitPercent() && expectLossPrev < strategy.getSellCriteria().getStopLossPercent()) {
+                if (expectProfitPrev > strategy.getBuyCriteria().getTakeProfitPercent() && expectLossPrev < strategy.getBuyCriteria().getStopLossPercent()) {
                     annotation += " ok";
                     res = true;
                 }

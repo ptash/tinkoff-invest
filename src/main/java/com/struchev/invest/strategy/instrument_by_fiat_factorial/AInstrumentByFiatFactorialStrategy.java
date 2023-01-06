@@ -34,16 +34,27 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
     }
 
     public SellLimitCriteria getSellLimitCriteria() {
-        return SellLimitCriteria.builder().exitProfitPercent(1f).build();
+        return SellLimitCriteria.builder().exitProfitPercent(0.7f).build();
     }
 
     public AInstrumentByFiatCrossStrategy.SellCriteria getSellCriteria() {
-        return AInstrumentByFiatCrossStrategy.SellCriteria.builder().takeProfitPercent(1f).stopLossPercent(0.5f).build();
+        return AInstrumentByFiatCrossStrategy.SellCriteria.builder().takeProfitPercent(0.5f).stopLossPercent(0.5f).build();
+    }
+
+    @Builder
+    @Data
+    public static class BuyCriteria {
+        Float takeProfitPercent;
+        Float stopLossPercent;
+    }
+
+    public  AInstrumentByFiatFactorialStrategy.BuyCriteria getBuyCriteria() {
+        return AInstrumentByFiatFactorialStrategy.BuyCriteria.builder().takeProfitPercent(1f).stopLossPercent(0.2f).build();
     }
 
     public Integer getFactorialLength() { return 50; }
     public Integer getFactorialHistoryLength() {
-        return this.getFactorialLength() * 100;
+        return this.getFactorialLength() * 200;
     }
     public List<Integer> getFactorialSizes() { return List.of(1, 2); };
 }
