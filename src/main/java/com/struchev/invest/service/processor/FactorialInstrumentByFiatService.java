@@ -39,8 +39,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         String info;
     }
 
-    @Override
-    public boolean isShouldBuy(AInstrumentByFiatFactorialStrategy strategy, CandleDomainEntity candle) {
+    public boolean isShouldBuy2(AInstrumentByFiatFactorialStrategy strategy, CandleDomainEntity candle) {
         var candleList = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
                 candle.getDateTime(), 2, strategy.getInterval());
         var factorial = findBestFactorialInPast(strategy, candleList.get(0));
@@ -101,7 +100,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         return res;
     }
 
-    public boolean isShouldBuy2(AInstrumentByFiatFactorialStrategy strategy, CandleDomainEntity candle) {
+    public boolean isShouldBuy(AInstrumentByFiatFactorialStrategy strategy, CandleDomainEntity candle) {
         var factorial = findBestFactorialInPast(strategy, candle);
         String annotation = "null";
         var res = false;
