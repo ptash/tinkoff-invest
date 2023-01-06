@@ -41,9 +41,9 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
         return AInstrumentByFiatCrossStrategy.SellCriteria.builder().takeProfitPercent(1f).stopLossPercent(0.5f).build();
     }
 
-    public Integer getFactorialLength() { return 100; }
+    public Integer getFactorialLength() { return 50; }
     public Integer getFactorialHistoryLength() {
         return this.getFactorialLength() * 100;
     }
-    public List<Integer> getFactorialSizes() { return List.of(1); };
+    public List<Integer> getFactorialSizes() { return List.of(1, 2); };
 }
