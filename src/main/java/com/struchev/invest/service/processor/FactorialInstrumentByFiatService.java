@@ -41,6 +41,64 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
 
     @Override
     public boolean isShouldBuy(AInstrumentByFiatFactorialStrategy strategy, CandleDomainEntity candle) {
+        var candleList = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
+                candle.getDateTime(), 2, strategy.getInterval());
+        var factorial = findBestFactorialInPast(strategy, candleList.get(0));
+        String annotation = "null";
+        var res = false;
+        Double profit = candle.getClosingPrice().doubleValue();
+        Double loss = candle.getClosingPrice().doubleValue();
+        if (null != factorial) {
+            annotation = "factorial from " + factorial.getCandleList().get(0).getDateTime()
+                    + " to " + factorial.getCandleList().get(factorial.getCandleList().size() - 1).getDateTime() + " size=" + factorial.getSize()
+                    + " diff=" + factorial.diff
+                    + " for from " + factorial.candleListPast.get(0).getDateTime();
+            Double maxPrice = (factorial.candleListFeature.stream().mapToDouble(value -> value.getHighestPrice().doubleValue()).max().orElse(-1));
+            Double minPrice = factorial.candleListFeature.stream().mapToDouble(value -> value.getLowestPrice().doubleValue()).min().orElse(-1);
+            var expectProfit = 100f * (maxPrice - factorial.candleList.get(factorial.candleList.size() - 1).getClosingPrice().doubleValue()) / maxPrice;
+            var expectLoss = 100f * (factorial.candleList.get(factorial.candleList.size() - 1).getClosingPrice().doubleValue() - minPrice) / minPrice;
+            annotation += " expectProfit=" + expectProfit
+                    + " expectLoss=" + expectLoss
+                    + "(from " + factorial.candleList.get(0).getDateTime() + " to " + factorial.candleList.get(factorial.candleList.size() - 1).getDateTime() + ")"
+                    + "(from " + factorial.candleListFeature.get(0).getDateTime() + " to " + factorial.candleListFeature.get(factorial.candleListFeature.size() - 1).getDateTime() + ")";
+            if (minPrice > candle.getClosingPrice().doubleValue()) {
+                annotation += " ok";
+                annotation += " info: " + factorial.getInfo();
+                var factorialPrev = findBestFactorialInPast(strategy, candle);
+                Double maxPricePrev = (factorialPrev.candleListFeature.stream().mapToDouble(value -> value.getHighestPrice().doubleValue()).max().orElse(-1));
+                Double minPricePrev = factorialPrev.candleListFeature.stream().mapToDouble(value -> value.getLowestPrice().doubleValue()).min().orElse(-1);
+                var expectProfitPrev = 100f * (maxPricePrev - factorialPrev.candleList.get(factorialPrev.candleList.size() - 1).getClosingPrice().doubleValue()) / maxPricePrev;
+                var expectLossPrev = 100f * (factorialPrev.candleList.get(factorialPrev.candleList.size() - 1).getClosingPrice().doubleValue() - minPricePrev) / minPricePrev;
+                annotation += " expectProfitPrev=" + expectProfitPrev
+                        + " expectLossPrev=" + expectLossPrev;
+                if (expectProfitPrev > strategy.getBuyCriteria().getTakeProfitPercent()) {
+                    annotation += " ok";
+                    res = true;
+                }
+            }
+            profit = profit * (1f + expectProfit / 100f);
+            loss = loss * (1f - expectLoss / 100f);
+            log.info("FactorialInstrumentByFiatService {} from {} to {} {} {} {}", candle.getFigi(), factorial.candleListPast.get(0).getDateTime(), candle.getDateTime(), maxPrice, minPrice, factorial.candleListFeature.size(), annotation);
+        }
+        notificationService.reportStrategy(
+                strategy,
+                candle.getFigi(),
+                "Date|smaSlowest|smaSlow|smaFast|emaFast|ema2|bye|sell|position|deadLineBottom|deadLineTop|investBottom|investTop|smaTube|strategy|average|averageBottom|averageTop|openPrice",
+                "{} | {} | {} | {} | {} | {} | {} | {} |||||||by {}||||",
+                notificationService.formatDateTime(candle.getDateTime()),
+                candle.getClosingPrice(),
+                candle.getOpenPrice(),
+                candle.getHighestPrice(),
+                candle.getLowestPrice(),
+                candle.getClosingPrice(),
+                profit,
+                loss,
+                annotation
+        );
+        return res;
+    }
+
+    public boolean isShouldBuy2(AInstrumentByFiatFactorialStrategy strategy, CandleDomainEntity candle) {
         var factorial = findBestFactorialInPast(strategy, candle);
         String annotation = "null";
         var res = false;
@@ -108,7 +166,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 strategy,
                 candle.getFigi(),
                 "Date|smaSlowest|smaSlow|smaFast|emaFast|ema2|bye|sell|position|deadLineBottom|deadLineTop|investBottom|investTop|smaTube|strategy|average|averageBottom|averageTop|openPrice",
-                "{} | {} | {} | {} | {} |  |  | |  |  |  |  |  |  |sell||||",
+                "{} | {} | {} | {} | | {} |  | |  |  |  |  |  |  |sell||||",
                 notificationService.formatDateTime(candle.getDateTime()),
                 candle.getClosingPrice(),
                 candle.getOpenPrice(),
