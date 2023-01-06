@@ -37,6 +37,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         List<CandleDomainEntity> candleListFeature;
         List<CandleDomainEntity> candleListPast;
         String info;
+        Float expectProfit;
+        Float expectLoss;
     }
 
     public boolean isShouldBuy2(AInstrumentByFiatFactorialStrategy strategy, CandleDomainEntity candle) {
@@ -295,8 +297,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         var maxDiff = factorialDataList.stream().mapToDouble(value -> value.getDiff().doubleValue()).max().orElse(-1);
         var maxDiffValue = factorialDataList.stream().mapToDouble(value -> value.getDiffValue().doubleValue()).max().orElse(-1);
         var iBest = IntStream.range(0, factorialDataList.size()).reduce((i, j) ->
-                0.66 * factorialDataList.get(i).getDiff()/maxDiff + 0.66 * factorialDataList.get(i).getDiffValue()/maxDiffValue
-                        > 0.66 * factorialDataList.get(j).getDiff()/maxDiff + 0.66 * factorialDataList.get(j).getDiffValue()/maxDiffValue
+                0.90 * factorialDataList.get(i).getDiff()/maxDiff + 0.10 * factorialDataList.get(i).getDiffValue()/maxDiffValue
+                        > 0.90 * factorialDataList.get(j).getDiff()/maxDiff + 0.10 * factorialDataList.get(j).getDiffValue()/maxDiffValue
                 ? j : i
         ).getAsInt();
 
