@@ -6,9 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.time.Duration;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Стратегии торговли, зарабатывающие на изменении стоимости торговых инструментов, относительно фиатной валюты
@@ -55,8 +53,9 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
     public Integer getFactorialLength() { return 100; }
     public Integer getFactorialLengthFuture() { return 50; }
     public Integer getFactorialHistoryLength() {
-        return this.getFactorialLength() * 300;
+        return this.getFactorialLength() * 150;
     }
     public List<Integer> getFactorialSizes() { return List.of(1); };
     public Integer getFactorialBestSize() { return 2; };
+    public Float getFactorialProfitLessPercent() { return 0.4f; };
 }

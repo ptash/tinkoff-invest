@@ -15,9 +15,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
-import java.util.stream.IntStream;
 
 @Service
 @Slf4j
@@ -46,12 +44,12 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
 
     public boolean isShouldBuy(AInstrumentByFiatFactorialStrategy strategy, CandleDomainEntity candle) {
         var candleList = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
-                candle.getDateTime(), 2, strategy.getInterval());
-        var factorial = findBestFactorialInPast(strategy, candleList.get(0));
+                candle.getDateTime(), 3, strategy.getInterval());
+        var factorial = findBestFactorialInPast(strategy, candleList.get(1));
         String annotation = "null";
         var res = false;
-        Double profit = candleList.get(0).getHighestPrice().doubleValue();
-        Double loss = candleList.get(0).getLowestPrice().doubleValue();
+        Double profit = candleList.get(1).getHighestPrice().doubleValue();
+        Double loss = candleList.get(1).getLowestPrice().doubleValue();
         if (null != factorial) {
             annotation = "factorial from " + factorial.getCandleList().get(0).getDateTime()
                     + " to " + factorial.getCandleList().get(factorial.getCandleList().size() - 1).getDateTime() + " size=" + factorial.getSize()
@@ -89,6 +87,23 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             ) {
                 annotation += " ok < loss";
                 res = true;
+            }
+            if (!res && candle.getClosingPrice().doubleValue() > profit
+                    && expectProfit < 0
+            ) {
+                annotation += "ok < profit";
+                res = true;
+                /*
+                var percent = 100f * (candle.getClosingPrice().doubleValue() - profit) / profit;
+                annotation += " percent=" + percent;
+                if (percent < strategy.getFactorialProfitLessPercent()) {
+                    var factorialPrevPrev = findBestFactorialInPast(strategy, candleList.get(0));
+                    var profitPrev = candleList.get(0).getLowestPrice().doubleValue() * (1f + factorialPrevPrev.getExpectProfit() / 100f);
+                    annotation += " expectProfitPrevPrev=" + factorialPrevPrev;
+                    if (candleList.get(1).getLowestPrice().doubleValue() > profitPrev && profitPrev < 0) {
+                        annotation += " ok < profit";
+                    }
+                }*/
             }
         }
         notificationService.reportStrategy(
