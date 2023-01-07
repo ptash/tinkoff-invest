@@ -50,8 +50,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         var factorial = findBestFactorialInPast(strategy, candleList.get(0));
         String annotation = "null";
         var res = false;
-        Double profit = candle.getClosingPrice().doubleValue();
-        Double loss = candle.getClosingPrice().doubleValue();
+        Double profit = candleList.get(0).getClosingPrice().doubleValue();
+        Double loss = candleList.get(0).getClosingPrice().doubleValue();
         if (null != factorial) {
             annotation = "factorial from " + factorial.getCandleList().get(0).getDateTime()
                     + " to " + factorial.getCandleList().get(factorial.getCandleList().size() - 1).getDateTime() + " size=" + factorial.getSize()
