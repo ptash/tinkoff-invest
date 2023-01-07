@@ -14,6 +14,8 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.IntStream;
 
@@ -31,8 +33,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         Integer i;
         Integer size;
         Integer length;
-        Float diff;
+        Float diffPrice;
         Float diffValue;
+        Float diff;
         List<CandleDomainEntity> candleList;
         List<CandleDomainEntity> candleListFeature;
         List<CandleDomainEntity> candleListPast;
@@ -52,7 +55,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         if (null != factorial) {
             annotation = "factorial from " + factorial.getCandleList().get(0).getDateTime()
                     + " to " + factorial.getCandleList().get(factorial.getCandleList().size() - 1).getDateTime() + " size=" + factorial.getSize()
-                    + " diff=" + factorial.diff
+                    + " diff=" + factorial.diffPrice
                     + " for from " + factorial.candleListPast.get(0).getDateTime();
             Double maxPrice = (factorial.candleListFeature.stream().mapToDouble(value -> value.getHighestPrice().doubleValue()).max().orElse(-1));
             Double minPrice = factorial.candleListFeature.stream().mapToDouble(value -> value.getLowestPrice().doubleValue()).min().orElse(-1);
@@ -111,7 +114,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         if (null != factorial) {
             annotation = "factorial from " + factorial.getCandleList().get(0).getDateTime()
                     + " to " + factorial.getCandleList().get(factorial.getCandleList().size() - 1).getDateTime() + " size=" + factorial.getSize()
-                    + " diff=" + factorial.diff
+                    + " diff=" + factorial.diffPrice
                     + " for from " + factorial.candleListPast.get(0).getDateTime();
             Double maxPrice = (factorial.candleListFeature.stream().mapToDouble(value -> value.getHighestPrice().doubleValue()).max().orElse(-1));
             Double minPrice = factorial.candleListFeature.stream().mapToDouble(value -> value.getLowestPrice().doubleValue()).min().orElse(-1);
@@ -282,7 +285,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         .i(i)
                         .size(size)
                         .length(strategy.getFactorialLength())
-                        .diff(diff)
+                        .diffPrice(diff)
                         .diffValue(diffValue)
                         .candleList(candleList.subList(i, i + 1))
                         .candleListFeature(candleList.subList(i, i + 1))
@@ -294,26 +297,24 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         if (null == bestDiff) {
             return null;
         }
-        var maxDiff = factorialDataList.stream().mapToDouble(value -> value.getDiff().doubleValue()).max().orElse(-1);
-        var maxDiffValue = factorialDataList.stream().mapToDouble(value -> value.getDiffValue().doubleValue()).max().orElse(-1);
-        var iBest = IntStream.range(0, factorialDataList.size()).reduce((i, j) ->
-                0.90 * factorialDataList.get(i).getDiff()/maxDiff + 0.10 * factorialDataList.get(i).getDiffValue()/maxDiffValue
-                        > 0.90 * factorialDataList.get(j).getDiff()/maxDiff + 0.10 * factorialDataList.get(j).getDiffValue()/maxDiffValue
-                ? j : i
-        ).getAsInt();
+        Float maxDiff = (float) factorialDataList.stream().mapToDouble(value -> value.getDiffPrice().doubleValue()).max().orElse(-1);
+        Float maxDiffValue = (float) factorialDataList.stream().mapToDouble(value -> value.getDiffValue().doubleValue()).max().orElse(-1);
+        factorialDataList.forEach(v -> v.setDiff(0.90f * v.getDiffPrice()/maxDiff + 0.10f * v.getDiffValue()/maxDiffValue));
+        Collections.sort(factorialDataList, (o1, o2) -> o1.getDiff() - o2.getDiff() > 0 ? 1 : (o1.getDiff() - o2.getDiff() < 0 ? -1: 0));
+        var iBest = 0;
 
         startCandleI = factorialDataList.get(iBest).getI();
         bestSize = factorialDataList.get(iBest).getSize();
-        bestDiff = factorialDataList.get(iBest).getDiff();
+        bestDiff = factorialDataList.get(iBest).getDiffPrice();
         bestInfo = factorialDataList.get(iBest).getInfo();
 
-        bestInfo += " diffAverage=" + (factorialDataList.stream().mapToDouble(value -> value.getDiff().doubleValue()).average().orElse(-1));
+        bestInfo += " diffAverage=" + (factorialDataList.stream().mapToDouble(value -> value.getDiffPrice().doubleValue()).average().orElse(-1));
 
         log.info("Select from {} best diff={} i={}", candleList.get(0).getDateTime(), bestDiff, startCandleI);
         var res = FactorialData.builder()
                 .size(bestSize)
                 .length(strategy.getFactorialLength())
-                .diff(bestDiff)
+                .diffPrice(bestDiff)
                 .candleList(candleList.subList(startCandleI, startCandleI + strategy.getFactorialLength() * bestSize))
                 .candleListFeature(candleList.subList(startCandleI + strategy.getFactorialLength() * bestSize, startCandleI + strategy.getFactorialLength() * bestSize * 2))
                 .candleListPast(candleList.subList(candleList.size() - strategy.getFactorialLength(), candleList.size()))
