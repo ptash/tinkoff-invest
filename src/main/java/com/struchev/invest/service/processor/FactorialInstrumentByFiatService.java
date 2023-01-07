@@ -50,8 +50,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         var factorial = findBestFactorialInPast(strategy, candleList.get(0));
         String annotation = "null";
         var res = false;
-        Double profit = candleList.get(0).getClosingPrice().doubleValue();
-        Double loss = candleList.get(0).getClosingPrice().doubleValue();
+        Double profit = candleList.get(0).getHighestPrice().doubleValue();
+        Double loss = candleList.get(0).getLowestPrice().doubleValue();
         if (null != factorial) {
             annotation = "factorial from " + factorial.getCandleList().get(0).getDateTime()
                     + " to " + factorial.getCandleList().get(factorial.getCandleList().size() - 1).getDateTime() + " size=" + factorial.getSize()
@@ -262,8 +262,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
 
             Double maxPrice = (candleListFeature.stream().mapToDouble(value -> value.getHighestPrice().doubleValue()).max().orElse(-1));
             Double minPrice = candleListFeature.stream().mapToDouble(value -> value.getLowestPrice().doubleValue()).min().orElse(-1);
-            var expectProfit = 100f * (maxPrice - candleListFactorial.get(candleListFactorial.size() - 1).getClosingPrice().doubleValue()) / maxPrice;
-            var expectLoss = 100f * (candleListFactorial.get(candleListFactorial.size() - 1).getClosingPrice().doubleValue() - minPrice) / minPrice;
+            var expectProfit = 100f * (maxPrice - candleListFactorial.get(candleListFactorial.size() - 1).getHighestPrice().doubleValue()) / maxPrice;
+            var expectLoss = 100f * (candleListFactorial.get(candleListFactorial.size() - 1).getLowestPrice().doubleValue() - minPrice) / minPrice;
             expectProfitList.add(expectProfit);
             expectLossList.add(expectLoss);
         }
