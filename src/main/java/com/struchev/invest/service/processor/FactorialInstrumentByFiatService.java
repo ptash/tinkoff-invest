@@ -66,6 +66,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             if (expectProfit > strategy.getBuyCriteria().getTakeProfitPercent()
                     && expectLoss < strategy.getBuyCriteria().getStopLossPercent()
                     && candleList.get(0).getClosingPrice().doubleValue() > candle.getClosingPrice().doubleValue()
+                    && false
             ) {
                 annotation += " ok";
                 annotation += " info: " + factorial.getInfo();
