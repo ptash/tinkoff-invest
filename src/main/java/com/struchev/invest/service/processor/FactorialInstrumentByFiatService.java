@@ -91,19 +91,19 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             if (!res && candle.getClosingPrice().doubleValue() > profit
                     && expectProfit < 0
             ) {
-                annotation += "ok < profit";
-                res = true;
-                /*
                 var percent = 100f * (candle.getClosingPrice().doubleValue() - profit) / profit;
                 annotation += " percent=" + percent;
                 if (percent < strategy.getFactorialProfitLessPercent()) {
                     var factorialPrevPrev = findBestFactorialInPast(strategy, candleList.get(0));
                     var profitPrev = candleList.get(0).getLowestPrice().doubleValue() * (1f + factorialPrevPrev.getExpectProfit() / 100f);
-                    annotation += " expectProfitPrevPrev=" + factorialPrevPrev;
-                    if (candleList.get(1).getLowestPrice().doubleValue() > profitPrev && profitPrev < 0) {
-                        annotation += " ok < profit";
+                    annotation += " expectProfitPrevPrev=" + profitPrev;
+                    if (candleList.get(1).getClosingPrice().doubleValue() > profitPrev
+                            && factorialPrevPrev.getExpectProfit() < 0)
+                    {
+                        annotation += "ok < profit";
+                        res = true;
                     }
-                }*/
+                }
             }
         }
         notificationService.reportStrategy(
