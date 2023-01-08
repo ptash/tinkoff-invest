@@ -51,7 +51,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
     }
 
     public Integer getFactorialLength() { return 100; }
-    public Integer getFactorialLengthFuture() { return 50; }
+    public Integer getFactorialLengthFuture() { return 30; }
     public Integer getFactorialHistoryLength() {
         return this.getFactorialLength() * 150;
     }

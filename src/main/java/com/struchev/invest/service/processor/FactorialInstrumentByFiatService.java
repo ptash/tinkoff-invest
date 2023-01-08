@@ -91,6 +91,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             if (!res && candle.getClosingPrice().doubleValue() > profit
                     && expectProfit < 0
             ) {
+                annotation += "ok < profit";
+                res = true;
+                /*
                 var percent = 100f * (candle.getClosingPrice().doubleValue() - profit) / profit;
                 annotation += " percent=" + percent;
                 if (percent < strategy.getFactorialProfitLessPercent()) {
@@ -104,6 +107,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         res = true;
                     }
                 }
+                 */
             }
         }
         notificationService.reportStrategy(
