@@ -236,8 +236,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     //                - (testCandle.getHighestPrice().floatValue() - testCandle.getLowestPrice().floatValue())/testCandle.getHighestPrice().floatValue());
                     //curDiffValue += Math.abs(modelCandle.getVolume() - testCandle.getVolume());
                     curDiffValue += Math.abs(modelCandle.getVolume()/(modelCandlePrev.getVolume() + 1) - testCandle.getVolume()/(testCandlePrev.getVolume() + 1));
-                    diff += curDiff * curDiff * ((strategy.getFactorialLength() + j * 3) / (4f * strategy.getFactorialLength()));
-                    diffValue += curDiffValue * curDiffValue * ((strategy.getFactorialLength() + j * 3) / (4f * strategy.getFactorialLength()));
+                    diff += curDiff * curDiff;// * ((strategy.getFactorialLength() + j * 3) / (4f * strategy.getFactorialLength()));
+                    diffValue += curDiffValue * curDiffValue;// * ((strategy.getFactorialLength() + j * 3) / (4f * strategy.getFactorialLength()));
                     if (j == 1 || j == strategy.getFactorialLength() - 1) {
                         info += " + " + curDiff + "(" + testCandle.getDateTime() + " with " + modelCandle.getDateTime() + ")";
                     }
