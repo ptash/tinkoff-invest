@@ -299,13 +299,13 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
 
         bestInfo += " diffAverage=" + (factorialDataList.stream().mapToDouble(value -> value.getDiffPrice().doubleValue()).average().orElse(-1));
 
-        log.info("Select from {} best diff={} i={}", candleList.get(0).getDateTime(), bestDiff, startCandleI);
+        log.info("Select from {} best diff={} bestSize={} i={}, candleList.size={}", candleList.get(0).getDateTime(), bestDiff, bestSize, startCandleI, candleList.size());
         var res = FactorialData.builder()
                 .size(bestSize)
                 .length(strategy.getFactorialLength())
                 .diffPrice(bestDiff)
                 .candleList(candleList.subList(startCandleI, startCandleI + strategy.getFactorialLength() * bestSize))
-                .candleListFeature(candleList.subList(startCandleI + strategy.getFactorialLengthFuture() * bestSize, startCandleI + strategy.getFactorialLength() * bestSize * 2))
+                .candleListFeature(candleList.subList(startCandleI + strategy.getFactorialLength() * bestSize, startCandleI + strategy.getFactorialLengthFuture() * bestSize * 2))
                 .candleListPast(candleList.subList(candleList.size() - strategy.getFactorialLength(), candleList.size()))
                 .info(bestInfo)
                 .expectProfit((float) expectProfit)
