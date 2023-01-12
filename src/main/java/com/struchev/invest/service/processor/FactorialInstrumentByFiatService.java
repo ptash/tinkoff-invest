@@ -90,6 +90,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             }
             if (!res && candle.getClosingPrice().doubleValue() > profit
                     && expectProfit < 0
+                    && false
             ) {
                 annotation += "ok < profit";
                 res = true;
