@@ -177,7 +177,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         for (var iSize = 0; iSize < strategy.getFactorialSizes().size(); iSize++) {
             Integer size = strategy.getFactorialSizes().get(iSize);
             CandleDomainEntity modelStartCandle = candleList.get(candleList.size() - strategy.getFactorialLength());
-            for (var i = 0; i < candleList.size() - strategy.getFactorialLength() * 2 * size; i++) {
+            for (var i = 0; i < candleList.size() - Math.max(strategy.getFactorialLength(), strategy.getFactorialLengthFuture()) * 2 * size; i++) {
                 CandleDomainEntity testStartCandle = candleList.get(i);
                 if (size > 1) {
                     testStartCandle = testStartCandle.clone();
