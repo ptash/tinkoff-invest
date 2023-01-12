@@ -81,8 +81,10 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             profit = profit * (1f + expectProfit / 100f);
             loss = loss * (1f - expectLoss / 100f);
             //log.info("FactorialInstrumentByFiatService {} from {} to {} {}", candle.getFigi(), factorial.candleListPast.get(0).getDateTime(), candle.getDateTime(), factorial.candleListFeature.size(), annotation);
+            var futureProfit = 100f * (profit - candle.getClosingPrice().doubleValue()) / candle.getClosingPrice().doubleValue();
             if (!res && candle.getClosingPrice().doubleValue() < loss
-                    //&& (expectLoss + expectProfit) > strategy.getBuyCriteria().getTakeProfitPercent()
+                    && futureProfit > strategy.getBuyCriteria().getTakeProfitPercent()
+                    && (expectLoss + expectProfit) > strategy.getBuyCriteria().getTakeProfitPercent()
                     && expectLoss > 0
             ) {
                 annotation += " ok < loss";
