@@ -50,8 +50,8 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
         return AInstrumentByFiatFactorialStrategy.BuyCriteria.builder().takeProfitPercent(0.5f).stopLossPercent(0.2f).build();
     }
 
-    public Integer getFactorialLength() { return 50; }
-    public Integer getFactorialLengthFuture() { return 15; }
+    public Integer getFactorialLength() { return 20; }
+    public Integer getFactorialLengthFuture() { return 10; }
     public Integer getFactorialHistoryLength() {
         return this.getFactorialLength() * 150;
     }
