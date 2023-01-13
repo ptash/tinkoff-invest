@@ -50,6 +50,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         var res = false;
         Double profit = candleList.get(1).getHighestPrice().doubleValue();
         Double loss = candleList.get(1).getLowestPrice().doubleValue();
+        Double lossAvg = null;
         if (null != factorial) {
             annotation = "factorial from " + factorial.getCandleList().get(0).getDateTime()
                     + " to " + factorial.getCandleList().get(factorial.getCandleList().size() - 1).getDateTime() + " size=" + factorial.getSize()
@@ -88,8 +89,31 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     //&& (expectLoss + expectProfit) > strategy.getBuyCriteria().getTakeProfitPercent()
                     && expectLoss > 0
             ) {
-                annotation += " ok < loss";
-                res = true;
+                var expectLossAvg = expectLoss;
+                lossAvg = candleList.get(1).getLowestPrice().doubleValue();
+                if (strategy.getFactorialAvgSize() > 1) {
+                    var candleListPrev = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
+                            candle.getDateTime(), strategy.getFactorialAvgSize() + 1, strategy.getInterval());
+                    for (var i = 0; i < strategy.getFactorialAvgSize() - 1; i++) {
+                        var factorialPrev = findBestFactorialInPast(strategy, candleListPrev.get(i));
+                        expectLossAvg += factorialPrev.getExpectLoss();
+                        lossAvg += candleListPrev.get(i).getLowestPrice().doubleValue();
+                    }
+                    expectLossAvg = expectLossAvg / strategy.getFactorialAvgSize();
+                    lossAvg = lossAvg / strategy.getFactorialAvgSize();
+                    lossAvg = Math.min(candleList.get(1).getLowestPrice().doubleValue(), lossAvg);
+                    lossAvg = candleList.get(1).getLowestPrice().doubleValue() * (1f - expectLossAvg / 100f);
+                    annotation += " expectLossAvg=" + expectLossAvg + " lossAvg=" + lossAvg;
+                    if (candle.getClosingPrice().doubleValue() < lossAvg
+                            //&& expectLoss > 0
+                    ) {
+                        annotation += " ok < lossAvg";
+                        res = true;
+                    }
+                } else {
+                    annotation += " ok < loss";
+                    res = true;
+                }
             }
             if (!res && candle.getClosingPrice().doubleValue() > profit
                     && expectProfit < 0
@@ -118,7 +142,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 strategy,
                 candle.getFigi(),
                 "Date|smaSlowest|smaSlow|smaFast|emaFast|ema2|bye|sell|position|deadLineBottom|deadLineTop|investBottom|investTop|smaTube|strategy|average|averageBottom|averageTop|openPrice",
-                "{} | {} | {} | {} | {} | {} | {} | {} |||||||by {}||||",
+                "{} | {} | {} | {} | {} | {} | {} | {} | {} ||||||by {}||||",
                 notificationService.formatDateTime(candle.getDateTime()),
                 candle.getClosingPrice(),
                 candle.getOpenPrice(),
@@ -127,6 +151,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 candle.getClosingPrice(),
                 profit,
                 loss,
+                lossAvg == null ? "" : lossAvg,
                 annotation
         );
         return res;
