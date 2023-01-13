@@ -85,29 +85,43 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             var futureProfit = 100f * (profit - candle.getClosingPrice().doubleValue()) / candle.getClosingPrice().doubleValue();
             annotation += " futureProfit=" + futureProfit;
             if (!res && candle.getClosingPrice().doubleValue() < loss
-                    //&& futureProfit > strategy.getBuyCriteria().getTakeProfitPercent()
+                    && futureProfit > strategy.getBuyCriteria().getTakeProfitPercent()
                     //&& (expectLoss + expectProfit) > strategy.getBuyCriteria().getTakeProfitPercent()
                     //&& expectLoss > 0
             ) {
                 var expectLossAvg = expectLoss;
                 lossAvg = candleList.get(1).getLowestPrice().doubleValue();
                 if (strategy.getFactorialAvgSize() > 1) {
+                    Float maxV = null;
+                    Float minV = null;
                     var candleListPrev = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
                             candle.getDateTime(), strategy.getFactorialAvgSize() + 1, strategy.getInterval());
                     for (var i = 0; i < strategy.getFactorialAvgSize() - 1; i++) {
                         var factorialPrev = findBestFactorialInPast(strategy, candleListPrev.get(i));
                         expectLossAvg += factorialPrev.getExpectLoss();
                         lossAvg += candleListPrev.get(i).getLowestPrice().doubleValue();
+                        if (maxV == null || maxV < factorialPrev.getExpectLoss()) {
+                            maxV = factorialPrev.getExpectLoss();
+                        }
+                        if (minV == null || minV > factorialPrev.getExpectLoss()) {
+                            minV = factorialPrev.getExpectLoss();
+                        }
                     }
-                    expectLossAvg = expectLossAvg / strategy.getFactorialAvgSize();
+                    if (strategy.getFactorialAvgSize() > 3) {
+                        expectLossAvg -= maxV;
+                        expectLossAvg -= minV;
+                        expectLossAvg = expectLossAvg / (strategy.getFactorialAvgSize() - 2);
+                    } else {
+                        expectLossAvg = expectLossAvg / strategy.getFactorialAvgSize();
+                    }
                     lossAvg = lossAvg / strategy.getFactorialAvgSize();
                     lossAvg = Math.min(candleList.get(1).getLowestPrice().doubleValue(), lossAvg);
                     lossAvg = lossAvg * (1f - expectLossAvg / 100f);
                     annotation += " expectLossAvg=" + expectLossAvg + " lossAvg=" + lossAvg;
                     if (candle.getClosingPrice().doubleValue() < lossAvg
-                            && (expectLossAvg + expectProfit) > strategy.getBuyCriteria().getTakeProfitPercent()
-                            && (expectLoss + expectProfit) > strategy.getBuyCriteria().getTakeProfitPercent()
-                            //&& expectLoss > 0
+                            //&& (expectLossAvg + expectProfit) > strategy.getBuyCriteria().getTakeProfitPercent()
+                            //&& (expectLoss + expectProfit) > strategy.getBuyCriteria().getTakeProfitPercent()
+                            //&& expectLossAvg > 0
                     ) {
                         annotation += " ok < lossAvg";
                         res = true;
