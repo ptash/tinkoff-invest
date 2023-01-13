@@ -85,9 +85,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             var futureProfit = 100f * (profit - candle.getClosingPrice().doubleValue()) / candle.getClosingPrice().doubleValue();
             annotation += " futureProfit=" + futureProfit;
             if (!res && candle.getClosingPrice().doubleValue() < loss
-                    && futureProfit > strategy.getBuyCriteria().getTakeProfitPercent()
+                    //&& futureProfit > strategy.getBuyCriteria().getTakeProfitPercent()
                     //&& (expectLoss + expectProfit) > strategy.getBuyCriteria().getTakeProfitPercent()
-                    && expectLoss > 0
+                    //&& expectLoss > 0
             ) {
                 var expectLossAvg = expectLoss;
                 lossAvg = candleList.get(1).getLowestPrice().doubleValue();
@@ -102,7 +102,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     expectLossAvg = expectLossAvg / strategy.getFactorialAvgSize();
                     lossAvg = lossAvg / strategy.getFactorialAvgSize();
                     lossAvg = Math.min(candleList.get(1).getLowestPrice().doubleValue(), lossAvg);
-                    lossAvg = candleList.get(1).getLowestPrice().doubleValue() * (1f - expectLossAvg / 100f);
+                    lossAvg = lossAvg * (1f - expectLossAvg / 100f);
                     annotation += " expectLossAvg=" + expectLossAvg + " lossAvg=" + lossAvg;
                     if (candle.getClosingPrice().doubleValue() < lossAvg
                             //&& expectLoss > 0
@@ -111,8 +111,12 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         res = true;
                     }
                 } else {
-                    annotation += " ok < loss";
-                    res = true;
+                    if (futureProfit > strategy.getBuyCriteria().getTakeProfitPercent()
+                            //&& (expectLoss + expectProfit) > strategy.getBuyCriteria().getTakeProfitPercent()
+                            && expectLoss > 0) {
+                        annotation += " ok < loss";
+                        res = true;
+                    }
                 }
             }
             if (!res && candle.getClosingPrice().doubleValue() > profit
