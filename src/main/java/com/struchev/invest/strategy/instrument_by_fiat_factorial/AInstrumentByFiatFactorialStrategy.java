@@ -47,7 +47,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
     }
 
     public  AInstrumentByFiatFactorialStrategy.BuyCriteria getBuyCriteria() {
-        return AInstrumentByFiatFactorialStrategy.BuyCriteria.builder().takeProfitPercent(0.3f).stopLossPercent(0.2f).build();
+        return AInstrumentByFiatFactorialStrategy.BuyCriteria.builder().takeProfitPercent(0.5f).stopLossPercent(0.2f).build();
     }
 
     public Integer getFactorialLength() { return 20; }
@@ -58,6 +58,6 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
     public List<Integer> getFactorialSizes() { return List.of(1, 2); };
     public Integer getFactorialBestSize() { return 2; };
     public Integer getFactorialAvgSize() { return 1; };
-    public Integer getFactorialLossSize() { return 5; };
+    public Integer getFactorialLossSize() { return 1; };
     public Float getFactorialProfitLessPercent() { return 0.4f; };
 }
