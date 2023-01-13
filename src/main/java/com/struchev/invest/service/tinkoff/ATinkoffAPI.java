@@ -44,7 +44,7 @@ public abstract class ATinkoffAPI implements ITinkoffCommonAPI, ITinkoffOrderAPI
         // Проверяем, что аккаунт существует (если задан в конфигах) или выбираем первый
         var accounts = isSandboxMode
                 ? api.getSandboxService().getAccountsSync() : api.getUserService().getAccountsSync();
-        log.info("Available accounts: {}", accounts.size());
+        log.info("Available accounts: {}, need = {}", accounts.size(), StringUtils.isEmpty(accountId) ? "first" : accountId);
         accounts.forEach(a -> log.info("Account id {}, name {}", a.getId(), a.getName()));
         var account = accounts.stream()
                 .filter(a -> a.getType() == AccountType.ACCOUNT_TYPE_TINKOFF)
