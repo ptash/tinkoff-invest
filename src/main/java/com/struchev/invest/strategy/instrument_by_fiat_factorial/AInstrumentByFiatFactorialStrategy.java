@@ -36,7 +36,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
     }
 
     public AInstrumentByFiatCrossStrategy.SellCriteria getSellCriteria() {
-        return AInstrumentByFiatCrossStrategy.SellCriteria.builder().takeProfitPercent(0.4f).stopLossPercent(0.2f).build();
+        return AInstrumentByFiatCrossStrategy.SellCriteria.builder().takeProfitPercent(0.7f).stopLossPercent(0.2f).build();
     }
 
     @Builder
