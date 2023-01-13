@@ -236,6 +236,8 @@
                     var annotations = [];
                     var buyPrice;
                     var profit = 0.0;
+                    var profitInMoney = 0.0;
+                    var profitCount = 0;
                     for (var i = 1; i < lines.length; i++) {
                         var line = lines[i];
                         if (line.length === 0) continue;
@@ -263,16 +265,17 @@
                                 if (buyPrice < sellPrice) {
                                     cssClass = 'annotation_sell_profit';
                                     buyCssClass = 'annotation_buy_profit';
-                                    var curProfit = ((sellPrice * 100 / buyPrice) - 100);
-                                    profit += curProfit;
-                                    text += ' with profit ' + curProfit.toFixed(2) + '%';
+                                    text += ' with profit ';
                                 } else {
                                     cssClass = 'annotation_sell_loss';
                                     buyCssClass = 'annotation_buy_loss';
-                                    var curLoss = ((buyPrice * 100 / sellPrice) - 100);
-                                    profit -= curLoss;
-                                    text += ' with loss -' + curLoss.toFixed(2) + '%';
+                                    text += ' with loss ';
                                 }
+                                var curProfit = ((sellPrice - buyPrice) / sellPrice * 100);
+                                profit += curProfit;
+                                profitInMoney += (sellPrice - buyPrice);
+                                profitCount++;
+                                text += curProfit.toFixed(2) + '%';
                                 annotations[annotations.length - 1].cssClass = buyCssClass;
                             }
                         }
@@ -293,7 +296,7 @@
                             xval: dateIndex.length - 1,
                             x: 'Total',
                             shortText: 'T',
-                            text: 'Total profit ' + profit.toFixed(2) + '%'
+                            text: 'Total profit ' + profit.toFixed(2) + '%' + ' in money ' + profitInMoney.toFixed(2) + ' (' + profitCount + ')'
                         });
                     }
                     g.setAnnotations(annotations);
