@@ -129,7 +129,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 } else {
                     if (futureProfit > strategy.getBuyCriteria().getTakeProfitPercent()
                             //&& (expectLoss + expectProfit) > strategy.getBuyCriteria().getTakeProfitPercent()
-                            && expectLoss > 0) {
+                            && expectLoss >= 0) {
                         annotation += " ok < loss";
                         res = true;
                     }
