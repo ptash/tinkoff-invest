@@ -182,7 +182,18 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 candle.getClosingPrice()
         );
         if (sellCriteria.getStopLossPercent() != null && profitPercent.floatValue() < -1 * sellCriteria.getStopLossPercent()) {
-            return true;
+            if (strategy.getFactorialLossSize() > 1) {
+                var candleList = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
+                        candle.getDateTime(), strategy.getFactorialLossSize(), strategy.getInterval());
+                var profitPercentPrev = candleList.get(0).getClosingPrice().subtract(purchaseRate)
+                        .multiply(BigDecimal.valueOf(100))
+                        .divide(purchaseRate, 4, RoundingMode.HALF_DOWN);
+                if (sellCriteria.getStopLossPercent() != null && profitPercentPrev.floatValue() < -1 * sellCriteria.getStopLossPercent()) {
+                    return true;
+                }
+            } else {
+                return true;
+            }
         }
         if (sellCriteria.getExitProfitPercent() != null
                 && profitPercent.floatValue() > sellCriteria.getExitProfitPercent()
