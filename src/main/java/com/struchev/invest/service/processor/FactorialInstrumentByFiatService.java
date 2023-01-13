@@ -105,6 +105,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     lossAvg = lossAvg * (1f - expectLossAvg / 100f);
                     annotation += " expectLossAvg=" + expectLossAvg + " lossAvg=" + lossAvg;
                     if (candle.getClosingPrice().doubleValue() < lossAvg
+                            && (expectLossAvg + expectProfit) > strategy.getBuyCriteria().getTakeProfitPercent()
+                            && (expectLoss + expectProfit) > strategy.getBuyCriteria().getTakeProfitPercent()
                             //&& expectLoss > 0
                     ) {
                         annotation += " ok < lossAvg";
