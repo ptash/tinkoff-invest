@@ -59,5 +59,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
     public Integer getFactorialBestSize() { return 2; };
     public Integer getFactorialAvgSize() { return 2; };
     public Integer getFactorialLossSize() { return 2; };
+
+    public Float getFactorialRatioI() { return 2f; }
     public Float getFactorialProfitLessPercent() { return 0.4f; };
 }
