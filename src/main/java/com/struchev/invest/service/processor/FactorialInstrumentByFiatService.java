@@ -350,8 +350,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         var avSize = strategy.getFactorialBestSize();
         for(var i = 0; i < avSize; i++) {
             var candleI = factorialDataList.get(i).getI();
-            var candleListFactorial = candleList.subList(candleI, candleI + strategy.getFactorialLengthFuture() * bestSize);
-            var candleListFeature = candleList.subList(candleI + strategy.getFactorialLength() * bestSize, candleI + strategy.getFactorialLength() * bestSize * 2);
+            var candleListFactorial = candleList.subList(candleI, candleI + strategy.getFactorialLength() * bestSize);
+            var candleListFeature = candleList.subList(candleI + strategy.getFactorialLength() * bestSize, candleI + strategy.getFactorialLengthFuture() * bestSize * 2);
 
             Double maxPrice = (candleListFeature.stream().mapToDouble(value -> value.getHighestPrice().doubleValue()).max().orElse(-1));
             Double minPrice = candleListFeature.stream().mapToDouble(value -> value.getLowestPrice().doubleValue()).min().orElse(-1);
@@ -359,6 +359,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             var expectLoss = 100f * (candleListFactorial.get(candleListFactorial.size() - 1).getClosingPrice().doubleValue() - minPrice) / minPrice;
             expectProfitList.add(expectProfit);
             expectLossList.add(expectLoss);
+            bestInfo += " expectLoss = " + candleListFactorial.get(candleListFactorial.size() - 1).getDateTime() + ":" + candleListFactorial.get(candleListFactorial.size() - 1).getClosingPrice().doubleValue() + "-"
+                    +  minPrice + "=" + expectLoss;
         }
 
         var expectProfit = expectProfitList.stream().mapToDouble(i -> i).average().orElse(-1);
