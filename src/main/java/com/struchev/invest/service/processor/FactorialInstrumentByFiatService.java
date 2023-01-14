@@ -273,7 +273,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     Float curDiff = 0f;
                     Float curDiffValue = 0f;
                     curDiff +=
-                            (float)Math.pow(
+                            //(float)Math.pow(
                                     Math.abs(((modelCandle.getHighestPrice().floatValue() - modelCandle.getLowestPrice().floatValue())
                                     / modelCandle.getLowestPrice().floatValue()
                                     //- (modelCandlePrev.getHighestPrice().floatValue() - modelCandlePrev.getLowestPrice().floatValue())
@@ -281,30 +281,35 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             - ((testCandle.getHighestPrice().floatValue() - testCandle.getLowestPrice().floatValue())
                                     / testCandle.getLowestPrice().floatValue()
                                     //- (testCandlePrev.getHighestPrice().floatValue() - testCandlePrev.getLowestPrice().floatValue())
-                            )), 2);
+                            ))
+                                    //, 2)
+                    ;
                     curDiff +=
-                            (float)Math.pow(
+                            //(float)Math.pow(
                                     Math.abs(((modelCandle.getClosingPrice().floatValue() - modelCandlePrev.getClosingPrice().floatValue())/modelCandle.getClosingPrice().floatValue())
                             - (testCandle.getClosingPrice().floatValue() - testCandlePrev.getClosingPrice().floatValue())/testCandle.getClosingPrice().floatValue())
-                            , 2);
+                            //, 2)
+                    ;
                     curDiff +=
-                            (float)Math.pow(
+                            //(float)Math.pow(
                                     Math.abs(((modelCandle.getOpenPrice().floatValue() - modelCandlePrev.getClosingPrice().floatValue())/modelCandle.getOpenPrice().floatValue())
                                     - (testCandle.getOpenPrice().floatValue() - testCandlePrev.getClosingPrice().floatValue())/testCandle.getOpenPrice().floatValue())
-                            , 2);
+                            //, 2)
+                    ;
 
                     curDiff +=
-                            (float)Math.pow(
+                            //(float)Math.pow(
                                     Math.abs(((modelCandle.getOpenPrice().floatValue() - modelCandle.getClosingPrice().floatValue())/modelCandle.getOpenPrice().floatValue())
                                     - (testCandle.getOpenPrice().floatValue() - testCandle.getClosingPrice().floatValue())/testCandle.getOpenPrice().floatValue())
-                            , 2);
+                            //, 2)
+                    ;
                     //curDiff +=
                     //        Math.abs(((modelCandle.getHighestPrice().floatValue() - modelCandle.getLowestPrice().floatValue())/modelCandle.getHighestPrice().floatValue())
                     //                - (testCandle.getHighestPrice().floatValue() - testCandle.getLowestPrice().floatValue())/testCandle.getHighestPrice().floatValue());
                     //curDiffValue += Math.abs(modelCandle.getVolume() - testCandle.getVolume());
                     curDiffValue += (float)Math.pow(Math.abs(modelCandle.getVolume()/(modelCandlePrev.getVolume() + 1) - testCandle.getVolume()/(testCandlePrev.getVolume() + 1))
                     , 2);
-                    curDiff = curDiff;// * curDiff;
+                    curDiff = curDiff * curDiff;
                     curDiffValue = curDiffValue;// * curDiffValue;
                     if (strategy.getFactorialRatioI() > 0) {
                         curDiff *= (strategy.getFactorialLength() + j * strategy.getFactorialRatioI())
