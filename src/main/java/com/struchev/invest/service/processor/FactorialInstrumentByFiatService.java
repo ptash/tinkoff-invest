@@ -335,7 +335,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         }
         Float maxDiff = (float) factorialDataList.stream().mapToDouble(value -> value.getDiffPrice().doubleValue()).max().orElse(-1);
         Float maxDiffValue = (float) factorialDataList.stream().mapToDouble(value -> value.getDiffValue().doubleValue()).max().orElse(-1);
-        factorialDataList.forEach(v -> v.setDiff(0.70f * v.getDiffPrice()/maxDiff + 0.30f * v.getDiffValue()/maxDiffValue));
+        factorialDataList.forEach(v -> v.setDiff((1f - strategy.getFactorialRatioValue()) * v.getDiffPrice()/maxDiff + strategy.getFactorialRatioValue() * v.getDiffValue()/maxDiffValue));
         Collections.sort(factorialDataList, (o1, o2) -> o1.getDiff() - o2.getDiff() > 0 ? 1 : (o1.getDiff() - o2.getDiff() < 0 ? -1: 0));
         var iBest = 0;
 
