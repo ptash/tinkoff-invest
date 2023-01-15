@@ -101,26 +101,31 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 annotation += " info: " + factorial.getInfo();
                 var candleListPrev = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
                         candle.getDateTime(), strategy.getBuyCriteria().getTakeLossPercentBetweenLength() + 1, strategy.getInterval());
-                //annotation += " prevClosingPrice=" + candleListPrev.get(0).getClosingPrice().doubleValue();
-                //if (candleListPrev.get(0).getClosingPrice().doubleValue() <= candle.getClosingPrice().doubleValue()) {
-                    for (var i = 0; i < strategy.getBuyCriteria().getTakeLossPercentBetweenLength() - 1; i++) {
-                        var factorialPrev = findBestFactorialInPast(strategy, candleListPrev.get(i));
-                        var expectProfitPrev = factorialPrev.getExpectProfit();
-                        var expectLossPrev = factorialPrev.getExpectLoss();
-                        annotation += " i" + i + " expectProfitPrev=" + expectProfitPrev
-                                + " expectLossPrev=" + expectLossPrev;
-                        if (
-                                expectProfitPrev < strategy.getBuyCriteria().getStopLossPercent()
-                                        && expectLossPrev > strategy.getBuyCriteria().getTakeLossPercentBetween()
-                        ) {
-                            annotation += " ok";
-                            res = true;
-                        } else {
+                for (var i = 0; i < strategy.getBuyCriteria().getTakeLossPercentBetweenLength() - 1; i++) {
+                    var factorialPrev = findBestFactorialInPast(strategy, candleListPrev.get(i));
+                    var expectProfitPrev = factorialPrev.getExpectProfit();
+                    var expectLossPrev = factorialPrev.getExpectLoss();
+                    if (i == 0) {
+                        var lossPrev = candleListPrev.get(i).getLowestPrice().doubleValue() * (1f - factorialPrev.getExpectLoss() / 100f);
+                        annotation += " lossPrev=" + lossPrev;
+                        if (lossPrev > loss) {
                             res = false;
                             break;
                         }
                     }
-                //}
+                    annotation += " i" + i + " expectProfitPrev=" + expectProfitPrev
+                            + " expectLossPrev=" + expectLossPrev;
+                    if (
+                            expectProfitPrev < strategy.getBuyCriteria().getStopLossPercent()
+                                    && expectLossPrev > strategy.getBuyCriteria().getTakeLossPercentBetween()
+                    ) {
+                        annotation += " ok";
+                        res = true;
+                    } else {
+                        res = false;
+                        break;
+                    }
+                }
             }
 
             //log.info("FactorialInstrumentByFiatService {} from {} to {} {}", candle.getFigi(), factorial.candleListPast.get(0).getDateTime(), candle.getDateTime(), factorial.candleListFeature.size(), annotation);
