@@ -70,12 +70,14 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     + " expectLoss=" + expectLoss
                     + "(from " + factorial.candleList.get(0).getDateTime() + " to " + factorial.candleList.get(factorial.candleList.size() - 1).getDateTime() + ")"
                     + "(from " + factorial.candleListFeature.get(0).getDateTime() + " to " + factorial.candleListFeature.get(factorial.candleListFeature.size() - 1).getDateTime() + ")";
+            annotation += " expectProfit/expectLoss=" + (expectProfit / expectLoss);
             if ((strategy.getBuyCriteria().getTakeProfitPercentBetween() != null
                     && expectProfit > strategy.getBuyCriteria().getTakeProfitPercentBetween()
                     && expectLoss < strategy.getBuyCriteria().getStopLossPercent())
                     || (
                             strategy.getBuyCriteria().getTakeProfitRatio() != null
-                                    && expectProfit / expectLoss > strategy.getBuyCriteria().getTakeProfitRatio()
+                                    && (expectProfit / expectLoss > strategy.getBuyCriteria().getTakeProfitRatio()
+                            || expectLoss < 0)
                     )
                     //&& candleList.get(0).getClosingPrice().doubleValue() > candle.getClosingPrice().doubleValue()
                     //&& false
@@ -95,7 +97,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             && expectLossPrev < strategy.getBuyCriteria().getStopLossPercent())
                             || (
                                     strategy.getBuyCriteria().getTakeProfitRatio() != null
-                                            && expectProfitPrev / expectLossPrev > strategy.getBuyCriteria().getTakeProfitRatio()
+                                            && (expectProfitPrev / expectLossPrev > strategy.getBuyCriteria().getTakeProfitRatio()
+                                            || expectLossPrev < 0)
                             )
                     ) {
                         annotation += " ok";
@@ -107,12 +110,16 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 }
             }
 
+            annotation += " expectLoss/expectProfit=" + (expectLoss/expectProfit);
             if (!res
-                    && strategy.getBuyCriteria().getTakeLossPercentBetween() != null
+                    && ((strategy.getBuyCriteria().getTakeLossPercentBetween() != null
                     && expectProfit < strategy.getBuyCriteria().getStopLossPercent()
-                    && expectLoss > strategy.getBuyCriteria().getTakeLossPercentBetween()
+                    && expectLoss > strategy.getBuyCriteria().getTakeLossPercentBetween())
+                    || (strategy.getBuyCriteria().getTakeLossRatio() != null
+                    && expectLoss/expectProfit > strategy.getBuyCriteria().getTakeLossRatio())
+                    )
                     //&& candleList.get(0).getClosingPrice().doubleValue() > candle.getClosingPrice().doubleValue()
-                    && profit > candle.getClosingPrice().doubleValue()
+                    //&& profit > candle.getClosingPrice().doubleValue()
             ) {
                 annotation += " ok TakeLossPercentBetween";
                 annotation += " info: " + factorial.getInfo();
@@ -138,8 +145,13 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         annotation += " i" + i + " expectProfitPrev=" + expectProfitPrev
                                 + " expectLossPrev=" + expectLossPrev;
                         if (
-                                expectProfitPrev < strategy.getBuyCriteria().getStopLossPercent()
-                                && expectLossPrev > strategy.getBuyCriteria().getTakeLossPercentBetween()
+                                (strategy.getBuyCriteria().getTakeLossPercentBetween() != null
+                                && expectProfitPrev < strategy.getBuyCriteria().getStopLossPercent()
+                                && expectLossPrev > strategy.getBuyCriteria().getTakeLossPercentBetween())
+                                || (
+                                        strategy.getBuyCriteria().getTakeLossRatio() != null
+                                                && expectLossPrev/expectProfitPrev > strategy.getBuyCriteria().getTakeLossRatio()
+                                )
                         ) {
                             annotation += " ok";
                             res = true;
@@ -148,6 +160,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             break;
                         }
                     }
+                    /*
                     annotation += " expectProfitPrevAvg=" + expectProfitPrevAvg
                             + " expectLossPrevAvg=" + expectLossPrevAvg;
                     annotation += " lossPrevAvg=" + lossPrevAvg;
@@ -161,6 +174,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     } else {
                         res = false;
                     }
+                     */
                 //}
             }
 
