@@ -143,9 +143,11 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     }
                 }
             }
-            if (!res && candle.getClosingPrice().doubleValue() > profit
+            if (!res
+                    && strategy.getFactorialProfitLessPercent() != null
+                    && candle.getClosingPrice().doubleValue() > profit
                     && expectProfit < 0
-                    && false
+                    //&& false
             ) {
                 annotation += "ok < profit";
                 res = true;
