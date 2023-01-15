@@ -164,6 +164,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     }
                     //annotation += " expectProfitPrevAvg=" + expectProfitPrevAvg
                     //        + " expectLossPrevAvg=" + expectLossPrevAvg;
+                /*
                     annotation += " lossPrevAvg=" + lossPrevAvg;
                     if (res
                             //&& expectProfitPrevAvg < strategy.getBuyCriteria().getStopLossPercent()
@@ -174,7 +175,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         res = true;
                     } else {
                         res = false;
-                    }
+                    }*/
                 //}
             }
 
