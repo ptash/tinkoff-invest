@@ -94,8 +94,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     && strategy.getBuyCriteria().getTakeLossPercentBetween() != null
                     && expectProfit < strategy.getBuyCriteria().getStopLossPercent()
                     && expectLoss > strategy.getBuyCriteria().getTakeLossPercentBetween()
-                    && candleList.get(0).getClosingPrice().doubleValue() > candle.getClosingPrice().doubleValue()
-                    //&& profit > candle.getClosingPrice().doubleValue()
+                    //&& candleList.get(0).getClosingPrice().doubleValue() > candle.getClosingPrice().doubleValue()
+                    && profit > candle.getClosingPrice().doubleValue()
             ) {
                 annotation += " ok";
                 annotation += " info: " + factorial.getInfo();
@@ -103,18 +103,20 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         candle.getDateTime(), strategy.getBuyCriteria().getTakeLossPercentBetweenLength() + 1, strategy.getInterval());
                 var lowestAvg = candleListPrev.stream().mapToDouble(v -> v.getLowestPrice().doubleValue()).average().orElse(-1);
                 annotation += " lowestAvg=" + lowestAvg;
-                var lossPrev = 0f;
+                var lossPrevAvg = 0f;
+                var expectProfitPrevAvg = 0f;
+                var expectLossPrevAvg = 0f;
                 if (lowestAvg < candle.getClosingPrice().doubleValue()) {
                     for (var i = 0; i < strategy.getBuyCriteria().getTakeLossPercentBetweenLength() - 1; i++) {
                         var factorialPrev = findBestFactorialInPast(strategy, candleListPrev.get(i));
                         var expectProfitPrev = factorialPrev.getExpectProfit();
                         var expectLossPrev = factorialPrev.getExpectLoss();
-                        if (i == 0) {
-                            lossPrev += factorialPrev.getLoss() / (strategy.getBuyCriteria().getTakeLossPercentBetweenLength() - 1);
-                        }
+                        lossPrevAvg += factorialPrev.getLoss() / (strategy.getBuyCriteria().getTakeLossPercentBetweenLength() - 1);
+                        expectProfitPrevAvg += factorialPrev.getExpectProfit() / (strategy.getBuyCriteria().getTakeLossPercentBetweenLength() - 1);
+                        expectLossPrevAvg += factorialPrev.getExpectLoss() / (strategy.getBuyCriteria().getTakeLossPercentBetweenLength() - 1);
                         annotation += " i" + i + " expectProfitPrev=" + expectProfitPrev
                                 + " expectLossPrev=" + expectLossPrev;
-                        if (
+                        /*if (
                                 expectProfitPrev < strategy.getBuyCriteria().getStopLossPercent()
                                         && expectLossPrev > strategy.getBuyCriteria().getTakeLossPercentBetween()
                         ) {
@@ -123,11 +125,18 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         } else {
                             res = false;
                             break;
-                        }
+                        }*/
                     }
-                    annotation += " lossPrevAvg=" + lossPrev;
-                    if (lossPrev > loss) {
-                        res = false;
+                    annotation += " expectProfitPrevAvg=" + expectProfitPrevAvg
+                            + " expectLossPrevAvg=" + expectLossPrevAvg;
+                    annotation += " lossPrevAvg=" + lossPrevAvg;
+                    if (
+                            expectProfitPrevAvg < strategy.getBuyCriteria().getStopLossPercent()
+                                    && expectLossPrevAvg > strategy.getBuyCriteria().getTakeLossPercentBetween()
+                            && lossPrevAvg > loss
+                    ) {
+                        annotation += " ok";
+                        res = true;
                     }
                 }
             }
