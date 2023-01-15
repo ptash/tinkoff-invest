@@ -102,13 +102,12 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 var candleListPrev = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
                         candle.getDateTime(), strategy.getBuyCriteria().getTakeLossPercentBetweenLength() + 1, strategy.getInterval());
                 var lowestAvg = candleListPrev.stream().mapToDouble(v -> v.getLowestPrice().doubleValue()).average().orElse(-1);
+                lowestAvg -= candleListPrev.stream().mapToDouble(v -> v.getLowestPrice().doubleValue()).max().orElse(-1) / candleListPrev.size();
                 annotation += " lowestAvg=" + lowestAvg;
                 var lossPrevAvg = 0f;
                 var expectProfitPrevAvg = 0f;
                 var expectLossPrevAvg = 0f;
-                if (lowestAvg < candle.getClosingPrice().doubleValue()
-                        || candleList.get(0).getClosingPrice().doubleValue() > candle.getClosingPrice().doubleValue()
-                ) {
+                if (lowestAvg < candle.getClosingPrice().doubleValue()) {
                     for (var i = 0; i < strategy.getBuyCriteria().getTakeLossPercentBetweenLength() - 1; i++) {
                         var factorialPrev = findBestFactorialInPast(strategy, candleListPrev.get(i));
                         var expectProfitPrev = factorialPrev.getExpectProfit();
