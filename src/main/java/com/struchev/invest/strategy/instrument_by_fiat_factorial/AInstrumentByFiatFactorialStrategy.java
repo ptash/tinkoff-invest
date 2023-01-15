@@ -32,11 +32,26 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
     }
 
     public SellLimitCriteria getSellLimitCriteria() {
-        return SellLimitCriteria.builder().exitProfitPercent(0.4f).build();
+        return null;
+        //return SellLimitCriteria.builder().exitProfitPercent(0.4f).build();
     }
 
-    public AInstrumentByFiatCrossStrategy.SellCriteria getSellCriteria() {
-        return AInstrumentByFiatCrossStrategy.SellCriteria.builder().takeProfitPercent(0.7f).stopLossPercent(0.2f).build();
+    @Builder
+    @Data
+    public static class SellCriteria {
+        // Процент (stop loss), если цена покупки падает на него, продаем
+        Float stopLossPercent;
+        // Процент (take profit), если цена покупки не растет на него, то даже
+        Float takeProfitPercent;
+        // Процент (take profit), если цена покупки растет на него, продаем в любом случае
+        Float exitProfitPercent;
+        Float exitProfitLossPercent;
+    }
+
+    public AInstrumentByFiatFactorialStrategy.SellCriteria getSellCriteria() {
+        return SellCriteria.builder().takeProfitPercent(0.4f).stopLossPercent(0.2f)
+                .exitProfitLossPercent(0.1f)
+                .build();
     }
 
     @Builder

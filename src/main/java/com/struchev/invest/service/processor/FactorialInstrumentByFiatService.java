@@ -3,10 +3,12 @@ package com.struchev.invest.service.processor;
 import com.struchev.invest.entity.CandleDomainEntity;
 import com.struchev.invest.service.candle.CandleHistoryService;
 import com.struchev.invest.service.notification.NotificationService;
+import com.struchev.invest.service.order.OrderService;
 import com.struchev.invest.strategy.AStrategy;
 import com.struchev.invest.strategy.instrument_by_fiat_factorial.AInstrumentByFiatFactorialStrategy;
 import lombok.Builder;
 import lombok.Data;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -16,6 +18,8 @@ import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 @Slf4j
@@ -24,6 +28,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
 
     private final CandleHistoryService candleHistoryService;
     private final NotificationService notificationService;
+
+    private final OrderService orderService;
 
     @Builder
     @Data
@@ -184,18 +190,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         var profitPercent = candle.getClosingPrice().subtract(purchaseRate)
                 .multiply(BigDecimal.valueOf(100))
                 .divide(purchaseRate, 4, RoundingMode.HALF_DOWN);
-        notificationService.reportStrategy(
-                strategy,
-                candle.getFigi(),
-                "Date|smaSlowest|smaSlow|smaFast|emaFast|ema2|bye|sell|position|deadLineBottom|deadLineTop|investBottom|investTop|smaTube|strategy|average|averageBottom|averageTop|openPrice",
-                "{} | {} | {} | {} | | {} |  | |  |  |  |  |  |  |sell||||",
-                notificationService.formatDateTime(candle.getDateTime()),
-                candle.getClosingPrice(),
-                candle.getOpenPrice(),
-                candle.getHighestPrice(),
-                candle.getLowestPrice(),
-                candle.getClosingPrice()
-        );
+
+        Boolean res = false;
+        String annotation = "a";
         if (sellCriteria.getStopLossPercent() != null && profitPercent.floatValue() < -1 * sellCriteria.getStopLossPercent()) {
             if (strategy.getFactorialLossSize() > 1) {
                 var candleList = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
@@ -204,18 +201,43 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         .multiply(BigDecimal.valueOf(100))
                         .divide(purchaseRate, 4, RoundingMode.HALF_DOWN);
                 if (sellCriteria.getStopLossPercent() != null && profitPercentPrev.floatValue() < -1 * sellCriteria.getStopLossPercent()) {
-                    return true;
+                    res = true;
                 }
             } else {
-                return true;
+                res = true;
             }
         }
-        if (sellCriteria.getExitProfitPercent() != null
-                && profitPercent.floatValue() > sellCriteria.getExitProfitPercent()
+        if (sellCriteria.getTakeProfitPercent() != null
+                && profitPercent.floatValue() > sellCriteria.getTakeProfitPercent()
         ) {
-            return true;
+            if (strategy.getSellCriteria().getExitProfitLossPercent() != null) {
+                var order = orderService.findActiveByFigiAndStrategy(candle.getFigi(), strategy);
+                var candleList = candleHistoryService.getCandlesByFigiBetweenDateTimes(candle.getFigi(), order.getPurchaseDateTime(), candle.getDateTime(), strategy.getInterval());
+                var maxPrice = candleList.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).max().orElse(-1);
+                var percent = 100f * (maxPrice - candle.getClosingPrice().doubleValue()) / maxPrice;
+                annotation += " maxPrice=" + maxPrice + "(" + candleList.size() + ")" + " ClosingPrice=" + candle.getClosingPrice()
+                        + " percent=" + percent;
+                if (percent > strategy.getSellCriteria().getExitProfitLossPercent()) {
+                    res = true;
+                }
+            } else {
+                res = true;
+            }
         }
-        return false;
+        annotation += " res=" + res;
+        notificationService.reportStrategy(
+                strategy,
+                candle.getFigi(),
+                "Date|smaSlowest|smaSlow|smaFast|emaFast|ema2|bye|sell|position|deadLineBottom|deadLineTop|investBottom|investTop|smaTube|strategy|average|averageBottom|averageTop|openPrice",
+                "{} | {} | {} | {} | | {} |  | |  |  |  |  |  |  |sell {}||||",
+                notificationService.formatDateTime(candle.getDateTime()),
+                candle.getClosingPrice(),
+                candle.getOpenPrice(),
+                candle.getHighestPrice(),
+                candle.getLowestPrice(),
+                annotation
+        );
+        return res;
     }
 
     @Override
