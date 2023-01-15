@@ -116,10 +116,12 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     && expectProfit < strategy.getBuyCriteria().getStopLossPercent()
                     && expectLoss > strategy.getBuyCriteria().getTakeLossPercentBetween())
                     || (strategy.getBuyCriteria().getTakeLossRatio() != null
-                    && expectLoss/expectProfit > strategy.getBuyCriteria().getTakeLossRatio())
+                    && expectLoss/expectProfit > strategy.getBuyCriteria().getTakeLossRatio()
+                    && expectLoss < strategy.getBuyCriteria().getTakeLossRatioMax()
+                    )
                     )
                     //&& candleList.get(0).getClosingPrice().doubleValue() > candle.getClosingPrice().doubleValue()
-                    //&& profit > candle.getClosingPrice().doubleValue()
+                    && profit > candle.getClosingPrice().doubleValue()
             ) {
                 annotation += " ok TakeLossPercentBetween";
                 annotation += " info: " + factorial.getInfo();
