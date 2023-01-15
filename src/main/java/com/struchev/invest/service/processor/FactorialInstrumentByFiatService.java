@@ -160,21 +160,19 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             break;
                         }
                     }
-                    /*
-                    annotation += " expectProfitPrevAvg=" + expectProfitPrevAvg
-                            + " expectLossPrevAvg=" + expectLossPrevAvg;
+                    //annotation += " expectProfitPrevAvg=" + expectProfitPrevAvg
+                    //        + " expectLossPrevAvg=" + expectLossPrevAvg;
                     annotation += " lossPrevAvg=" + lossPrevAvg;
                     if (res
-                            && expectProfitPrevAvg < strategy.getBuyCriteria().getStopLossPercent()
-                            && expectLossPrevAvg > strategy.getBuyCriteria().getTakeLossPercentBetween()
-                            //&& lossPrevAvg < loss
+                            //&& expectProfitPrevAvg < strategy.getBuyCriteria().getStopLossPercent()
+                            //&& expectLossPrevAvg > strategy.getBuyCriteria().getTakeLossPercentBetween()
+                            && lossPrevAvg < loss
                     ) {
                         annotation += " ok";
                         res = true;
                     } else {
                         res = false;
                     }
-                     */
                 }
             }
 
