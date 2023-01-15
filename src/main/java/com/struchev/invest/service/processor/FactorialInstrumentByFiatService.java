@@ -68,7 +68,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     + " expectLoss=" + expectLoss
                     + "(from " + factorial.candleList.get(0).getDateTime() + " to " + factorial.candleList.get(factorial.candleList.size() - 1).getDateTime() + ")"
                     + "(from " + factorial.candleListFeature.get(0).getDateTime() + " to " + factorial.candleListFeature.get(factorial.candleListFeature.size() - 1).getDateTime() + ")";
-            if (expectProfit > strategy.getBuyCriteria().getTakeProfitPercent()
+            if (strategy.getBuyCriteria().getTakeProfitPercentBetween() != null
+                    && expectProfit > strategy.getBuyCriteria().getTakeProfitPercentBetween()
                     && expectLoss < strategy.getBuyCriteria().getStopLossPercent()
                     && candleList.get(0).getClosingPrice().doubleValue() > candle.getClosingPrice().doubleValue()
                     //&& false
@@ -80,7 +81,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 var expectLossPrev = factorialPrev.getExpectLoss();
                 annotation += " expectProfitPrev=" + expectProfitPrev
                         + " expectLossPrev=" + expectLossPrev;
-                if (expectProfitPrev > strategy.getBuyCriteria().getTakeProfitPercent() && expectLossPrev < strategy.getBuyCriteria().getStopLossPercent()) {
+                if (expectProfitPrev > strategy.getBuyCriteria().getTakeProfitPercentBetween() && expectLossPrev < strategy.getBuyCriteria().getStopLossPercent()) {
                     annotation += " ok";
                     res = true;
                 }

@@ -58,11 +58,16 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
     @Data
     public static class BuyCriteria {
         Float takeProfitPercent;
+        Float takeProfitPercentBetween;
         Float stopLossPercent;
     }
 
     public  AInstrumentByFiatFactorialStrategy.BuyCriteria getBuyCriteria() {
-        return AInstrumentByFiatFactorialStrategy.BuyCriteria.builder().takeProfitPercent(0.5f).stopLossPercent(0.2f).build();
+        return AInstrumentByFiatFactorialStrategy.BuyCriteria.builder()
+                .takeProfitPercent(0.5f)
+                .takeProfitPercentBetween(1.5f)
+                .stopLossPercent(0.2f)
+                .build();
     }
 
     public Integer getFactorialLength() { return 20; }
