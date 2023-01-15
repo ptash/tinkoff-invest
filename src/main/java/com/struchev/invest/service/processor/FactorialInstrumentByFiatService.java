@@ -135,7 +135,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     if (res
                             && expectProfitPrevAvg < strategy.getBuyCriteria().getStopLossPercent()
                             && expectLossPrevAvg > strategy.getBuyCriteria().getTakeLossPercentBetween()
-                            && lossPrevAvg > loss
+                            && lossPrevAvg < loss
                     ) {
                         annotation += " ok";
                         res = true;
