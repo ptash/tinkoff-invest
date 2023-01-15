@@ -103,6 +103,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         candle.getDateTime(), strategy.getBuyCriteria().getTakeLossPercentBetweenLength() + 1, strategy.getInterval());
                 var lowestAvg = candleListPrev.stream().mapToDouble(v -> v.getLowestPrice().doubleValue()).average().orElse(-1);
                 lowestAvg -= candleListPrev.stream().mapToDouble(v -> v.getLowestPrice().doubleValue()).max().orElse(-1) / candleListPrev.size();
+                lowestAvg = candleListPrev.size() * lowestAvg / (candleListPrev.size() - 1);
                 annotation += " lowestAvg=" + lowestAvg;
                 var lossPrevAvg = 0f;
                 var expectProfitPrevAvg = 0f;
