@@ -132,9 +132,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 var lossPrevAvg = 0f;
                 var expectProfitPrevAvg = 0f;
                 var expectLossPrevAvg = 0f;
-                //if (lowestAvg < candle.getClosingPrice().doubleValue()
+                if (lowestAvg < candle.getClosingPrice().doubleValue()
                 //        || candleList.get(0).getClosingPrice().doubleValue() > candle.getClosingPrice().doubleValue()
-                //) {
+                ) {
                     for (var i = 0; i < strategy.getBuyCriteria().getTakeLossPercentBetweenLength() - 1; i++) {
                         var factorialPrev = findBestFactorialInPast(strategy, candleListPrev.get(i));
                         var expectProfitPrev = factorialPrev.getExpectProfit();
@@ -175,7 +175,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         res = false;
                     }
                      */
-                //}
+                }
             }
 
             //log.info("FactorialInstrumentByFiatService {} from {} to {} {}", candle.getFigi(), factorial.candleListPast.get(0).getDateTime(), candle.getDateTime(), factorial.candleListFeature.size(), annotation);
