@@ -64,6 +64,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     + " for from " + factorial.candleListPast.get(0).getDateTime();
             var expectProfit = factorial.getExpectProfit();
             var expectLoss = factorial.getExpectLoss();
+            profit = profit * (1f + expectProfit / 100f);
+            loss = loss * (1f - expectLoss / 100f);
             annotation += " expectProfit=" + expectProfit
                     + " expectLoss=" + expectLoss
                     + "(from " + factorial.candleList.get(0).getDateTime() + " to " + factorial.candleList.get(factorial.candleList.size() - 1).getDateTime() + ")"
@@ -93,32 +95,34 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     && expectProfit < strategy.getBuyCriteria().getStopLossPercent()
                     && expectLoss > strategy.getBuyCriteria().getTakeLossPercentBetween()
                     && candleList.get(0).getClosingPrice().doubleValue() > candle.getClosingPrice().doubleValue()
+                    //&& profit > candle.getClosingPrice().doubleValue()
             ) {
                 annotation += " ok";
                 annotation += " info: " + factorial.getInfo();
                 var candleListPrev = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
                         candle.getDateTime(), strategy.getBuyCriteria().getTakeLossPercentBetweenLength() + 1, strategy.getInterval());
-                for (var i = 0; i < strategy.getBuyCriteria().getTakeLossPercentBetweenLength() - 1; i++) {
-                    var factorialPrev = findBestFactorialInPast(strategy, candleListPrev.get(i));
-                    var expectProfitPrev = factorialPrev.getExpectProfit();
-                    var expectLossPrev = factorialPrev.getExpectLoss();
-                    annotation += " expectProfitPrev=" + expectProfitPrev
-                            + " expectLossPrev=" + expectLossPrev;
-                    if (
-                            expectProfitPrev < strategy.getBuyCriteria().getStopLossPercent()
-                            && expectLossPrev > strategy.getBuyCriteria().getTakeLossPercentBetween()
-                    ) {
-                        annotation += " ok";
-                        res = true;
-                    } else {
-                        res = false;
-                        break;
+                annotation += " prevClosingPrice=" + candleListPrev.get(0).getClosingPrice().doubleValue();
+                if (candleListPrev.get(0).getClosingPrice().doubleValue() <= candle.getClosingPrice().doubleValue()) {
+                    for (var i = 0; i < strategy.getBuyCriteria().getTakeLossPercentBetweenLength() - 1; i++) {
+                        var factorialPrev = findBestFactorialInPast(strategy, candleListPrev.get(i));
+                        var expectProfitPrev = factorialPrev.getExpectProfit();
+                        var expectLossPrev = factorialPrev.getExpectLoss();
+                        annotation += " expectProfitPrev=" + expectProfitPrev
+                                + " expectLossPrev=" + expectLossPrev;
+                        if (
+                                expectProfitPrev < strategy.getBuyCriteria().getStopLossPercent()
+                                        && expectLossPrev > strategy.getBuyCriteria().getTakeLossPercentBetween()
+                        ) {
+                            annotation += " ok";
+                            res = true;
+                        } else {
+                            res = false;
+                            break;
+                        }
                     }
                 }
             }
 
-            profit = profit * (1f + expectProfit / 100f);
-            loss = loss * (1f - expectLoss / 100f);
             //log.info("FactorialInstrumentByFiatService {} from {} to {} {}", candle.getFigi(), factorial.candleListPast.get(0).getDateTime(), candle.getDateTime(), factorial.candleListFeature.size(), annotation);
             var futureProfit = 100f * (profit - candle.getClosingPrice().doubleValue()) / candle.getClosingPrice().doubleValue();
             annotation += " futureProfit=" + futureProfit;
