@@ -74,8 +74,8 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
                 .build();
     }
 
-    public Integer getFactorialLength() { return 10; }
-    public Integer getFactorialLengthFuture() { return 20; }
+    public Integer getFactorialLength() { return 20; }
+    public Integer getFactorialLengthFuture() { return 40; }
     public Integer getFactorialHistoryLength() {
         return this.getFactorialLength() * 400;
     }
@@ -85,5 +85,5 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
     public Integer getFactorialLossSize() { return 2; };
 
     public Float getFactorialRatioI() { return -1f; }
-    public Float getFactorialRatioValue() { return 0.10f; }
+    public Float getFactorialRatioValue() { return 0.15f; }
 }
