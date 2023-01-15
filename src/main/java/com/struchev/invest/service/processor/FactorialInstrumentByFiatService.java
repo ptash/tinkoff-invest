@@ -97,7 +97,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     //&& candleList.get(0).getClosingPrice().doubleValue() > candle.getClosingPrice().doubleValue()
                     && profit > candle.getClosingPrice().doubleValue()
             ) {
-                annotation += " ok";
+                annotation += " ok TakeLossPercentBetween";
                 annotation += " info: " + factorial.getInfo();
                 var candleListPrev = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
                         candle.getDateTime(), strategy.getBuyCriteria().getTakeLossPercentBetweenLength() + 1, strategy.getInterval());
@@ -106,7 +106,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 var lossPrevAvg = 0f;
                 var expectProfitPrevAvg = 0f;
                 var expectLossPrevAvg = 0f;
-                if (lowestAvg < candle.getClosingPrice().doubleValue()) {
+                //if (lowestAvg < candle.getClosingPrice().doubleValue()) {
                     for (var i = 0; i < strategy.getBuyCriteria().getTakeLossPercentBetweenLength() - 1; i++) {
                         var factorialPrev = findBestFactorialInPast(strategy, candleListPrev.get(i));
                         var expectProfitPrev = factorialPrev.getExpectProfit();
@@ -116,7 +116,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         expectLossPrevAvg += factorialPrev.getExpectLoss() / (strategy.getBuyCriteria().getTakeLossPercentBetweenLength() - 1);
                         annotation += " i" + i + " expectProfitPrev=" + expectProfitPrev
                                 + " expectLossPrev=" + expectLossPrev;
-                        /*if (
+                        if (
                                 expectProfitPrev < strategy.getBuyCriteria().getStopLossPercent()
                                         && expectLossPrev > strategy.getBuyCriteria().getTakeLossPercentBetween()
                         ) {
@@ -125,20 +125,20 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         } else {
                             res = false;
                             break;
-                        }*/
+                        }
                     }
                     annotation += " expectProfitPrevAvg=" + expectProfitPrevAvg
                             + " expectLossPrevAvg=" + expectLossPrevAvg;
                     annotation += " lossPrevAvg=" + lossPrevAvg;
-                    if (
-                            expectProfitPrevAvg < strategy.getBuyCriteria().getStopLossPercent()
-                                    && expectLossPrevAvg > strategy.getBuyCriteria().getTakeLossPercentBetween()
+                    if (res
+                            && expectProfitPrevAvg < strategy.getBuyCriteria().getStopLossPercent()
+                            && expectLossPrevAvg > strategy.getBuyCriteria().getTakeLossPercentBetween()
                             && lossPrevAvg > loss
                     ) {
                         annotation += " ok";
                         res = true;
                     }
-                }
+                //}
             }
 
             //log.info("FactorialInstrumentByFiatService {} from {} to {} {}", candle.getFigi(), factorial.candleListPast.get(0).getDateTime(), candle.getDateTime(), factorial.candleListFeature.size(), annotation);
