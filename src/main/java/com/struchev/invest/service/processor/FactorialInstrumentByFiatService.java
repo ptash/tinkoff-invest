@@ -92,21 +92,28 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     && strategy.getBuyCriteria().getTakeLossPercentBetween() != null
                     && expectProfit < strategy.getBuyCriteria().getStopLossPercent()
                     && expectLoss > strategy.getBuyCriteria().getTakeLossPercentBetween()
-                    && candleList.get(0).getClosingPrice().doubleValue() < candle.getClosingPrice().doubleValue()
+                    && candleList.get(0).getClosingPrice().doubleValue() > candle.getClosingPrice().doubleValue()
             ) {
                 annotation += " ok";
                 annotation += " info: " + factorial.getInfo();
-                var factorialPrev = findBestFactorialInPast(strategy, candle);
-                var expectProfitPrev = factorialPrev.getExpectProfit();
-                var expectLossPrev = factorialPrev.getExpectLoss();
-                annotation += " expectProfitPrev=" + expectProfitPrev
-                        + " expectLossPrev=" + expectLossPrev;
-                if (
-                        expectProfitPrev < strategy.getBuyCriteria().getStopLossPercent()
-                        && expectLossPrev > strategy.getBuyCriteria().getTakeLossPercentBetween()
-                ) {
-                    annotation += " ok";
-                    res = true;
+                var candleListPrev = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
+                        candle.getDateTime(), strategy.getBuyCriteria().getTakeLossPercentBetweenLength() + 1, strategy.getInterval());
+                for (var i = 0; i < strategy.getBuyCriteria().getTakeLossPercentBetweenLength() - 1; i++) {
+                    var factorialPrev = findBestFactorialInPast(strategy, candleListPrev.get(i));
+                    var expectProfitPrev = factorialPrev.getExpectProfit();
+                    var expectLossPrev = factorialPrev.getExpectLoss();
+                    annotation += " expectProfitPrev=" + expectProfitPrev
+                            + " expectLossPrev=" + expectLossPrev;
+                    if (
+                            expectProfitPrev < strategy.getBuyCriteria().getStopLossPercent()
+                            && expectLossPrev > strategy.getBuyCriteria().getTakeLossPercentBetween()
+                    ) {
+                        annotation += " ok";
+                        res = true;
+                    } else {
+                        res = false;
+                        break;
+                    }
                 }
             }
 
