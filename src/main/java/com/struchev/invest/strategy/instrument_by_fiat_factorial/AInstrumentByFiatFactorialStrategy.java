@@ -60,6 +60,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
         Float takeProfitPercent;
         Float takeProfitPercentBetween;
         Float stopLossPercent;
+        Float takeLossPercentBetween;
     }
 
     public  AInstrumentByFiatFactorialStrategy.BuyCriteria getBuyCriteria() {
@@ -67,6 +68,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
                 .takeProfitPercent(0.5f)
                 .takeProfitPercentBetween(1.5f)
                 .stopLossPercent(0.2f)
+                .takeLossPercentBetween(1f)
                 .build();
     }
 
@@ -82,5 +84,4 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
 
     public Float getFactorialRatioI() { return -1f; }
     public Float getFactorialRatioValue() { return 0.15f; }
-    public Float getFactorialProfitLessPercent() { return 0.4f; };
 }

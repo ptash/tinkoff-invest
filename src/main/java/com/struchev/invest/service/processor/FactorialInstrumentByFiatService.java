@@ -81,11 +81,35 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 var expectLossPrev = factorialPrev.getExpectLoss();
                 annotation += " expectProfitPrev=" + expectProfitPrev
                         + " expectLossPrev=" + expectLossPrev;
-                if (expectProfitPrev > strategy.getBuyCriteria().getTakeProfitPercentBetween() && expectLossPrev < strategy.getBuyCriteria().getStopLossPercent()) {
+                if (expectProfitPrev > strategy.getBuyCriteria().getTakeProfitPercentBetween()
+                        && expectLossPrev < strategy.getBuyCriteria().getStopLossPercent()
+                ) {
                     annotation += " ok";
                     res = true;
                 }
             }
+            if (!res
+                    && strategy.getBuyCriteria().getTakeLossPercentBetween() != null
+                    && expectProfit < strategy.getBuyCriteria().getStopLossPercent()
+                    && expectLoss > strategy.getBuyCriteria().getTakeLossPercentBetween()
+                    && candleList.get(0).getClosingPrice().doubleValue() < candle.getClosingPrice().doubleValue()
+            ) {
+                annotation += " ok";
+                annotation += " info: " + factorial.getInfo();
+                var factorialPrev = findBestFactorialInPast(strategy, candle);
+                var expectProfitPrev = factorialPrev.getExpectProfit();
+                var expectLossPrev = factorialPrev.getExpectLoss();
+                annotation += " expectProfitPrev=" + expectProfitPrev
+                        + " expectLossPrev=" + expectLossPrev;
+                if (
+                        expectProfitPrev < strategy.getBuyCriteria().getStopLossPercent()
+                        && expectLossPrev > strategy.getBuyCriteria().getTakeLossPercentBetween()
+                ) {
+                    annotation += " ok";
+                    res = true;
+                }
+            }
+
             profit = profit * (1f + expectProfit / 100f);
             loss = loss * (1f - expectLoss / 100f);
             //log.info("FactorialInstrumentByFiatService {} from {} to {} {}", candle.getFigi(), factorial.candleListPast.get(0).getDateTime(), candle.getDateTime(), factorial.candleListFeature.size(), annotation);
@@ -144,10 +168,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 }
             }
             if (!res
-                    && strategy.getFactorialProfitLessPercent() != null
                     && candle.getClosingPrice().doubleValue() > profit
                     && expectProfit < 0
-                    //&& false
+                    && false
             ) {
                 annotation += "ok < profit";
                 res = true;
