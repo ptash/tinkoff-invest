@@ -67,7 +67,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
     public static class BuyCriteria {
         Float takeProfitPercent;
         Float takeProfitPercentBetween;
-        Float takeProfitPercentBetweenFutureMin;
+        Float takeProfitPercentBetweenCloseMax;
         Integer takeProfitPercentBetweenLength;
         Float takeProfitRatio;
         Float stopLossPercent;
@@ -85,7 +85,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
     public  AInstrumentByFiatFactorialStrategy.BuyCriteria getBuyCriteria() {
         return AInstrumentByFiatFactorialStrategy.BuyCriteria.builder()
                 //.takeProfitPercent(0.5f)
-                .takeProfitPercentBetweenFutureMin(0.5f)
+                .takeProfitPercentBetweenCloseMax(0.3f)
                 .takeProfitPercentBetween(1.5f)
                 .takeProfitPercentBetweenLength(7)
                 .takeProfitRatio(2f)
