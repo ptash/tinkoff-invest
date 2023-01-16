@@ -264,13 +264,16 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             if (!res
                     && strategy.getBuyCriteria().getSplashLossPercentMax() != null
                     && factorial.getExpectLoss() < strategy.getBuyCriteria().getSplashLossPercentMax()
-                    && factorial.getExpectProfit() > strategy.getBuyCriteria().getSplashProfitRatio()
+                    && factorial.getExpectProfit() > strategy.getBuyCriteria().getSplashProfitPercentMin()
                     && factorial.getLoss() < candle.getClosingPrice().doubleValue()
             ) {
                 var factorialPrev = findBestFactorialInPast(strategy, candleList.get(0));
-                annotation += " lossRatio=" + (factorialPrev.getExpectLoss()/factorial.getExpectLoss()) + " profitRatio=" + factorial.getExpectProfit()/factorialPrev.getExpectProfit();
+                annotation += " lossRatio=" + (factorialPrev.getExpectLoss()/factorial.getExpectLoss())
+                        + " profitRatio=" + factorial.getExpectProfit()/factorialPrev.getExpectProfit()
+                        + " factorialPrev.getProfit()=" + factorialPrev.getProfit();
                 if (factorialPrev.getExpectLoss()/factorial.getExpectLoss() > strategy.getBuyCriteria().getSplashLossRatio()
                         && factorial.getExpectProfit()/factorialPrev.getExpectProfit() > strategy.getBuyCriteria().getSplashProfitRatio()
+                        //&& factorialPrev.getProfit() > factorial.getProfit()
                 ) {
                     annotation += "ok splash";
                     res = true;
