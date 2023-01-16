@@ -84,9 +84,9 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
     public  AInstrumentByFiatFactorialStrategy.BuyCriteria getBuyCriteria() {
         return AInstrumentByFiatFactorialStrategy.BuyCriteria.builder()
                 //.takeProfitPercent(0.5f)
-                //.takeProfitPercentBetween(1.5f)
-                .takeProfitPercentBetweenLength(3)
-                //.takeProfitRatio(7f)
+                .takeProfitPercentBetween(1.5f)
+                .takeProfitPercentBetweenLength(5)
+                .takeProfitRatio(2f)
                 .stopLossPercent(0.2f)
                 //.takeLossPercentBetween(1f)
                 .takeLossPercentBetweenLength(3)
@@ -95,7 +95,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
                 .splashProfitRatio(1.66)
                 .splashProfitPercentMin(1.5)
                 .splashLossRatio(2.0)
-                .splashLossPercentMax(0.2)
+                //.splashLossPercentMax(0.2)
                 .build();
     }
 

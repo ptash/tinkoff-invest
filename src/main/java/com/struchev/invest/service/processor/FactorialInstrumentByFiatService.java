@@ -76,8 +76,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     && expectLoss < strategy.getBuyCriteria().getStopLossPercent())
                     || (
                             strategy.getBuyCriteria().getTakeProfitRatio() != null
+                                    && (expectLoss < strategy.getBuyCriteria().getStopLossPercent()
                                     && (expectProfit / expectLoss > strategy.getBuyCriteria().getTakeProfitRatio()
-                            || expectLoss < 0)
+                            || expectLoss < 0))
                     )
                     //&& candleList.get(0).getClosingPrice().doubleValue() > candle.getClosingPrice().doubleValue()
                     //&& false
@@ -97,8 +98,11 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             && expectLossPrev < strategy.getBuyCriteria().getStopLossPercent())
                             || (
                                     strategy.getBuyCriteria().getTakeProfitRatio() != null
-                                            && (expectProfitPrev / expectLossPrev > strategy.getBuyCriteria().getTakeProfitRatio()
-                                            || expectLossPrev < 0)
+                                            && (
+                                            expectLoss < strategy.getBuyCriteria().getStopLossPercent() && (
+                                                    expectProfitPrev / expectLossPrev > strategy.getBuyCriteria().getTakeProfitRatio()
+                                                            || expectLossPrev < 0
+                                            ))
                             )
                     ) {
                         annotation += " ok";
