@@ -52,11 +52,12 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
     }
 
     public AInstrumentByFiatFactorialStrategy.SellCriteria getSellCriteria() {
-        return SellCriteria.builder().takeProfitPercent(0.4f)
+        return SellCriteria.builder()
+                .takeProfitPercent(0.3f)
                 .stopLossPercent(0.4f)
-                .stopLossLength(2)
+                .stopLossLength(3)
                 .stopLossSoftPercent(0.2f)
-                .stopLossSoftLength(4)
+                .stopLossSoftLength(6)
                 .exitProfitLossPercent(0.1f)
                 .build();
     }

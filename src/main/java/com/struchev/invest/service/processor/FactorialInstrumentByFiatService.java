@@ -184,6 +184,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             annotation += " futureProfit=" + futureProfit;
             if (!res && candle.getClosingPrice().doubleValue() < loss
                     && futureProfit > strategy.getBuyCriteria().getTakeProfitPercent()
+                    && factorial.getExpectProfit() > strategy.getBuyCriteria().getTakeProfitPercent()
                     //&& (expectLoss + expectProfit) > strategy.getBuyCriteria().getTakeProfitPercent()
                     //&& expectLoss > 0
             ) {
@@ -293,7 +294,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 var profitPercentPrev = candleList.get(0).getClosingPrice().subtract(purchaseRate)
                         .multiply(BigDecimal.valueOf(100))
                         .divide(purchaseRate, 4, RoundingMode.HALF_DOWN);
-                annotation = " profitPercentPrev(" + strategy.getSellCriteria().getStopLossSoftLength()+ ")=" + profitPercentPrev;
+                annotation += " profitPercentPrev(" + strategy.getSellCriteria().getStopLossSoftLength()+ ")=" + profitPercentPrev;
                 if (sellCriteria.getStopLossSoftPercent() != null && profitPercentPrev.floatValue() < -1 * sellCriteria.getStopLossSoftPercent()) {
                     res = true;
                 }
@@ -308,7 +309,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 var profitPercentPrev = candleList.get(0).getClosingPrice().subtract(purchaseRate)
                         .multiply(BigDecimal.valueOf(100))
                         .divide(purchaseRate, 4, RoundingMode.HALF_DOWN);
-                annotation = " profitPercentPrev(" + strategy.getSellCriteria().getStopLossLength()+ ")=" + profitPercentPrev;
+                annotation += " profitPercentPrev(" + strategy.getSellCriteria().getStopLossLength()+ ")=" + profitPercentPrev;
                 if (sellCriteria.getStopLossSoftPercent() != null && profitPercentPrev.floatValue() < -1 * sellCriteria.getStopLossSoftPercent()) {
                     res = true;
                 }
