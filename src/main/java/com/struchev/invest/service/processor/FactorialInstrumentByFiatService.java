@@ -90,7 +90,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     var factorialPrev = findBestFactorialInPast(strategy, candleListPrev.get(i));
                     var expectProfitPrev = factorialPrev.getExpectProfit();
                     var expectLossPrev = factorialPrev.getExpectLoss();
-                    annotation +=  " i" + i + " expectProfitPrev=" + expectProfitPrev
+                    annotation +=  " i=" + i + " expectProfitPrev=" + expectProfitPrev
                             + " expectLossPrev=" + expectLossPrev;
                     if ((strategy.getBuyCriteria().getTakeProfitPercentBetween() != null
                             && expectProfitPrev > strategy.getBuyCriteria().getTakeProfitPercentBetween()
@@ -144,7 +144,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         lossPrevAvg += factorialPrev.getLoss() / (strategy.getBuyCriteria().getTakeLossPercentBetweenLength() - 1);
                         expectProfitPrevAvg += factorialPrev.getExpectProfit() / (strategy.getBuyCriteria().getTakeLossPercentBetweenLength() - 1);
                         expectLossPrevAvg += factorialPrev.getExpectLoss() / (strategy.getBuyCriteria().getTakeLossPercentBetweenLength() - 1);
-                        annotation += " i" + i + " expectProfitPrev=" + expectProfitPrev
+                        annotation += " i=" + i + " expectProfitPrev=" + expectProfitPrev
                                 + " expectLossPrev=" + expectLossPrev;
                         if (
                                 (strategy.getBuyCriteria().getTakeLossPercentBetween() != null

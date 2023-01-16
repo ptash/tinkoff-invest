@@ -86,7 +86,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
                 //.takeProfitPercent(0.5f)
                 //.takeProfitPercentBetween(1.5f)
                 .takeProfitPercentBetweenLength(3)
-                .takeProfitRatio(7f)
+                //.takeProfitRatio(7f)
                 .stopLossPercent(0.2f)
                 //.takeLossPercentBetween(1f)
                 .takeLossPercentBetweenLength(3)
