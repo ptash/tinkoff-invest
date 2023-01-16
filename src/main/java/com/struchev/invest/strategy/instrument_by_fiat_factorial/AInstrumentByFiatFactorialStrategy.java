@@ -41,7 +41,9 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
     public static class SellCriteria {
         // Процент (stop loss), если цена покупки падает на него, продаем
         Float stopLossSoftPercent;
+        Integer stopLossSoftLength;
         Float stopLossPercent;
+        Integer stopLossLength;
         // Процент (take profit), если цена покупки не растет на него, то даже
         Float takeProfitPercent;
         // Процент (take profit), если цена покупки растет на него, продаем в любом случае
@@ -52,7 +54,9 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
     public AInstrumentByFiatFactorialStrategy.SellCriteria getSellCriteria() {
         return SellCriteria.builder().takeProfitPercent(0.4f)
                 .stopLossPercent(0.4f)
+                .stopLossLength(2)
                 .stopLossSoftPercent(0.2f)
+                .stopLossSoftLength(4)
                 .exitProfitLossPercent(0.1f)
                 .build();
     }
@@ -93,7 +97,6 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
     public List<Integer> getFactorialSizes() { return List.of(1); };
     public Integer getFactorialBestSize() { return 2; };
     public Integer getFactorialAvgSize() { return 2; };
-    public Integer getFactorialLossSize() { return 4; };
 
     public Float getFactorialRatioI() { return -1f; }
     public Float getFactorialRatioValue() { return 0.15f; }

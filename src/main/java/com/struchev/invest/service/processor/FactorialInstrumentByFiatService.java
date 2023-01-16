@@ -285,14 +285,15 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 .divide(purchaseRate, 4, RoundingMode.HALF_DOWN);
 
         Boolean res = false;
-        String annotation = "a";
+        String annotation = " profitPercent=" + profitPercent;
         if (sellCriteria.getStopLossSoftPercent() != null && profitPercent.floatValue() < -1 * sellCriteria.getStopLossSoftPercent()) {
-            if (strategy.getFactorialLossSize() > 1) {
+            if (strategy.getSellCriteria().getStopLossSoftLength() > 1) {
                 var candleList = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
-                        candle.getDateTime(), strategy.getFactorialLossSize(), strategy.getInterval());
+                        candle.getDateTime(), strategy.getSellCriteria().getStopLossSoftLength(), strategy.getInterval());
                 var profitPercentPrev = candleList.get(0).getClosingPrice().subtract(purchaseRate)
                         .multiply(BigDecimal.valueOf(100))
                         .divide(purchaseRate, 4, RoundingMode.HALF_DOWN);
+                annotation = " profitPercentPrev(" + strategy.getSellCriteria().getStopLossSoftLength()+ ")=" + profitPercentPrev;
                 if (sellCriteria.getStopLossSoftPercent() != null && profitPercentPrev.floatValue() < -1 * sellCriteria.getStopLossSoftPercent()) {
                     res = true;
                 }
@@ -301,7 +302,19 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             }
         }
         if (sellCriteria.getStopLossPercent() != null && profitPercent.floatValue() < -1 * sellCriteria.getStopLossPercent()) {
-            res = true;
+            if (strategy.getSellCriteria().getStopLossLength() > 1) {
+                var candleList = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
+                        candle.getDateTime(), strategy.getSellCriteria().getStopLossLength(), strategy.getInterval());
+                var profitPercentPrev = candleList.get(0).getClosingPrice().subtract(purchaseRate)
+                        .multiply(BigDecimal.valueOf(100))
+                        .divide(purchaseRate, 4, RoundingMode.HALF_DOWN);
+                annotation = " profitPercentPrev(" + strategy.getSellCriteria().getStopLossLength()+ ")=" + profitPercentPrev;
+                if (sellCriteria.getStopLossSoftPercent() != null && profitPercentPrev.floatValue() < -1 * sellCriteria.getStopLossSoftPercent()) {
+                    res = true;
+                }
+            } else {
+                res = true;
+            }
         }
         if (sellCriteria.getTakeProfitPercent() != null
                 && profitPercent.floatValue() > sellCriteria.getTakeProfitPercent()
@@ -500,7 +513,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
 
         bestInfo += " diffAverage=" + (factorialDataList.stream().mapToDouble(value -> value.getDiffPrice().doubleValue()).average().orElse(-1));
 
-        log.info("Select from {} best diff={} bestSize={} i={}, candleList.size={}", candleList.get(0).getDateTime(), bestDiff, bestSize, startCandleI, candleList.size());
+        bestInfo += "Select from " + candleList.get(0).getDateTime() + ", candleList.size=" + candleList.size();
         var res = FactorialData.builder()
                 .size(bestSize)
                 .length(strategy.getFactorialLength())
