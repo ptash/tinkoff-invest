@@ -74,12 +74,17 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
         Integer takeLossPercentBetweenLength;
         Float takeLossRatio;
         Float takeLossRatioMax;
+
+        Double splashProfitRatio;
+        Double splashProfitPercentMin;
+        Double splashLossRatio;
+        Double splashLossPercentMax;
     }
 
     public  AInstrumentByFiatFactorialStrategy.BuyCriteria getBuyCriteria() {
         return AInstrumentByFiatFactorialStrategy.BuyCriteria.builder()
-                .takeProfitPercent(0.5f)
-                .takeProfitPercentBetween(1.5f)
+                //.takeProfitPercent(0.5f)
+                //.takeProfitPercentBetween(1.5f)
                 .takeProfitPercentBetweenLength(3)
                 .takeProfitRatio(7f)
                 .stopLossPercent(0.2f)
@@ -87,6 +92,10 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
                 .takeLossPercentBetweenLength(3)
                 //.takeLossRatio(5f)
                 .takeLossRatioMax(2f)
+                .splashProfitRatio(1.66)
+                .splashProfitPercentMin(1.5)
+                .splashLossRatio(2.0)
+                .splashLossPercentMax(0.2)
                 .build();
     }
 

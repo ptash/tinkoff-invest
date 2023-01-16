@@ -182,7 +182,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             //log.info("FactorialInstrumentByFiatService {} from {} to {} {}", candle.getFigi(), factorial.candleListPast.get(0).getDateTime(), candle.getDateTime(), factorial.candleListFeature.size(), annotation);
             var futureProfit = 100f * (profit - candle.getClosingPrice().doubleValue()) / candle.getClosingPrice().doubleValue();
             annotation += " futureProfit=" + futureProfit;
-            if (!res && candle.getClosingPrice().doubleValue() < loss
+            if (!res
+                    && strategy.getBuyCriteria().getTakeProfitPercent() != null
+                    && candle.getClosingPrice().doubleValue() < loss
                     && futureProfit > strategy.getBuyCriteria().getTakeProfitPercent()
                     && factorial.getExpectProfit() > strategy.getBuyCriteria().getTakeProfitPercent()
                     //&& (expectLoss + expectProfit) > strategy.getBuyCriteria().getTakeProfitPercent()
@@ -257,6 +259,22 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     }
                 }
                  */
+            }
+
+            if (!res
+                    && strategy.getBuyCriteria().getSplashLossPercentMax() != null
+                    && factorial.getExpectLoss() < strategy.getBuyCriteria().getSplashLossPercentMax()
+                    && factorial.getExpectProfit() > strategy.getBuyCriteria().getSplashProfitRatio()
+                    && factorial.getLoss() < candle.getClosingPrice().doubleValue()
+            ) {
+                var factorialPrev = findBestFactorialInPast(strategy, candleList.get(0));
+                annotation += " lossRatio=" + (factorialPrev.getExpectLoss()/factorial.getExpectLoss()) + " profitRatio=" + factorial.getExpectProfit()/factorialPrev.getExpectProfit();
+                if (factorialPrev.getExpectLoss()/factorial.getExpectLoss() > strategy.getBuyCriteria().getSplashLossRatio()
+                        && factorial.getExpectProfit()/factorialPrev.getExpectProfit() > strategy.getBuyCriteria().getSplashProfitRatio()
+                ) {
+                    annotation += "ok splash";
+                    res = true;
+                }
             }
         }
         notificationService.reportStrategy(
