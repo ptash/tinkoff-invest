@@ -286,19 +286,22 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
 
         Boolean res = false;
         String annotation = "a";
-        if (sellCriteria.getStopLossPercent() != null && profitPercent.floatValue() < -1 * sellCriteria.getStopLossPercent()) {
+        if (sellCriteria.getStopLossSoftPercent() != null && profitPercent.floatValue() < -1 * sellCriteria.getStopLossSoftPercent()) {
             if (strategy.getFactorialLossSize() > 1) {
                 var candleList = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
                         candle.getDateTime(), strategy.getFactorialLossSize(), strategy.getInterval());
                 var profitPercentPrev = candleList.get(0).getClosingPrice().subtract(purchaseRate)
                         .multiply(BigDecimal.valueOf(100))
                         .divide(purchaseRate, 4, RoundingMode.HALF_DOWN);
-                if (sellCriteria.getStopLossPercent() != null && profitPercentPrev.floatValue() < -1 * sellCriteria.getStopLossPercent()) {
+                if (sellCriteria.getStopLossSoftPercent() != null && profitPercentPrev.floatValue() < -1 * sellCriteria.getStopLossSoftPercent()) {
                     res = true;
                 }
             } else {
                 res = true;
             }
+        }
+        if (sellCriteria.getStopLossPercent() != null && profitPercent.floatValue() < -1 * sellCriteria.getStopLossPercent()) {
+            res = true;
         }
         if (sellCriteria.getTakeProfitPercent() != null
                 && profitPercent.floatValue() > sellCriteria.getTakeProfitPercent()
