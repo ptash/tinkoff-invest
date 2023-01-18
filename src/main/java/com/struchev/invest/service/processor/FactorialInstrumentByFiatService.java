@@ -485,8 +485,11 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     if (j == 1 || j == (strategy.getFactorialLength() - 1)) {
                         var modelCandleDate = modelCandle.getDateTime().atZoneSimilarLocal(ZoneId.systemDefault());
                         var testCandleDate = testCandle.getDateTime().atZoneSimilarLocal(ZoneId.systemDefault());
-                        diffTime += Math.abs((modelCandleDate.getHour() * 60 + modelCandleDate.getSecond())
-                                - (testCandleDate.getHour() * 60 + testCandleDate.getSecond()));
+                        diffTime += (float)Math.pow(
+                                Math.abs((modelCandleDate.getHour() * 60 + modelCandleDate.getSecond())
+                                - (testCandleDate.getHour() * 60 + testCandleDate.getSecond()))
+                                , 2)
+                        ;
                     }
                     if (j == 1 || j == strategy.getFactorialLength() - 1) {
                         info += " + " + curDiff + "(" + testCandle.getDateTime() + " with " + modelCandle.getDateTime() + ")";
