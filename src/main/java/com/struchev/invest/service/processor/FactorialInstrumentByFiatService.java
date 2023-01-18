@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -39,6 +40,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         Integer length;
         Float diffPrice;
         Float diffValue;
+        Float diffTime;
         Float diff;
         List<CandleDomainEntity> candleList;
         List<CandleDomainEntity> candleListFeature;
@@ -411,6 +413,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 }
                 Float diff = 0f;
                 Float diffValue = 0f;
+                Float diffTime = 0f;
                 String info = "" + testStartCandle.getDateTime() + " price=" + testStartCandle.getClosingPrice() + " mPrice=" + modelStartCandle.getClosingPrice();
                 var testCandlePrev = testStartCandle;
                 var modelCandlePrev = modelStartCandle;
@@ -479,6 +482,12 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     }
                     diff += curDiff;
                     diffValue += curDiffValue;
+                    if (j == 1 || j == (strategy.getFactorialLength() - 1)) {
+                        var modelCandleDate = modelCandle.getDateTime().atZoneSimilarLocal(ZoneId.systemDefault());
+                        var testCandleDate = testCandle.getDateTime().atZoneSimilarLocal(ZoneId.systemDefault());
+                        diffTime += Math.abs((modelCandleDate.getHour() * 60 + modelCandleDate.getSecond())
+                                - (testCandleDate.getHour() * 60 + testCandleDate.getSecond()));
+                    }
                     if (j == 1 || j == strategy.getFactorialLength() - 1) {
                         info += " + " + curDiff + "(" + testCandle.getDateTime() + " with " + modelCandle.getDateTime() + ")";
                     }
@@ -497,6 +506,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         .length(strategy.getFactorialLength())
                         .diffPrice(diff)
                         .diffValue(diffValue)
+                        .diffTime(diffTime)
                         .candleList(candleList.subList(i, i + 1))
                         .candleListFeature(candleList.subList(i, i + 1))
                         .candleListPast(candleList.subList(i, i + 1))
@@ -509,7 +519,12 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         }
         Float maxDiff = (float) factorialDataList.stream().mapToDouble(value -> value.getDiffPrice().doubleValue()).max().orElse(-1);
         Float maxDiffValue = (float) factorialDataList.stream().mapToDouble(value -> value.getDiffValue().doubleValue()).max().orElse(-1);
-        factorialDataList.forEach(v -> v.setDiff((1f - strategy.getFactorialRatioValue()) * v.getDiffPrice()/maxDiff + strategy.getFactorialRatioValue() * v.getDiffValue()/maxDiffValue));
+        Float maxDiffTime = (float) factorialDataList.stream().mapToDouble(value -> value.getDiffTime().doubleValue()).max().orElse(-1);
+        factorialDataList.forEach(v -> v.setDiff(
+                (1f - strategy.getFactorialRatioValue() - strategy.getFactorialRatioTime()) * v.getDiffPrice()/maxDiff
+                        + strategy.getFactorialRatioValue() * v.getDiffValue()/maxDiffValue
+                        + strategy.getFactorialRatioTime() * v.getDiffTime()/maxDiffTime
+        ));
         Collections.sort(factorialDataList, (o1, o2) -> o1.getDiff() - o2.getDiff() > 0 ? 1 : (o1.getDiff() - o2.getDiff() < 0 ? -1: 0));
         var iBest = 0;
 
