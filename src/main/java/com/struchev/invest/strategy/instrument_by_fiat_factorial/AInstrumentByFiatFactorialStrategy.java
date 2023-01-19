@@ -1,7 +1,6 @@
 package com.struchev.invest.strategy.instrument_by_fiat_factorial;
 
 import com.struchev.invest.strategy.AStrategy;
-import com.struchev.invest.strategy.instrument_by_fiat_cross.AInstrumentByFiatCrossStrategy;
 import lombok.Builder;
 import lombok.Data;
 
@@ -65,7 +64,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
     @Builder
     @Data
     public static class BuyCriteria {
-        Float takeProfitPercent;
+        Float takeProfitLossPercent;
         Float takeProfitPercentBetween;
         Float takeProfitPercentBetweenCloseMax;
         Integer takeProfitPercentBetweenLength;
@@ -84,7 +83,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
 
     public  AInstrumentByFiatFactorialStrategy.BuyCriteria getBuyCriteria() {
         return AInstrumentByFiatFactorialStrategy.BuyCriteria.builder()
-                .takeProfitPercent(0.5f)
+                //.takeProfitLossPercent(0.5f)
 
                 .takeProfitPercentBetweenCloseMax(0.5f)
                 .takeProfitPercentBetween(1.5f)

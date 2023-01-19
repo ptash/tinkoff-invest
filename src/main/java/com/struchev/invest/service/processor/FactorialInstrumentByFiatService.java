@@ -8,7 +8,6 @@ import com.struchev.invest.strategy.AStrategy;
 import com.struchev.invest.strategy.instrument_by_fiat_factorial.AInstrumentByFiatFactorialStrategy;
 import lombok.Builder;
 import lombok.Data;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -19,8 +18,6 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 @Slf4j
@@ -192,10 +189,10 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
 
             //log.info("FactorialInstrumentByFiatService {} from {} to {} {}", candle.getFigi(), factorial.candleListPast.get(0).getDateTime(), candle.getDateTime(), factorial.candleListFeature.size(), annotation);
             if (!res
-                    && strategy.getBuyCriteria().getTakeProfitPercent() != null
+                    && strategy.getBuyCriteria().getTakeProfitLossPercent() != null
                     && candle.getClosingPrice().doubleValue() < loss
-                    && futureProfit > strategy.getBuyCriteria().getTakeProfitPercent()
-                    && factorial.getExpectProfit() > strategy.getBuyCriteria().getTakeProfitPercent()
+                    && futureProfit > strategy.getBuyCriteria().getTakeProfitLossPercent()
+                    && factorial.getExpectProfit() > strategy.getBuyCriteria().getTakeProfitLossPercent()
                     //&& (expectLoss + expectProfit) > strategy.getBuyCriteria().getTakeProfitPercent()
                     //&& expectLoss > 0
             ) {
@@ -237,7 +234,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         res = true;
                     }
                 } else {
-                    if (futureProfit > strategy.getBuyCriteria().getTakeProfitPercent()
+                    if (futureProfit > strategy.getBuyCriteria().getTakeProfitLossPercent()
                             //&& (expectLoss + expectProfit) > strategy.getBuyCriteria().getTakeProfitPercent()
                             && expectLoss >= 0
                     ) {
@@ -482,7 +479,10 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     }
                     diff += curDiff;
                     diffValue += curDiffValue;
-                    if (j == 1 || j == (strategy.getFactorialLength() - 1)) {
+                    if (false
+                            //|| j == 1
+                            || j == (strategy.getFactorialLength() - 1)
+                    ) {
                         var modelCandleDate = modelCandle.getDateTime().atZoneSimilarLocal(ZoneId.systemDefault());
                         var testCandleDate = testCandle.getDateTime().atZoneSimilarLocal(ZoneId.systemDefault());
                         diffTime += (float)Math.pow(
