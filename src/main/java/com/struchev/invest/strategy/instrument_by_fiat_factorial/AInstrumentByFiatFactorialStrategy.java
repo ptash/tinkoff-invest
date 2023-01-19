@@ -114,6 +114,6 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
     public Integer getFactorialAvgSize() { return 2; };
 
     public Float getFactorialRatioI() { return -1f; }
-    public Float getFactorialRatioValue() { return 0.15f; }
-    public Float getFactorialRatioTime() { return 0.15f; }
+    public Float getFactorialRatioValue() { return 0.10f; }
+    public Float getFactorialRatioTime() { return 0.10f; }
 }
