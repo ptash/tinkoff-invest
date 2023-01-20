@@ -36,6 +36,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         Integer size;
         Integer length;
         Float diffPrice;
+        Float diffPriceOpen;
+        Float diffPriceCandle;
+        Float diffPriceCandleMax;
         Float diffValue;
         Float diffTime;
         Float diff;
@@ -409,6 +412,10 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     }
                 }
                 Float diff = 0f;
+                Float diffCandle = 0f;
+                Float diffCandleMax = 0f;
+                Float diffClose = 0f;
+                Float diffOpen = 0f;
                 Float diffValue = 0f;
                 Float diffTime = 0f;
                 String info = "" + testStartCandle.getDateTime() + " price=" + testStartCandle.getClosingPrice() + " mPrice=" + modelStartCandle.getClosingPrice();
@@ -432,8 +439,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     }
                     Float curDiff = 0f;
                     Float curDiffValue = 0f;
-                    curDiff +=
-                            //(float)Math.pow(
+                    diffCandleMax +=
+                            (float)Math.pow(
                                     Math.abs(((modelCandle.getHighestPrice().floatValue() - modelCandle.getLowestPrice().floatValue())
                                     / modelCandle.getLowestPrice().floatValue()
                                     //- (modelCandlePrev.getHighestPrice().floatValue() - modelCandlePrev.getLowestPrice().floatValue())
@@ -442,26 +449,26 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                     / testCandle.getLowestPrice().floatValue()
                                     //- (testCandlePrev.getHighestPrice().floatValue() - testCandlePrev.getLowestPrice().floatValue())
                             ))
-                                    //, 2)
+                                    , 2)
                     ;
-                    curDiff +=
-                            //(float)Math.pow(
+                    diffClose +=
+                            (float)Math.pow(
                                     Math.abs(((modelCandle.getClosingPrice().floatValue() - modelCandlePrev.getClosingPrice().floatValue())/modelCandle.getClosingPrice().floatValue())
                             - (testCandle.getClosingPrice().floatValue() - testCandlePrev.getClosingPrice().floatValue())/testCandle.getClosingPrice().floatValue())
-                            //, 2)
+                            , 2)
                     ;
-                    curDiff +=
-                            //(float)Math.pow(
+                    diffOpen +=
+                            (float)Math.pow(
                                     Math.abs(((modelCandle.getOpenPrice().floatValue() - modelCandlePrev.getClosingPrice().floatValue())/modelCandle.getOpenPrice().floatValue())
                                     - (testCandle.getOpenPrice().floatValue() - testCandlePrev.getClosingPrice().floatValue())/testCandle.getOpenPrice().floatValue())
-                            //, 2)
+                            , 2)
                     ;
 
-                    curDiff +=
-                            //(float)Math.pow(
+                    diffCandle +=
+                            (float)Math.pow(
                                     Math.abs(((modelCandle.getOpenPrice().floatValue() - modelCandle.getClosingPrice().floatValue())/modelCandle.getOpenPrice().floatValue())
                                     - (testCandle.getOpenPrice().floatValue() - testCandle.getClosingPrice().floatValue())/testCandle.getOpenPrice().floatValue())
-                            //, 2)
+                            , 2)
                     ;
                     //curDiff +=
                     //        Math.abs(((modelCandle.getHighestPrice().floatValue() - modelCandle.getLowestPrice().floatValue())/modelCandle.getHighestPrice().floatValue())
@@ -497,17 +504,14 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     testCandlePrev = testCandle;
                     modelCandlePrev = modelCandle;
                 }
-                if (null == bestDiff || bestDiff > diff) {
-                    startCandleI = i;
-                    bestSize = size;
-                    bestDiff = diff;
-                    bestInfo = info;
-                }
                 factorialDataList.add(FactorialData.builder()
                         .i(i)
                         .size(size)
                         .length(strategy.getFactorialLength())
-                        .diffPrice(diff)
+                        .diffPrice(diffClose)
+                        .diffPriceOpen(diffOpen)
+                        .diffPriceCandle(diffCandle)
+                        .diffPriceCandleMax(diffCandleMax)
                         .diffValue(diffValue)
                         .diffTime(diffTime)
                         .candleList(candleList.subList(i, i + 1))
@@ -517,14 +521,18 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         .build());
             }
         }
-        if (null == bestDiff) {
-            return null;
-        }
         Float maxDiff = (float) factorialDataList.stream().mapToDouble(value -> value.getDiffPrice().doubleValue()).max().orElse(-1);
+        Float maxDiffOpen = (float) factorialDataList.stream().mapToDouble(value -> value.getDiffPriceOpen().doubleValue()).max().orElse(-1);
+        Float maxDiffCandle = (float) factorialDataList.stream().mapToDouble(value -> value.getDiffPriceCandle().doubleValue()).max().orElse(-1);
+        Float maxDiffCandleMax = (float) factorialDataList.stream().mapToDouble(value -> value.getDiffPriceCandleMax().doubleValue()).max().orElse(-1);
         Float maxDiffValue = (float) factorialDataList.stream().mapToDouble(value -> value.getDiffValue().doubleValue()).max().orElse(-1);
         Float maxDiffTime = (float) factorialDataList.stream().mapToDouble(value -> value.getDiffTime().doubleValue()).max().orElse(-1);
         factorialDataList.forEach(v -> v.setDiff(
-                (1f - strategy.getFactorialRatioValue() - strategy.getFactorialRatioTime()) * v.getDiffPrice()/maxDiff
+                (1f - strategy.getFactorialRatioOpen() - strategy.getFactorialRatioCandle() - strategy.getFactorialRatioCandleMax()
+                        - strategy.getFactorialRatioValue() - strategy.getFactorialRatioTime()) * v.getDiffPrice()/maxDiff
+                        + strategy.getFactorialRatioOpen() * v.getDiffPriceOpen()/maxDiffOpen
+                        + strategy.getFactorialRatioCandle() * v.getDiffPriceCandle()/maxDiffCandle
+                        + strategy.getFactorialRatioCandleMax() * v.getDiffPriceCandle()/maxDiffCandleMax
                         + strategy.getFactorialRatioValue() * v.getDiffValue()/maxDiffValue
                         + strategy.getFactorialRatioTime() * v.getDiffTime()/maxDiffTime
         ));
