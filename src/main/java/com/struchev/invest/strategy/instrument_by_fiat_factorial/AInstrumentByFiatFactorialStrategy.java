@@ -120,4 +120,5 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
     public Float getFactorialRatioCandleMax() { return 0.10f; }
 
     public String getInterval() { return "1hour"; }
+    public String getSellInterval() { return "1minute"; }
 }

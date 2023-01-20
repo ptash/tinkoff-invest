@@ -229,6 +229,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     lossAvg = lossAvg * (1f - expectLossAvg / 100f);
                     annotation += " expectLossAvg=" + expectLossAvg + " lossAvg=" + lossAvg;
                     if (candle.getClosingPrice().doubleValue() < lossAvg
+                            && lossAvg <= loss
                             //&& (expectLossAvg + expectProfit) > strategy.getBuyCriteria().getTakeProfitPercent()
                             //&& (expectLoss + expectProfit) > strategy.getBuyCriteria().getTakeProfitPercent()
                             //&& expectLossAvg > 0
@@ -315,12 +316,15 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 .multiply(BigDecimal.valueOf(100))
                 .divide(purchaseRate, 4, RoundingMode.HALF_DOWN);
 
+        var candleListPrev = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
+                candle.getDateTime(), 3, strategy.getInterval());
+        var factorial = findBestFactorialInPast(strategy, candleListPrev.get(1));
         Boolean res = false;
         String annotation = " profitPercent=" + profitPercent;
         if (sellCriteria.getStopLossSoftPercent() != null && profitPercent.floatValue() < -1 * sellCriteria.getStopLossSoftPercent()) {
             if (strategy.getSellCriteria().getStopLossSoftLength() > 1) {
                 var candleList = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
-                        candle.getDateTime(), strategy.getSellCriteria().getStopLossSoftLength(), strategy.getInterval());
+                        candle.getDateTime(), strategy.getSellCriteria().getStopLossSoftLength(), strategy.getSellInterval());
                 var profitPercentPrev = candleList.get(0).getClosingPrice().subtract(purchaseRate)
                         .multiply(BigDecimal.valueOf(100))
                         .divide(purchaseRate, 4, RoundingMode.HALF_DOWN);
@@ -335,7 +339,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         if (sellCriteria.getStopLossPercent() != null && profitPercent.floatValue() < -1 * sellCriteria.getStopLossPercent()) {
             if (strategy.getSellCriteria().getStopLossLength() > 1) {
                 var candleList = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
-                        candle.getDateTime(), strategy.getSellCriteria().getStopLossLength(), strategy.getInterval());
+                        candle.getDateTime(), strategy.getSellCriteria().getStopLossLength(), strategy.getSellInterval());
                 var profitPercentPrev = candleList.get(0).getClosingPrice().subtract(purchaseRate)
                         .multiply(BigDecimal.valueOf(100))
                         .divide(purchaseRate, 4, RoundingMode.HALF_DOWN);
@@ -352,7 +356,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         ) {
             if (strategy.getSellCriteria().getExitProfitLossPercent() != null) {
                 var order = orderService.findActiveByFigiAndStrategy(candle.getFigi(), strategy);
-                var candleList = candleHistoryService.getCandlesByFigiBetweenDateTimes(candle.getFigi(), order.getPurchaseDateTime(), candle.getDateTime(), strategy.getInterval());
+                var candleList = candleHistoryService.getCandlesByFigiBetweenDateTimes(candle.getFigi(),
+                        order.getPurchaseDateTime(), candle.getDateTime(), strategy.getSellInterval());
                 var maxPrice = candleList.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).max().orElse(-1);
                 var percent = 100f * (maxPrice - candle.getClosingPrice().doubleValue()) / maxPrice;
                 annotation += " maxPrice=" + maxPrice + "(" + candleList.size() + ")" + " ClosingPrice=" + candle.getClosingPrice()
@@ -369,12 +374,14 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 strategy,
                 candle.getFigi(),
                 "Date|smaSlowest|smaSlow|smaFast|emaFast|ema2|bye|sell|position|deadLineBottom|deadLineTop|investBottom|investTop|smaTube|strategy|average|averageBottom|averageTop|openPrice",
-                "{} | {} | {} | {} | | {} |  | |  |  |  |  |  |  |sell {}||||",
+                "{} | {} | {} | {} | {} | {} | {} | |  |  |  |  |  |  |sell {}||||",
                 notificationService.formatDateTime(candle.getDateTime()),
                 candle.getClosingPrice(),
                 candle.getOpenPrice(),
                 candle.getHighestPrice(),
                 candle.getLowestPrice(),
+                factorial.getProfit(),
+                factorial.getLoss(),
                 annotation
         );
         return res;
