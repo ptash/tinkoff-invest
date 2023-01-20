@@ -480,7 +480,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     diff += curDiff;
                     diffValue += curDiffValue;
                     if (false
-                            //|| j == 1
+                            || j == 1
                             || j == (strategy.getFactorialLength() - 1)
                     ) {
                         var modelCandleDate = modelCandle.getDateTime().atZoneSimilarLocal(ZoneId.systemDefault());

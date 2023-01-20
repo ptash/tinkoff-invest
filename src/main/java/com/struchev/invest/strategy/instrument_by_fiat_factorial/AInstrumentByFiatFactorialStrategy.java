@@ -83,7 +83,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
 
     public  AInstrumentByFiatFactorialStrategy.BuyCriteria getBuyCriteria() {
         return AInstrumentByFiatFactorialStrategy.BuyCriteria.builder()
-                //.takeProfitLossPercent(0.5f)
+                .takeProfitLossPercent(0.5f)
 
                 .takeProfitPercentBetweenCloseMax(0.5f)
                 .takeProfitPercentBetween(1.5f)
