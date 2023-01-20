@@ -46,6 +46,7 @@ public class CandleHistoryService {
     private Map<String, OffsetDateTime> firstCandleDateTimeByFigi;
     private Map<String, List<CandleDomainEntity>> candlesLocalCacheMinute;
     private Map<String, List<CandleDomainEntity>> candlesLocalCacheDay;
+    private Map<String, List<CandleDomainEntity>> candlesLocalCacheHour;
 
     @Value("${candle.history.duration}")
     private Duration historyDuration;
@@ -102,7 +103,8 @@ public class CandleHistoryService {
     public List<CandleDomainEntity> getCandlesByFigiBetweenDateTimes(String figi, OffsetDateTime startDateTime, OffsetDateTime endDateTime, String interval) {
         // если слушатель выключен - значит запускаем не в продакшн режиме, можем хранить свечки в памяти, а не на диске (БД)
         if (!isCandleListenerEnabled) {
-            var candlesByFigi = interval.equals("1min") ? candlesLocalCacheMinute.get(figi) : candlesLocalCacheDay.get(figi);
+            var candlesByFigi = interval.equals("1min") ? candlesLocalCacheMinute.get(figi)
+                    : (interval.equals("1hour") ? candlesLocalCacheHour.get(figi) : candlesLocalCacheDay.get(figi));
             if (candlesByFigi.size() == 0) {
                 throw new RuntimeException("Candles not found in local cache for " + figi);
             }
@@ -133,18 +135,22 @@ public class CandleHistoryService {
     public List<CandleDomainEntity> getCandlesByFigiAndIntervalAndBeforeDateTimeLimit(String figi, OffsetDateTime dateTime, Integer length, String interval) {
         // если слушатель выключен - значит запускаем не в продакшн режиме, можем хранить свечки в памяти, а не на диске (БД)
         if (!isCandleListenerEnabled) {
-            var candlesByFigi = interval.equals("1min") ? candlesLocalCacheMinute.get(figi) : candlesLocalCacheDay.get(figi);
+            var candlesByFigi = interval.equals("1min") ? candlesLocalCacheMinute.get(figi)
+                    : (interval.equals("1hour") ? candlesLocalCacheHour.get(figi) : candlesLocalCacheDay.get(figi));
             if (candlesByFigi.size() == 0) {
                 throw new RuntimeException("Candles not found in local cache for " + figi);
             }
 
-            var startDateTime = dateTime.minusDays(30).minusMinutes((interval.equals("1min") ? length : length * 60 * 24) * 10);
+            var startDateTime = dateTime.minusDays(30).minusMinutes((interval.equals("1min") ? length
+                    : (interval.equals("1hour") ? (length * 24) : (length * 60 * 24))) * 10);
             var candles = candlesByFigi.stream()
                     .filter(c -> c.getDateTime().isAfter(startDateTime))
                     .filter(c -> c.getDateTime().isBefore(dateTime) || c.getDateTime().isEqual(dateTime))
                     .collect(Collectors.toList());
             if (length > candles.size()) {
-                log.info("candles figi {} from {} to {}. Expect length {}, real {}, total {}, begin {}, end {}", figi, startDateTime, dateTime, length, candles.size(), candlesByFigi.size(), candlesByFigi.get(0).getDateTime(), candlesByFigi.get(candlesByFigi.size() - 1).getDateTime());
+                log.info("candles {} figi {} from {} to {}. Expect length {}, real {}, total {}, begin {}, end {}",
+                        interval, figi, startDateTime, dateTime, length, candles.size(), candlesByFigi.size(),
+                        candlesByFigi.get(0).getDateTime(), candlesByFigi.get(candlesByFigi.size() - 1).getDateTime());
             }
             candles.sort(Comparator.comparing(CandleDomainEntity::getDateTime));
             return candles.subList(Math.max(0, candles.size() - length), candles.size());
@@ -202,18 +208,26 @@ public class CandleHistoryService {
         figies.stream().forEach(figi -> {
             loadCandlesHistory(figi, days, CandleInterval.CANDLE_INTERVAL_DAY, now);
         });
+
+        figies.stream().forEach(figi -> {
+            loadCandlesHistory(figi, days, CandleInterval.CANDLE_INTERVAL_HOUR, now);
+        });
         log.info("Loaded to load history for {} days", days);
     }
 
     private void loadCandlesHistory(String figi, Long days, CandleInterval candleInterval, OffsetDateTime now)
     {
-        String interval = candleInterval == CandleInterval.CANDLE_INTERVAL_1_MIN ? "1min": "1day";
-        Integer minutesInInterval = candleInterval == CandleInterval.CANDLE_INTERVAL_1_MIN ? 60 * 24: 60 * 24 * 365;
+        String interval = candleInterval == CandleInterval.CANDLE_INTERVAL_1_MIN ? "1min"
+                : (candleInterval == CandleInterval.CANDLE_INTERVAL_HOUR ? "1hour" : "1day");
+        Integer minutesInInterval = candleInterval == CandleInterval.CANDLE_INTERVAL_1_MIN ? 60 * 24
+                : (candleInterval == CandleInterval.CANDLE_INTERVAL_HOUR ? 60 * 24 * 6 : 60 * 24 * 365);
         var candlesMax = candleRepository.findFirstByFigiAndIntervalOrderByDateTimeDesc(figi, interval);
         var candlesMin = candleRepository.findFirstByFigiAndIntervalOrderByDateTimeAsc(figi, interval);
 
         var dayStart = 0;
-        var dayEnd = candleInterval == CandleInterval.CANDLE_INTERVAL_1_MIN ? days : Long.max(Long.divideUnsigned(days, 365), 1);
+        var dayEnd = candleInterval == CandleInterval.CANDLE_INTERVAL_1_MIN ? days
+                : (candleInterval == CandleInterval.CANDLE_INTERVAL_HOUR ? days
+                : Long.max(Long.divideUnsigned(days, 365), 1));
         log.info("Candles history from {} to {} {}", dayStart, dayEnd, interval);
         LongStream datesRange = LongStream.empty();
         var timeStart = now.minusMinutes((dayEnd) * minutesInInterval);
@@ -283,6 +297,13 @@ public class CandleHistoryService {
             candlesLocalCacheDay = candlesDay.stream()
                     .peek(c -> entityManager.detach(c))
                     .collect(Collectors.groupingBy(CandleDomainEntity::getFigi));
+
+            var candlesHour = candleRepository.findByIntervalOrderByDateTime("1hour");
+            candlesLocalCacheHour = candlesHour.stream()
+                    .peek(c -> entityManager.detach(c))
+                    .collect(Collectors.groupingBy(CandleDomainEntity::getFigi));
+            log.info("Loaded candles 1hour {}", candlesHour.size());
+            candlesLocalCacheHour.forEach((c, b) -> log.info("Candles {} {}", c, b.size()));
         }
     }
 }

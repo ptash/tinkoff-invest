@@ -114,8 +114,10 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
 
     public Float getFactorialRatioI() { return -1f; }
     public Float getFactorialRatioValue() { return 0.15f; }
-    public Float getFactorialRatioTime() { return 0.20f; }
+    public Float getFactorialRatioTime() { return 0.15f; }
     public Float getFactorialRatioOpen() { return 0.10f; }
     public Float getFactorialRatioCandle() { return 0.15f; }
     public Float getFactorialRatioCandleMax() { return 0.10f; }
+
+    public String getInterval() { return "1hour"; }
 }
