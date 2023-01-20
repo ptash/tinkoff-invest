@@ -200,16 +200,18 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     //&& expectLoss > 0
             ) {
                 var expectLossAvg = expectLoss;
-                lossAvg = candleList.get(1).getLowestPrice().doubleValue();
+                //lossAvg = candleList.get(1).getLowestPrice().doubleValue();
+                lossAvg = 0.0;
                 if (strategy.getFactorialAvgSize() > 1) {
                     Float maxV = null;
                     Float minV = null;
                     var candleListPrev = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
-                            candle.getDateTime(), strategy.getFactorialAvgSize() + 1, strategy.getInterval());
-                    for (var i = 0; i < strategy.getFactorialAvgSize() - 1; i++) {
+                            candle.getDateTime(), strategy.getFactorialAvgSize() + 2, strategy.getInterval());
+                    for (var i = 0; i < strategy.getFactorialAvgSize(); i++) {
                         var factorialPrev = findBestFactorialInPast(strategy, candleListPrev.get(i));
                         expectLossAvg += factorialPrev.getExpectLoss();
-                        lossAvg += candleListPrev.get(i).getLowestPrice().doubleValue();
+                        //lossAvg += candleListPrev.get(i).getLowestPrice().doubleValue();
+                        lossAvg += factorialPrev.getLoss();
                         if (maxV == null || maxV < factorialPrev.getExpectLoss()) {
                             maxV = factorialPrev.getExpectLoss();
                         }
@@ -224,11 +226,13 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     } else {
                         expectLossAvg = expectLossAvg / strategy.getFactorialAvgSize();
                     }
+                    //lossAvg = lossAvg / strategy.getFactorialAvgSize();
                     lossAvg = lossAvg / strategy.getFactorialAvgSize();
-                    lossAvg = Math.min(candleList.get(1).getLowestPrice().doubleValue(), lossAvg);
-                    lossAvg = lossAvg * (1f - expectLossAvg / 100f);
+                    //lossAvg = Math.min(candleList.get(1).getLowestPrice().doubleValue(), lossAvg);
+                    //lossAvg = lossAvg * (1f - expectLossAvg / 100f);
                     annotation += " expectLossAvg=" + expectLossAvg + " lossAvg=" + lossAvg;
-                    if (candle.getClosingPrice().doubleValue() < lossAvg
+                    if (true
+                            //&& candle.getClosingPrice().doubleValue() < lossAvg
                             && lossAvg <= loss
                             //&& (expectLossAvg + expectProfit) > strategy.getBuyCriteria().getTakeProfitPercent()
                             //&& (expectLoss + expectProfit) > strategy.getBuyCriteria().getTakeProfitPercent()
@@ -321,7 +325,10 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         var factorial = findBestFactorialInPast(strategy, candleListPrev.get(1));
         Boolean res = false;
         String annotation = " profitPercent=" + profitPercent;
-        if (sellCriteria.getStopLossSoftPercent() != null && profitPercent.floatValue() < -1 * sellCriteria.getStopLossSoftPercent()) {
+        if (sellCriteria.getStopLossSoftPercent() != null
+                && profitPercent.floatValue() < -1 * sellCriteria.getStopLossSoftPercent()
+                && factorial.getLoss() < candle.getClosingPrice().doubleValue()
+        ) {
             if (strategy.getSellCriteria().getStopLossSoftLength() > 1) {
                 var candleList = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
                         candle.getDateTime(), strategy.getSellCriteria().getStopLossSoftLength(), strategy.getSellInterval());
@@ -336,7 +343,10 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 res = true;
             }
         }
-        if (sellCriteria.getStopLossPercent() != null && profitPercent.floatValue() < -1 * sellCriteria.getStopLossPercent()) {
+        if (sellCriteria.getStopLossPercent() != null
+                && profitPercent.floatValue() < -1 * sellCriteria.getStopLossPercent()
+                && factorial.getLoss() < candle.getClosingPrice().doubleValue()
+        ) {
             if (strategy.getSellCriteria().getStopLossLength() > 1) {
                 var candleList = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
                         candle.getDateTime(), strategy.getSellCriteria().getStopLossLength(), strategy.getSellInterval());
