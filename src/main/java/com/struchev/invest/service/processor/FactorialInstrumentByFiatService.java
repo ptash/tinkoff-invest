@@ -551,7 +551,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         for(var i = 0; i < avSize; i++) {
             var candleI = factorialDataList.get(i).getI();
             var candleListFactorial = candleList.subList(candleI, candleI + strategy.getFactorialLength() * bestSize);
-            var candleListFeature = candleList.subList(candleI + strategy.getFactorialLength() * bestSize, candleI + strategy.getFactorialLengthFuture() * bestSize * 2);
+            var candleListFeature = candleList.subList(candleI + strategy.getFactorialLength() * bestSize, candleI + + strategy.getFactorialLength() * bestSize + strategy.getFactorialLengthFuture() * bestSize);
 
             Double maxPrice = (candleListFeature.stream().mapToDouble(value -> value.getHighestPrice().doubleValue()).max().orElse(-1));
             Double minPrice = candleListFeature.stream().mapToDouble(value -> value.getLowestPrice().doubleValue()).min().orElse(-1);
@@ -574,7 +574,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 .length(strategy.getFactorialLength())
                 .diffPrice(bestDiff)
                 .candleList(candleList.subList(startCandleI, startCandleI + strategy.getFactorialLength() * bestSize))
-                .candleListFeature(candleList.subList(startCandleI + strategy.getFactorialLength() * bestSize, startCandleI + strategy.getFactorialLengthFuture() * bestSize * 2))
+                .candleListFeature(candleList.subList(startCandleI + strategy.getFactorialLength() * bestSize, startCandleI + strategy.getFactorialLength() * bestSize + strategy.getFactorialLengthFuture() * bestSize))
                 .candleListPast(candleList.subList(candleList.size() - strategy.getFactorialLength(), candleList.size()))
                 .info(bestInfo)
                 .expectProfit((float) expectProfit)
