@@ -205,6 +205,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 if (strategy.getFactorialAvgSize() > 1) {
                     Float maxV = null;
                     Float minV = null;
+                    Double minProfit = null;
                     var candleListPrev = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
                             candle.getDateTime(), strategy.getFactorialAvgSize() + 2, strategy.getInterval());
                     for (var i = 0; i < strategy.getFactorialAvgSize(); i++) {
@@ -217,6 +218,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         }
                         if (minV == null || minV > factorialPrev.getExpectLoss()) {
                             minV = factorialPrev.getExpectLoss();
+                        }
+                        if (minProfit == null || minProfit < factorialPrev.getProfit()) {
+                            minProfit = factorialPrev.getProfit();
                         }
                     }
                     if (strategy.getFactorialAvgSize() > 3) {
@@ -234,6 +238,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     if (true
                             //&& candle.getClosingPrice().doubleValue() < lossAvg
                             && lossAvg <= loss
+                            && minProfit > loss
                             //&& (expectLossAvg + expectProfit) > strategy.getBuyCriteria().getTakeProfitPercent()
                             //&& (expectLoss + expectProfit) > strategy.getBuyCriteria().getTakeProfitPercent()
                             //&& expectLossAvg > 0
