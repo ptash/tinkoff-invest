@@ -331,10 +331,11 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         var order = orderService.findActiveByFigiAndStrategy(candle.getFigi(), strategy);
         Boolean res = false;
         String annotation = " profitPercent=" + profitPercent;
+        annotation += " orderDate=" + order.getPurchaseDateTime() + " prevCandleDate=" + candleListPrev.get(0).getDateTime();
         if (sellCriteria.getStopLossSoftPercent() != null
                 && profitPercent.floatValue() < -1 * sellCriteria.getStopLossSoftPercent()
                 && factorial.getLoss() < candle.getClosingPrice().doubleValue()
-                && candleListPrev.get(0).getDateTime().isBefore(order.getPurchaseDateTime())
+                && candleListPrev.get(0).getDateTime().isAfter(order.getPurchaseDateTime())
         ) {
             if (strategy.getSellCriteria().getStopLossSoftLength() > 1) {
                 var candleList = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
@@ -353,7 +354,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         if (sellCriteria.getStopLossPercent() != null
                 && profitPercent.floatValue() < -1 * sellCriteria.getStopLossPercent()
                 && factorial.getLoss() < candle.getClosingPrice().doubleValue()
-                && candleListPrev.get(0).getDateTime().isBefore(order.getPurchaseDateTime())
+                && candleListPrev.get(0).getDateTime().isAfter(order.getPurchaseDateTime())
         ) {
             if (strategy.getSellCriteria().getStopLossLength() > 1) {
                 var candleList = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
