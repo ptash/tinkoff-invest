@@ -219,7 +219,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         if (minV == null || minV > factorialPrev.getExpectLoss()) {
                             minV = factorialPrev.getExpectLoss();
                         }
-                        if (minProfit == null || minProfit < factorialPrev.getProfit()) {
+                        if (minProfit == null || minProfit > factorialPrev.getProfit()) {
                             minProfit = factorialPrev.getProfit();
                         }
                     }
@@ -235,6 +235,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     //lossAvg = Math.min(candleList.get(1).getLowestPrice().doubleValue(), lossAvg);
                     //lossAvg = lossAvg * (1f - expectLossAvg / 100f);
                     annotation += " expectLossAvg=" + expectLossAvg + " lossAvg=" + lossAvg;
+                    annotation += " minProfit=" + minProfit + " lossAvg=" + lossAvg;
                     if (true
                             //&& candle.getClosingPrice().doubleValue() < lossAvg
                             && lossAvg <= loss
