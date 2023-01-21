@@ -31,8 +31,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
     }
 
     public SellLimitCriteria getSellLimitCriteria() {
-        return null;
-        //return SellLimitCriteria.builder().exitProfitPercent(0.4f).build();
+        return SellLimitCriteria.builder().exitProfitPercent(2.0f).build();
     }
 
     @Builder
