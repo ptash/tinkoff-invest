@@ -10,5 +10,5 @@ public class BuyProfit1InvestPercent02SellWithMaxProfitCrossTube2Strategy extend
 
     public Integer getAvgLength() {return getSmaFastLength() / 2;}
 
-    public boolean isEnabled() { return false; }
+    public boolean isEnabled() { return true; }
 }

@@ -239,7 +239,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     if (true
                             //&& candle.getClosingPrice().doubleValue() < lossAvg
                             && lossAvg <= loss
-                            && minProfit > loss
+                            //&& minProfit > loss
                             //&& (expectLossAvg + expectProfit) > strategy.getBuyCriteria().getTakeProfitPercent()
                             //&& (expectLoss + expectProfit) > strategy.getBuyCriteria().getTakeProfitPercent()
                             //&& expectLossAvg > 0
