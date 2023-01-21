@@ -328,11 +328,13 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         var candleListPrev = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
                 candle.getDateTime(), 3, strategy.getInterval());
         var factorial = findBestFactorialInPast(strategy, candleListPrev.get(1));
+        var order = orderService.findActiveByFigiAndStrategy(candle.getFigi(), strategy);
         Boolean res = false;
         String annotation = " profitPercent=" + profitPercent;
         if (sellCriteria.getStopLossSoftPercent() != null
                 && profitPercent.floatValue() < -1 * sellCriteria.getStopLossSoftPercent()
                 && factorial.getLoss() < candle.getClosingPrice().doubleValue()
+                && candleListPrev.get(0).getDateTime().isBefore(order.getPurchaseDateTime())
         ) {
             if (strategy.getSellCriteria().getStopLossSoftLength() > 1) {
                 var candleList = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
@@ -351,6 +353,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         if (sellCriteria.getStopLossPercent() != null
                 && profitPercent.floatValue() < -1 * sellCriteria.getStopLossPercent()
                 && factorial.getLoss() < candle.getClosingPrice().doubleValue()
+                && candleListPrev.get(0).getDateTime().isBefore(order.getPurchaseDateTime())
         ) {
             if (strategy.getSellCriteria().getStopLossLength() > 1) {
                 var candleList = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
@@ -370,7 +373,6 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 && profitPercent.floatValue() > sellCriteria.getTakeProfitPercent()
         ) {
             if (strategy.getSellCriteria().getExitProfitLossPercent() != null) {
-                var order = orderService.findActiveByFigiAndStrategy(candle.getFigi(), strategy);
                 var candleList = candleHistoryService.getCandlesByFigiBetweenDateTimes(candle.getFigi(),
                         order.getPurchaseDateTime(), candle.getDateTime(), strategy.getSellInterval());
                 var maxPrice = candleList.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).max().orElse(-1);
