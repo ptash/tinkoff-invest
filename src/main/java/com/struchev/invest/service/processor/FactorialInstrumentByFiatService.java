@@ -197,14 +197,14 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     && futureProfit > strategy.getBuyCriteria().getTakeProfitLossPercent()
                     && factorial.getExpectProfit() > strategy.getBuyCriteria().getTakeProfitLossPercent()
                     //&& (expectLoss + expectProfit) > strategy.getBuyCriteria().getTakeProfitPercent()
-                    //&& expectLoss > 0
+                    && expectLoss > 0
             ) {
-                var expectLossAvg = expectLoss;
+                Double expectLossAvg = Double.valueOf(expectLoss);
                 //lossAvg = candleList.get(1).getLowestPrice().doubleValue();
                 lossAvg = 0.0;
                 if (strategy.getFactorialAvgSize() > 1) {
-                    Float maxV = null;
-                    Float minV = null;
+                    Double maxV = null;
+                    Double minV = null;
                     Double minProfit = null;
                     var candleListPrev = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
                             candle.getDateTime(), strategy.getFactorialAvgSize() + 2, strategy.getInterval());
@@ -213,29 +213,33 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         expectLossAvg += factorialPrev.getExpectLoss();
                         //lossAvg += candleListPrev.get(i).getLowestPrice().doubleValue();
                         lossAvg += factorialPrev.getLoss();
-                        if (maxV == null || maxV < factorialPrev.getExpectLoss()) {
-                            maxV = factorialPrev.getExpectLoss();
+                        if (maxV == null || maxV < factorialPrev.getLoss()) {
+                            maxV = factorialPrev.getLoss();
                         }
-                        if (minV == null || minV > factorialPrev.getExpectLoss()) {
-                            minV = factorialPrev.getExpectLoss();
+                        if (minV == null || minV > factorialPrev.getLoss()) {
+                            minV = factorialPrev.getLoss();
                         }
                         if (minProfit == null || minProfit > factorialPrev.getProfit()) {
                             minProfit = factorialPrev.getProfit();
                         }
                     }
                     if (strategy.getFactorialAvgSize() > 3) {
-                        expectLossAvg -= maxV;
-                        expectLossAvg -= minV;
+                        //expectLossAvg -= maxV;
+                        //expectLossAvg -= minV;
+                        lossAvg -= minV;
+                        lossAvg = lossAvg / (strategy.getFactorialAvgSize() - 1);
                         expectLossAvg = expectLossAvg / (strategy.getFactorialAvgSize() - 2);
                     } else {
                         expectLossAvg = expectLossAvg / strategy.getFactorialAvgSize();
+                        lossAvg = lossAvg / strategy.getFactorialAvgSize();
                     }
                     //lossAvg = lossAvg / strategy.getFactorialAvgSize();
-                    lossAvg = lossAvg / strategy.getFactorialAvgSize();
+                    //lossAvg = lossAvg / strategy.getFactorialAvgSize();
                     //lossAvg = Math.min(candleList.get(1).getLowestPrice().doubleValue(), lossAvg);
                     //lossAvg = lossAvg * (1f - expectLossAvg / 100f);
-                    annotation += " expectLossAvg=" + expectLossAvg + " lossAvg=" + lossAvg;
-                    annotation += " minProfit=" + minProfit + " lossAvg=" + lossAvg;
+                    //annotation += " expectLossAvg=" + expectLossAvg;
+                    annotation += " lossAvg=" + lossAvg;
+                    annotation += " minProfit=" + minProfit;
                     if (true
                             //&& candle.getClosingPrice().doubleValue() < lossAvg
                             && lossAvg <= loss
@@ -246,6 +250,27 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     ) {
                         annotation += " ok < lossAvg";
                         res = true;
+                    } else {
+                        lossAvg = (double) 0;
+                        var candleListPrevPrev = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
+                                candle.getDateTime(), strategy.getFactorialDownAvgSize() + 2, strategy.getInterval());
+                        boolean isLess = false;
+                        for (var i = 0; i < strategy.getFactorialDownAvgSize(); i++) {
+                            var factorialPrev = findBestFactorialInPast(strategy, candleListPrevPrev.get(i));
+                            lossAvg += factorialPrev.getLoss();
+                            if (candleListPrevPrev.get(i).getLowestPrice().doubleValue() < factorialPrev.getLoss()) {
+                                annotation += " i=" + i;
+                                isLess = true;
+                            }
+                        }
+                        lossAvg = lossAvg / strategy.getFactorialDownAvgSize();
+                        annotation += " lossDownAvg=" + lossAvg;
+                        if (lossAvg <= loss
+                                && isLess
+                        ) {
+                            annotation += " ok < lossDownAvg";
+                            res = true;
+                        }
                     }
                 } else {
                     if (futureProfit > strategy.getBuyCriteria().getTakeProfitLossPercent()
@@ -327,8 +352,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 .divide(purchaseRate, 4, RoundingMode.HALF_DOWN);
 
         var candleListPrev = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
-                candle.getDateTime(), 3, strategy.getInterval());
-        var factorial = findBestFactorialInPast(strategy, candleListPrev.get(1));
+                candle.getDateTime(), strategy.getFactorialLossIgnoreSize(), strategy.getInterval());
+        var factorial = findBestFactorialInPast(strategy, candleListPrev.get(strategy.getFactorialLossIgnoreSize() - 2));
         var order = orderService.findActiveByFigiAndStrategy(candle.getFigi(), strategy);
         Boolean res = false;
         String annotation = " profitPercent=" + profitPercent;

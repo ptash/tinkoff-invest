@@ -83,7 +83,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
 
     public  AInstrumentByFiatFactorialStrategy.BuyCriteria getBuyCriteria() {
         return AInstrumentByFiatFactorialStrategy.BuyCriteria.builder()
-                .takeProfitLossPercent(0.5f)
+                .takeProfitLossPercent(1.0f)
 
                 .takeProfitPercentBetweenCloseMax(0.5f)
                 .takeProfitPercentBetween(1.5f)
@@ -111,6 +111,8 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
     public List<Integer> getFactorialSizes() { return List.of(1); };
     public Integer getFactorialBestSize() { return 3; };
     public Integer getFactorialAvgSize() { return 3; };
+    public Integer getFactorialDownAvgSize() { return 4; };
+    public Integer getFactorialLossIgnoreSize() { return 4; };
 
     public Float getFactorialRatioI() { return -1f; }
     public Float getFactorialRatioValue() { return 0.15f; }
