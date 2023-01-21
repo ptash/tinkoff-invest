@@ -223,7 +223,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             minProfit = factorialPrev.getProfit();
                         }
                     }
-                    if (strategy.getFactorialAvgSize() > 3) {
+                    if (strategy.getFactorialAvgSize() > 2) {
                         //expectLossAvg -= maxV;
                         //expectLossAvg -= minV;
                         lossAvg -= minV;
@@ -257,15 +257,20 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         boolean isLess = false;
                         for (var i = 0; i < strategy.getFactorialDownAvgSize(); i++) {
                             var factorialPrev = findBestFactorialInPast(strategy, candleListPrevPrev.get(i));
+                            var curCandle = candleListPrevPrev.get(i + 1);
                             lossAvg += factorialPrev.getLoss();
-                            if (candleListPrevPrev.get(i).getLowestPrice().doubleValue() < factorialPrev.getLoss()) {
-                                annotation += " i=" + i;
+                            annotation += " i=" + i;
+                            annotation += " date=" + curCandle.getDateTime();
+                            annotation += " LowestPrice=" + curCandle.getLowestPrice();
+                            annotation += " loss=" + factorialPrev.getLoss();
+                            if (curCandle.getLowestPrice().doubleValue() < factorialPrev.getLoss()) {
+                                annotation += " isLess";
                                 isLess = true;
                             }
                         }
                         lossAvg = lossAvg / strategy.getFactorialDownAvgSize();
                         annotation += " lossDownAvg=" + lossAvg;
-                        if (lossAvg <= loss
+                        if (lossAvg > loss
                                 && isLess
                         ) {
                             annotation += " ok < lossDownAvg";
@@ -617,6 +622,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
 
         var expectProfit = expectProfitList.stream().mapToDouble(i -> i).average().orElse(-1);
         var expectLoss = expectLossList.stream().mapToDouble(i -> i).average().orElse(-1);
+
+        //expectProfit = Math.abs(expectProfit);
+        //expectLoss = Math.abs(expectLoss);
 
         bestInfo += " diffAverage=" + (factorialDataList.stream().mapToDouble(value -> value.getDiffPrice().doubleValue()).average().orElse(-1));
 
