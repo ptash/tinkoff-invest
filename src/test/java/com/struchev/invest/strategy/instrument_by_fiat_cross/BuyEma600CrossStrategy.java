@@ -23,7 +23,9 @@ public class BuyEma600CrossStrategy extends AInstrumentByFiatCrossStrategy {
         //FIGIES.put("BBG00475KKY8", 1); // НОВАТЭК
         //FIGIES.put("BBG004S683W7", 1);   // Аэрофлот
         //FIGIES.put("BBG006L8G4H1", 1); // Yandex
-        FIGIES.put("BBG00178PGX3", 1);    // VK
+        //FIGIES.put("BBG00178PGX3", 1);    // VK
+        FIGIES.put("BBG00QPYJ5H0", 1); // TCS Group
+        FIGIES.put("BBG004730JJ5", 1); // Московская Биржа
         /*
         FIGIES.put("BBG000LWVHN8", 1); // Дагестанская энергосбытовая компания
         FIGIES.put("BBG00178PGX3", 1);    // VK

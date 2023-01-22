@@ -50,7 +50,7 @@ public class PurchaseService {
 
     public void observeNewCandle(CandleDomainEntity candleDomainEntity) {
         log.debug("Observe candle event: {}", candleDomainEntity);
-        var strategies = strategySelector.suitableByFigi(candleDomainEntity.getFigi(), null);
+        var strategies = strategySelector.suitableByFigi(candleDomainEntity.getFigi(), null, candleDomainEntity.getInterval());
         strategies.parallelStream().forEach(strategy -> {
             // Ищем открытый ордер
             // Для стратегии instrumentByInstrument нужен ордер по инструменту свечки (торгуется стратегия в разрезе инструмента)

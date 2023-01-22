@@ -49,9 +49,9 @@ class StrategiesByCandleHistoryTests {
     //private OffsetDateTime dateBefore = OffsetDateTime.parse("2022-09-23T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
     //private OffsetDateTime dateBefore = OffsetDateTime.parse("2022-11-08T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
     //private OffsetDateTime dateBefore = OffsetDateTime.parse("2023-01-15T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
-    //private OffsetDateTime dateBefore = OffsetDateTime.parse("2022-12-26T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+    private OffsetDateTime dateBefore = OffsetDateTime.parse("2022-12-26T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
     //private OffsetDateTime dateBefore = OffsetDateTime.parse("2022-11-14T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
-    private OffsetDateTime dateBefore = OffsetDateTime.parse("2022-10-03T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+    //private OffsetDateTime dateBefore = OffsetDateTime.parse("2022-10-03T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
 
 
     @Value("${tinkoff.emulator}")
@@ -71,9 +71,10 @@ class StrategiesByCandleHistoryTests {
 
         // Эмулируем поток свечей за заданный интервал (test.candle.history.duration)
         var days = historyDuration.toDays();
-        log.info("Эмулируем поток свечей за заданный интервал в днях {} до {}", days, dateBefore);
+        var strategies = strategySelector.getFigiesForActiveStrategies();
+        log.info("Эмулируем поток свечей за заданный интервал в днях {} до {} for {} strategies", days, dateBefore, strategies.size());
 
-        strategySelector.getFigiesForActiveStrategies().stream()
+        strategies.stream()
                 .flatMap(figi -> {
                     var candles = candleRepository.findByFigiAndIntervalAndBeforeDateTimeLimit(figi,
                             "1min", dateBefore, PageRequest.of(0, 1));

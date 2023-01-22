@@ -29,7 +29,7 @@ public class CandleListenerService {
     private final ITinkoffCommonAPI tinkoffCommonAPI;
     private final NotificationService notificationService;
 
-    private void startToListen(int number) {
+    private void startToListen(int number, String interval) {
         var figies = strategySelector.getFigiesForActiveStrategies();
         notificationService.sendMessageAndLog("Listening candle events..");
         try {
@@ -43,17 +43,17 @@ public class CandleListenerService {
                             candle.setHigh(item.getCandle().getHigh());
                             candle.setLow(item.getCandle().getLow());
                             candle.setTime(item.getCandle().getTime());
-                            var candleDomainEntity = candleHistoryService.addOrReplaceCandles(candle.build(), item.getCandle().getFigi(), "1min");
+                            var candleDomainEntity = candleHistoryService.addOrReplaceCandles(candle.build(), item.getCandle().getFigi(), interval);
                             purchaseService.observeNewCandleNoThrow(candleDomainEntity);
                         }
                     }, e -> {
-                        log.error("An error in candles_stream, listener will be restarted", e);
-                        startToListen(number + 1);
+                        log.error("An error in candles_stream " + interval + " , listener will be restarted", e);
+                        startToListen(number + 1, interval);
                     })
                     .subscribeCandles(new ArrayList<>(figies));
         } catch (Throwable th) {
-            log.error("An error in subscriber, listener will be restarted", th);
-            startToListen(number + 1);
+            log.error("An error in subscriber, listener " + interval + " will be restarted", th);
+            startToListen(number + 1, interval);
             throw th;
         }
     }
@@ -61,7 +61,10 @@ public class CandleListenerService {
     @PostConstruct
     void init() {
         new Thread(() -> {
-            startToListen(1);
+            startToListen(1, "1min");
+        }, "event-listener").start();
+        new Thread(() -> {
+            startToListen(1, "1hour");
         }, "event-listener").start();
     }
 }

@@ -26,10 +26,11 @@ public class StrategySelector {
     @Value("${invest.currency:RUB}")
     private String currency;
 
-    public List<AStrategy> suitableByFigi(String figi, AStrategy.Type type) {
+    public List<AStrategy> suitableByFigi(String figi, AStrategy.Type type, String interval) {
         return activeStrategies.stream()
                 .filter(s -> s.isEnabled())
                 .filter(s -> type == null || s.getType() == type)
+                .filter(s -> interval == null || s.getInterval().equals(interval))
                 .filter(s -> s.isSuitableByFigi(figi))
                 .collect(Collectors.toList());
     }
