@@ -402,6 +402,13 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 res = true;
             }
         }
+        if (sellCriteria.getExitLossPercent() != null
+                && profitPercent.floatValue() < -1 * sellCriteria.getExitLossPercent()
+                && factorial.getLoss() < candle.getClosingPrice().doubleValue()
+        ) {
+            annotation += "ok < ExitLossPercent " + sellCriteria.getExitLossPercent();
+            res = true;
+        }
         if (sellCriteria.getTakeProfitPercent() != null
                 && profitPercent.floatValue() > sellCriteria.getTakeProfitPercent()
         ) {

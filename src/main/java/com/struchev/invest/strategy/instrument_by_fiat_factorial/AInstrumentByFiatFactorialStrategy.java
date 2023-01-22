@@ -47,6 +47,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
         // Процент (take profit), если цена покупки растет на него, продаем в любом случае
         Float exitProfitPercent;
         Float exitProfitLossPercent;
+        Float exitLossPercent;
     }
 
     public AInstrumentByFiatFactorialStrategy.SellCriteria getSellCriteria() {
@@ -57,6 +58,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
                 .stopLossSoftPercent(0.2f)
                 .stopLossSoftLength(6)
                 .exitProfitLossPercent(0.1f)
+                .exitLossPercent(8f)
                 .build();
     }
 
