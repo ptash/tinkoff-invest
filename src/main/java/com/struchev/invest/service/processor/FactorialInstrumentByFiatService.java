@@ -651,11 +651,6 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 .profit(candle.getHighestPrice().doubleValue() * (1f + expectProfit / 100f))
                 .loss(candle.getLowestPrice().doubleValue() * (1f - expectLoss / 100f))
                 .build();
-        log.info("Select from {} best diff={} i={}, {} ({}) {} ({}) {} ({})", candleList.get(0).getDateTime(), bestDiff, startCandleI,
-                res.candleList.get(0).getDateTime(), res.candleList.size(),
-                res.candleListFeature.get(0).getDateTime(), res.candleListFeature.size(),
-                res.candleListPast.get(0).getDateTime(), res.candleListPast.size()
-        );
         return res;
     }
 }
