@@ -271,7 +271,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         lossAvg = lossAvg / strategy.getFactorialDownAvgSize();
                         annotation += " lossDownAvg=" + lossAvg;
                         if (true
-                                && lossAvg > loss
+                                //&& lossAvg > loss
                                 && isLess
                         ) {
                             annotation += " ok < lossDownAvg";
