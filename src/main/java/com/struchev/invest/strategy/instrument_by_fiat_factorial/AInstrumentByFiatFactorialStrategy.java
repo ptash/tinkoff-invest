@@ -55,9 +55,9 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
         return SellCriteria.builder()
                 .takeProfitPercent(0.3f)
                 .stopLossPercent(0.4f)
-                .stopLossLength(3)
+                .stopLossLength(2)
                 .stopLossSoftPercent(0.2f)
-                .stopLossSoftLength(6)
+                .stopLossSoftLength(5)
                 .exitProfitLossPercent(0.1f)
                 .exitLossPercent(8f)
                 .isSellUnderProfit(false)
@@ -116,7 +116,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
     public Integer getFactorialAvgSize() { return 3; };
     public Boolean isFactorialAvgByMiddle() { return false; };
     public Integer getFactorialDownAvgSize() { return 4; };
-    public Integer getFactorialLossIgnoreSize() { return 4; };
+    public Integer getFactorialLossIgnoreSize() { return 3; };
 
     public Float getFactorialRatioI() { return -1f; }
     public Float getFactorialRatioValue() { return 0.15f; }

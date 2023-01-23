@@ -91,8 +91,10 @@ public class CandleHistoryService {
                     .interval(interval)
                     .dateTime(dateTime)
                     .build();
-            candleDomainEntity = candleRepository.save(candleDomainEntity);
-            log.trace("Add new candle {}", candleDomainEntity);
+            if (candleDomainEntity.getIsComplete()) {
+                candleDomainEntity = candleRepository.save(candleDomainEntity);
+                log.trace("Add new candle {}", candleDomainEntity);
+            }
             return candleDomainEntity;
         } catch (Exception e) {
             log.error("Can't add candle", e);
@@ -235,12 +237,12 @@ public class CandleHistoryService {
         if (candlesMax != null && candlesMin != null) {
             log.info("History {} candles {} has period from {} to {}. We need period from {} to {}", interval, figi, candlesMin.getDateTime(), candlesMax.getDateTime(), timeStart, timeEnd);
             if (candlesMin.getDateTime().isAfter(timeStart) && candlesMin.getDateTime().isBefore(timeEnd)) {
-                var dayEndChanged = dayEnd - Duration.between(timeStart, candlesMin.getDateTime()).toMinutes() / minutesInInterval  + 1;
+                var dayEndChanged = Math.max(0, dayEnd - Duration.between(timeStart, candlesMin.getDateTime()).toMinutes() / minutesInInterval  + 1);
                 datesRange = LongStream.concat(datesRange, LongStream.range(dayEndChanged, dayEnd));
                 log.info("History start {} candles {} from {} to {} already loaded. Load from {} to {}", interval, figi, timeStart, candlesMin.getDateTime(), dayEndChanged, dayEnd);
             }
             if (candlesMax.getDateTime().isAfter(timeStart) && candlesMax.getDateTime().isBefore(timeEnd)) {
-                var dayStartChanged = dayStart + (Duration.between(candlesMax.getDateTime(), timeEnd).toMinutes() / minutesInInterval) - 1;
+                var dayStartChanged = Math.max(1, dayStart + (Duration.between(candlesMax.getDateTime(), timeEnd).toMinutes() / minutesInInterval) - 1);
                 datesRange = LongStream.concat(datesRange, LongStream.range(dayStart, dayStartChanged));
                 log.info("History end {} candles {} from {} to {} already loaded. Load from {} to {}", interval, figi, candlesMin.getDateTime(), candlesMax.getDateTime(), dayStart, dayStartChanged);
             }

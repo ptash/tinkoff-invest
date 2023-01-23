@@ -50,10 +50,12 @@ public class CandleListenerService {
                             candle.setTime(item.getCandle().getTime());
                             var candleDomainEntity = candleHistoryService.addOrReplaceCandles(candle.build(), item.getCandle().getFigi(), interval);
 
-                            var candleHour = candleHistoryService.getCandlesByFigiByLength(candleDomainEntity.getFigi(), candleDomainEntity.getDateTime(), 1, "1hour");
+                            var candleHour = candleHistoryService.getCandlesByFigiByLength(candleDomainEntity.getFigi(), candleDomainEntity.getDateTime(), 1,
+                                    "1hour");
                             var maxCandleHourDate = Date.formatDateTimeToHour(candleHour.get(0).getDateTime());
-                            if (!maxCandleHourDate.equals(Date.formatDateTimeToHour(candleDomainEntity.getDateTime()))) {
-                                log.info("Need 1hour candle {} != {}", maxCandleHourDate, Date.formatDateTimeToHour(candleDomainEntity.getDateTime()));
+                            var curCandleHourExpect = Date.formatDateTimeToHour(candleDomainEntity.getDateTime().minusHours(1));
+                            if (!maxCandleHourDate.equals(curCandleHourExpect)) {
+                                log.info("Need 1hour candle {} != {}", maxCandleHourDate, curCandleHourExpect);
                                 candleHistoryService.loadCandlesHistory(candleDomainEntity.getFigi(), 1L, CandleInterval.CANDLE_INTERVAL_HOUR, OffsetDateTime.now());
                             }
                             purchaseService.observeNewCandleNoThrow(candleDomainEntity);

@@ -52,7 +52,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
 
     public boolean isShouldBuy(AInstrumentByFiatFactorialStrategy strategy, CandleDomainEntity candle) {
         var candleList = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
-                candle.getDateTime(), 3, strategy.getFactorialInterval());
+                candle.getDateTime(), 2, strategy.getFactorialInterval());
         var factorial = findBestFactorialInPast(strategy, candleList.get(1));
         String annotation = "null";
         var res = false;
@@ -91,7 +91,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 annotation += " ok";
                 annotation += " info: " + factorial.getInfo();
                 var candleListPrev = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
-                        candle.getDateTime(), strategy.getBuyCriteria().getTakeProfitPercentBetweenLength() + 1, strategy.getFactorialInterval());
+                        candle.getDateTime(), strategy.getBuyCriteria().getTakeProfitPercentBetweenLength(), strategy.getFactorialInterval());
                 for (var i = 0; i < strategy.getBuyCriteria().getTakeProfitPercentBetweenLength() - 1; i++) {
                     var factorialPrev = findBestFactorialInPast(strategy, candleListPrev.get(i));
                     var expectProfitPrev = factorialPrev.getExpectProfit();
@@ -135,7 +135,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 annotation += " ok TakeLossPercentBetween";
                 annotation += " info: " + factorial.getInfo();
                 var candleListPrev = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
-                        candle.getDateTime(), strategy.getBuyCriteria().getTakeLossPercentBetweenLength() + 1, strategy.getFactorialInterval());
+                        candle.getDateTime(), strategy.getBuyCriteria().getTakeLossPercentBetweenLength(), strategy.getFactorialInterval());
                 var lowestAvg = candleListPrev.stream().mapToDouble(v -> v.getLowestPrice().doubleValue()).average().orElse(-1);
                 lowestAvg -= candleListPrev.stream().mapToDouble(v -> v.getLowestPrice().doubleValue()).max().orElse(-1) / candleListPrev.size();
                 lowestAvg = candleListPrev.size() * lowestAvg / (candleListPrev.size() - 1);
@@ -207,7 +207,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     Double endMiddle = 0.;
                     var beginMiddleSize = Math.max(1, strategy.getFactorialAvgSize() / 2);
                     var candleListPrev = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
-                            candle.getDateTime(), strategy.getFactorialAvgSize() + 2, strategy.getFactorialInterval());
+                            candle.getDateTime(), strategy.getFactorialAvgSize() + 1, strategy.getFactorialInterval());
                     for (var i = 0; i < strategy.getFactorialAvgSize(); i++) {
                         var factorialPrev = findBestFactorialInPast(strategy, candleListPrev.get(i));
                         expectLossAvg += factorialPrev.getExpectLoss();
@@ -273,7 +273,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     } else {
                         lossAvg = (double) 0;
                         var candleListPrevPrev = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
-                                candle.getDateTime(), strategy.getFactorialDownAvgSize() + 2, strategy.getFactorialInterval());
+                                candle.getDateTime(), strategy.getFactorialDownAvgSize() + 1, strategy.getFactorialInterval());
                         boolean isLess = false;
                         for (var i = 0; i < strategy.getFactorialDownAvgSize(); i++) {
                             var factorialPrev = findBestFactorialInPast(strategy, candleListPrevPrev.get(i));
@@ -380,7 +380,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
 
         var candleListPrev = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
                 candle.getDateTime(), strategy.getFactorialLossIgnoreSize(), strategy.getFactorialInterval());
-        var factorial = findBestFactorialInPast(strategy, candleListPrev.get(strategy.getFactorialLossIgnoreSize() - 2));
+        var factorial = findBestFactorialInPast(strategy, candleListPrev.get(strategy.getFactorialLossIgnoreSize() - 1));
         var order = orderService.findActiveByFigiAndStrategy(candle.getFigi(), strategy);
         Boolean res = false;
         String annotation = " profitPercent=" + profitPercent;
@@ -477,7 +477,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
 
     private FactorialData findBestFactorialInPast(AInstrumentByFiatFactorialStrategy strategy, CandleDomainEntity candle) {
         var candleListCash = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
-                candle.getDateTime(), 2, strategy.getFactorialInterval());
+                candle.getDateTime(), 1, strategy.getFactorialInterval());
         String key = candle.getFigi() + candleListCash.get(0).getDateTime();
         var ret = getCashedValue(key);
         if (ret != null) {
