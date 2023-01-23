@@ -124,6 +124,9 @@ public class CandleHistoryService {
 
     public List<CandleDomainEntity> getCandlesByFigiByLength(String figi, OffsetDateTime currentDateTime, Integer length, String interval)
     {
+        if (interval.equals("1hour")) {
+            currentDateTime = currentDateTime.minusMinutes(currentDateTime.getMinute() + 1);
+        }
         var candleHistoryLocal = getCandlesByFigiAndIntervalAndBeforeDateTimeLimit(figi,
                 currentDateTime, length, interval);
 
