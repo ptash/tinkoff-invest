@@ -82,6 +82,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
         Double splashProfitPercentMin;
         Double splashLossRatio;
         Double splashLossPercentMax;
+        Boolean isAllUnderLoss;
     }
 
     public  AInstrumentByFiatFactorialStrategy.BuyCriteria getBuyCriteria() {
@@ -103,6 +104,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
                 .splashProfitPercentMin(1.5)
                 .splashLossRatio(2.0)
                 //.splashLossPercentMax(0.2)
+                .isAllUnderLoss(false)
                 .build();
     }
 

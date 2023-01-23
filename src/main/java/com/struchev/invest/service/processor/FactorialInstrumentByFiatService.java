@@ -188,6 +188,14 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 //}
             }
 
+            if (!res
+                    && strategy.getBuyCriteria().getIsAllUnderLoss()
+                    && candle.getClosingPrice().doubleValue() < loss
+            ) {
+                annotation += " ok < all loss";
+                res = true;
+            }
+
             //log.info("FactorialInstrumentByFiatService {} from {} to {} {}", candle.getFigi(), factorial.candleListPast.get(0).getDateTime(), candle.getDateTime(), factorial.candleListFeature.size(), annotation);
             if (!res
                     && strategy.getBuyCriteria().getTakeProfitLossPercent() != null
@@ -240,9 +248,6 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         }
                     } else {
                         lossAvg = lossAvg / strategy.getFactorialAvgSize();
-                    }
-                    if (strategy.isFactorialAvgByMiddle()) {
-
                     }
                     //lossAvg = lossAvg / strategy.getFactorialAvgSize();
                     //lossAvg = lossAvg / strategy.getFactorialAvgSize();
