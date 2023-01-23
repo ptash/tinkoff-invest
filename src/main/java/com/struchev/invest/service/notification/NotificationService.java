@@ -16,6 +16,7 @@ import com.pengrad.telegrambot.UpdatesListener;
 import com.pengrad.telegrambot.request.SendMessage;
 import com.struchev.invest.entity.CandleDomainEntity;
 import com.struchev.invest.entity.OrderDomainEntity;
+import com.struchev.invest.expression.Date;
 import com.struchev.invest.strategy.AStrategy;
 import io.micrometer.core.instrument.util.StringUtils;
 import lombok.RequiredArgsConstructor;
@@ -131,7 +132,7 @@ public class NotificationService {
     }
 
     public String formatDateTime(OffsetDateTime date) {
-        return date.atZoneSimilarLocal(ZoneId.systemDefault()).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+        return Date.formatDateTimeWithTimeZone(date);
     }
 
     @PostConstruct

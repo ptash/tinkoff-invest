@@ -215,7 +215,7 @@ public class CandleHistoryService {
         log.info("Loaded to load history for {} days", days);
     }
 
-    private void loadCandlesHistory(String figi, Long days, CandleInterval candleInterval, OffsetDateTime now)
+    public void loadCandlesHistory(String figi, Long days, CandleInterval candleInterval, OffsetDateTime now)
     {
         String interval = candleInterval == CandleInterval.CANDLE_INTERVAL_1_MIN ? "1min"
                 : (candleInterval == CandleInterval.CANDLE_INTERVAL_HOUR ? "1hour" : "1day");

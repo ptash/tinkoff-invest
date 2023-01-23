@@ -21,7 +21,7 @@ public class Factorial2Strategy extends AInstrumentByFiatFactorialStrategy {
     @Override
     public Map<String, Integer> getFigies()  { return FIGIES; }
 
-    public Integer getFactorialAvgSize() { return 4; };
+    public Integer getFactorialAvgSize() { return 8; };
 
     public Boolean isFactorialAvgByMiddle() { return true; };
 
