@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Component
-public class FactorialStrategy extends AInstrumentByFiatFactorialStrategy {
+public class Factorial2Strategy extends AInstrumentByFiatFactorialStrategy {
     private static final Map FIGIES = new HashMap<String, Integer>();
     static {
         //FIGIES.put("BBG000LWVHN8", 1); // Дагестанская энергосбытовая компания
@@ -14,10 +14,23 @@ public class FactorialStrategy extends AInstrumentByFiatFactorialStrategy {
         //FIGIES.put("BBG00475KKY8", 1); // НОВАТЭК
         //FIGIES.put("BBG006L8G4H1", 1); // Yandex
         //FIGIES.put("BBG00178PGX3", 1); // VK
+        //FIGIES.put("BBG00QPYJ5H0", 1); // TCS Group
+        //FIGIES.put("BBG004730JJ5", 1); // Московская Биржа
         FIGIES.put("BBG005DXJS36", 1); // TCS Group (Tinkoff Bank holder)
     }
     @Override
     public Map<String, Integer> getFigies()  { return FIGIES; }
 
-    public boolean isEnabled() { return true; }
+    public Integer getFactorialAvgSize() { return 4; };
+
+    public Boolean isFactorialAvgByMiddle() { return true; };
+
+    public AInstrumentByFiatFactorialStrategy.SellCriteria getSellCriteria() {
+        var sell = super.getSellCriteria();
+        sell.setIsSellUnderProfit(true);
+        return sell;
+    }
+    public boolean isEnabled() {
+        return true;
+    }
 }

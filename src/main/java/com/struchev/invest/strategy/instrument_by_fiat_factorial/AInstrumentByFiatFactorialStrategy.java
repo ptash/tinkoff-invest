@@ -48,6 +48,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
         Float exitProfitPercent;
         Float exitProfitLossPercent;
         Float exitLossPercent;
+        Boolean isSellUnderProfit;
     }
 
     public AInstrumentByFiatFactorialStrategy.SellCriteria getSellCriteria() {
@@ -59,6 +60,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
                 .stopLossSoftLength(6)
                 .exitProfitLossPercent(0.1f)
                 .exitLossPercent(8f)
+                .isSellUnderProfit(false)
                 .build();
     }
 
@@ -112,6 +114,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
     public List<Integer> getFactorialSizes() { return List.of(1); };
     public Integer getFactorialBestSize() { return 3; };
     public Integer getFactorialAvgSize() { return 3; };
+    public Boolean isFactorialAvgByMiddle() { return false; };
     public Integer getFactorialDownAvgSize() { return 4; };
     public Integer getFactorialLossIgnoreSize() { return 4; };
 

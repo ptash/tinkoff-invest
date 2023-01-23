@@ -15,9 +15,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -205,6 +203,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     Double maxV = null;
                     Double minV = null;
                     Double minProfit = null;
+                    Double beginMiddle = 0.;
+                    Double endMiddle = 0.;
+                    var beginMiddleSize = Math.max(1, strategy.getFactorialAvgSize() / 2);
                     var candleListPrev = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
                             candle.getDateTime(), strategy.getFactorialAvgSize() + 2, strategy.getFactorialInterval());
                     for (var i = 0; i < strategy.getFactorialAvgSize(); i++) {
@@ -221,16 +222,27 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         if (minProfit == null || minProfit > factorialPrev.getProfit()) {
                             minProfit = factorialPrev.getProfit();
                         }
+                        if (i < beginMiddleSize) {
+                            beginMiddle += factorialPrev.getLoss() + (factorialPrev.getProfit() - factorialPrev.getLoss()) / 2;
+                        } else {
+                            endMiddle += factorialPrev.getLoss() + (factorialPrev.getProfit() - factorialPrev.getLoss()) / 2;
+                        }
                     }
                     if (strategy.getFactorialAvgSize() > 2) {
                         //expectLossAvg -= maxV;
                         //expectLossAvg -= minV;
                         lossAvg -= minV;
-                        lossAvg = lossAvg / (strategy.getFactorialAvgSize() - 1);
-                        expectLossAvg = expectLossAvg / (strategy.getFactorialAvgSize() - 2);
+                        if (strategy.getFactorialAvgSize() > 3) {
+                            lossAvg -= maxV;
+                            lossAvg = lossAvg / (strategy.getFactorialAvgSize() - 2);
+                        } else {
+                            lossAvg = lossAvg / (strategy.getFactorialAvgSize() - 1);
+                        }
                     } else {
-                        expectLossAvg = expectLossAvg / strategy.getFactorialAvgSize();
                         lossAvg = lossAvg / strategy.getFactorialAvgSize();
+                    }
+                    if (strategy.isFactorialAvgByMiddle()) {
+
                     }
                     //lossAvg = lossAvg / strategy.getFactorialAvgSize();
                     //lossAvg = lossAvg / strategy.getFactorialAvgSize();
@@ -239,7 +251,18 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     //annotation += " expectLossAvg=" + expectLossAvg;
                     annotation += " lossAvg=" + lossAvg;
                     annotation += " minProfit=" + minProfit;
-                    if (true
+                    var isUpByMiddle = true;
+                    if (strategy.isFactorialAvgByMiddle() && strategy.getFactorialAvgSize() > 1) {
+                        isUpByMiddle = false;
+                        beginMiddle = beginMiddle / beginMiddleSize;
+                        endMiddle = endMiddle / (strategy.getFactorialAvgSize() - beginMiddleSize);
+                        annotation += " beginMiddle=" + beginMiddle;
+                        annotation += " endMiddle=" + endMiddle;
+                        if (beginMiddle <= endMiddle) {
+                            isUpByMiddle = true;
+                        }
+                    }
+                    if (isUpByMiddle
                             //&& candle.getClosingPrice().doubleValue() < lossAvg
                             && lossAvg <= loss
                             && factorial.getExpectProfit() > strategy.getBuyCriteria().getTakeProfitLossPercent()
@@ -365,7 +388,11 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         Boolean res = false;
         String annotation = " profitPercent=" + profitPercent;
         annotation += " orderDate=" + order.getPurchaseDateTime() + " prevCandleDate=" + candleListPrev.get(0).getDateTime();
-        if (sellCriteria.getStopLossSoftPercent() != null
+        if (strategy.getSellCriteria().getIsSellUnderProfit() && factorial.getProfit() < candle.getClosingPrice().doubleValue()) {
+            annotation += "profit < close";
+            res = true;
+        }
+        if (!res && sellCriteria.getStopLossSoftPercent() != null
                 && profitPercent.floatValue() < -1 * sellCriteria.getStopLossSoftPercent()
                 && factorial.getLoss() < candle.getClosingPrice().doubleValue()
                 && candleListPrev.get(0).getDateTime().isAfter(order.getPurchaseDateTime())
@@ -452,6 +479,13 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
     }
 
     private FactorialData findBestFactorialInPast(AInstrumentByFiatFactorialStrategy strategy, CandleDomainEntity candle) {
+        var candleListCash = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
+                candle.getDateTime(), 2, strategy.getFactorialInterval());
+        String key = candle.getFigi() + candleListCash.get(0).getDateTime();
+        var ret = getCashedValue(key);
+        if (ret != null) {
+            return ret;
+        }
         var candleList = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
                 candle.getDateTime(), strategy.getFactorialHistoryLength(), strategy.getFactorialInterval());
         if (null == candleList) {
@@ -651,6 +685,28 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 .profit(candle.getHighestPrice().doubleValue() * (1f + expectProfit / 100f))
                 .loss(candle.getLowestPrice().doubleValue() * (1f - expectLoss / 100f))
                 .build();
+        addCashedValue(key, res);
         return res;
+    }
+
+    private Map<String, FactorialData> factorialCashMap = new HashMap<>();
+
+    private synchronized FactorialData getCashedValue(String indent)
+    {
+        if (factorialCashMap.containsKey(indent)) {
+            return factorialCashMap.get(indent);
+        }
+        if (factorialCashMap.size() > 100) {
+            factorialCashMap.clear();
+        }
+        return null;
+    }
+
+    private synchronized void addCashedValue(String indent, FactorialData v)
+    {
+        if (factorialCashMap.size() > 100) {
+            factorialCashMap.clear();
+        }
+        factorialCashMap.put(indent, v);
     }
 }

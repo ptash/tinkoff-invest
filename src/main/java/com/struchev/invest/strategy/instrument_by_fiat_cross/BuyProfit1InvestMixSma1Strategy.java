@@ -35,6 +35,6 @@ public class BuyProfit1InvestMixSma1Strategy extends BuyProfit1InvestMixStrategy
         return crisisStrategy;
     }
 
-    public boolean isEnabled() { return true; }
+    public boolean isEnabled() { return false; }
     public boolean isArchive() {return true;}
 }
