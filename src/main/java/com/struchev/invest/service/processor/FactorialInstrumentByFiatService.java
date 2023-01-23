@@ -251,20 +251,17 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     //annotation += " expectLossAvg=" + expectLossAvg;
                     annotation += " lossAvg=" + lossAvg;
                     annotation += " minProfit=" + minProfit;
-                    var isUpByMiddle = true;
-                    if (strategy.isFactorialAvgByMiddle() && strategy.getFactorialAvgSize() > 1) {
-                        isUpByMiddle = false;
+                    var isUp = lossAvg <= loss;
+                    if (isUp && strategy.isFactorialAvgByMiddle() && strategy.getFactorialAvgSize() > 1) {
                         beginMiddle = beginMiddle / beginMiddleSize;
                         endMiddle = endMiddle / (strategy.getFactorialAvgSize() - beginMiddleSize);
                         annotation += " beginMiddle=" + beginMiddle;
                         annotation += " endMiddle=" + endMiddle;
                         if (beginMiddle <= endMiddle) {
-                            isUpByMiddle = true;
+                            isUp = true;
                         }
                     }
-                    if (isUpByMiddle
-                            //&& candle.getClosingPrice().doubleValue() < lossAvg
-                            && lossAvg <= loss
+                    if (isUp
                             && factorial.getExpectProfit() > strategy.getBuyCriteria().getTakeProfitLossPercent()
                             //&& minProfit > loss
                             //&& (expectLossAvg + expectProfit) > strategy.getBuyCriteria().getTakeProfitPercent()
