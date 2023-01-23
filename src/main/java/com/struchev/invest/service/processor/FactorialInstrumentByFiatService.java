@@ -476,15 +476,19 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
     }
 
     private FactorialData findBestFactorialInPast(AInstrumentByFiatFactorialStrategy strategy, CandleDomainEntity candle) {
+        var curDateTime = candle.getDateTime();
+        if (strategy.getFactorialInterval().equals("1hour")) {
+            curDateTime = curDateTime.plusMinutes(60);
+        }
         var candleListCash = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
-                candle.getDateTime(), 1, strategy.getFactorialInterval());
+                curDateTime, 1, strategy.getFactorialInterval());
         String key = candle.getFigi() + candleListCash.get(0).getDateTime();
         var ret = getCashedValue(key);
         if (ret != null) {
             return ret;
         }
         var candleList = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
-                candle.getDateTime(), strategy.getFactorialHistoryLength(), strategy.getFactorialInterval());
+                curDateTime, strategy.getFactorialHistoryLength(), strategy.getFactorialInterval());
         if (null == candleList) {
             return null;
         }
