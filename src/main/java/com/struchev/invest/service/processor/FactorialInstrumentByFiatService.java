@@ -232,7 +232,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         //expectLossAvg -= maxV;
                         //expectLossAvg -= minV;
                         lossAvg -= minV;
-                        if (strategy.getFactorialAvgSize() > 3) {
+                        if (strategy.getFactorialAvgSize() > 4) {
                             lossAvg -= maxV;
                             lossAvg = lossAvg / (strategy.getFactorialAvgSize() - 2);
                         } else {
