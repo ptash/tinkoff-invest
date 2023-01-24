@@ -91,10 +91,8 @@ public class CandleHistoryService {
                     .interval(interval)
                     .dateTime(dateTime)
                     .build();
-            if (candleDomainEntity.getIsComplete()) {
-                candleDomainEntity = candleRepository.save(candleDomainEntity);
-                log.trace("Add new candle {}", candleDomainEntity);
-            }
+            candleDomainEntity = candleRepository.save(candleDomainEntity);
+            log.trace("Add new candle {}", candleDomainEntity);
             return candleDomainEntity;
         } catch (Exception e) {
             log.error("Can't add candle", e);
@@ -226,8 +224,8 @@ public class CandleHistoryService {
                 : (candleInterval == CandleInterval.CANDLE_INTERVAL_HOUR ? "1hour" : "1day");
         Integer minutesInInterval = candleInterval == CandleInterval.CANDLE_INTERVAL_1_MIN ? 60 * 24
                 : (candleInterval == CandleInterval.CANDLE_INTERVAL_HOUR ? 60 * 24 * 6 : 60 * 24 * 365);
-        var candlesMax = candleRepository.findFirstByFigiAndIntervalOrderByDateTimeDesc(figi, interval);
-        var candlesMin = candleRepository.findFirstByFigiAndIntervalOrderByDateTimeAsc(figi, interval);
+        var candlesMax = candleRepository.findFirstByFigiAndIntervalAndIsCompleteOrderByDateTimeDesc(figi, interval, true);
+        var candlesMin = candleRepository.findFirstByFigiAndIntervalAndIsCompleteOrderByDateTimeAsc(figi, interval, true);
 
         var dayStart = 0;
         var dayEnd = candleInterval == CandleInterval.CANDLE_INTERVAL_1_MIN ? days

@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Component
-public class FactorialStrategy extends AInstrumentByFiatFactorialStrategy {
+public class Factorial2Strategy extends AInstrumentByFiatFactorialStrategy {
     private static final Map FIGIES = new HashMap<String, Integer>();
     static {
         //FIGIES.put("BBG000LWVHN8", 1); // Дагестанская энергосбытовая компания
@@ -16,6 +16,11 @@ public class FactorialStrategy extends AInstrumentByFiatFactorialStrategy {
         //FIGIES.put("BBG00178PGX3", 1); // VK
         FIGIES.put("BBG005DXJS36", 1); // TCS Group (Tinkoff Bank holder)
     }
+
+    public Integer getFactorialAvgSize() { return 8; };
+
+    public Boolean isFactorialAvgByMiddle() { return true; };
+
     @Override
     public Map<String, Integer> getFigies()  { return FIGIES; }
 
