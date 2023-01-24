@@ -14,6 +14,10 @@ public class FactorialAllLossStrategy extends Factorial2Strategy {
     }
     @Override
     public Map<String, Integer> getFigies()  { return FIGIES; }
+    public Integer getFactorialHistoryLength() {
+        return this.getFactorialLength() * 100;
+    }
+
     public  BuyCriteria getBuyCriteria() {
         var buy = super.getBuyCriteria();
         buy.setIsAllUnderLoss(true);
