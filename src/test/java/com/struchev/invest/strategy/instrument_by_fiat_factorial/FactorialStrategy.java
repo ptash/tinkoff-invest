@@ -14,9 +14,11 @@ public class FactorialStrategy extends AInstrumentByFiatFactorialStrategy {
         //FIGIES.put("BBG004S681W1", 10); // МТС
         //FIGIES.put("BBG00475KKY8", 1); // НОВАТЭК
         //FIGIES.put("BBG006L8G4H1", 1); // Yandex
-        FIGIES.put("BBG00178PGX3", 1); // VK
+        //FIGIES.put("BBG00178PGX3", 1); // VK
         //FIGIES.put("BBG00QPYJ5H0", 1); // TCS Group
         //FIGIES.put("BBG004730JJ5", 1); // Московская Биржа
+        //FIGIES.put("TCS00A0JQ9P9", 1); // SPBE
+        FIGIES.put("TCS00A103X66", 1); // POSI
         FIGIES.put("BBG005DXJS36", 1); // TCS Group (Tinkoff Bank holder)
     }
     @Override
