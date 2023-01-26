@@ -184,7 +184,7 @@ public class CandleHistoryService {
                     start.toInstant(), end.toInstant(), resolution).get();
             return candles;
         } catch (Exception e) {
-            log.error("Can't get candles for figi {}", e);
+            log.error("Can't get candles for figi " + figi, e);
             Thread.sleep(10000);
             return requestCandles(figi, start, end, resolution, tries--);
         }
