@@ -11,7 +11,7 @@ public class FactorialAllLoss100Strategy extends Factorial2Strategy {
     private static final Map FIGIES = new HashMap<String, Integer>();
     static {
         FIGIES.put("TCS00A103X66", 1); // POSI
-        FIGIES.put("BBG002GHV6L9", 1); // SPBE
+        FIGIES.put("BBG002GHV6L9", 10); // SPBE
     }
     @Override
     public Map<String, Integer> getFigies()  { return FIGIES; }
