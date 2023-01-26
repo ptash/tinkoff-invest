@@ -147,7 +147,7 @@ public class CandleHistoryService {
             var startDateTime = dateTime.minusDays(30).minusMinutes((interval.equals("1min") ? length
                     : (interval.equals("1hour") ? (length * 24) : (length * 60 * 24))) * 10);
             var candles = candlesByFigi.stream()
-                    .filter(c -> c.getDateTime().isAfter(startDateTime))
+                    //.filter(c -> c.getDateTime().isAfter(startDateTime))
                     .filter(c -> c.getDateTime().isBefore(dateTime) || c.getDateTime().isEqual(dateTime))
                     .collect(Collectors.toList());
             if (length > candles.size()) {
