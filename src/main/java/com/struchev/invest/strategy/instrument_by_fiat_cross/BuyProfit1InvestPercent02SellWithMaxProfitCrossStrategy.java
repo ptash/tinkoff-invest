@@ -54,7 +54,7 @@ public class BuyProfit1InvestPercent02SellWithMaxProfitCrossStrategy extends Buy
     public Boolean isTubeTopBlur() { return false; }
 
     @Override
-    public boolean isEnabled() { return false; }
+    public boolean isEnabled() { return true; }
 
-    public boolean isArchive() {return false;}
+    public boolean isArchive() {return true;}
 }
