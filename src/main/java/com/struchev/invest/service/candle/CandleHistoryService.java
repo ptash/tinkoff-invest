@@ -160,8 +160,9 @@ public class CandleHistoryService {
         }
 
         Pageable top = PageRequest.of(0, length);
-        var candles = candleRepository.findByFigiAndIntervalAndBeforeDateTimeLimit(figi,
-                interval, dateTime, top);
+        var candles = interval.equals("1min")
+                ? candleRepository.findByFigiAndIntervalAndBeforeDateTimeLimit(figi, interval, dateTime, top)
+                : candleRepository.findByFigiAndIntervalAndBeforeDateTimeCompletedLimit(figi, interval, dateTime, top);
         Collections.reverse(candles);
         return candles;
     }
