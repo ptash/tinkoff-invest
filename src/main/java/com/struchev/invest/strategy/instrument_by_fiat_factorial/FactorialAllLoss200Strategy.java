@@ -10,6 +10,7 @@ public class FactorialAllLoss200Strategy extends Factorial2Strategy {
 
     private static final Map FIGIES = new HashMap<String, Integer>();
     static {
+        FIGIES.put("BBG002458LF8", 1); // SELG Селигдар
         FIGIES.put("BBG00178PGX3", 1); // VK
     }
     @Override
