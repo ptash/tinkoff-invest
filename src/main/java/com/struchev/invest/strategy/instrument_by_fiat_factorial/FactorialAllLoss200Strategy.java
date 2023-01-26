@@ -11,9 +11,9 @@ public class FactorialAllLoss200Strategy extends Factorial2Strategy {
     private static final Map FIGIES = new HashMap<String, Integer>();
     static {
         FIGIES.put("BBG00Y91R9T3", 1); // OZON
-        FIGIES.put("BBG0029SG1C1", 10); // KZOSP ПАО «КАЗАНЬОРГСИНТЕЗ» - акции привилегированные
-        FIGIES.put("BBG002458LF8", 1); // SELG Селигдар
-        FIGIES.put("BBG00178PGX3", 1); // VK
+        FIGIES.put("BBG0029SG1C1", 100); // KZOSP ПАО «КАЗАНЬОРГСИНТЕЗ» - акции привилегированные
+        FIGIES.put("BBG002458LF8", 50); // SELG Селигдар
+        FIGIES.put("BBG00178PGX3", 5); // VK
     }
     @Override
     public Map<String, Integer> getFigies()  { return FIGIES; }
