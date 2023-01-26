@@ -12,7 +12,7 @@ public class FactorialStrategy extends AInstrumentByFiatFactorialStrategy {
     static {
         //FIGIES.put("BBG000LWVHN8", 1); // Дагестанская энергосбытовая компания
         //FIGIES.put("BBG004S681W1", 10); // МТС
-        FIGIES.put("BBG00475KKY8", 1); // НОВАТЭК
+        //FIGIES.put("BBG00475KKY8", 1); // НОВАТЭК
         //FIGIES.put("BBG006L8G4H1", 1); // Yandex
         //FIGIES.put("BBG00178PGX3", 1); // VK
         //FIGIES.put("BBG00QPYJ5H0", 1); // TCS Group
@@ -22,7 +22,7 @@ public class FactorialStrategy extends AInstrumentByFiatFactorialStrategy {
         //FIGIES.put("BBG004731032", 1); // ЛУКОЙЛ
         //FIGIES.put("BBG002458LF8", 1); // SELG Селигдар
         //FIGIES.put("BBG004730RP0", 1); // Газпром
-        //FIGIES.put("BBG0029SG1C1", 10); // KZOSP ПАО «КАЗАНЬОРГСИНТЕЗ» - акции привилегированные
+        FIGIES.put("BBG0029SG1C1", 10); // KZOSP ПАО «КАЗАНЬОРГСИНТЕЗ» - акции привилегированные
         //FIGIES.put("BBG222222222", 100); // Тинькофф Золото
         //FIGIES.put("BBG005DXJS36", 1); // TCS Group (Tinkoff Bank holder)
     }
