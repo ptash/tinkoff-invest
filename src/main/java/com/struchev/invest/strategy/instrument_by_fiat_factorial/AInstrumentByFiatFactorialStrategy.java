@@ -83,10 +83,11 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
         Double splashLossRatio;
         Double splashLossPercentMax;
         Boolean isAllUnderLoss;
+        Boolean isOverProfit;
     }
 
-    public  AInstrumentByFiatFactorialStrategy.BuyCriteria getBuyCriteria() {
-        return AInstrumentByFiatFactorialStrategy.BuyCriteria.builder()
+    public BuyCriteria getBuyCriteria() {
+        return BuyCriteria.builder()
                 .takeProfitLossPercent(1.0f)
 
                 .takeProfitPercentBetweenCloseMax(0.5f)
@@ -105,6 +106,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
                 .splashLossRatio(2.0)
                 //.splashLossPercentMax(0.2)
                 .isAllUnderLoss(false)
+                .isOverProfit(false)
                 .build();
     }
 

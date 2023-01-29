@@ -53,16 +53,20 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
     public boolean isShouldBuy(AInstrumentByFiatFactorialStrategy strategy, CandleDomainEntity candle) {
         var candleList = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
                 candle.getDateTime(), 2, strategy.getFactorialInterval());
-        var factorial = findBestFactorialInPast(strategy, candleList.get(1));
-        String annotation = "null";
+        var curHourCandle = candleList.get(1);
+        var factorial = findBestFactorialInPast(strategy, curHourCandle);
+        String annotation = curHourCandle.getDateTime().toString();
         var res = false;
         Double profit = factorial.getProfit();
         Double loss = factorial.getLoss();
         var futureProfit = 100f * (factorial.getProfit() - candle.getClosingPrice().doubleValue()) / candle.getClosingPrice().doubleValue();
+        var futureLoss = 100f * (candle.getClosingPrice().doubleValue() - factorial.getLoss()) / candle.getClosingPrice().doubleValue();
         var closeMax = (candle.getClosingPrice().doubleValue() - factorial.getLoss())/(factorial.getProfit() - factorial.getLoss());
         annotation += " futureProfit=" + futureProfit;
+        annotation += " futureLoss=" + futureLoss;
         annotation += " closeMax=" + closeMax;
         Double lossAvg = null;
+        Double profitAvg = null;
         if (null != factorial) {
             annotation += "factorial from " + factorial.getCandleList().get(0).getDateTime()
                     + " to " + factorial.getCandleList().get(factorial.getCandleList().size() - 1).getDateTime() + " size=" + factorial.getSize()
@@ -315,12 +319,130 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 }
             }
             if (!res
+                    && strategy.getBuyCriteria().getIsOverProfit()
                     && candle.getClosingPrice().doubleValue() > profit
-                    && expectProfit < 0
-                    && false
             ) {
-                annotation += "ok < profit";
-                res = true;
+                Boolean isBuyToShort = false;
+
+                if (expectProfit > 0
+                        && (strategy.getBuyCriteria().getTakeProfitLossPercent() == null
+                        || futureLoss > strategy.getBuyCriteria().getTakeProfitLossPercent())) {
+                    profitAvg = 0.0;
+                    if (strategy.getFactorialAvgSize() > 1) {
+                        Double maxV = null;
+                        Double minV = null;
+                        Double minProfit = null;
+                        Double beginMiddle = 0.;
+                        Double endMiddle = 0.;
+                        var beginMiddleSize = Math.max(1, strategy.getFactorialAvgSize() / 2);
+                        var candleListPrev = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
+                                candle.getDateTime(), strategy.getFactorialAvgSize() + 1, strategy.getFactorialInterval());
+                        for (var i = 0; i < strategy.getFactorialAvgSize(); i++) {
+                            var factorialPrev = findBestFactorialInPast(strategy, candleListPrev.get(i));
+                            profitAvg += factorialPrev.getProfit();
+                            if (maxV == null || maxV < factorialPrev.getProfit()) {
+                                maxV = factorialPrev.getProfit();
+                            }
+                            if (minV == null || minV > factorialPrev.getProfit()) {
+                                minV = factorialPrev.getProfit();
+                            }
+                            if (minProfit == null || minProfit > factorialPrev.getProfit()) {
+                                minProfit = factorialPrev.getProfit();
+                            }
+                            if (i < beginMiddleSize) {
+                                beginMiddle += factorialPrev.getLoss() + (factorialPrev.getProfit() - factorialPrev.getLoss()) / 2;
+                            } else {
+                                endMiddle += factorialPrev.getLoss() + (factorialPrev.getProfit() - factorialPrev.getLoss()) / 2;
+                            }
+                        }
+                        if (strategy.getFactorialAvgSize() > 2) {
+                            //expectLossAvg -= maxV;
+                            //expectLossAvg -= minV;
+                            profitAvg -= minV;
+                            if (strategy.getFactorialAvgSize() > 4) {
+                                profitAvg -= maxV;
+                                profitAvg = profitAvg / (strategy.getFactorialAvgSize() - 2);
+                            } else {
+                                profitAvg = profitAvg / (strategy.getFactorialAvgSize() - 1);
+                            }
+                        } else {
+                            profitAvg = profitAvg / strategy.getFactorialAvgSize();
+                        }
+                        //lossAvg = lossAvg / strategy.getFactorialAvgSize();
+                        //lossAvg = lossAvg / strategy.getFactorialAvgSize();
+                        //lossAvg = Math.min(candleList.get(1).getLowestPrice().doubleValue(), lossAvg);
+                        //lossAvg = lossAvg * (1f - expectLossAvg / 100f);
+                        //annotation += " expectLossAvg=" + expectLossAvg;
+                        annotation += " profitAvg=" + profitAvg;
+                        var isDown = profitAvg >= profit;
+                        if (isDown && strategy.isFactorialAvgByMiddle() && strategy.getFactorialAvgSize() > 1) {
+                            beginMiddle = beginMiddle / beginMiddleSize;
+                            endMiddle = endMiddle / (strategy.getFactorialAvgSize() - beginMiddleSize);
+                            annotation += " beginMiddle=" + beginMiddle;
+                            annotation += " endMiddle=" + endMiddle;
+                            if (beginMiddle >= endMiddle) {
+                                isDown = true;
+                            }
+                        }
+                        if (isDown
+                                && factorial.getExpectLoss() > strategy.getBuyCriteria().getTakeProfitLossPercent()
+                            //&& minProfit > loss
+                            //&& (expectLossAvg + expectProfit) > strategy.getBuyCriteria().getTakeProfitPercent()
+                            //&& (expectLoss + expectProfit) > strategy.getBuyCriteria().getTakeProfitPercent()
+                            //&& expectLossAvg > 0
+                        ) {
+                            annotation += " ok > profitAvg";
+                            isBuyToShort = true;
+                        } else {
+                            profitAvg = (double) 0;
+                            var candleListPrevPrev = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
+                                    candle.getDateTime(), strategy.getFactorialDownAvgSize() + 1, strategy.getFactorialInterval());
+                            boolean isLess = false;
+                            for (var i = 0; i < strategy.getFactorialDownAvgSize(); i++) {
+                                var factorialPrev = findBestFactorialInPast(strategy, candleListPrevPrev.get(i));
+                                var curCandle = candleListPrevPrev.get(i + 1);
+                                profitAvg += factorialPrev.getProfit();
+                                annotation += " i=" + i;
+                                annotation += " date=" + curCandle.getDateTime();
+                                annotation += " HighestPrice=" + curCandle.getHighestPrice();
+                                annotation += " profit=" + factorialPrev.getProfit();
+                                if (curCandle.getHighestPrice().doubleValue() > factorialPrev.getProfit()) {
+                                    annotation += " isLess";
+                                    isLess = true;
+                                }
+                            }
+                            profitAvg = profitAvg / strategy.getFactorialDownAvgSize();
+                            annotation += " profitUpAvg=" + profitAvg;
+                            if (true
+                                    //&& lossAvg > loss
+                                    && isLess
+                            ) {
+                                annotation += " ok > profitUpAvg";
+                                isBuyToShort = true;
+                            }
+                        }
+                    } else {
+                        if (futureLoss > strategy.getBuyCriteria().getTakeProfitLossPercent()
+                                //&& (expectLoss + expectProfit) > strategy.getBuyCriteria().getTakeProfitPercent()
+                                && expectLoss >= 0
+                                && factorial.getExpectLoss() > strategy.getBuyCriteria().getTakeProfitLossPercent()
+                        ) {
+                            annotation += " ok > profit";
+                            isBuyToShort = true;
+                        }
+                    }
+                }
+                if (!isBuyToShort) {
+                    var order = orderService.findLastByFigiAndStrategy(candle.getFigi(), strategy);
+                    if (order == null) {
+                        res = true;
+                    } else if (order.getPurchaseDateTime().isBefore(curHourCandle.getDateTime())) {
+                        res = true;
+                    }
+                    if (res) {
+                        annotation += " notShort";
+                    }
+                }
                 /*
                 var percent = 100f * (candle.getClosingPrice().doubleValue() - profit) / profit;
                 annotation += " percent=" + percent;
@@ -385,12 +507,19 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
 
         var candleListPrev = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
                 candle.getDateTime(), strategy.getFactorialLossIgnoreSize(), strategy.getFactorialInterval());
-        var factorial = findBestFactorialInPast(strategy, candleListPrev.get(strategy.getFactorialLossIgnoreSize() - 1));
+        var curHourCandle = candleListPrev.get(strategy.getFactorialLossIgnoreSize() - 1);
+        var factorial = findBestFactorialInPast(strategy, curHourCandle);
         var order = orderService.findActiveByFigiAndStrategy(candle.getFigi(), strategy);
         Boolean res = false;
         String annotation = " profitPercent=" + profitPercent;
         annotation += " orderDate=" + order.getPurchaseDateTime() + " prevCandleDate=" + candleListPrev.get(0).getDateTime();
-        if (strategy.getSellCriteria().getIsSellUnderProfit() && factorial.getProfit() < candle.getClosingPrice().doubleValue()) {
+        if (strategy.getSellCriteria().getIsSellUnderProfit()
+                && factorial.getProfit() < candle.getClosingPrice().doubleValue()
+                && !(
+                        order.getPurchaseDateTime().isBefore(curHourCandle.getDateTime().plusHours(1))
+                                && order.getPurchasePrice().doubleValue() >= factorial.getProfit()
+                )
+        ) {
             annotation += "profit < close";
             res = true;
         }
