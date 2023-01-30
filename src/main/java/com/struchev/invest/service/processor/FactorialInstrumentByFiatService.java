@@ -65,6 +65,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         annotation += " futureProfit=" + futureProfit;
         annotation += " futureLoss=" + futureLoss;
         annotation += " closeMax=" + closeMax;
+        //annotation += " info: " + factorial.getInfo();
         Double lossAvg = null;
         Double profitAvg = null;
         if (null != factorial) {
@@ -93,7 +94,6 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     //&& false
             ) {
                 annotation += " ok";
-                annotation += " info: " + factorial.getInfo();
                 var candleListPrev = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
                         candle.getDateTime(), strategy.getBuyCriteria().getTakeProfitPercentBetweenLength(), strategy.getFactorialInterval());
                 for (var i = 0; i < strategy.getBuyCriteria().getTakeProfitPercentBetweenLength() - 1; i++) {
@@ -137,7 +137,6 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     && profit > candle.getClosingPrice().doubleValue()
             ) {
                 annotation += " ok TakeLossPercentBetween";
-                annotation += " info: " + factorial.getInfo();
                 var candleListPrev = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
                         candle.getDateTime(), strategy.getBuyCriteria().getTakeLossPercentBetweenLength(), strategy.getFactorialInterval());
                 var lowestAvg = candleListPrev.stream().mapToDouble(v -> v.getLowestPrice().doubleValue()).average().orElse(-1);
@@ -612,11 +611,11 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
     private FactorialData findBestFactorialInPast(AInstrumentByFiatFactorialStrategy strategy, CandleDomainEntity candle) {
         var curDateTime = candle.getDateTime();
         if (strategy.getFactorialInterval().equals("1hour")) {
-            curDateTime = curDateTime.plusMinutes(60);
+            curDateTime = curDateTime.plusHours(1);
         }
         var candleListCash = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
                 curDateTime, 1, strategy.getFactorialInterval());
-        String key = candle.getFigi() + candleListCash.get(0).getDateTime();
+        String key = strategy.getName() + candle.getFigi() + candleListCash.get(0).getDateTime();
         var ret = getCashedValue(key);
         if (ret != null) {
             return ret;
@@ -806,7 +805,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
 
         bestInfo += " diffAverage=" + (factorialDataList.stream().mapToDouble(value -> value.getDiffPrice().doubleValue()).average().orElse(-1));
 
-        bestInfo += "Select from " + candleList.get(0).getDateTime() + ", candleList.size=" + candleList.size();
+        bestInfo += " Select from " + candleList.get(0).getDateTime() + ", candleList.size=" + candleList.size();
+        bestInfo += " getFactorialHistoryLength=" + strategy.getFactorialHistoryLength();
         var res = FactorialData.builder()
                 .size(bestSize)
                 .length(strategy.getFactorialLength())
