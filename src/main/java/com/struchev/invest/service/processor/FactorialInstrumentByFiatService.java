@@ -926,7 +926,12 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         return res;
     }
 
-    private Map<String, FactorialData> factorialCashMap = new HashMap<>();
+    private Map<String, FactorialData> factorialCashMap = new LinkedHashMap<>() {
+        @Override
+        protected boolean removeEldestEntry(final Map.Entry eldest) {
+            return size() > 100;
+        }
+    };
 
     private synchronized FactorialData getCashedValue(String indent)
     {
@@ -941,13 +946,18 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
 
     private synchronized void addCashedValue(String indent, FactorialData v)
     {
-        if (factorialCashMap.size() > 100) {
-            factorialCashMap.clear();
-        }
+        //if (factorialCashMap.size() > 100) {
+        //    factorialCashMap.clear();
+        //}
         factorialCashMap.put(indent, v);
     }
 
-    private Map<String, BuyData> factorialCashIsBuy = new HashMap<>();
+    private LinkedHashMap<String, BuyData> factorialCashIsBuy = new LinkedHashMap<>() {
+        @Override
+        protected boolean removeEldestEntry(final Map.Entry eldest) {
+            return size() > 100;
+        }
+    };
 
     private synchronized BuyData getCashedIsBuyValue(String indent)
     {
@@ -962,9 +972,6 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
 
     private synchronized void addCashedIsBuyValue(String indent, BuyData v)
     {
-        if (factorialCashIsBuy.size() > 100) {
-            factorialCashIsBuy.clear();
-        }
         factorialCashIsBuy.put(indent, v);
     }
 }
