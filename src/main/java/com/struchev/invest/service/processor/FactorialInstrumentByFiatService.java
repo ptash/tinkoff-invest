@@ -548,8 +548,14 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         && percentFromBy < strategy.getBuyCriteria().getProfitPercentFromBuyMinPrice()
                 ) {
                     resBuy = true;
-                    annotation += " ok ProfitPercentFromBuyMinPrice";
+                    annotation += " ok loss ProfitPercentFromBuyMinPrice";
                 } else if (candle.getClosingPrice().doubleValue() < buyPrice.getMinPrice()) {
+                    buyPrice.setMinPrice(candle.getClosingPrice().doubleValue());
+                    addCashedIsBuyValue(key, buyPrice);
+                } else if (candle.getClosingPrice().doubleValue() > profit
+                        && candle.getClosingPrice().doubleValue() > buyPrice.getPrice()
+                ) {
+                    buyPrice.setPrice(candle.getClosingPrice().doubleValue());
                     buyPrice.setMinPrice(candle.getClosingPrice().doubleValue());
                     addCashedIsBuyValue(key, buyPrice);
                 }
@@ -577,6 +583,11 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
 
     @Override
     public boolean isShouldSell(AInstrumentByFiatFactorialStrategy strategy, CandleDomainEntity candle, BigDecimal purchaseRate) {
+        var curBeginHour = candle.getDateTime();
+        curBeginHour = curBeginHour.minusMinutes(curBeginHour.getMinute() + 1);
+        String key = strategy.getName() + candle.getFigi() + notificationService.formatDateTime(curBeginHour);
+        addCashedIsBuyValue(key, null);
+
         var sellCriteria = strategy.getSellCriteria();
         var profitPercent = candle.getClosingPrice().subtract(purchaseRate)
                 .multiply(BigDecimal.valueOf(100))
