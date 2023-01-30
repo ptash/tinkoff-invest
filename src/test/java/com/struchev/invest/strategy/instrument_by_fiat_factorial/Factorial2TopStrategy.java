@@ -8,7 +8,7 @@ public class Factorial2TopStrategy extends Factorial2Strategy {
     public Integer getFactorialHistoryLength() {
         return this.getFactorialLength() * 200;
     }
-    public Integer getFactorialLengthFuture() { return 8; }
+    public Integer getFactorialLengthFuture() { return 4; }
 
     public BuyCriteria getBuyCriteria() {
         var buy = super.getBuyCriteria();

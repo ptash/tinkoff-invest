@@ -807,6 +807,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         var expectProfit = expectProfitList.stream().mapToDouble(i -> i).average().orElse(-1);
         var expectLoss = expectLossList.stream().mapToDouble(i -> i).average().orElse(-1);
 
+        //expectProfit -= expectProfitList.stream().mapToDouble(i -> i).max().orElse(-1) / avSize;
+        //expectLoss -= expectLossList.stream().mapToDouble(i -> i).max().orElse(-1) / avSize;
+
         //expectProfit = Math.abs(expectProfit);
         //expectLoss = Math.abs(expectLoss);
 
