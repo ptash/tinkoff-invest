@@ -58,33 +58,34 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
     }
 
     public boolean isShouldBuy(AInstrumentByFiatFactorialStrategy strategy, CandleDomainEntity candle) {
+        return isShouldBuyFactorial(strategy, candle);
+        /*
         var curBeginHour = candle.getDateTime();
         curBeginHour = curBeginHour.minusMinutes(curBeginHour.getMinute() + 1);
         String key = strategy.getName() + candle.getFigi() + notificationService.formatDateTime(curBeginHour);
         var buyPrice = getCashedIsBuyValue(key);
         var res = isShouldBuyFactorial(strategy, candle);
+        var resBuy = false;
         if (buyPrice == null) {
             if (res) {
                 addCashedIsBuyValue(key, BuyData.builder()
                         .price(candle.getClosingPrice().doubleValue())
                         .minPrice(candle.getClosingPrice().doubleValue())
                         .build());
-                res = false;
             }
-        } else if (res) {
+        } else {
             var percentProfit = 100.0 * (candle.getClosingPrice().doubleValue() - buyPrice.getMinPrice()) / buyPrice.getMinPrice();
             var percentFromBy = 100.0 * (candle.getClosingPrice().doubleValue() - buyPrice.getPrice()) / buyPrice.getPrice();
             if (percentProfit > strategy.getBuyCriteria().getProfitPercentFromBuyMinPrice()
-                    //&& percentFromBy < strategy.getBuyCriteria().getProfitPercentFromBuyMinPrice()
+                    && percentFromBy < strategy.getBuyCriteria().getProfitPercentFromBuyMinPrice()
             ) {
-                res = true;
+                resBuy = true;
             } else if (candle.getClosingPrice().doubleValue() < buyPrice.getMinPrice()) {
-                res = false;
                 buyPrice.setMinPrice(candle.getClosingPrice().doubleValue());
                 addCashedIsBuyValue(key, buyPrice);
             }
         }
-        return res;
+        return resBuy;*/
     }
 
     public boolean isShouldBuyFactorial(AInstrumentByFiatFactorialStrategy strategy, CandleDomainEntity candle) {
@@ -520,6 +521,41 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 }
             }
         }
+
+        var curBeginHour = candle.getDateTime();
+        curBeginHour = curBeginHour.minusMinutes(curBeginHour.getMinute() + 1);
+        String key = strategy.getName() + candle.getFigi() + notificationService.formatDateTime(curBeginHour);
+        var resBuy = false;
+        if (null == strategy.getBuyCriteria().getProfitPercentFromBuyMinPrice()) {
+            resBuy = res;
+        } else {
+            annotation = "key = " + key;
+            var buyPrice = getCashedIsBuyValue(key);
+            if (buyPrice == null) {
+                if (res) {
+                    addCashedIsBuyValue(key, BuyData.builder()
+                            .price(candle.getClosingPrice().doubleValue())
+                            .minPrice(candle.getClosingPrice().doubleValue())
+                            .build());
+                }
+            } else {
+                var percentProfit = 100.0 * (candle.getClosingPrice().doubleValue() - buyPrice.getMinPrice()) / buyPrice.getMinPrice();
+                var percentFromBy = 100.0 * (candle.getClosingPrice().doubleValue() - buyPrice.getPrice()) / buyPrice.getPrice();
+                annotation += " percentProfit = " + percentProfit;
+                annotation += " percentFromBy = " + percentFromBy;
+                annotation += " buyPrice = " + buyPrice;
+                if (percentProfit > strategy.getBuyCriteria().getProfitPercentFromBuyMinPrice()
+                        && percentFromBy < strategy.getBuyCriteria().getProfitPercentFromBuyMinPrice()
+                ) {
+                    resBuy = true;
+                    annotation += " ok ProfitPercentFromBuyMinPrice";
+                } else if (candle.getClosingPrice().doubleValue() < buyPrice.getMinPrice()) {
+                    buyPrice.setMinPrice(candle.getClosingPrice().doubleValue());
+                    addCashedIsBuyValue(key, buyPrice);
+                }
+            }
+        }
+
         notificationService.reportStrategy(
                 strategy,
                 candle.getFigi(),
@@ -536,7 +572,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 lossAvg == null ? "" : lossAvg,
                 annotation
         );
-        return res;
+        return resBuy;
     }
 
     @Override
