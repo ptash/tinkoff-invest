@@ -108,7 +108,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
                 //.splashLossPercentMax(0.2)
                 .isAllUnderLoss(false)
                 .isOverProfit(false)
-                .overProfitMaxPercent(0.2)
+                //.overProfitMaxPercent(0.2)
                 .build();
     }
 
