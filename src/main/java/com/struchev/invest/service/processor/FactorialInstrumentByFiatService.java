@@ -359,8 +359,14 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     && strategy.getBuyCriteria().getIsAllOverProfit()
                     && candle.getClosingPrice().doubleValue() > profit
             ) {
-                annotation += " ok < all profit";
-                res = true;
+                var order = orderService.findLastByFigiAndStrategy(candle.getFigi(), strategy);
+                if (order == null) {
+                    annotation += " ok < all profit";
+                    res = true;
+                } else if (order.getPurchaseDateTime().isBefore(curHourCandle.getDateTime())) {
+                    annotation += " ok < all profit";
+                    res = true;
+                }
             }
             if (!res
                     && strategy.getBuyCriteria().getIsOverProfit()
