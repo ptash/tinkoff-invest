@@ -7,6 +7,8 @@ public class Factorial2TopStrategy extends Factorial2Strategy {
     public BuyCriteria getBuyCriteria() {
         var buy = super.getBuyCriteria();
         buy.setIsOverProfit(true);
+        buy.setIsAllUnderLoss(true);
+        buy.setIsAllOverProfit(true);
         return buy;
     }
     public boolean isEnabled() {

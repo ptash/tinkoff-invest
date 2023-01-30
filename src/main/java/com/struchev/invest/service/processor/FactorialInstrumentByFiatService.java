@@ -356,6 +356,13 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 }
             }
             if (!res
+                    && strategy.getBuyCriteria().getIsAllOverProfit()
+                    && candle.getClosingPrice().doubleValue() > profit
+            ) {
+                annotation += " ok < all profit";
+                res = true;
+            }
+            if (!res
                     && strategy.getBuyCriteria().getIsOverProfit()
                     && candle.getClosingPrice().doubleValue() > profit
             ) {
@@ -529,7 +536,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         if (null == strategy.getBuyCriteria().getProfitPercentFromBuyMinPrice()) {
             resBuy = res;
         } else {
-            annotation = "key = " + key;
+            annotation += "key = " + key;
             var buyPrice = getCashedIsBuyValue(key);
             if (buyPrice == null) {
                 if (res) {
@@ -539,6 +546,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             .build());
                 }
             } else {
+                annotation = "key = " + key;
                 var percentProfit = 100.0 * (candle.getClosingPrice().doubleValue() - buyPrice.getMinPrice()) / buyPrice.getMinPrice();
                 var percentFromBy = 100.0 * (candle.getClosingPrice().doubleValue() - buyPrice.getPrice()) / buyPrice.getPrice();
                 annotation += " percentProfit = " + percentProfit;
