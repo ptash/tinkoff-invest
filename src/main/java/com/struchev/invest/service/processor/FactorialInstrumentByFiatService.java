@@ -432,9 +432,10 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     }
                 }
                 var overProfitPercent = 100.0 * (candle.getClosingPrice().doubleValue() - profit) / profit;
+                annotation += " overProfitPercent=" + overProfitPercent;
                 if (!isBuyToShort
-                        //&& (strategy.getBuyCriteria().getOverProfitMaxPercent() == null
-                        //|| overProfitPercent < strategy.getBuyCriteria().getOverProfitMaxPercent())
+                        && (strategy.getBuyCriteria().getOverProfitMaxPercent() == null
+                        || overProfitPercent < strategy.getBuyCriteria().getOverProfitMaxPercent())
                 ) {
                     var order = orderService.findLastByFigiAndStrategy(candle.getFigi(), strategy);
                     if (order == null) {
