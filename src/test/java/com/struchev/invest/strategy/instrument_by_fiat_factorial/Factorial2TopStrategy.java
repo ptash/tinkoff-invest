@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 public class Factorial2TopStrategy extends Factorial2Strategy {
     public BuyCriteria getBuyCriteria() {
         var buy = super.getBuyCriteria();
+        buy.setProfitPercentFromBuyMinPrice(0.1);
         buy.setIsOverProfit(true);
         return buy;
     }
