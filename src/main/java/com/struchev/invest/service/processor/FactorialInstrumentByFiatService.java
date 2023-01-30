@@ -62,9 +62,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         curBeginHour = curBeginHour.minusMinutes(curBeginHour.getMinute() + 1);
         String key = strategy.getName() + candle.getFigi() + notificationService.formatDateTime(curBeginHour);
         var buyPrice = getCashedIsBuyValue(key);
-        var res = false;
+        var res = isShouldBuyFactorial(strategy, candle);
         if (buyPrice == null) {
-            res = isShouldBuyFactorial(strategy, candle);
             if (res) {
                 addCashedIsBuyValue(key, BuyData.builder()
                         .price(candle.getClosingPrice().doubleValue())
@@ -72,14 +71,15 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         .build());
                 res = false;
             }
-        } else {
+        } else if (res) {
             var percentProfit = 100.0 * (candle.getClosingPrice().doubleValue() - buyPrice.getMinPrice()) / buyPrice.getMinPrice();
             var percentFromBy = 100.0 * (candle.getClosingPrice().doubleValue() - buyPrice.getPrice()) / buyPrice.getPrice();
             if (percentProfit > strategy.getBuyCriteria().getProfitPercentFromBuyMinPrice()
-                    && percentFromBy < strategy.getBuyCriteria().getProfitPercentFromBuyMinPrice()
+                    //&& percentFromBy < strategy.getBuyCriteria().getProfitPercentFromBuyMinPrice()
             ) {
                 res = true;
             } else if (candle.getClosingPrice().doubleValue() < buyPrice.getMinPrice()) {
+                res = false;
                 buyPrice.setMinPrice(candle.getClosingPrice().doubleValue());
                 addCashedIsBuyValue(key, buyPrice);
             }
