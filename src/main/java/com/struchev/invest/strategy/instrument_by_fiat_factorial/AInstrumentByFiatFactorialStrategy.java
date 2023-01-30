@@ -85,6 +85,8 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
         Boolean isAllUnderLoss;
         Boolean isOverProfit;
         Double overProfitMaxPercent;
+
+        Double profitPercentFromBuyMinPrice;
     }
 
     public BuyCriteria getBuyCriteria() {
@@ -109,6 +111,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
                 .isAllUnderLoss(false)
                 .isOverProfit(false)
                 //.overProfitMaxPercent(0.2)
+                .profitPercentFromBuyMinPrice(0.1)
                 .build();
     }
 

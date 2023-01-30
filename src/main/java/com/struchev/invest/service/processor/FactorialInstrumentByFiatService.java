@@ -50,7 +50,44 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         Double loss;
     }
 
+    @Builder
+    @Data
+    public static class BuyData {
+        Double price;
+        Double minPrice;
+    }
+
     public boolean isShouldBuy(AInstrumentByFiatFactorialStrategy strategy, CandleDomainEntity candle) {
+        var curBeginHour = candle.getDateTime();
+        curBeginHour = curBeginHour.minusMinutes(curBeginHour.getMinute() + 1);
+        String key = strategy.getName() + candle.getFigi() + notificationService.formatDateTime(curBeginHour);
+        var buyPrice = getCashedIsBuyValue(key);
+        var res = false;
+        if (buyPrice == null) {
+            res = isShouldBuyFactorial(strategy, candle);
+            if (res) {
+                addCashedIsBuyValue(key, BuyData.builder()
+                        .price(candle.getClosingPrice().doubleValue())
+                        .minPrice(candle.getClosingPrice().doubleValue())
+                        .build());
+                res = false;
+            }
+        } else {
+            var percentProfit = 100.0 * (candle.getClosingPrice().doubleValue() - buyPrice.getMinPrice()) / buyPrice.getMinPrice();
+            var percentFromBy = 100.0 * (candle.getClosingPrice().doubleValue() - buyPrice.getPrice()) / buyPrice.getPrice();
+            if (percentProfit > strategy.getBuyCriteria().getProfitPercentFromBuyMinPrice()
+                    && percentFromBy < strategy.getBuyCriteria().getProfitPercentFromBuyMinPrice()
+            ) {
+                res = true;
+            } else if (candle.getClosingPrice().doubleValue() < buyPrice.getMinPrice()) {
+                buyPrice.setMinPrice(candle.getClosingPrice().doubleValue());
+                addCashedIsBuyValue(key, buyPrice);
+            }
+        }
+        return res;
+    }
+
+    public boolean isShouldBuyFactorial(AInstrumentByFiatFactorialStrategy strategy, CandleDomainEntity candle) {
         var candleList = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
                 candle.getDateTime(), 2, strategy.getFactorialInterval());
         var curHourCandle = candleList.get(1);
@@ -853,5 +890,26 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             factorialCashMap.clear();
         }
         factorialCashMap.put(indent, v);
+    }
+
+    private Map<String, BuyData> factorialCashIsBuy = new HashMap<>();
+
+    private synchronized BuyData getCashedIsBuyValue(String indent)
+    {
+        if (factorialCashIsBuy.containsKey(indent)) {
+            return factorialCashIsBuy.get(indent);
+        }
+        if (factorialCashIsBuy.size() > 100) {
+            factorialCashIsBuy.clear();
+        }
+        return null;
+    }
+
+    private synchronized void addCashedIsBuyValue(String indent, BuyData v)
+    {
+        if (factorialCashIsBuy.size() > 100) {
+            factorialCashIsBuy.clear();
+        }
+        factorialCashIsBuy.put(indent, v);
     }
 }
