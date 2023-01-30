@@ -10,6 +10,7 @@ public class Factorial2TopStrategy extends Factorial2Strategy {
 
     private static final Map FIGIES = new HashMap<String, Integer>();
     static {
+        FIGIES.put("BBG00Y91R9T3", 1); // OZON
         FIGIES.put("BBG0029SG1C1", 100); // KZOSP ПАО «КАЗАНЬОРГСИНТЕЗ» - акции привилегированные
     }
     @Override
