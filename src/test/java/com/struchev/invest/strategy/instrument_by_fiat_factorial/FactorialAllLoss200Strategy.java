@@ -14,6 +14,6 @@ public class FactorialAllLoss200Strategy extends Factorial2Strategy {
         return buy;
     }
     public boolean isEnabled() {
-        return true;
+        return false;
     }
 }
