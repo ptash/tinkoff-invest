@@ -6,23 +6,20 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Component
-public class Factorial2TopStrategy extends Factorial2Strategy {
-
+public class Factorial2TopAllStrategy extends Factorial2TopStrategy {
     private static final Map FIGIES = new HashMap<String, Integer>();
     static {
         FIGIES.put("BBG00QPYJ5H0", 1); // TCS Group
-        FIGIES.put("BBG00Y91R9T3", 1); // OZON
-        FIGIES.put("BBG0029SG1C1", 100); // KZOSP ПАО «КАЗАНЬОРГСИНТЕЗ» - акции привилегированные
     }
     @Override
     public Map<String, Integer> getFigies()  { return FIGIES; }
     public BuyCriteria getBuyCriteria() {
         var buy = super.getBuyCriteria();
-        buy.setProfitPercentFromBuyMinPrice(0.1);
-        buy.setIsOverProfit(true);
+        buy.setIsAllUnderLoss(true);
+        buy.setIsAllOverProfit(true);
         return buy;
     }
     public boolean isEnabled() {
-        return true;
+        return false;
     }
 }
