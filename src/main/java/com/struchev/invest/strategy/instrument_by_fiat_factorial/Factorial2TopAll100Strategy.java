@@ -16,6 +16,6 @@ public class Factorial2TopAll100Strategy extends Factorial2TopAllStrategy {
         return this.getFactorialLength() * 100;
     }
     public boolean isEnabled() {
-        return false;
+        return true;
     }
 }
