@@ -17,8 +17,8 @@ public class FactorialStrategy extends AInstrumentByFiatFactorialStrategy {
         //FIGIES.put("BBG00178PGX3", 1); // VK
         //FIGIES.put("BBG00QPYJ5H0", 1); // TCS Group
         //FIGIES.put("BBG004730N88", 10); // SBER
-        FIGIES.put("BBG004730RP0", 1); // Газпром
-        //FIGIES.put("BBG004731032", 1); // LKOH ЛУКОЙЛ
+        //FIGIES.put("BBG004730RP0", 1); // Газпром
+        FIGIES.put("BBG004731032", 1); // LKOH ЛУКОЙЛ
         //FIGIES.put("BBG004730JJ5", 1); // Московская Биржа
         //FIGIES.put("BBG002GHV6L9", 1); // SPBE
         //FIGIES.put("TCS00A103X66", 1); // POSI
