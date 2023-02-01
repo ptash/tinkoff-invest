@@ -8,7 +8,7 @@ public class FactorialAllLoss200MinPriceStrategy extends FactorialAllLoss200Stra
     public BuyCriteria getBuyCriteria() {
         var buy = super.getBuyCriteria();
         buy.setProfitPercentFromBuyMinPrice(0.1);
-        buy.setProfitPercentFromBuyMaxPrice(0.5);
+        buy.setProfitPercentFromBuyMaxPrice(1.5);
         return buy;
     }
     public boolean isEnabled() {
