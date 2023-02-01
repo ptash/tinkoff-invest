@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 public class FactorialAllLoss200Strategy extends Factorial2Strategy {
 
     public Integer getFactorialHistoryLength() {
-        return this.getFactorialLength() * 100;
+        return this.getFactorialLength() * 50;
     }
     public  BuyCriteria getBuyCriteria() {
         var buy = super.getBuyCriteria();

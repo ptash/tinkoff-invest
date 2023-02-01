@@ -30,7 +30,9 @@ public class FactorialStrategy extends AInstrumentByFiatFactorialStrategy {
         //FIGIES.put("BBG222222222", 100); // Тинькофф Золото
         FIGIES.put("BBG005DXJS36", 1); // TCS Group (Tinkoff Bank holder)
         // HKD
-        FIGIES.put("BBG00QV37ZP9", 1); // 9988 Alibaba
+        //FIGIES.put("BBG00QV37ZP9", 1); // 9988 Alibaba
+        //FIGIES.put("BBG0120WC125", 1); // 2015 Li Auto
+        FIGIES.put("BBG000BFNTD0", 1); // 857 PetroChina
     }
     @Override
     public Map<String, Integer> getFigies()  { return FIGIES; }
