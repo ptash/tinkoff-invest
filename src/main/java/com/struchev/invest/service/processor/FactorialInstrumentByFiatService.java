@@ -559,7 +559,10 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 annotation += " percentFromBy = " + percentFromBy;
                 annotation += " buyPrice = " + buyPrice;
                 if (percentProfit > strategy.getBuyCriteria().getProfitPercentFromBuyMinPrice()
-                        && percentFromBy < strategy.getBuyCriteria().getProfitPercentFromBuyMinPrice()
+                        && (
+                                strategy.getBuyCriteria().getProfitPercentFromBuyMaxPrice() == null
+                                        || percentFromBy < strategy.getBuyCriteria().getProfitPercentFromBuyMaxPrice()
+                )
                 ) {
                     resBuy = true;
                     annotation += " ok loss ProfitPercentFromBuyMinPrice";
