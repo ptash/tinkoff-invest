@@ -36,14 +36,14 @@ public class FactorialStrategy extends AInstrumentByFiatFactorialStrategy {
         //FIGIES.put("BBG00KVTBY91", 100); // 1810 Xiaomi
         //FIGIES.put("BBG000BZ3PX4", 100); // 175 Geely Automobile Holdings
         //FIGIES.put("BBG00ZNW65W3", 10); // 9626 Bilibili // 20
-        //FIGIES.put("BBG00VC6RYV6", 10); // 9618 JD.com // 50, 100
-        //FIGIES.put("BBG000CN0Y73", 100); // 2600 Aluminum Corp of China // 50, 100
+        FIGIES.put("BBG00VC6RYV6", 10); // 9618 JD.com // 50, 100
+        FIGIES.put("BBG000CN0Y73", 100); // 2600 Aluminum Corp of China // 50, 100
         //FIGIES.put("BBG000BG4QM5", 100); // 992 Lenovo // candles 1hour figi BBG000BG4QM5 from 2021-01-24T01:59+03:00 to 2022-12-21T17:59+03:00. Expect length 2000, real 497, total 740, begin 2022-10-12T08:00+03:00, end 2023-02-02T10:00+03:00
         //FIGIES.put("BBG00V6PS1F0", 10); // 9999 NetEase
-        FIGIES.put("BBG00ZMFX1S5", 10); // 9888 Baidu
+        //FIGIES.put("BBG00ZMFX1S5", 10); // 9888 Baidu
         //FIGIES.put("BBG0078Q6BC4", 100); // 1347 Hua Hong Semiconductor // candles 1hour figi BBG0078Q6BC4 from 2022-07-11T09:59+03:00 to 2022-12-21T17:59+03:00. Expect length 400, real 337, total 573, begin 2022-10-12T08:00+03:00, end 2023-02-02T10:00+03:00
         //FIGIES.put("BBG000C1DC75", 100); // 836 China Resources Power // candles 1hour figi BBG000C1DC75 from 2022-07-11T09:59+03:00 to 2022-12-21T17:59+03:00. Expect length 400, real 291, total 504, begin 2022-10-13T08:00+03:00, end 2023-02-02T10:00+03:00
-        FIGIES.put("BBG000C6XDL4", 100); // 1177 Sino Biopharmaceutical
+        FIGIES.put("BBG000C6XDL4", 100); // 1177 Sino Biopharmaceutical // 50, 100
     }
     @Override
     public Map<String, Integer> getFigies()  { return FIGIES; }

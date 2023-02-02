@@ -10,7 +10,7 @@ public class FactorialAllLoss20MinPriceStrategy extends FactorialAllLoss200Strat
 
     private static final Map FIGIES = new HashMap<String, Integer>();
     static {
-        FIGIES.put("BBG0120WC125", 1); // 2015 Li Auto
+        //FIGIES.put("BBG0120WC125", 1); // 2015 Li Auto
     }
     @Override
     public Map<String, Integer> getFigies()  { return FIGIES; }
