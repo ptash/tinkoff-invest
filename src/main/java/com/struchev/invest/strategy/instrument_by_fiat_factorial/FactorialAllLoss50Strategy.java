@@ -10,7 +10,8 @@ public class FactorialAllLoss50Strategy extends FactorialAllLoss200Strategy {
 
     private static final Map FIGIES = new HashMap<String, Integer>();
     static {
-        FIGIES.put("BBG000BFNTD0", 10); // 857 PetroChina
+        FIGIES.put("BBG000BFNTD0", 100); // 857 PetroChina
+        //FIGIES.put("BBG00KVTBY91", 10); // 1810 Xiaomi
     }
     @Override
     public Map<String, Integer> getFigies()  { return FIGIES; }

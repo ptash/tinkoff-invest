@@ -11,6 +11,7 @@ public class FactorialAllLoss20Strategy extends FactorialAllLoss200Strategy {
     private static final Map FIGIES = new HashMap<String, Integer>();
     static {
         //FIGIES.put("BBG00ZNW65W3", 1); // 9626 Bilibili
+        FIGIES.put("BBG000CN0Y73", 100); // 2600 Aluminum Corp of China
     }
     @Override
     public Map<String, Integer> getFigies()  { return FIGIES; }
@@ -19,7 +20,6 @@ public class FactorialAllLoss20Strategy extends FactorialAllLoss200Strategy {
     }
 
     public boolean isEnabled() {
-        return false;
-        //return true;
+        return true;
     }
 }

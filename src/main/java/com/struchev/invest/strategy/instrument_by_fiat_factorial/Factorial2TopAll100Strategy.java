@@ -9,7 +9,7 @@ import java.util.Map;
 public class Factorial2TopAll100Strategy extends Factorial2TopAllStrategy {
     private static final Map FIGIES = new HashMap<String, Integer>();
     static {
-        FIGIES.put("BBG00QV37ZP9", 1); // 9988 Alibaba
+        //FIGIES.put("BBG00QV37ZP9", 1); // 9988 Alibaba
     }
 
     public Integer getFactorialHistoryLength() {
