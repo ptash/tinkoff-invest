@@ -27,8 +27,9 @@ public class FactorialStrategy extends AInstrumentByFiatFactorialStrategy {
         //FIGIES.put("BBG004730RP0", 1); // Газпром
         //FIGIES.put("BBG002W2FT69", 1); // АбрауДюрсо
         //FIGIES.put("BBG000LNHHJ9", 1); // КАМАЗ
-        FIGIES.put("BBG004S68BH6", 1); // ПИК
-        FIGIES.put("BBG004TC84Z8", 1); // Трубная Металлургическая Компания
+        //FIGIES.put("BBG004S68BH6", 1); // ПИК
+        //FIGIES.put("BBG004TC84Z8", 1); // Трубная Металлургическая Компания
+        FIGIES.put("BBG00Y3XYV94", 1); // MDMG Мать и дитя
         //FIGIES.put("BBG00Y91R9T3", 1); // OZON
         //FIGIES.put("BBG0029SG1C1", 10); // KZOSP ПАО «КАЗАНЬОРГСИНТЕЗ» - акции привилегированные
         FIGIES.put("BBG222222222", 100); // Тинькофф Золото
