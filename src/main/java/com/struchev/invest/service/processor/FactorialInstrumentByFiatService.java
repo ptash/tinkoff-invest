@@ -579,6 +579,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             }
         }
 
+        if (res) {
+            annotation += " info: " + factorial.getInfo();
+        }
         notificationService.reportStrategy(
                 strategy,
                 candle.getFigi(),
