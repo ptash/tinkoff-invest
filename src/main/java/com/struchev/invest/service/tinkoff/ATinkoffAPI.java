@@ -32,6 +32,10 @@ public abstract class ATinkoffAPI implements ITinkoffCommonAPI, ITinkoffOrderAPI
         return accountId;
     }
 
+    public String getAccountIdByFigi(String figi) {
+        return accountId;
+    }
+
     @Override
     public boolean getIsSandboxMode() {
         return isSandboxMode;
