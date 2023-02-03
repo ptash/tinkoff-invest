@@ -9,6 +9,7 @@ import java.util.Map;
 public class Factorial2Strategy extends AInstrumentByFiatFactorialStrategy {
     private static final Map FIGIES = new HashMap<String, Integer>();
     static {
+        FIGIES.put("BBG000NLB2G3", 10); // KROT Красный Октябрь
         FIGIES.put("BBG006L8G4H1", 1); // Yandex
         FIGIES.put("BBG005DXJS36", 5); // TCS Group (Tinkoff Bank holder)
     }
