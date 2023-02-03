@@ -24,13 +24,17 @@ public class FactorialStrategy extends AInstrumentByFiatFactorialStrategy {
         //FIGIES.put("TCS00A103X66", 1); // POSI
         //FIGIES.put("BBG004731032", 1); // ЛУКОЙЛ
         //FIGIES.put("BBG002458LF8", 1); // SELG Селигдар
-        FIGIES.put("BBG004730RP0", 1); // Газпром
+        //FIGIES.put("BBG004730RP0", 1); // Газпром
+        FIGIES.put("BBG002W2FT69", 1); // АбрауДюрсо
+        FIGIES.put("BBG000LNHHJ9", 1); // КАМАЗ
+        //FIGIES.put("BBG004S68BH6", 1); // ПИК
+        //FIGIES.put("BBG004TC84Z8", 1); // Трубная Металлургическая Компания
         //FIGIES.put("BBG00Y91R9T3", 1); // OZON
         //FIGIES.put("BBG0029SG1C1", 10); // KZOSP ПАО «КАЗАНЬОРГСИНТЕЗ» - акции привилегированные
-        //FIGIES.put("BBG222222222", 100); // Тинькофф Золото
+        FIGIES.put("BBG222222222", 100); // Тинькофф Золото
         //FIGIES.put("BBG000NLB2G3", 10); // KROT Красный Октябрь
         //FIGIES.put("BBG005DXJS36", 1); // TCS Group (Tinkoff Bank holder)
-        FIGIES.put("BBG00KHGQ0H4", 1); // HHR HeadHunter Group PLC
+        //FIGIES.put("BBG00KHGQ0H4", 1); // HHR HeadHunter Group PLC
         // HKD hkd
         //FIGIES.put("BBG00QV37ZP9", 10); // 9988 Alibaba
         //FIGIES.put("BBG0120WC125", 10); // 2015 Li Auto
