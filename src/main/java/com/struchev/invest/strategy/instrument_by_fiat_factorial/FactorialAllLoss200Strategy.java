@@ -19,8 +19,7 @@ public class FactorialAllLoss200Strategy extends Factorial2Strategy {
         FIGIES.put("BBG002458LF8", 50); // SELG Селигдар
         FIGIES.put("BBG00178PGX3", 5); // VK
     }
-    @Override
-    public Map<String, Integer> getFigies()  { return FIGIES; }
+    //public Map<String, Integer> getFigies()  { return FIGIES; }
     public Integer getFactorialHistoryLength() {
         return this.getFactorialLength() * 200;
     }
@@ -30,7 +29,5 @@ public class FactorialAllLoss200Strategy extends Factorial2Strategy {
         buy.setIsAllUnderLoss(true);
         return buy;
     }
-    public boolean isEnabled() {
-        return true;
-    }
+    //public boolean isEnabled() { return true; }
 }

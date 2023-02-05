@@ -7,12 +7,9 @@ import java.util.Map;
 @Component
 public class BuyEma600DeadLineP1DeadLine2InvestPercent02CrossStrategy extends ABuyEma600CrossStrategy {
 
-    private Map FIGIES = Map.of(
-    );
+    private Map FIGIES = Map.of();
 
-    public Map<String, Integer> getFigies() {
-        return FIGIES;
-    }
+    //public Map<String, Integer> getFigies() { return FIGIES; }
 
     public Double getDeadLinePercent() { return 1.0; }
 
@@ -29,6 +26,5 @@ public class BuyEma600DeadLineP1DeadLine2InvestPercent02CrossStrategy extends AB
         return SellLimitCriteria.builder().exitProfitPercent(1.5f).build();
     }
 
-    @Override
-    public boolean isEnabled() { return false; }
+    //public boolean isEnabled() { return false; }
 }

@@ -1,23 +1,36 @@
 package com.struchev.invest.strategy;
 
 import com.struchev.invest.strategy.instrument_by_fiat_cross.AInstrumentByFiatCrossStrategy;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.Getter;
+import lombok.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.data.relational.core.sql.In;
+import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
-
 public abstract class AStrategy {
-
+    @Autowired
+    private StrategySettings config;
     /**
      * Карта FIGI: количество бумаг для торговли
      *
      * @return
      */
-    public abstract Map<String, Integer> getFigies();
+    public Map<String, Integer> getFigies() {
+        return config.getFigies(this.getName());
+    }
+
+    public boolean isEnabled() {
+        return config.isEnabled(this.getName());
+    }
+
+    public boolean isArchive() {
+        return config.isArchive(this.getName());
+    }
 
     /**
      * Количество бумаг для торговли заданным figi
@@ -35,14 +48,6 @@ public abstract class AStrategy {
 
     public String getName() {
         return this.getClass().getSimpleName();
-    }
-
-    public boolean isEnabled() {
-        return false;
-    }
-
-    public boolean isArchive() {
-        return false;
     }
 
     public abstract Duration getDelayBySL();

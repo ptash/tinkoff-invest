@@ -20,14 +20,12 @@ public class BuyEma600DeadLineP1DeadLine2InvestPercent02DelaySLNullCrossStrategy
             "BBG006G2JVL2", 1 // Alibaba
     );
 
-    public Map<String, Integer> getFigies() {
-        return FIGIES;
-    }
+    //public Map<String, Integer> getFigies() { return FIGIES; }
     public Duration getDelayBySL() {
         return null;
     }
 
-    public boolean isEnabled() { return false; }
+    //public boolean isEnabled() { return false; }
 
-    public boolean isArchive() { return true; }
+    //public boolean isArchive() { return true; }
 }

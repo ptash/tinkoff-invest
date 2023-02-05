@@ -11,15 +11,12 @@ public class Factorial2TopAllStrategy extends Factorial2TopStrategy {
     static {
         FIGIES.put("BBG00QPYJ5H0", 1); // TCS Group
     }
-    @Override
-    public Map<String, Integer> getFigies()  { return FIGIES; }
+    //public Map<String, Integer> getFigies()  { return FIGIES; }
     public BuyCriteria getBuyCriteria() {
         var buy = super.getBuyCriteria();
         buy.setIsAllUnderLoss(true);
         buy.setIsAllOverProfit(true);
         return buy;
     }
-    public boolean isEnabled() {
-        return false;
-    }
+    //public boolean isEnabled() { return false; }
 }

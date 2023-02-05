@@ -27,11 +27,11 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                 .build();
         var uuid = UUID.randomUUID().toString();
         log.info("Send postOrderSync with: figi {}, quantity {}, quotation {}, direction {}, acc {}, type {}, id {}",
-                instrument.getFigi(), quantity, quotation, OrderDirection.ORDER_DIRECTION_BUY, getAccountId(), OrderType.ORDER_TYPE_MARKET, uuid);
+                instrument.getFigi(), quantity, quotation, OrderDirection.ORDER_DIRECTION_BUY, getAccountIdByFigi(instrument), OrderType.ORDER_TYPE_MARKET, uuid);
 
         if (getIsSandboxMode()) {
             var result = getApi().getSandboxService().postOrderSync(instrument.getFigi(), quantity, quotation,
-                    OrderDirection.ORDER_DIRECTION_BUY, getAccountId(), OrderType.ORDER_TYPE_MARKET, uuid);
+                    OrderDirection.ORDER_DIRECTION_BUY, getAccountIdByFigi(instrument), OrderType.ORDER_TYPE_MARKET, uuid);
             return OrderResult.builder()
                     .orderId(result.getOrderId())
                     .commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
@@ -41,11 +41,11 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                     .build();
         } else {
             var result = getApi().getOrdersService().postOrderSync(instrument.getFigi(), quantity, quotation,
-                    OrderDirection.ORDER_DIRECTION_BUY, getAccountId(), OrderType.ORDER_TYPE_MARKET, uuid);
+                    OrderDirection.ORDER_DIRECTION_BUY, getAccountIdByFigi(instrument), OrderType.ORDER_TYPE_MARKET, uuid);
             return OrderResult.builder()
                     .orderId(result.getOrderId())
                     .commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
-                    .commission(getExecutedCommission(result))
+                    .commission(getExecutedCommission(result, instrument))
                     .price(toBigDecimal(result.getExecutedOrderPrice(), 8, price))
                     .lots(result.getLotsRequested() * instrument.getLot())
                     .build();
@@ -58,12 +58,12 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
             orderResultBuilder.build();
         }
         log.info("Close sell limit with: figi {}, acc {}, orderId {}",
-                instrument.getFigi(), getAccountId(), orderId);
+                instrument.getFigi(), getAccountIdByFigi(instrument), orderId);
         try {
             if (getIsSandboxMode()) {
-                getApi().getSandboxService().cancelOrderSync(getAccountId(), orderId);
+                getApi().getSandboxService().cancelOrderSync(getAccountIdByFigi(instrument), orderId);
             } else {
-                getApi().getOrdersService().cancelOrderSync(getAccountId(), orderId);
+                getApi().getOrdersService().cancelOrderSync(getAccountIdByFigi(instrument), orderId);
             }
             return checkSellLimit(instrument, orderId);
         } catch (Exception e) {
@@ -79,12 +79,12 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
             orderResultBuilder.build();
         }
         log.info("Check limit postOrderSync with: figi {}, acc {}, orderId {}",
-                instrument.getFigi(), getAccountId(), orderId);
+                instrument.getFigi(), getAccountIdByFigi(instrument), orderId);
 
         try {
             orderResultBuilder.active(true);
             if (getIsSandboxMode()) {
-                var result = getApi().getSandboxService().getOrderStateSync(getAccountId(), orderId);
+                var result = getApi().getSandboxService().getOrderStateSync(getAccountIdByFigi(instrument), orderId);
                 orderResultBuilder
                         .orderId(result.getOrderId());
                 if (result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_FILL_VALUE
@@ -102,7 +102,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                     orderResultBuilder.active(false);
                 }
             } else {
-                var result = getApi().getOrdersService().getOrderStateSync(getAccountId(), orderId);
+                var result = getApi().getOrdersService().getOrderStateSync(getAccountIdByFigi(instrument), orderId);
                 orderResultBuilder
                         .orderId(result.getOrderId());
                 if (result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_FILL_VALUE
@@ -110,7 +110,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                 ) {
                     if (result.hasExecutedOrderPrice() && !isZero(result.getExecutedOrderPrice())) {
                         orderResultBuilder.commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
-                                .commission(getExecutedCommission(result))
+                                .commission(getExecutedCommission(result, instrument))
                                 .lots(result.getLotsExecuted() * instrument.getLot())
                                 .orderPrice(toBigDecimal(result.getExecutedOrderPrice(), 8));
                     }
@@ -154,12 +154,12 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
             orderResultBuilder.orderUuid(uuid);
         //}
         log.info("Send limit postOrderSync with: figi {}, quantity {}, quotation {}, direction {}, acc {}, type {}, id {}",
-                instrument.getFigi(), quantity, quotation, OrderDirection.ORDER_DIRECTION_SELL, getAccountId(), OrderType.ORDER_TYPE_LIMIT, uuid);
+                instrument.getFigi(), quantity, quotation, OrderDirection.ORDER_DIRECTION_SELL, getAccountIdByFigi(instrument), OrderType.ORDER_TYPE_LIMIT, uuid);
 
         try {
             if (getIsSandboxMode()) {
                 var result = getApi().getSandboxService().postOrderSync(instrument.getFigi(), quantity, quotation,
-                        OrderDirection.ORDER_DIRECTION_SELL, getAccountId(), OrderType.ORDER_TYPE_LIMIT, uuid);
+                        OrderDirection.ORDER_DIRECTION_SELL, getAccountIdByFigi(instrument), OrderType.ORDER_TYPE_LIMIT, uuid);
                 orderResultBuilder
                         .orderId(result.getOrderId());
                 if (result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_FILL_VALUE
@@ -174,7 +174,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                 }
             } else {
                 var result = getApi().getOrdersService().postOrderSync(instrument.getFigi(), quantity, quotation,
-                        OrderDirection.ORDER_DIRECTION_SELL, getAccountId(), OrderType.ORDER_TYPE_LIMIT, uuid);
+                        OrderDirection.ORDER_DIRECTION_SELL, getAccountIdByFigi(instrument), OrderType.ORDER_TYPE_LIMIT, uuid);
                 orderResultBuilder
                         .orderId(result.getOrderId());
                 if (result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_FILL_VALUE
@@ -182,7 +182,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                 ) {
                     if (result.hasExecutedOrderPrice() && !isZero(result.getExecutedOrderPrice())) {
                         orderResultBuilder.commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
-                                .commission(getExecutedCommission(result))
+                                .commission(getExecutedCommission(result, instrument))
                                 .lots(result.getLotsExecuted() * instrument.getLot())
                                 .orderPrice(toBigDecimal(result.getExecutedOrderPrice(), 8));
                     }
@@ -203,11 +203,11 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                 .build();
         var uuid = UUID.randomUUID().toString();
         log.info("Send postOrderSync with: figi {}, quantity {}, quotation {}, direction {}, acc {}, type {}, id {}",
-                instrument.getFigi(), quantity, quotation, OrderDirection.ORDER_DIRECTION_SELL, getAccountId(), OrderType.ORDER_TYPE_MARKET, uuid);
+                instrument.getFigi(), quantity, quotation, OrderDirection.ORDER_DIRECTION_SELL, getAccountIdByFigi(instrument), OrderType.ORDER_TYPE_MARKET, uuid);
 
         if (getIsSandboxMode()) {
             var result = getApi().getSandboxService().postOrderSync(instrument.getFigi(), quantity, quotation,
-                    OrderDirection.ORDER_DIRECTION_SELL, getAccountId(), OrderType.ORDER_TYPE_MARKET, uuid);
+                    OrderDirection.ORDER_DIRECTION_SELL, getAccountIdByFigi(instrument), OrderType.ORDER_TYPE_MARKET, uuid);
             result.getOrderId();
             return OrderResult.builder()
                     .orderId(result.getOrderId())
@@ -218,11 +218,11 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                     .build();
         } else {
             var result = getApi().getOrdersService().postOrderSync(instrument.getFigi(), quantity, quotation,
-                    OrderDirection.ORDER_DIRECTION_SELL, getAccountId(), OrderType.ORDER_TYPE_MARKET, uuid);
+                    OrderDirection.ORDER_DIRECTION_SELL, getAccountIdByFigi(instrument), OrderType.ORDER_TYPE_MARKET, uuid);
             return OrderResult.builder()
                     .orderId(result.getOrderId())
                     .commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
-                    .commission(getExecutedCommission(result))
+                    .commission(getExecutedCommission(result, instrument))
                     .price(toBigDecimal(result.getExecutedOrderPrice(), 8, price))
                     .lots(result.getLotsRequested() * instrument.getLot())
                     .build();
@@ -284,14 +284,15 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
         return money.getNano() == 0 && money.getUnits() == 0;
     }
 
-    private BigDecimal getExecutedCommission(OrderState orderState) {
-        return getExecutedCommission(orderState.getFigi(), orderState.getOrderId(), orderState.getInitialCommission(), orderState.getExecutedCommission());
+    private BigDecimal getExecutedCommission(OrderState orderState, InstrumentService.Instrument instrument) {
+        return getExecutedCommission(instrument, orderState.getOrderId(), orderState.getInitialCommission(), orderState.getExecutedCommission());
     }
-    private BigDecimal getExecutedCommission(PostOrderResponse postOrderResponse) {
-        return getExecutedCommission(postOrderResponse.getFigi(), postOrderResponse.getOrderId(), postOrderResponse.getInitialCommission(), postOrderResponse.getExecutedCommission());
+    private BigDecimal getExecutedCommission(PostOrderResponse postOrderResponse, InstrumentService.Instrument instrument) {
+        return getExecutedCommission(instrument, postOrderResponse.getOrderId(), postOrderResponse.getInitialCommission(), postOrderResponse.getExecutedCommission());
     }
 
-    private BigDecimal getExecutedCommission(String figi, String orderId, MoneyValue initialCommission, MoneyValue executedCommission) {
+    private BigDecimal getExecutedCommission(InstrumentService.Instrument instrument, String orderId, MoneyValue initialCommission, MoneyValue executedCommission) {
+        var figi = instrument.getFigi();
         if (null != executedCommission) {
             if (!isZero(executedCommission)) {
                 var commission = toBigDecimal(executedCommission, 8);
@@ -302,7 +303,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
         for (var i = 0; i < 10; i++) {
             try {
                 log.info("Try number {} to request commission for order {} figi {}", i + 1, orderId, figi);
-                var orderState = getApi().getOrdersService().getOrderStateSync(getAccountId(), orderId);
+                var orderState = getApi().getOrdersService().getOrderStateSync(getAccountIdByFigi(instrument), orderId);
                 if (orderState.hasExecutedCommission()) {
                     if (!isZero(orderState.getExecutedCommission())) {
                         var commission = toBigDecimal(orderState.getExecutedCommission(), 8);

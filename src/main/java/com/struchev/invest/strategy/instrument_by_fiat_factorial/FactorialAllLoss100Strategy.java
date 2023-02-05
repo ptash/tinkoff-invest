@@ -18,8 +18,8 @@ public class FactorialAllLoss100Strategy extends Factorial2Strategy {
         FIGIES.put("TCS00A103X66", 1); // POSI
         FIGIES.put("BBG002GHV6L9", 10); // SPBE
     }
-    @Override
-    public Map<String, Integer> getFigies()  { return FIGIES; }
+
+    //public Map<String, Integer> getFigies()  { return FIGIES; }
     public Integer getFactorialHistoryLength() {
         return this.getFactorialLength() * 100;
     }
@@ -29,7 +29,5 @@ public class FactorialAllLoss100Strategy extends Factorial2Strategy {
         buy.setIsAllUnderLoss(true);
         return buy;
     }
-    public boolean isEnabled() {
-        return true;
-    }
+    //public boolean isEnabled() { return true; }
 }

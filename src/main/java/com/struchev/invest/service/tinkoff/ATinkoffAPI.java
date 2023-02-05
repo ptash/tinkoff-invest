@@ -1,12 +1,21 @@
 package com.struchev.invest.service.tinkoff;
 
+import com.struchev.invest.service.dictionary.InstrumentService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Bean;
+import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import ru.tinkoff.piapi.contract.v1.AccountType;
 import ru.tinkoff.piapi.core.InvestApi;
 
 import javax.annotation.PostConstruct;
+import java.util.HashMap;
+import java.util.Map;
 
 @Slf4j
 public abstract class ATinkoffAPI implements ITinkoffCommonAPI, ITinkoffOrderAPI {
@@ -16,6 +25,9 @@ public abstract class ATinkoffAPI implements ITinkoffCommonAPI, ITinkoffOrderAPI
 
     @Value("${tinkoff.account-id}")
     private String accountId;
+
+    @Autowired
+    private TinkoffConfig config;
 
     @Value("${tinkoff.is-token-sandbox:false}")
     private Boolean isSandboxMode;
@@ -32,8 +44,12 @@ public abstract class ATinkoffAPI implements ITinkoffCommonAPI, ITinkoffOrderAPI
         return accountId;
     }
 
-    public String getAccountIdByFigi(String figi) {
-        return accountId;
+    public String getAccountIdByFigi(InstrumentService.Instrument instrument)
+    {
+        if (null == config.getAccountIdByCurrency() || !config.getAccountIdByCurrency().containsKey(instrument.getCurrency().toUpperCase())) {
+            return accountId;
+        }
+        return config.getAccountIdByCurrency().get(instrument.getCurrency().toUpperCase());
     }
 
     @Override
@@ -43,6 +59,9 @@ public abstract class ATinkoffAPI implements ITinkoffCommonAPI, ITinkoffOrderAPI
 
     @PostConstruct
     private void init() {
+        if (null == token || token.isEmpty()) {
+            throw new RuntimeException("Token is empty");
+        }
         api = isSandboxMode ? InvestApi.createSandbox(token, "roman-struchev") : InvestApi.create(token, "roman-struchev");
 
         // Проверяем, что аккаунт существует (если задан в конфигах) или выбираем первый
@@ -56,5 +75,6 @@ public abstract class ATinkoffAPI implements ITinkoffCommonAPI, ITinkoffOrderAPI
                 .findFirst().orElseThrow(() -> new RuntimeException("Account was not found for token " + token));
         log.info("Will use Account id {}, name {}", account.getId(), account.getName());
         accountId = account.getId();
+        config.getAccountIdByCurrency().forEach((k, v) -> log.info("Account by {}: {}", k, v));
     }
 }

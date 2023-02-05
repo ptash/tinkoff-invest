@@ -13,13 +13,10 @@ public class FactorialAllLoss20Strategy extends FactorialAllLoss200Strategy {
         //FIGIES.put("BBG00ZNW65W3", 1); // 9626 Bilibili
         FIGIES.put("BBG000CN0Y73", 100); // 2600 Aluminum Corp of China
     }
-    @Override
-    public Map<String, Integer> getFigies()  { return FIGIES; }
+    //public Map<String, Integer> getFigies()  { return FIGIES; }
     public Integer getFactorialHistoryLength() {
         return this.getFactorialLength() * 20;
     }
 
-    public boolean isEnabled() {
-        return true;
-    }
+    //public boolean isEnabled() { return true; }
 }

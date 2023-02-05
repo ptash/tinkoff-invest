@@ -1,8 +1,12 @@
 package com.struchev.invest;
 
+import com.struchev.invest.service.tinkoff.TinkoffConfig;
+import com.struchev.invest.strategy.StrategySettings;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Import;
 import org.springframework.retry.annotation.EnableRetry;
@@ -15,6 +19,7 @@ import java.util.TimeZone;
 @EnableCaching
 @EnableAsync
 @EnableRetry
+@EnableConfigurationProperties
 public class InvestRobotApplication {
 
     @Value("${invest.timeZone:Europe/Moscow}")

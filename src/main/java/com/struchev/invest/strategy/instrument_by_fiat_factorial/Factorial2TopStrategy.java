@@ -15,14 +15,12 @@ public class Factorial2TopStrategy extends Factorial2Strategy {
         FIGIES.put("BBG0029SG1C1", 100); // KZOSP ПАО «КАЗАНЬОРГСИНТЕЗ» - акции привилегированные
     }
     @Override
-    public Map<String, Integer> getFigies()  { return FIGIES; }
+    //public Map<String, Integer> getFigies()  { return FIGIES; }
     public BuyCriteria getBuyCriteria() {
         var buy = super.getBuyCriteria();
         buy.setProfitPercentFromBuyMinPrice(0.1);
         buy.setIsOverProfit(true);
         return buy;
     }
-    public boolean isEnabled() {
-        return true;
-    }
+    //public boolean isEnabled() { return true; }
 }

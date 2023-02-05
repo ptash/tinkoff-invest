@@ -22,9 +22,7 @@ public abstract class ABuyEma600CrossStrategy extends AInstrumentByFiatCrossStra
             //"BBG00W0KZD98", 1  //LI
     );
 
-    public Map<String, Integer> getFigies() {
-        return FIGIES;
-    }
+    //public Map<String, Integer> getFigies() { return FIGIES; }
 
     @Override
     public BuyCriteria getBuyCriteria() {
@@ -56,6 +54,5 @@ public abstract class ABuyEma600CrossStrategy extends AInstrumentByFiatCrossStra
         return SellLimitCriteria.builder().exitProfitPercent(3f).build();
     }
 
-    @Override
-    public boolean isEnabled() { return false; }
+    //public boolean isEnabled() { return false; }
 }

@@ -1,5 +1,6 @@
 package com.struchev.invest.strategy.instrument_by_fiat_factorial;
 
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -19,8 +20,7 @@ public class Factorial2Strategy extends AInstrumentByFiatFactorialStrategy {
 
     public Boolean isFactorialAvgByMiddle() { return true; };
 
-    @Override
-    public Map<String, Integer> getFigies()  { return FIGIES; }
+    //public Map<String, Integer> getFigies()  { return FIGIES; }
 
-    public boolean isEnabled() { return true; }
+    //public boolean isEnabled() { return true; }
 }

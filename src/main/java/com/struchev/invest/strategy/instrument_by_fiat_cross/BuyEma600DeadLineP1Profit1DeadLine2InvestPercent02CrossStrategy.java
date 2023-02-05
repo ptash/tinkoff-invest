@@ -21,16 +21,13 @@ public class BuyEma600DeadLineP1Profit1DeadLine2InvestPercent02CrossStrategy ext
 
     );
 
-    public Map<String, Integer> getFigies() {
-        return FIGIES;
-    }
+    //public Map<String, Integer> getFigies() {return FIGIES;}
     public Boolean isBuyInvestCrossSmaEma2() { return true; }
     public Double getDelayPlusBySLFactor() { return 1.0; }
 
     public Double getMinPercentTubeMoveUp() { return -0.020; }
 
-    @Override
-    public boolean isEnabled() { return false; }
+    //public boolean isEnabled() { return false; }
 
-    public boolean isArchive() { return true; }
+    //public boolean isArchive() { return true; }
 }

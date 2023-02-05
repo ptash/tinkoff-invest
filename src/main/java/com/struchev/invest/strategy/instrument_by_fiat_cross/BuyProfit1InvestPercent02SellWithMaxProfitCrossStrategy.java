@@ -32,9 +32,7 @@ public class BuyProfit1InvestPercent02SellWithMaxProfitCrossStrategy extends Buy
 
     );
 
-    public Map<String, Integer> getFigies() {
-        return FIGIES;
-    }
+    //public Map<String, Integer> getFigies() { return FIGIES; }
 
     public Integer getTicksMoveUp() { return 5; }
     public Double getMinPercentTubeMoveUp() { return -0.050; }
@@ -53,8 +51,7 @@ public class BuyProfit1InvestPercent02SellWithMaxProfitCrossStrategy extends Buy
 
     public Boolean isTubeTopBlur() { return false; }
 
-    @Override
-    public boolean isEnabled() { return true; }
+    //public boolean isEnabled() { return true; }
 
-    public boolean isArchive() {return true;}
+    //public boolean isArchive() {return true;}
 }

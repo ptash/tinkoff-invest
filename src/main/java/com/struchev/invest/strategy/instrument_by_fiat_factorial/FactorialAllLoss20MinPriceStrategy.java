@@ -12,8 +12,7 @@ public class FactorialAllLoss20MinPriceStrategy extends FactorialAllLoss200Strat
     static {
         //FIGIES.put("BBG0120WC125", 1); // 2015 Li Auto
     }
-    @Override
-    public Map<String, Integer> getFigies()  { return FIGIES; }
+    //public Map<String, Integer> getFigies()  { return FIGIES; }
     public Integer getFactorialHistoryLength() { return this.getFactorialLength() * 20; }
     public BuyCriteria getBuyCriteria() {
         var buy = super.getBuyCriteria();
@@ -21,7 +20,5 @@ public class FactorialAllLoss20MinPriceStrategy extends FactorialAllLoss200Strat
         buy.setProfitPercentFromBuyMaxPrice(1.0);
         return buy;
     }
-    public boolean isEnabled() {
-        return true;
-    }
+    //public boolean isEnabled() { return true; }
 }

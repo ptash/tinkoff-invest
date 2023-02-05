@@ -4,6 +4,7 @@ import com.struchev.invest.service.dictionary.InstrumentService;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -23,8 +24,8 @@ public class StrategySelector {
     private final List<AStrategy> allStrategies;
     private List<AStrategy> activeStrategies;
 
-    @Value("${invest.currency:RUB}")
-    private String currency;
+    @Autowired
+    private StrategySettings config;
 
     public List<AStrategy> suitableByFigi(String figi, AStrategy.Type type, String interval) {
         return activeStrategies.stream()
@@ -46,11 +47,8 @@ public class StrategySelector {
     public Stream<String> filterByCurrency(Map<String, Integer> figies) {
         return figies.keySet().stream().filter(figi -> {
             var instrument = instrumentService.getInstrument(figi);
-            log.info("Figi {} currency {}. Target currency {}", figi, instrument.getCurrency(), currency);
-            if (currency.equals("ALL")) {
-                return true;
-            }
-            return instrument.getCurrency().equalsIgnoreCase(currency);
+            log.info("Figi {} currency {}. Target currency {}", figi, instrument.getCurrency(), config.getCurrencies());
+            return config.getCurrencies().contains(instrument.getCurrency().toUpperCase());
         });
     }
 
