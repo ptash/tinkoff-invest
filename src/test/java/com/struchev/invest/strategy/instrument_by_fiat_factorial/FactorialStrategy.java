@@ -29,10 +29,25 @@ public class FactorialStrategy extends AInstrumentByFiatFactorialStrategy {
         //FIGIES.put("BBG000LNHHJ9", 1); // КАМАЗ
         //FIGIES.put("BBG004S68BH6", 1); // ПИК
         //FIGIES.put("BBG004TC84Z8", 1); // Трубная Металлургическая Компания
-        FIGIES.put("BBG00Y3XYV94", 1); // MDMG Мать и дитя
+        //FIGIES.put("BBG00Y3XYV94", 1); // MDMG Мать и дитя
+        //FIGIES.put("BBG004PYF2N3", 1); // POLY Polymetal
+        //FIGIES.put("BBG00475K2X9", 1000); // HYDR РусГидро
+        FIGIES.put("BBG004730ZJ9", 10000); // VTBR Банк ВТБ
+        //FIGIES.put("BBG004S68B31", 10); // ALRS АЛРОСА
+        //FIGIES.put("BBG000R607Y3", 1); // PLZL Полюс
+        // instrument BBG004731354 (ROSN): InstrumentService.Instrument(figi=BBG004731354, tiket=ROSN, currency=rub, name=Роснефть, lot=1, minPriceIncrement=0.05000000, isBuyAvailable=true)
+        // instrument BBG004S68507 (MAGN): InstrumentService.Instrument(figi=BBG004S68507, tiket=MAGN, currency=rub, name=Магнитогорский металлургический комбинат, lot=10, minPriceIncrement=0.00500000, isBuyAvailable=true)
+        // instrument BBG000PZ0833 (MGTSP): InstrumentService.Instrument(figi=BBG000PZ0833, tiket=MGTSP, currency=rub, name=МГТС - акции привилегированные, lot=1, minPriceIncrement=2.00000000, isBuyAvailable=true)
+        // instrument BBG0100R9963 (SGZH): InstrumentService.Instrument(figi=BBG0100R9963, tiket=SGZH, currency=rub, name=Сегежа, lot=100, minPriceIncrement=0.00100000, isBuyAvailable=true)
+        // instrument BBG004S68DD6 (MSTT): InstrumentService.Instrument(figi=BBG004S68DD6, tiket=MSTT, currency=rub, name=Мостотрест, lot=10, minPriceIncrement=0.05000000, isBuyAvailable=true)
+        // instrument BBG000R04X57 (FLOT): InstrumentService.Instrument(figi=BBG000R04X57, tiket=FLOT, currency=rub, name=Совкомфлот, lot=10, minPriceIncrement=0.01000000, isBuyAvailable=true)
+        // instrument BBG000BBV4M5 (CNTL): InstrumentService.Instrument(figi=BBG000BBV4M5, tiket=CNTL, currency=rub, name=Центральный Телеграф, lot=100, minPriceIncrement=0.02000000, isBuyAvailable=true)
+        // instrument BBG004S689R0 (PHOR): InstrumentService.Instrument(figi=BBG004S689R0, tiket=PHOR, currency=rub, name=ФосАгро, lot=1, minPriceIncrement=1.00000000, isBuyAvailable=true)
+        // instrument BBG000RTHVK7 (GCHE): InstrumentService.Instrument(figi=BBG000RTHVK7, tiket=GCHE, currency=rub, name=Группа Черкизово, lot=1, minPriceIncrement=0.50000000, isBuyAvailable=true)
+        //
         //FIGIES.put("BBG00Y91R9T3", 1); // OZON
         //FIGIES.put("BBG0029SG1C1", 10); // KZOSP ПАО «КАЗАНЬОРГСИНТЕЗ» - акции привилегированные
-        FIGIES.put("BBG222222222", 100); // Тинькофф Золото
+        //FIGIES.put("BBG222222222", 100); // Тинькофф Золото
         //FIGIES.put("BBG000NLB2G3", 10); // KROT Красный Октябрь
         //FIGIES.put("BBG005DXJS36", 1); // TCS Group (Tinkoff Bank holder)
         //FIGIES.put("BBG00KHGQ0H4", 1); // HHR HeadHunter Group PLC

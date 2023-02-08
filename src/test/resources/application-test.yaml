@@ -1,0 +1,4 @@
+invest:
+  timeZone: Europe/Moscow
+  currencies:
+    - RUB
