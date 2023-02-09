@@ -297,12 +297,14 @@ public class CandleHistoryService {
                     .peek(c -> entityManager.detach(c))
                     .collect(Collectors.groupingBy(CandleDomainEntity::getFigi));
 
-            var candlesDay = candleRepository.findByIntervalOrderByDateTime("1day");
+            log.info("Loading candles for 1day");
+            var candlesDay = candleRepository.findByFigiesAndByIntervalOrderByDateTime(figies, "1day");
             candlesLocalCacheDay = candlesDay.stream()
                     .peek(c -> entityManager.detach(c))
                     .collect(Collectors.groupingBy(CandleDomainEntity::getFigi));
 
-            var candlesHour = candleRepository.findByIntervalOrderByDateTime("1hour");
+            log.info("Loading candles for 1hour");
+                var candlesHour = candleRepository.findByFigiesAndByIntervalOrderByDateTime(figies, "1hour");
             candlesLocalCacheHour = candlesHour.stream()
                     .peek(c -> entityManager.detach(c))
                     .collect(Collectors.groupingBy(CandleDomainEntity::getFigi));

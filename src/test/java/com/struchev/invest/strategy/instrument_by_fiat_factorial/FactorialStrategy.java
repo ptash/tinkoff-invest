@@ -32,18 +32,31 @@ public class FactorialStrategy extends AInstrumentByFiatFactorialStrategy {
         //FIGIES.put("BBG00Y3XYV94", 1); // MDMG Мать и дитя
         //FIGIES.put("BBG004PYF2N3", 1); // POLY Polymetal
         //FIGIES.put("BBG00475K2X9", 1000); // HYDR РусГидро
-        FIGIES.put("BBG004730ZJ9", 10000); // VTBR Банк ВТБ
+        //FIGIES.put("BBG004730ZJ9", 10000); // VTBR Банк ВТБ
         //FIGIES.put("BBG004S68B31", 10); // ALRS АЛРОСА
         //FIGIES.put("BBG000R607Y3", 1); // PLZL Полюс
-        // instrument BBG004731354 (ROSN): InstrumentService.Instrument(figi=BBG004731354, tiket=ROSN, currency=rub, name=Роснефть, lot=1, minPriceIncrement=0.05000000, isBuyAvailable=true)
-        // instrument BBG004S68507 (MAGN): InstrumentService.Instrument(figi=BBG004S68507, tiket=MAGN, currency=rub, name=Магнитогорский металлургический комбинат, lot=10, minPriceIncrement=0.00500000, isBuyAvailable=true)
-        // instrument BBG000PZ0833 (MGTSP): InstrumentService.Instrument(figi=BBG000PZ0833, tiket=MGTSP, currency=rub, name=МГТС - акции привилегированные, lot=1, minPriceIncrement=2.00000000, isBuyAvailable=true)
-        // instrument BBG0100R9963 (SGZH): InstrumentService.Instrument(figi=BBG0100R9963, tiket=SGZH, currency=rub, name=Сегежа, lot=100, minPriceIncrement=0.00100000, isBuyAvailable=true)
-        // instrument BBG004S68DD6 (MSTT): InstrumentService.Instrument(figi=BBG004S68DD6, tiket=MSTT, currency=rub, name=Мостотрест, lot=10, minPriceIncrement=0.05000000, isBuyAvailable=true)
-        // instrument BBG000R04X57 (FLOT): InstrumentService.Instrument(figi=BBG000R04X57, tiket=FLOT, currency=rub, name=Совкомфлот, lot=10, minPriceIncrement=0.01000000, isBuyAvailable=true)
-        // instrument BBG000BBV4M5 (CNTL): InstrumentService.Instrument(figi=BBG000BBV4M5, tiket=CNTL, currency=rub, name=Центральный Телеграф, lot=100, minPriceIncrement=0.02000000, isBuyAvailable=true)
-        // instrument BBG004S689R0 (PHOR): InstrumentService.Instrument(figi=BBG004S689R0, tiket=PHOR, currency=rub, name=ФосАгро, lot=1, minPriceIncrement=1.00000000, isBuyAvailable=true)
-        // instrument BBG000RTHVK7 (GCHE): InstrumentService.Instrument(figi=BBG000RTHVK7, tiket=GCHE, currency=rub, name=Группа Черкизово, lot=1, minPriceIncrement=0.50000000, isBuyAvailable=true)
+        //FIGIES.put("BBG004731354", 1); // ROSN Роснефть
+        //FIGIES.put("BBG004S68507", 10); // MAGN Магнитогорский металлургический комбинат
+        //FIGIES.put("BBG000PZ0833", 1); // MGTSP МГТС - акции привилегированные
+        //FIGIES.put("BBG0100R9963", 100); // SGZH Сегежа // candles 1hour figi BBG0100R9963 from 2018-12-30T10:59+03:00 to 2022-09-23T18:59+03:00. Expect length 4000, real 3117, total 4290, begin 2021-04-28T10:00+03:00, end 2023-02-08T14:00+03:00
+        //FIGIES.put("BBG004S68DD6", 10); // MSTT Мостотрест
+        //FIGIES.put("BBG000R04X57", 10); // FLOT Совкомфлот
+        //FIGIES.put("BBG000BBV4M5", 100); // CNTL Центральный Телеграф
+        //FIGIES.put("BBG004S689R0", 1); // PHOR ФосАгро
+        //FIGIES.put("BBG000RTHVK7", 1); // GCHE Группа Черкизово
+        //FIGIES.put("BBG000VG1034", 10000); // MRKP Россети Центр и Приволжье
+        //FIGIES.put("BBG00JXPFBN0", 1); // FIVE ГДР X5 RetailGroup
+        //FIGIES.put("BBG004S68696", 1); // Распадская
+        //FIGIES.put("BBG000QFH687", 1); // ТГК-1
+        //FIGIES.put("BBG004S683W7", 1); // Аэрофлот
+        //FIGIES.put("BBG012YQ6P43", 1); // CIAN АДР Циан // candles 1hour figi BBG012YQ6P43 from 2018-12-02T10:59+03:00 to 2022-08-26T18:59+03:00. Expect length 4000, real 2004, total 3776, begin 2021-11-05T20:00+03:00, end 2023-02-08T23:00+03:00
+        //FIGIES.put("BBG001BBGNS2", 10); // ORUP Обувь России
+        FIGIES.put("BBG000K3STR7", 10); // APTK Аптечная сеть 36,6
+        //FIGIES.put("BBG0019K04R5", 100); // LIFE Фармсинтез
+        //FIGIES.put("BBG003BNWBP3", 100); // PRFN ЧЗПСН
+        //FIGIES.put("BBG000RJWGC4", 100); // AMEZ Ашинский метзавод
+        //FIGIES.put("BBG000VQWH86", 100); // BLNG Белон
+        //FIGIES.put("BBG000RP8V70", 1); // CHMK ЧМК
         //
         //FIGIES.put("BBG00Y91R9T3", 1); // OZON
         //FIGIES.put("BBG0029SG1C1", 10); // KZOSP ПАО «КАЗАНЬОРГСИНТЕЗ» - акции привилегированные

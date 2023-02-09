@@ -14,6 +14,10 @@ public interface CandleRepository extends JpaRepository<CandleDomainEntity, Long
     List<CandleDomainEntity> findByIntervalOrderByDateTime(String interval);
 
     @Query("select c from CandleDomainEntity c where c.figi IN :figies AND c.interval = :interval " +
+            "ORDER BY c.dateTime")
+    List<CandleDomainEntity> findByFigiesAndByIntervalOrderByDateTime(Set<String> figies, String interval);
+
+    @Query("select c from CandleDomainEntity c where c.figi IN :figies AND c.interval = :interval " +
             "AND c.dateTime >= :dateTime ORDER BY c.dateTime")
     List<CandleDomainEntity> findByByFigiesAndIntervalOrderByDateTime(Set<String> figies, String interval, OffsetDateTime dateTime);
 
