@@ -2,6 +2,7 @@ package com.struchev.invest.service.candle;
 
 import com.struchev.invest.expression.Date;
 import com.struchev.invest.service.notification.NotificationService;
+import com.struchev.invest.service.processor.FactorialInstrumentByFiatService;
 import com.struchev.invest.service.processor.PurchaseService;
 import com.struchev.invest.service.tinkoff.ITinkoffCommonAPI;
 import com.struchev.invest.strategy.StrategySelector;
@@ -17,6 +18,8 @@ import ru.tinkoff.piapi.contract.v1.SubscriptionInterval;
 import javax.annotation.PostConstruct;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * Service to observe candles
@@ -36,7 +39,7 @@ public class CandleListenerService {
     private void startToListen(int number) {
         var figies = strategySelector.getFigiesForActiveStrategies();
         var interval = "1min";
-        notificationService.sendMessageAndLog("Listening candle events..");
+        notificationService.sendMessageAndLog("Listening candle events... " + number);
         try {
             tinkoffCommonAPI.getApi().getMarketDataStreamService()
                     .newStream("candles_stream", item -> {
@@ -55,8 +58,22 @@ public class CandleListenerService {
                             var maxCandleHourDate = Date.formatDateTimeToHour(candleHour.get(0).getDateTime());
                             var curCandleHourExpect = Date.formatDateTimeToHour(candleDomainEntity.getDateTime().minusHours(1));
                             if (!maxCandleHourDate.equals(curCandleHourExpect)) {
-                                log.info("Need 1hour candle {} != {}", maxCandleHourDate, curCandleHourExpect);
-                                candleHistoryService.loadCandlesHistory(candleDomainEntity.getFigi(), 1L, CandleInterval.CANDLE_INTERVAL_HOUR, OffsetDateTime.now());
+                                String key = candleDomainEntity.getFigi() + curCandleHourExpect;
+                                Integer keyValue = 0;
+                                synchronized (loadCandlesHistory) {
+                                    if (!loadCandlesHistory.containsValue(key)) {
+                                        keyValue = 1;
+                                    } else {
+                                        keyValue = loadCandlesHistory.get(key) + 1;
+                                    }
+                                    loadCandlesHistory.put(key, keyValue);
+                                }
+                                if (keyValue < 3) {
+                                    log.info("Need 1hour candle {} != {}: {} = {}", maxCandleHourDate, curCandleHourExpect, key, keyValue);
+                                    candleHistoryService.loadCandlesHistory(candleDomainEntity.getFigi(), 1L, CandleInterval.CANDLE_INTERVAL_HOUR, OffsetDateTime.now());
+                                } else {
+                                    log.info("No Need 1hour candle {} != {}: {} = {}", maxCandleHourDate, curCandleHourExpect, key, keyValue);
+                                }
                             }
                             purchaseService.observeNewCandleNoThrow(candleDomainEntity);
                         }
@@ -71,6 +88,13 @@ public class CandleListenerService {
             throw th;
         }
     }
+
+    private LinkedHashMap<String, Integer> loadCandlesHistory = new LinkedHashMap<>() {
+        @Override
+        protected boolean removeEldestEntry(final Map.Entry eldest) {
+            return size() > 1000;
+        }
+    };
 
     @PostConstruct
     void init() {

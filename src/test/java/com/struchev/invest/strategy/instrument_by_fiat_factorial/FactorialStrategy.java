@@ -51,10 +51,10 @@ public class FactorialStrategy extends AInstrumentByFiatFactorialStrategy {
         //FIGIES.put("BBG004S683W7", 1); // Аэрофлот
         //FIGIES.put("BBG012YQ6P43", 1); // CIAN АДР Циан // candles 1hour figi BBG012YQ6P43 from 2018-12-02T10:59+03:00 to 2022-08-26T18:59+03:00. Expect length 4000, real 2004, total 3776, begin 2021-11-05T20:00+03:00, end 2023-02-08T23:00+03:00
         //FIGIES.put("BBG001BBGNS2", 10); // ORUP Обувь России
-        FIGIES.put("BBG000K3STR7", 10); // APTK Аптечная сеть 36,6
+        //FIGIES.put("BBG000K3STR7", 10); // APTK Аптечная сеть 36,6
         //FIGIES.put("BBG0019K04R5", 100); // LIFE Фармсинтез
         //FIGIES.put("BBG003BNWBP3", 100); // PRFN ЧЗПСН
-        //FIGIES.put("BBG000RJWGC4", 100); // AMEZ Ашинский метзавод
+        FIGIES.put("BBG000RJWGC4", 100); // AMEZ Ашинский метзавод
         //FIGIES.put("BBG000VQWH86", 100); // BLNG Белон
         //FIGIES.put("BBG000RP8V70", 1); // CHMK ЧМК
         //

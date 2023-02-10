@@ -34,7 +34,7 @@ public class StrategySettings {
     }
 
     public boolean isEnabled(String strategy) {
-        log.info("getFigies for {} size={}", strategy, this.strategies.size());
+        //log.info("getFigies for {} size={}", strategy, this.strategies.size());
         if (!this.strategies.containsKey(strategy)) {
             return false;
         }

@@ -941,7 +941,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
     private Map<String, FactorialData> factorialCashMap = new LinkedHashMap<>() {
         @Override
         protected boolean removeEldestEntry(final Map.Entry eldest) {
-            return size() > 100;
+            return size() > 1000;
         }
     };
 
@@ -950,7 +950,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         if (factorialCashMap.containsKey(indent)) {
             return factorialCashMap.get(indent);
         }
-        if (factorialCashMap.size() > 100) {
+        if (factorialCashMap.size() > 1000) {
             factorialCashMap.clear();
         }
         return null;
@@ -967,7 +967,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
     private LinkedHashMap<String, BuyData> factorialCashIsBuy = new LinkedHashMap<>() {
         @Override
         protected boolean removeEldestEntry(final Map.Entry eldest) {
-            return size() > 100;
+            return size() > 1000;
         }
     };
 
@@ -976,7 +976,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         if (factorialCashIsBuy.containsKey(indent)) {
             return factorialCashIsBuy.get(indent);
         }
-        if (factorialCashIsBuy.size() > 100) {
+        if (factorialCashIsBuy.size() > 1000) {
             factorialCashIsBuy.clear();
         }
         return null;
