@@ -53,22 +53,22 @@ public class CandleListenerService {
                             candle.setTime(item.getCandle().getTime());
                             var candleDomainEntity = candleHistoryService.addOrReplaceCandles(candle.build(), item.getCandle().getFigi(), interval);
 
-                            var candleHour = candleHistoryService.getCandlesByFigiByLength(candleDomainEntity.getFigi(), candleDomainEntity.getDateTime(), 2,
-                                    "1hour");
+                            var candleHour = candleHistoryService.getAllCandlesByFigiByLength(
+                                    candleDomainEntity.getFigi(),
+                                    candleDomainEntity.getDateTime(),
+                                    2,
+                                    "1hour"
+                            );
                             var maxCandleHourDate = Date.formatDateTimeToHour(candleHour.get(1).getDateTime());
                             var curCandleHourExpect = Date.formatDateTimeToHour(candleDomainEntity.getDateTime());
                             if (!maxCandleHourDate.equals(curCandleHourExpect) || !candleHour.get(0).getIsComplete()) {
                                 String key = candleDomainEntity.getFigi() + curCandleHourExpect;
                                 Integer keyValue = 0;
                                 synchronized (loadCandlesHistory) {
-                                    if (!loadCandlesHistory.containsValue(key)) {
-                                        keyValue = 1;
-                                    } else {
-                                        keyValue = loadCandlesHistory.get(key) + 1;
-                                    }
+                                    keyValue = loadCandlesHistory.getOrDefault(key, 0) + 1;
                                     loadCandlesHistory.put(key, keyValue);
                                 }
-                                if (keyValue < 10) {
+                                if (keyValue < 100) {
                                     log.info("Need 1hour candle {} != {}: {} = {}", maxCandleHourDate, curCandleHourExpect, key, keyValue);
                                     candleHistoryService.loadCandlesHistory(candleDomainEntity.getFigi(), 1L, CandleInterval.CANDLE_INTERVAL_HOUR, OffsetDateTime.now());
                                 } else {

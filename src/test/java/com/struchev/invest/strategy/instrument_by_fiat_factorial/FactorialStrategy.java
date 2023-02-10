@@ -12,7 +12,7 @@ public class FactorialStrategy extends AInstrumentByFiatFactorialStrategy {
     static {
         //FIGIES.put("BBG000LWVHN8", 1); // Дагестанская энергосбытовая компания
         //FIGIES.put("BBG004S681W1", 10); // МТС
-        //FIGIES.put("BBG00475KKY8", 1); // НОВАТЭК
+        FIGIES.put("BBG00475KKY8", 1); // НОВАТЭК
         //FIGIES.put("BBG006L8G4H1", 1); // Yandex
         //FIGIES.put("BBG00178PGX3", 1); // VK
         //FIGIES.put("BBG00QPYJ5H0", 1); // TCS Group
@@ -54,7 +54,7 @@ public class FactorialStrategy extends AInstrumentByFiatFactorialStrategy {
         //FIGIES.put("BBG000K3STR7", 10); // APTK Аптечная сеть 36,6
         //FIGIES.put("BBG0019K04R5", 100); // LIFE Фармсинтез
         //FIGIES.put("BBG003BNWBP3", 100); // PRFN ЧЗПСН
-        FIGIES.put("BBG000RJWGC4", 100); // AMEZ Ашинский метзавод
+        //FIGIES.put("BBG000RJWGC4", 100); // AMEZ Ашинский метзавод
         //FIGIES.put("BBG000VQWH86", 100); // BLNG Белон
         //FIGIES.put("BBG000RP8V70", 1); // CHMK ЧМК
         //

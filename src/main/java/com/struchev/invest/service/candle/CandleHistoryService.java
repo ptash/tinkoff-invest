@@ -135,6 +135,18 @@ public class CandleHistoryService {
         return candleHistoryLocal;
     }
 
+    public List<CandleDomainEntity> getAllCandlesByFigiByLength(String figi, OffsetDateTime currentDateTime, Integer length, String interval)
+    {
+        Pageable top = PageRequest.of(0, length);
+        var candles = candleRepository.findByFigiAndIntervalAndBeforeDateTimeLimit(figi, interval, currentDateTime, top);
+        if (candles.size() < length) {
+            // недостаточно данных за промежуток (мало свечек) - не калькулируем
+            return null;
+        }
+        Collections.reverse(candles);
+        return candles;
+    }
+
     public List<CandleDomainEntity> getCandlesByFigiAndIntervalAndBeforeDateTimeLimit(String figi, OffsetDateTime dateTime, Integer length, String interval) {
         // если слушатель выключен - значит запускаем не в продакшн режиме, можем хранить свечки в памяти, а не на диске (БД)
         if (!isCandleListenerEnabled) {
