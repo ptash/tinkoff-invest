@@ -9,7 +9,10 @@ public class Factorial3TopAllStrategy extends Factorial2TopAllStrategy {
         buy.setProfitPercentFromBuyMinPrice(0.1);
         buy.setProfitPercentFromBuyMaxPrice(0.2);
         buy.setIsProfitPercentFromBuyPriceTop(false);
-        buy.setIsProfitPercentFromBuyPriceTopSecond(true);
+        buy.setIsProfitPercentFromBuyPriceTopSecond(false);
+        buy.setProfitPercentFromBuyMinPriceProfit(0.0);
+        buy.setProfitPercentFromBuyMaxPriceProfit(null);
+        buy.setProfitPercentFromBuyMaxPriceProfitSecond(2.0);
         buy.setAllOverProfitSecondPercent(0.0);
         return buy;
     }

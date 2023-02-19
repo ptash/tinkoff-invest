@@ -93,7 +93,10 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
         Double overProfitMaxPercent;
 
         Double profitPercentFromBuyMinPrice;
+        Double profitPercentFromBuyMinPriceProfit;
         Double profitPercentFromBuyMaxPrice;
+        Double profitPercentFromBuyMaxPriceProfit;
+        Double profitPercentFromBuyMaxPriceProfitSecond;
         Boolean isProfitPercentFromBuyPriceTop;
         Boolean isProfitPercentFromBuyPriceTopSecond;
         Boolean isAllOverProfit;

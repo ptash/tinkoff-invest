@@ -556,20 +556,19 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             }
         }
 
-        var curBeginHour = candle.getDateTime();
-        curBeginHour = curBeginHour.minusMinutes(curBeginHour.getMinute() + 1);
-        String key = strategy.getName() + candle.getFigi() + notificationService.formatDateTime(curBeginHour);
+        String key = buildKeyHour(strategy.getName(), candle);
+        var buyPrice = getCashedIsBuyValue(key);
         var resBuy = false;
         if (null == strategy.getBuyCriteria().getProfitPercentFromBuyMinPrice()
                 || (!strategy.getBuyCriteria().getIsProfitPercentFromBuyPriceTop()
                     && candle.getClosingPrice().doubleValue() > profit
+                    && buyPrice == null
                     && !(isProfitSecond && strategy.getBuyCriteria().getIsProfitPercentFromBuyPriceTopSecond())
                 )
         ) {
             resBuy = res;
         } else {
-            annotation += "key = " + key;
-            var buyPrice = getCashedIsBuyValue(key);
+            annotation += " key = " + key;
             if (buyPrice == null) {
                 if (res) {
                     addCashedIsBuyValue(key, BuyData.builder()
@@ -584,9 +583,20 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 annotation += " percentProfit = " + percentProfit;
                 annotation += " percentFromBy = " + percentFromBy;
                 annotation += " buyPrice = " + buyPrice.minPrice + "price:" + buyPrice.price;
-                if (percentProfit > strategy.getBuyCriteria().getProfitPercentFromBuyMinPrice()
+                var profitPercentFromBuyMinPrice = strategy.getBuyCriteria().getProfitPercentFromBuyMinPrice();
+                var profitPercentFromBuyMaxPrice = strategy.getBuyCriteria().getProfitPercentFromBuyMaxPrice();
+                if (candle.getClosingPrice().doubleValue() > profit) {
+                    if (strategy.getBuyCriteria().getProfitPercentFromBuyMinPriceProfit() != null) {
+                        profitPercentFromBuyMinPrice = strategy.getBuyCriteria().getProfitPercentFromBuyMinPriceProfit();
+                    }
+                    profitPercentFromBuyMaxPrice = strategy.getBuyCriteria().getProfitPercentFromBuyMaxPriceProfit();
+                    if (isProfitSecond) {
+                        profitPercentFromBuyMaxPrice = strategy.getBuyCriteria().getProfitPercentFromBuyMaxPriceProfitSecond();
+                    }
+                }
+                if (percentProfit > profitPercentFromBuyMinPrice
                         && (
-                                strategy.getBuyCriteria().getProfitPercentFromBuyMaxPrice() == null
+                                profitPercentFromBuyMaxPrice == null
                                         || percentFromBy < strategy.getBuyCriteria().getProfitPercentFromBuyMaxPrice()
                 )
                 ) {
@@ -598,9 +608,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 } else if (candle.getClosingPrice().doubleValue() > profit
                         && candle.getClosingPrice().doubleValue() > buyPrice.getPrice()
                 ) {
-                    buyPrice.setPrice(candle.getClosingPrice().doubleValue());
-                    buyPrice.setMinPrice(candle.getClosingPrice().doubleValue());
-                    addCashedIsBuyValue(key, buyPrice);
+                    //buyPrice.setPrice(candle.getClosingPrice().doubleValue());
+                    //buyPrice.setMinPrice(candle.getClosingPrice().doubleValue());
+                    //addCashedIsBuyValue(key, buyPrice);
                 }
             }
         }
@@ -629,9 +639,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
 
     @Override
     public boolean isShouldSell(AInstrumentByFiatFactorialStrategy strategy, CandleDomainEntity candle, BigDecimal purchaseRate) {
-        var curBeginHour = candle.getDateTime();
-        curBeginHour = curBeginHour.minusMinutes(curBeginHour.getMinute() + 1);
-        String key = strategy.getName() + candle.getFigi() + notificationService.formatDateTime(curBeginHour);
+        String key = buildKeyHour(strategy.getName(), candle);
         addCashedIsBuyValue(key, null);
 
         var sellCriteria = strategy.getSellCriteria();
@@ -1015,6 +1023,14 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             return size() > 1000;
         }
     };
+
+    private String buildKeyHour(String strategyName, CandleDomainEntity candle)
+    {
+        var curBeginHour = candle.getDateTime();
+        curBeginHour = curBeginHour.minusMinutes(curBeginHour.getMinute() + 1);
+        String key = strategyName + candle.getFigi() + notificationService.formatDateTime(curBeginHour);
+        return key;
+    }
 
     private synchronized BuyData getCashedIsBuyValue(String indent)
     {
