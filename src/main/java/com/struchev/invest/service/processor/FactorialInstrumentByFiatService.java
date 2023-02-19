@@ -89,11 +89,18 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
     }
 
     public boolean isShouldBuyFactorial(AInstrumentByFiatFactorialStrategy strategy, CandleDomainEntity candle) {
+        var curDateTime = candle.getDateTime();
+        if (strategy.getFactorialInterval().equals("1hour")) {
+            curDateTime = curDateTime.plusHours(1);
+        }
         var candleList = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
                 candle.getDateTime(), 2, strategy.getFactorialInterval());
-        var curHourCandle = candleList.get(1);
-        var factorial = findBestFactorialInPast(strategy, curHourCandle);
-        String annotation = curHourCandle.getDateTime().toString();
+        var candleList2 = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
+                curDateTime, 1, strategy.getFactorialInterval());
+        var curHourCandleForFactorial = candleList.get(1);
+        var curHourCandle = candleList2.get(0);
+        var factorial = findBestFactorialInPast(strategy, curHourCandleForFactorial);
+        String annotation = curHourCandleForFactorial.getDateTime().toString();
         var res = false;
         Double profit = factorial.getProfit();
         Double loss = factorial.getLoss();
@@ -363,12 +370,17 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 if (order == null) {
                     annotation += " ok < all profit";
                     res = true;
-                } else if (order.getPurchaseDateTime().isBefore(curHourCandle.getDateTime())) {
-                    annotation += " ok < all profit";
-                    res = true;
+                } else {
+                    annotation += " curHourCandle=" + curHourCandle.getDateTime();
+                    annotation += " orderClosedPrice=" + order.getSellPrice();
+                    if (order.getPurchaseDateTime().isBefore(curHourCandle.getDateTime())
+                            || order.getSellPrice().doubleValue() > candle.getClosingPrice().doubleValue()
+                    ) {
+                        annotation += " ok < all profit";
+                        res = true;
+                    }
                 }
-            }
-            if (!res
+            } else if (!res
                     && strategy.getBuyCriteria().getIsOverProfit()
                     && candle.getClosingPrice().doubleValue() > profit
             ) {
@@ -539,7 +551,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         curBeginHour = curBeginHour.minusMinutes(curBeginHour.getMinute() + 1);
         String key = strategy.getName() + candle.getFigi() + notificationService.formatDateTime(curBeginHour);
         var resBuy = false;
-        if (null == strategy.getBuyCriteria().getProfitPercentFromBuyMinPrice()) {
+        if (null == strategy.getBuyCriteria().getProfitPercentFromBuyMinPrice()
+                || (!strategy.getBuyCriteria().getIsProfitPercentFromBuyPriceTop() && candle.getClosingPrice().doubleValue() > profit)
+        ) {
             resBuy = res;
         } else {
             annotation += "key = " + key;
@@ -557,7 +571,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 var percentFromBy = 100.0 * (candle.getClosingPrice().doubleValue() - buyPrice.getPrice()) / buyPrice.getPrice();
                 annotation += " percentProfit = " + percentProfit;
                 annotation += " percentFromBy = " + percentFromBy;
-                annotation += " buyPrice = " + buyPrice;
+                annotation += " buyPrice = " + buyPrice.minPrice + "price:" + buyPrice.price;
                 if (percentProfit > strategy.getBuyCriteria().getProfitPercentFromBuyMinPrice()
                         && (
                                 strategy.getBuyCriteria().getProfitPercentFromBuyMaxPrice() == null
@@ -678,7 +692,26 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             annotation += "ok < ExitLossPercent " + sellCriteria.getExitLossPercent();
             res = true;
         }
-        if (sellCriteria.getTakeProfitPercent() != null
+
+        if (sellCriteria.getExitProfitInPercentMax() != null
+                && profitPercent.floatValue() > 0
+        ) {
+            var candleList = candleHistoryService.getCandlesByFigiBetweenDateTimes(candle.getFigi(),
+                    order.getPurchaseDateTime(), candle.getDateTime(), strategy.getInterval());
+            var maxPrice = candleList.stream().mapToDouble(value -> value.getHighestPrice().doubleValue()).max().orElse(-1);
+            var percent = maxPrice - order.getPurchasePrice().doubleValue();
+            Double percent2 = 0.0;
+            if (percent > 0) {
+                percent2 = 100f * (percent - (maxPrice - candle.getClosingPrice().doubleValue())) / percent;
+            }
+            annotation += " maxHighestPrice=" + maxPrice + "(" + candleList.size() + ")" + " ClosingPrice=" + candle.getClosingPrice()
+                    + " percent=" + percent2;
+            if (percent2 > strategy.getSellCriteria().getExitProfitInPercentMin()
+                    && percent2 < strategy.getSellCriteria().getExitProfitInPercentMax()
+            ) {
+                res = true;
+            }
+        } else if (sellCriteria.getTakeProfitPercent() != null
                 && profitPercent.floatValue() > sellCriteria.getTakeProfitPercent()
         ) {
             if (strategy.getSellCriteria().getExitProfitLossPercent() != null) {
@@ -908,8 +941,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     +  minPrice + "=" + expectLoss;
         }
 
-        var expectProfit = expectProfitList.stream().mapToDouble(i -> i).average().orElse(-1);
-        var expectLoss = expectLossList.stream().mapToDouble(i -> i).average().orElse(-1);
+        var expectProfit = expectProfitList.stream().mapToDouble(i -> i).max().orElse(-1);
+        var expectLoss = expectLossList.stream().mapToDouble(i -> i).max().orElse(-1);
 
         //expectProfit -= expectProfitList.stream().mapToDouble(i -> i).max().orElse(-1) / avSize;
         //expectLoss -= expectLossList.stream().mapToDouble(i -> i).max().orElse(-1) / avSize;

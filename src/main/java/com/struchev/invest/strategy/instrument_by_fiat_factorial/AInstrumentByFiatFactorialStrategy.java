@@ -46,19 +46,25 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
         Float takeProfitPercent;
         // Процент (take profit), если цена покупки растет на него, продаем в любом случае
         Float exitProfitPercent;
+        Float exitProfitInPercentMax;
+        Float exitProfitInPercentMin;
         Float exitProfitLossPercent;
         Float exitLossPercent;
         Boolean isSellUnderProfit;
     }
 
-    public AInstrumentByFiatFactorialStrategy.SellCriteria getSellCriteria() {
+    public SellCriteria getSellCriteria() {
         return SellCriteria.builder()
                 .takeProfitPercent(0.3f)
+                .exitProfitLossPercent(0.1f)
+                .exitProfitInPercentMax(null)
+
                 .stopLossPercent(0.4f)
                 .stopLossLength(2)
-                .stopLossSoftPercent(0.2f)
+
                 .stopLossSoftLength(5)
-                .exitProfitLossPercent(0.1f)
+                .stopLossSoftPercent(0.2f)
+
                 .exitLossPercent(8f)
                 .isSellUnderProfit(false)
                 .build();
@@ -88,6 +94,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
 
         Double profitPercentFromBuyMinPrice;
         Double profitPercentFromBuyMaxPrice;
+        Boolean isProfitPercentFromBuyPriceTop;
         Boolean isAllOverProfit;
     }
 
@@ -115,12 +122,13 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
                 //.overProfitMaxPercent(0.2)
                 .profitPercentFromBuyMinPrice(null)
                 .profitPercentFromBuyMaxPrice(null)
+                .isProfitPercentFromBuyPriceTop(true)
                 .isAllOverProfit(false)
                 .build();
     }
 
     public Integer getFactorialLength() { return 20; }
-    public Integer getFactorialLengthFuture() { return 4; }
+    public Integer getFactorialLengthFuture() { return 1; }
     public Integer getFactorialHistoryLength() {
         return this.getFactorialLength() * 200;
     }
