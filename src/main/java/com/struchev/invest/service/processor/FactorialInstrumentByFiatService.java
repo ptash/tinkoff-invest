@@ -726,6 +726,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             if (strategy.getSellCriteria().getExitProfitInPercentMaxForLoss() != null
                     && minPercent > strategy.getSellCriteria().getExitProfitInPercentMaxForLoss()
                     && profitPercent.floatValue() < 0
+                    && order.getPurchaseDateTime().isBefore(curEndHour)
             ) {
                 isLoss = true;
                 annotation += " minHighestPrice=" + minPrice;
