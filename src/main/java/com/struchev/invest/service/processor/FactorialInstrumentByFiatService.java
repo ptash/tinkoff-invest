@@ -719,8 +719,12 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         ) {
             var candleList = candleHistoryService.getCandlesByFigiBetweenDateTimes(candle.getFigi(),
                     order.getPurchaseDateTime(), candle.getDateTime(), strategy.getInterval());
-            var maxPrice = candleList.stream().mapToDouble(value -> value.getHighestPrice().doubleValue()).max().orElse(-1);
-            var minPrice = candleList.stream().mapToDouble(value -> value.getLowestPrice().doubleValue()).min().orElse(-1);
+            var maxPrice = candleList.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).max().orElse(-1);
+            var minPrice = candleList.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).min().orElse(-1);
+            if (sellCriteria.getIsExitProfitInPercentMaxMax()) {
+                maxPrice = candleList.stream().mapToDouble(value -> value.getHighestPrice().doubleValue()).max().orElse(-1);
+                minPrice = candleList.stream().mapToDouble(value -> value.getLowestPrice().doubleValue()).min().orElse(-1);
+            }
             var priceOne = order.getPurchasePrice().doubleValue();
             var minPercent = 100f * (order.getPurchasePrice().doubleValue() - minPrice) / order.getPurchasePrice().doubleValue();
             var isLoss = false;
@@ -976,8 +980,12 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     +  minPrice + "=" + expectLoss;
         }
 
-        var expectProfit = expectProfitList.stream().mapToDouble(i -> i).max().orElse(-1);
-        var expectLoss = expectLossList.stream().mapToDouble(i -> i).max().orElse(-1);
+        var expectProfit = expectProfitList.stream().mapToDouble(i -> i).average().orElse(-1);
+        var expectLoss = expectLossList.stream().mapToDouble(i -> i).average().orElse(-1);
+        if (strategy.isFactorialAvgMaxMin()) {
+            expectProfit = expectProfitList.stream().mapToDouble(i -> i).max().orElse(-1);
+            expectLoss = expectLossList.stream().mapToDouble(i -> i).max().orElse(-1);
+        }
 
         //expectProfit -= expectProfitList.stream().mapToDouble(i -> i).max().orElse(-1) / avSize;
         //expectLoss -= expectLossList.stream().mapToDouble(i -> i).max().orElse(-1) / avSize;

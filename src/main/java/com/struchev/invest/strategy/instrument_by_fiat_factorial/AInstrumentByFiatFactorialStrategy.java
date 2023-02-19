@@ -46,6 +46,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
         Float takeProfitPercent;
         // Процент (take profit), если цена покупки растет на него, продаем в любом случае
         Float exitProfitPercent;
+        Boolean isExitProfitInPercentMaxMax;
         Float exitProfitInPercentMax;
         Float exitProfitInPercentMin;
         Float exitProfitInPercentMaxForLoss;
@@ -68,6 +69,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
 
                 .exitLossPercent(8f)
                 .isSellUnderProfit(false)
+                .isExitProfitInPercentMaxMax(false)
                 .exitProfitInPercentMaxForLoss(null)
                 .build();
     }
@@ -136,13 +138,14 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
     }
 
     public Integer getFactorialLength() { return 20; }
-    public Integer getFactorialLengthFuture() { return 1; }
+    public Integer getFactorialLengthFuture() { return 4; }
     public Integer getFactorialHistoryLength() {
         return this.getFactorialLength() * 200;
     }
     public List<Integer> getFactorialSizes() { return List.of(1); };
     public Integer getFactorialBestSize() { return 3; };
     public Integer getFactorialAvgSize() { return 3; };
+    public Boolean isFactorialAvgMaxMin() { return false; };
     public Boolean isFactorialAvgByMiddle() { return false; };
     public Integer getFactorialDownAvgSize() { return 4; };
     public Integer getFactorialLossIgnoreSize() { return 3; };

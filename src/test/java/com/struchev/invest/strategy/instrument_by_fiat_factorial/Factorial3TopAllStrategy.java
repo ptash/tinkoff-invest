@@ -32,6 +32,8 @@ public class Factorial3TopAllStrategy extends Factorial2TopAllStrategy {
 
         //sell.setStopLossSoftLength(5);
         sell.setStopLossSoftPercent(1.f);
+
+        sell.setIsExitProfitInPercentMaxMax(true);
         return sell;
     }
 
