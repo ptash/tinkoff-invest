@@ -15,6 +15,8 @@ public class Factorial3TopAllStrategy extends Factorial2TopAllStrategy {
         //buy.setProfitPercentFromBuyMaxPriceProfitSecond(2.0);
         buy.setProfitPercentFromBuyMaxPriceProfitSecond(null);
         buy.setAllOverProfitSecondPercent(0.0);
+
+        buy.setIsAllOverProfit(false);
         return buy;
     }
 

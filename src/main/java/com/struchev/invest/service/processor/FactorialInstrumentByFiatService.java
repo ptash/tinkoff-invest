@@ -363,32 +363,12 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     }
                 }
             }
+            var isResOverProfit = false;
             if (!res
                     && strategy.getBuyCriteria().getIsAllOverProfit()
                     && candle.getClosingPrice().doubleValue() > profit
             ) {
-                var order = orderService.findLastByFigiAndStrategy(candle.getFigi(), strategy);
-                if (order == null) {
-                    annotation += " ok < all profit";
-                    res = true;
-                } else {
-                    annotation += " curHourCandle=" + curHourCandle.getDateTime();
-                    annotation += " orderClosedPrice=" + order.getSellPrice();
-                    var percentFromLastSell = 100f * (order.getSellPrice().doubleValue() - candle.getClosingPrice().doubleValue()) / order.getSellPrice().doubleValue();
-                    annotation += " curHourCandle=" + curHourCandle.getDateTime();
-                    annotation += " orderClosedPrice=" + order.getSellPrice();
-                    annotation += " percentFromLastSell=" + percentFromLastSell;
-                    if (order.getPurchaseDateTime().isBefore(curHourCandle.getDateTime())) {
-                        annotation += " ok < all profit";
-                        res = true;
-                    } else if (strategy.getBuyCriteria().getAllOverProfitSecondPercent() != null
-                            && percentFromLastSell > strategy.getBuyCriteria().getAllOverProfitSecondPercent()
-                    ) {
-                        annotation += " ok < all profit second";
-                        res = true;
-                        isProfitSecond = true;
-                    }
-                }
+                isResOverProfit = true;
             } else if (!res
                     && strategy.getBuyCriteria().getIsOverProfit()
                     && candle.getClosingPrice().doubleValue() > profit
@@ -509,12 +489,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         && (strategy.getBuyCriteria().getOverProfitMaxPercent() == null
                         || overProfitPercent < strategy.getBuyCriteria().getOverProfitMaxPercent())
                 ) {
-                    var order = orderService.findLastByFigiAndStrategy(candle.getFigi(), strategy);
-                    if (order == null) {
-                        res = true;
-                    } else if (order.getPurchaseDateTime().isBefore(curHourCandle.getDateTime())) {
-                        res = true;
-                    }
+                    isResOverProfit = true;
                     if (res) {
                         annotation += " notShort";
                     }
@@ -534,6 +509,31 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     }
                 }
                  */
+            }
+
+            if (!res && isResOverProfit) {
+                var order = orderService.findLastByFigiAndStrategy(candle.getFigi(), strategy);
+                if (order == null) {
+                    annotation += " ok < all profit";
+                    res = true;
+                } else {
+                    annotation += " curHourCandle=" + curHourCandle.getDateTime();
+                    annotation += " orderClosedPrice=" + order.getSellPrice();
+                    var percentFromLastSell = 100f * (order.getSellPrice().doubleValue() - candle.getClosingPrice().doubleValue()) / order.getSellPrice().doubleValue();
+                    annotation += " curHourCandle=" + curHourCandle.getDateTime();
+                    annotation += " orderClosedPrice=" + order.getSellPrice();
+                    annotation += " percentFromLastSell=" + percentFromLastSell;
+                    if (order.getPurchaseDateTime().isBefore(curHourCandle.getDateTime())) {
+                        annotation += " ok < all profit";
+                        res = true;
+                    } else if (strategy.getBuyCriteria().getAllOverProfitSecondPercent() != null
+                            && percentFromLastSell > strategy.getBuyCriteria().getAllOverProfitSecondPercent()
+                    ) {
+                        annotation += " ok < all profit second";
+                        res = true;
+                        isProfitSecond = true;
+                    }
+                }
             }
 
             if (!res
