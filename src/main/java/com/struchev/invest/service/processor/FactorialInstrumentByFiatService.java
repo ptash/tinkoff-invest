@@ -728,7 +728,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             var percent = maxPrice - priceOne;
             Double percent2 = 0.0;
             if (percent > 0) {
-                percent2 = 100f * (percent - (maxPrice - priceOne)) / percent;
+                percent2 = 100f * (percent - (maxPrice - candle.getClosingPrice().doubleValue())) / percent;
             }
             annotation += " maxHighestPrice=" + maxPrice + "(" + candleList.size() + ")" + " ClosingPrice=" + candle.getClosingPrice()
                     + " percent=" + percent2;
