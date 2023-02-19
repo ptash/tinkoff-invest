@@ -373,8 +373,12 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 } else {
                     annotation += " curHourCandle=" + curHourCandle.getDateTime();
                     annotation += " orderClosedPrice=" + order.getSellPrice();
+                    var percentFromLastSell = 100f * (order.getSellPrice().doubleValue() - candle.getClosingPrice().doubleValue()) / order.getSellPrice().doubleValue();
+                    annotation += " curHourCandle=" + curHourCandle.getDateTime();
+                    annotation += " orderClosedPrice=" + order.getSellPrice();
+                    annotation += " percentFromLastSell=" + percentFromLastSell;
                     if (order.getPurchaseDateTime().isBefore(curHourCandle.getDateTime())
-                            || order.getSellPrice().doubleValue() > candle.getClosingPrice().doubleValue()
+                            || strategy.getBuyCriteria().getAllOverProfitSecondPercent() != null && percentFromLastSell < strategy.getBuyCriteria().getAllOverProfitSecondPercent()
                     ) {
                         annotation += " ok < all profit";
                         res = true;

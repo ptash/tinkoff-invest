@@ -96,6 +96,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
         Double profitPercentFromBuyMaxPrice;
         Boolean isProfitPercentFromBuyPriceTop;
         Boolean isAllOverProfit;
+        Double allOverProfitSecondPercent;
     }
 
     public BuyCriteria getBuyCriteria() {
