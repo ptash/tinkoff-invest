@@ -719,8 +719,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         ) {
             var candleList = candleHistoryService.getCandlesByFigiBetweenDateTimes(candle.getFigi(),
                     order.getPurchaseDateTime(), candle.getDateTime(), strategy.getInterval());
-            var maxPrice = candleList.stream().mapToDouble(value -> value.getHighestPrice().doubleValue()).max().orElse(-1);
-            var minPrice = candleList.stream().mapToDouble(value -> value.getLowestPrice().doubleValue()).min().orElse(-1);
+            var maxPrice = candleList.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).max().orElse(-1);
+            var minPrice = candleList.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).min().orElse(-1);
             var priceOne = order.getPurchasePrice().doubleValue();
             var minPercent = 100f * (order.getPurchasePrice().doubleValue() - minPrice) / order.getPurchasePrice().doubleValue();
             var isLoss = false;
