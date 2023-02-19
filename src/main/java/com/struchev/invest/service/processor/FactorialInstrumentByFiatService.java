@@ -721,7 +721,13 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             var maxPrice = candleList.stream().mapToDouble(value -> value.getHighestPrice().doubleValue()).max().orElse(-1);
             var minPrice = candleList.stream().mapToDouble(value -> value.getLowestPrice().doubleValue()).min().orElse(-1);
             var priceOne = order.getPurchasePrice().doubleValue();
-            if (strategy.getSellCriteria().getIsExitProfitInPercentMaxForLoss() && profitPercent.floatValue() < 0) {
+            var minPercent = 100f * (order.getPurchasePrice().doubleValue() - minPrice) / order.getPurchasePrice().doubleValue();
+            var isLoss = false;
+            if (strategy.getSellCriteria().getExitProfitInPercentMaxForLoss() != null
+                    && minPercent > strategy.getSellCriteria().getExitProfitInPercentMaxForLoss()
+                    && profitPercent.floatValue() < 0
+            ) {
+                isLoss = true;
                 annotation += " minHighestPrice=" + minPrice;
                 priceOne = minPrice;
             }
@@ -734,7 +740,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     + " percent=" + percent2;
             if (percent2 > strategy.getSellCriteria().getExitProfitInPercentMin()
                     && percent2 < strategy.getSellCriteria().getExitProfitInPercentMax()
-                    && (profitPercent.floatValue() > 0 || strategy.getSellCriteria().getIsExitProfitInPercentMaxForLoss())
+                    && (profitPercent.floatValue() > 0 || isLoss)
             ) {
                 res = true;
             }

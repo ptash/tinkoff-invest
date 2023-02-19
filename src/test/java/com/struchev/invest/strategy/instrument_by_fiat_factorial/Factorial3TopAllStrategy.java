@@ -24,7 +24,7 @@ public class Factorial3TopAllStrategy extends Factorial2TopAllStrategy {
         sell.setExitProfitLossPercent(0.5f);
         sell.setExitProfitInPercentMax(66.f);
         sell.setExitProfitInPercentMin(40.f);
-        sell.setIsExitProfitInPercentMaxForLoss(true);
+        sell.setExitProfitInPercentMaxForLoss(2.f);
 
         //sell.setStopLossLength(2);
         sell.setStopLossPercent(2.0f);
