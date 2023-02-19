@@ -742,7 +742,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     + " percent=" + percent2;
             if (percent2 > strategy.getSellCriteria().getExitProfitInPercentMin()
                     && percent2 < strategy.getSellCriteria().getExitProfitInPercentMax()
-                    && (profitPercent.floatValue() > 0 || isLoss)
+                    && (profitPercent.floatValue() > sellCriteria.getTakeProfitPercent() || isLoss)
             ) {
                 res = true;
             }

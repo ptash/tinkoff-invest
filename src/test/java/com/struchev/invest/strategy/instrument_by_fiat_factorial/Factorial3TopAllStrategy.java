@@ -21,7 +21,7 @@ public class Factorial3TopAllStrategy extends Factorial2TopAllStrategy {
     public SellCriteria getSellCriteria() {
         var sell = super.getSellCriteria();
 
-        sell.setTakeProfitPercent(1.f);
+        sell.setTakeProfitPercent(0.2f);
         sell.setExitProfitLossPercent(0.5f);
         sell.setExitProfitInPercentMax(66.f);
         sell.setExitProfitInPercentMin(40.f);
