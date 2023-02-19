@@ -714,20 +714,27 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         }
 
         if (sellCriteria.getExitProfitInPercentMax() != null
-                && profitPercent.floatValue() > 0
+                //&& profitPercent.floatValue() > 0
         ) {
             var candleList = candleHistoryService.getCandlesByFigiBetweenDateTimes(candle.getFigi(),
                     order.getPurchaseDateTime(), candle.getDateTime(), strategy.getInterval());
             var maxPrice = candleList.stream().mapToDouble(value -> value.getHighestPrice().doubleValue()).max().orElse(-1);
-            var percent = maxPrice - order.getPurchasePrice().doubleValue();
+            var minPrice = candleList.stream().mapToDouble(value -> value.getLowestPrice().doubleValue()).min().orElse(-1);
+            var priceOne = order.getPurchasePrice().doubleValue();
+            if (strategy.getSellCriteria().getIsExitProfitInPercentMaxForLoss() && profitPercent.floatValue() < 0) {
+                annotation += " minHighestPrice=" + minPrice;
+                priceOne = minPrice;
+            }
+            var percent = maxPrice - priceOne;
             Double percent2 = 0.0;
             if (percent > 0) {
-                percent2 = 100f * (percent - (maxPrice - candle.getClosingPrice().doubleValue())) / percent;
+                percent2 = 100f * (percent - (maxPrice - priceOne)) / percent;
             }
             annotation += " maxHighestPrice=" + maxPrice + "(" + candleList.size() + ")" + " ClosingPrice=" + candle.getClosingPrice()
                     + " percent=" + percent2;
             if (percent2 > strategy.getSellCriteria().getExitProfitInPercentMin()
                     && percent2 < strategy.getSellCriteria().getExitProfitInPercentMax()
+                    && (profitPercent.floatValue() > 0 || strategy.getSellCriteria().getIsExitProfitInPercentMaxForLoss())
             ) {
                 res = true;
             }
