@@ -595,7 +595,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     }
                 }
                 if (percentProfit > profitPercentFromBuyMinPrice
-                        && (candle.getClosingPrice().doubleValue() < loss
+                        && (false //candle.getClosingPrice().doubleValue() < loss
                                 || profitPercentFromBuyMaxPrice == null
                                 || percentFromBy < strategy.getBuyCriteria().getProfitPercentFromBuyMaxPrice()
                 )

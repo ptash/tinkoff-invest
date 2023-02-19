@@ -13,6 +13,7 @@ public class Factorial3TopAllStrategy extends Factorial2TopAllStrategy {
         buy.setProfitPercentFromBuyMinPriceProfit(0.0);
         buy.setProfitPercentFromBuyMaxPriceProfit(null);
         buy.setProfitPercentFromBuyMaxPriceProfitSecond(2.0);
+        buy.setProfitPercentFromBuyMaxPriceProfitSecond(null);
         buy.setAllOverProfitSecondPercent(0.0);
         return buy;
     }
@@ -24,7 +25,7 @@ public class Factorial3TopAllStrategy extends Factorial2TopAllStrategy {
         sell.setExitProfitLossPercent(0.5f);
         sell.setExitProfitInPercentMax(66.f);
         sell.setExitProfitInPercentMin(40.f);
-        sell.setExitProfitInPercentMaxForLoss(2.f);
+        //sell.setExitProfitInPercentMaxForLoss(2.f);
 
         //sell.setStopLossLength(2);
         sell.setStopLossPercent(2.0f);
