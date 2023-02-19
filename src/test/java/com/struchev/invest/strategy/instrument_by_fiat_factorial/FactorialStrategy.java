@@ -61,7 +61,7 @@ public class FactorialStrategy extends AInstrumentByFiatFactorialStrategy {
         //FIGIES.put("BBG00Y91R9T3", 1); // OZON
         FIGIES.put("BBG0029SG1C1", 10); // KZOSP ПАО «КАЗАНЬОРГСИНТЕЗ» - акции привилегированные
         //FIGIES.put("BBG222222222", 100); // Тинькофф Золото
-        FIGIES.put("BBG000NLB2G3", 10); // KROT Красный Октябрь
+        //FIGIES.put("BBG000NLB2G3", 10); // KROT Красный Октябрь
         //FIGIES.put("BBG005DXJS36", 1); // TCS Group (Tinkoff Bank holder)
         //FIGIES.put("BBG00KHGQ0H4", 1); // HHR HeadHunter Group PLC
         // HKD hkd
