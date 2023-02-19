@@ -102,6 +102,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         var factorial = findBestFactorialInPast(strategy, curHourCandleForFactorial);
         String annotation = curHourCandleForFactorial.getDateTime().toString();
         var res = false;
+        var isProfitSecond = false;
         Double profit = factorial.getProfit();
         Double loss = factorial.getLoss();
         var futureProfit = 100f * (factorial.getProfit() - candle.getClosingPrice().doubleValue()) / candle.getClosingPrice().doubleValue();
@@ -377,12 +378,15 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     annotation += " curHourCandle=" + curHourCandle.getDateTime();
                     annotation += " orderClosedPrice=" + order.getSellPrice();
                     annotation += " percentFromLastSell=" + percentFromLastSell;
-                    if (order.getPurchaseDateTime().isBefore(curHourCandle.getDateTime())
-                            || (strategy.getBuyCriteria().getAllOverProfitSecondPercent() != null
-                            && percentFromLastSell > strategy.getBuyCriteria().getAllOverProfitSecondPercent())
-                    ) {
+                    if (order.getPurchaseDateTime().isBefore(curHourCandle.getDateTime())) {
                         annotation += " ok < all profit";
                         res = true;
+                    } else if (strategy.getBuyCriteria().getAllOverProfitSecondPercent() != null
+                            && percentFromLastSell > strategy.getBuyCriteria().getAllOverProfitSecondPercent()
+                    ) {
+                        annotation += " ok < all profit second";
+                        res = true;
+                        isProfitSecond = true;
                     }
                 }
             } else if (!res
@@ -557,7 +561,10 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         String key = strategy.getName() + candle.getFigi() + notificationService.formatDateTime(curBeginHour);
         var resBuy = false;
         if (null == strategy.getBuyCriteria().getProfitPercentFromBuyMinPrice()
-                || (!strategy.getBuyCriteria().getIsProfitPercentFromBuyPriceTop() && candle.getClosingPrice().doubleValue() > profit)
+                || (!strategy.getBuyCriteria().getIsProfitPercentFromBuyPriceTop()
+                    && candle.getClosingPrice().doubleValue() > profit
+                    && !(isProfitSecond && strategy.getBuyCriteria().getIsProfitPercentFromBuyPriceTopSecond())
+                )
         ) {
             resBuy = res;
         } else {
@@ -703,7 +710,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         ) {
             var candleList = candleHistoryService.getCandlesByFigiBetweenDateTimes(candle.getFigi(),
                     order.getPurchaseDateTime(), candle.getDateTime(), strategy.getInterval());
-            var maxPrice = candleList.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).max().orElse(-1);
+            var maxPrice = candleList.stream().mapToDouble(value -> value.getHighestPrice().doubleValue()).max().orElse(-1);
             var percent = maxPrice - order.getPurchasePrice().doubleValue();
             Double percent2 = 0.0;
             if (percent > 0) {
