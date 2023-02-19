@@ -101,6 +101,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
         Double profitPercentFromBuyMaxPrice;
         Double profitPercentFromBuyMaxPriceProfit;
         Double profitPercentFromBuyMaxPriceProfitSecond;
+        // true - покупать с поиском лучшей
         Boolean isProfitPercentFromBuyPriceTop;
         Boolean isProfitPercentFromBuyPriceTopSecond;
         Boolean isAllOverProfit;
