@@ -654,8 +654,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         var order = orderService.findActiveByFigiAndStrategy(candle.getFigi(), strategy);
         Boolean res = false;
         String annotation = " profitPercent=" + profitPercent;
-        var curEndHour = candle.getDateTime();
-        curEndHour = curEndHour.minusMinutes(curEndHour.getMinute()).plusHours(1);
+        var curBeginHour = candle.getDateTime();
+        curBeginHour.minusMinutes(curBeginHour.getMinute());
+        var curEndHour = curBeginHour.plusHours(1);
         annotation += " orderDate=" + order.getPurchaseDateTime() + " curBeginHour=" + curEndHour;
         if (strategy.getSellCriteria().getIsSellUnderProfit()
                 && factorial.getProfit() < candle.getClosingPrice().doubleValue()
@@ -726,7 +727,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             if (strategy.getSellCriteria().getExitProfitInPercentMaxForLoss() != null
                     && minPercent > strategy.getSellCriteria().getExitProfitInPercentMaxForLoss()
                     && profitPercent.floatValue() < 0
-                    && order.getPurchaseDateTime().isBefore(curEndHour)
+                    && order.getPurchaseDateTime().isBefore(curBeginHour)
             ) {
                 isLoss = true;
                 annotation += " minHighestPrice=" + minPrice;
