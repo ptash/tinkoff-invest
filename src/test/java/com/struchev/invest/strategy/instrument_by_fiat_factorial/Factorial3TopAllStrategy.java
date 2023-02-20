@@ -4,7 +4,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class Factorial3TopAllStrategy extends Factorial2TopAllStrategy {
-    //public Integer getFactorialHistoryLength() { return this.getFactorialLength() * 20; }
+    public Integer getFactorialHistoryLength() { return this.getFactorialLength() * 20; }
     public BuyCriteria getBuyCriteria() {
         var buy = super.getBuyCriteria();
         buy.setProfitPercentFromBuyMinPrice(0.1);
