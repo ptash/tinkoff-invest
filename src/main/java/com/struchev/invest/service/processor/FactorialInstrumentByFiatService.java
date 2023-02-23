@@ -585,11 +585,12 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         maxPrice = candle.getHighestPrice().doubleValue();
                     }
                     var candlePrev = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(), candle.getDateTime(), 200, strategy.getInterval());
-                    for (var i = candlePrev.size() - 1; i >= 0; i--) {
+                    var i = candlePrev.size() - 2;
+                    for (; i >= 0; i--) {
                         var curPrice = candlePrev.get(i).getClosingPrice().doubleValue();
                         var curMaxPrice = curPrice;
                         if (strategy.getBuyCriteria().getIsProfitPercentFromBuyMinPriceRelativeMaxMax()) {
-                            curMaxPrice = candle.getHighestPrice().doubleValue();
+                            curPrice = curMaxPrice = candlePrev.get(i).getHighestPrice().doubleValue();
                         }
                         if (curMaxPrice > maxPrice) {
                             maxPrice = curMaxPrice;
@@ -600,10 +601,11 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         }
                         if (percentDown > strategy.getBuyCriteria().getProfitPercentFromBuyMinPriceRelativeTop()) {
                             annotation += "percentDown = " + percentDown;
-                            annotation += "maxPrice = " + maxPrice;
                             break;
                         }
                     }
+                    annotation += " i = " + i;
+                    annotation += " maxPrice = " + maxPrice;
                 }
                 buyPrice = addCashedIsBuyValue(key, BuyData.builder()
                         .price(candle.getClosingPrice().doubleValue())
@@ -628,7 +630,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             var percentFromBy = 100.0 * (candle.getClosingPrice().doubleValue() - buyPrice.getPrice()) / buyPrice.getPrice();
             annotation += " percentProfit = " + percentProfit;
             annotation += " percentFromBy = " + percentFromBy;
-            annotation += " buyPrice = " + buyPrice.minPrice + "price:" + buyPrice.price;
+            annotation += " minPrice = " + buyPrice.minPrice + " price:" + buyPrice.price;
             if (strategy.getBuyCriteria().getProfitPercentFromBuyMinPriceRelativeMin() != null
                     && profitPercentFromBuyMinPrice == null
             ) {
@@ -636,6 +638,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 if (percentUp > 0) {
                     percentUp = 100f * (candle.getClosingPrice().doubleValue() - buyPrice.minPrice) / percentUp;
                 }
+                annotation += "maxPrice = " + buyPrice.maxPrice;
                 annotation += "percentUp = " + percentUp;
                 if (percentUp > strategy.getBuyCriteria().getProfitPercentFromBuyMinPriceRelativeMin()
                         && percentUp < strategy.getBuyCriteria().getProfitPercentFromBuyMinPriceRelativeMax()
