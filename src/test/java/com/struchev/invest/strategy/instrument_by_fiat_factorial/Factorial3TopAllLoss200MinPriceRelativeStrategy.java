@@ -11,7 +11,7 @@ public class Factorial3TopAllLoss200MinPriceRelativeStrategy extends Factorial3T
         buy.setProfitPercentFromBuyMinPriceRelativeTop(33.f);
         buy.setProfitPercentFromBuyMinPriceRelativeMin(10.f);
         buy.setProfitPercentFromBuyMinPriceRelativeMax(30.f);
-        buy.setIsProfitPercentFromBuyMinPriceRelativeMaxMax(true);
+        //buy.setIsProfitPercentFromBuyMinPriceRelativeMaxMax(true);
         return buy;
     }
 
