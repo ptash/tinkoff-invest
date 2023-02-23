@@ -97,6 +97,10 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
         Double overProfitMaxPercent;
 
         Double profitPercentFromBuyMinPrice;
+        Float profitPercentFromBuyMinPriceRelativeTop;
+        Float profitPercentFromBuyMinPriceRelativeMin;
+        Float profitPercentFromBuyMinPriceRelativeMax;
+        Boolean isProfitPercentFromBuyMinPriceRelativeMaxMax;
         Double profitPercentFromBuyMinPriceProfit;
         Double profitPercentFromBuyMaxPrice;
         Double profitPercentFromBuyMaxPriceProfit;
@@ -135,6 +139,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
                 .isProfitPercentFromBuyPriceTop(true)
                 .isProfitPercentFromBuyPriceTopSecond(true)
                 .isAllOverProfit(false)
+                .isProfitPercentFromBuyMinPriceRelativeMaxMax(false)
                 .build();
     }
 

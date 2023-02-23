@@ -55,6 +55,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
     public static class BuyData {
         Double price;
         Double minPrice;
+        Double maxPrice;
+        Boolean isResOverProfit;
+        Boolean isProfitSecond;
     }
 
     public boolean isShouldBuy(AInstrumentByFiatFactorialStrategy strategy, CandleDomainEntity candle) {
@@ -102,6 +105,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         var factorial = findBestFactorialInPast(strategy, curHourCandleForFactorial);
         String annotation = curHourCandleForFactorial.getDateTime().toString();
         var res = false;
+        var isResOverProfit = false;
         var isProfitSecond = false;
         Double profit = factorial.getProfit();
         Double loss = factorial.getLoss();
@@ -363,7 +367,6 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     }
                 }
             }
-            var isResOverProfit = false;
             if (!res
                     && strategy.getBuyCriteria().getIsAllOverProfit()
                     && candle.getClosingPrice().doubleValue() > profit
@@ -559,60 +562,106 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         String key = buildKeyHour(strategy.getName(), candle);
         var buyPrice = getCashedIsBuyValue(key);
         var resBuy = false;
-        if (null == strategy.getBuyCriteria().getProfitPercentFromBuyMinPrice()
-                || (!strategy.getBuyCriteria().getIsProfitPercentFromBuyPriceTop()
-                    && candle.getClosingPrice().doubleValue() > profit
-                    //&& buyPrice == null
-                    && !(isProfitSecond && strategy.getBuyCriteria().getIsProfitPercentFromBuyPriceTopSecond())
-                )
-        ) {
-            resBuy = res;
-        } else {
+        if ((buyPrice != null || res)
+                && (null != strategy.getBuyCriteria().getProfitPercentFromBuyMinPrice()
+                    || null != strategy.getBuyCriteria().getProfitPercentFromBuyMinPriceRelativeMin())
+                && (!isResOverProfit
+                    || (strategy.getBuyCriteria().getIsProfitPercentFromBuyPriceTop() && isResOverProfit)
+                    || (isProfitSecond && strategy.getBuyCriteria().getIsProfitPercentFromBuyPriceTopSecond())
+        )) {
             annotation += " key = " + key;
             if (buyPrice == null) {
-                if (res) {
-                    addCashedIsBuyValue(key, BuyData.builder()
-                            .price(candle.getClosingPrice().doubleValue())
-                            .minPrice(candle.getClosingPrice().doubleValue())
-                            .build());
-                }
-            } else {
-                annotation = "key = " + key;
-                var percentProfit = 100.0 * (candle.getClosingPrice().doubleValue() - buyPrice.getMinPrice()) / buyPrice.getMinPrice();
-                var percentFromBy = 100.0 * (candle.getClosingPrice().doubleValue() - buyPrice.getPrice()) / buyPrice.getPrice();
-                annotation += " percentProfit = " + percentProfit;
-                annotation += " percentFromBy = " + percentFromBy;
-                annotation += " buyPrice = " + buyPrice.minPrice + "price:" + buyPrice.price;
-                var profitPercentFromBuyMinPrice = strategy.getBuyCriteria().getProfitPercentFromBuyMinPrice();
-                var profitPercentFromBuyMaxPrice = strategy.getBuyCriteria().getProfitPercentFromBuyMaxPrice();
-                if (candle.getClosingPrice().doubleValue() > profit) {
-                    if (strategy.getBuyCriteria().getProfitPercentFromBuyMinPriceProfit() != null) {
-                        profitPercentFromBuyMinPrice = strategy.getBuyCriteria().getProfitPercentFromBuyMinPriceProfit();
-                    }
-                    profitPercentFromBuyMaxPrice = strategy.getBuyCriteria().getProfitPercentFromBuyMaxPriceProfit();
-                    if (isProfitSecond) {
-                        profitPercentFromBuyMaxPrice = strategy.getBuyCriteria().getProfitPercentFromBuyMaxPriceProfitSecond();
-                    }
-                }
-                if (percentProfit > profitPercentFromBuyMinPrice
-                        && (false //candle.getClosingPrice().doubleValue() < loss
-                                || profitPercentFromBuyMaxPrice == null
-                                || percentFromBy < strategy.getBuyCriteria().getProfitPercentFromBuyMaxPrice()
-                )
+                var maxPrice = candle.getClosingPrice().doubleValue();
+                var minPrice = candle.getClosingPrice().doubleValue();
+                if (strategy.getBuyCriteria().getProfitPercentFromBuyMinPriceRelativeMin() != null
+                        && strategy.getBuyCriteria().getProfitPercentFromBuyMinPrice() == null
+                        && !isResOverProfit
                 ) {
-                    resBuy = true;
-                    annotation += " ok loss ProfitPercentFromBuyMinPrice";
-                } else if (candle.getClosingPrice().doubleValue() < buyPrice.getMinPrice()) {
-                    buyPrice.setMinPrice(candle.getClosingPrice().doubleValue());
-                    addCashedIsBuyValue(key, buyPrice);
-                } else if (candle.getClosingPrice().doubleValue() > profit
-                        && candle.getClosingPrice().doubleValue() > buyPrice.getPrice()
-                ) {
-                    //buyPrice.setPrice(candle.getClosingPrice().doubleValue());
-                    //buyPrice.setMinPrice(candle.getClosingPrice().doubleValue());
-                    //addCashedIsBuyValue(key, buyPrice);
+                    // определяем с какой цены началось падение
+                    if (strategy.getBuyCriteria().getIsProfitPercentFromBuyMinPriceRelativeMaxMax()) {
+                        minPrice = candle.getLowestPrice().doubleValue();
+                    }
+                    if (strategy.getBuyCriteria().getIsProfitPercentFromBuyMinPriceRelativeMaxMax()) {
+                        maxPrice = candle.getHighestPrice().doubleValue();
+                    }
+                    var candlePrev = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(), candle.getDateTime(), 200, strategy.getInterval());
+                    for (var i = candlePrev.size() - 1; i >= 0; i--) {
+                        var curPrice = candlePrev.get(i).getClosingPrice().doubleValue();
+                        var curMaxPrice = curPrice;
+                        if (strategy.getBuyCriteria().getIsProfitPercentFromBuyMinPriceRelativeMaxMax()) {
+                            curMaxPrice = candle.getHighestPrice().doubleValue();
+                        }
+                        if (curMaxPrice > maxPrice) {
+                            maxPrice = curMaxPrice;
+                        }
+                        var percentDown = maxPrice - minPrice;
+                        if (percentDown > 0) {
+                            percentDown = 100f * (maxPrice - curPrice) / percentDown;
+                        }
+                        if (percentDown > strategy.getBuyCriteria().getProfitPercentFromBuyMinPriceRelativeTop()) {
+                            annotation += "percentDown = " + percentDown;
+                            annotation += "maxPrice = " + maxPrice;
+                            break;
+                        }
+                    }
+                }
+                buyPrice = addCashedIsBuyValue(key, BuyData.builder()
+                        .price(candle.getClosingPrice().doubleValue())
+                        .minPrice(minPrice)
+                        .maxPrice(maxPrice)
+                        .isResOverProfit(isResOverProfit)
+                        .isProfitSecond(isProfitSecond)
+                        .build());
+            }
+            var profitPercentFromBuyMinPrice = strategy.getBuyCriteria().getProfitPercentFromBuyMinPrice();
+            var profitPercentFromBuyMaxPrice = strategy.getBuyCriteria().getProfitPercentFromBuyMaxPrice();
+            if (buyPrice.getIsResOverProfit()) {
+                if (strategy.getBuyCriteria().getProfitPercentFromBuyMinPriceProfit() != null) {
+                    profitPercentFromBuyMinPrice = strategy.getBuyCriteria().getProfitPercentFromBuyMinPriceProfit();
+                }
+                profitPercentFromBuyMaxPrice = strategy.getBuyCriteria().getProfitPercentFromBuyMaxPriceProfit();
+                if (buyPrice.getIsProfitSecond()) {
+                    profitPercentFromBuyMaxPrice = strategy.getBuyCriteria().getProfitPercentFromBuyMaxPriceProfitSecond();
                 }
             }
+            var percentProfit = 100.0 * (candle.getClosingPrice().doubleValue() - buyPrice.getMinPrice()) / buyPrice.getMinPrice();
+            var percentFromBy = 100.0 * (candle.getClosingPrice().doubleValue() - buyPrice.getPrice()) / buyPrice.getPrice();
+            annotation += " percentProfit = " + percentProfit;
+            annotation += " percentFromBy = " + percentFromBy;
+            annotation += " buyPrice = " + buyPrice.minPrice + "price:" + buyPrice.price;
+            if (strategy.getBuyCriteria().getProfitPercentFromBuyMinPriceRelativeMin() != null
+                    && profitPercentFromBuyMinPrice == null
+            ) {
+                var percentUp = buyPrice.getMaxPrice() - buyPrice.getMinPrice();
+                if (percentUp > 0) {
+                    percentUp = 100f * (candle.getClosingPrice().doubleValue() - buyPrice.minPrice) / percentUp;
+                }
+                annotation += "percentUp = " + percentUp;
+                if (percentUp > strategy.getBuyCriteria().getProfitPercentFromBuyMinPriceRelativeMin()
+                        && percentUp < strategy.getBuyCriteria().getProfitPercentFromBuyMinPriceRelativeMax()
+                ) {
+                    resBuy = true;
+                    annotation += " ok loss ProfitPercentFromBuyMinPriceRelative";
+                }
+            } else if (percentProfit > profitPercentFromBuyMinPrice
+                    && (false //candle.getClosingPrice().doubleValue() < loss
+                            || profitPercentFromBuyMaxPrice == null
+                            || percentFromBy < strategy.getBuyCriteria().getProfitPercentFromBuyMaxPrice()
+            )) {
+                resBuy = true;
+                annotation += " ok loss ProfitPercentFromBuyMinPrice";
+            }
+
+            var curMinPrice = candle.getClosingPrice().doubleValue();
+            if (strategy.getBuyCriteria().getIsProfitPercentFromBuyMinPriceRelativeMaxMax()) {
+                curMinPrice = candle.getLowestPrice().doubleValue();
+            }
+            if (curMinPrice < buyPrice.getMinPrice()) {
+                buyPrice.setMinPrice(curMinPrice);
+                addCashedIsBuyValue(key, buyPrice);
+            }
+        } else {
+            resBuy = res;
         }
 
         if (res) {
@@ -1066,8 +1115,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         return null;
     }
 
-    private synchronized void addCashedIsBuyValue(String indent, BuyData v)
+    private synchronized BuyData addCashedIsBuyValue(String indent, BuyData v)
     {
         factorialCashIsBuy.put(indent, v);
+        return v;
     }
 }
