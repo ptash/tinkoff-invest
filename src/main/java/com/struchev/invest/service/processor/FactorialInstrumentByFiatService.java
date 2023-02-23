@@ -493,9 +493,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         || overProfitPercent < strategy.getBuyCriteria().getOverProfitMaxPercent())
                 ) {
                     isResOverProfit = true;
-                    if (res) {
-                        annotation += " notShort";
-                    }
+                    annotation += " notShort";
                 }
                 /*
                 var percent = 100f * (candle.getClosingPrice().doubleValue() - profit) / profit;
@@ -526,7 +524,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     annotation += " curHourCandle=" + curHourCandle.getDateTime();
                     annotation += " orderClosedPrice=" + order.getSellPrice();
                     annotation += " percentFromLastSell=" + percentFromLastSell;
-                    if (order.getPurchaseDateTime().isBefore(curHourCandle.getDateTime())) {
+                    if (order.getPurchaseDateTime().isBefore(curHourCandle.getDateTime())
+                            || (order.getSellPrice().doubleValue() < profit)
+                    ) {
                         annotation += " ok < all profit";
                         res = true;
                     } else if (strategy.getBuyCriteria().getAllOverProfitSecondPercent() != null
@@ -584,7 +584,13 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     if (strategy.getBuyCriteria().getIsProfitPercentFromBuyMinPriceRelativeMaxMax()) {
                         maxPrice = candle.getHighestPrice().doubleValue();
                     }
-                    var candlePrev = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(), candle.getDateTime(), 200, strategy.getInterval());
+                    List<CandleDomainEntity> candlePrev;
+                    var order = orderService.findLastByFigiAndStrategy(candle.getFigi(), strategy);
+                    if (null != order && order.getPurchaseDateTime().isBefore(curHourCandle.getDateTime())) {
+                        candlePrev = candleHistoryService.getCandlesByFigiBetweenDateTimes(candle.getFigi(), order.getPurchaseDateTime(), candle.getDateTime(), strategy.getInterval());
+                    } else {
+                        candlePrev = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(), candle.getDateTime(), 200, strategy.getInterval());
+                    }
                     var i = candlePrev.size() - 2;
                     for (; i >= 0; i--) {
                         var curPrice = candlePrev.get(i).getClosingPrice().doubleValue();
