@@ -103,6 +103,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         var curHourCandleForFactorial = candleList.get(1);
         var curHourCandle = candleList2.get(0);
         var factorial = findBestFactorialInPast(strategy, curHourCandleForFactorial);
+        if (null == factorial) {
+            return false;
+        }
         String annotation = curHourCandleForFactorial.getDateTime().toString();
         var res = false;
         var isResOverProfit = false;

@@ -14,6 +14,7 @@ public class FactorialStrategy extends AInstrumentByFiatFactorialStrategy {
         //FIGIES.put("BBG004S681W1", 10); // МТС
         //FIGIES.put("BBG00475KKY8", 1); // НОВАТЭК
         //FIGIES.put("BBG006L8G4H1", 1); // Yandex
+        FIGIES.put("FUTNG0323000", 1); // NGH3 NG-3.23 Природный газ
         //FIGIES.put("BBG00178PGX3", 1); // VK
         //FIGIES.put("BBG00QPYJ5H0", 1); // TCS Group
         //FIGIES.put("BBG004730N88", 10); // SBER
@@ -59,11 +60,11 @@ public class FactorialStrategy extends AInstrumentByFiatFactorialStrategy {
         //FIGIES.put("BBG000RP8V70", 1); // CHMK ЧМК
         //
         //FIGIES.put("BBG00Y91R9T3", 1); // OZON
-        FIGIES.put("BBG0029SG1C1", 10); // KZOSP ПАО «КАЗАНЬОРГСИНТЕЗ» - акции привилегированные
-        FIGIES.put("BBG222222222", 100); // Тинькофф Золото
-        FIGIES.put("BBG000NLB2G3", 10); // KROT Красный Октябрь
+        //FIGIES.put("BBG0029SG1C1", 10); // KZOSP ПАО «КАЗАНЬОРГСИНТЕЗ» - акции привилегированные
+        //FIGIES.put("BBG222222222", 100); // Тинькофф Золото
+        //FIGIES.put("BBG000NLB2G3", 10); // KROT Красный Октябрь
         //FIGIES.put("BBG005DXJS36", 1); // TCS Group (Tinkoff Bank holder)
-        //FIGIES.put("BBG00KHGQ0H4", 1); // HHR HeadHunter Group PLC
+        FIGIES.put("BBG00KHGQ0H4", 1); // HHR HeadHunter Group PLC
         // HKD hkd
         //FIGIES.put("BBG00QV37ZP9", 10); // 9988 Alibaba
         //FIGIES.put("BBG0120WC125", 10); // 2015 Li Auto
