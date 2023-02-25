@@ -831,7 +831,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             var isLoss = false;
             if (strategy.getSellCriteria().getExitProfitInPercentMaxForLoss() != null
                     && minPercent > strategy.getSellCriteria().getExitProfitInPercentMaxForLoss()
-                    && profitPercent.floatValue() < 0
+                    //&& profitPercent.floatValue() < 0
                     && order.getPurchaseDateTime().isBefore(curBeginHour)
             ) {
                 isLoss = true;
@@ -846,7 +846,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             annotation += " maxHighestPrice=" + maxPrice + "(" + candleList.size() + ")" + " ClosingPrice=" + candle.getClosingPrice()
                     + " percent=" + percent2;
             if (percent2 > strategy.getSellCriteria().getExitProfitInPercentMin()
-                    && percent2 < strategy.getSellCriteria().getExitProfitInPercentMax()
+                    && (percent2 < strategy.getSellCriteria().getExitProfitInPercentMax() || isLoss)
                     && (profitPercent.floatValue() > sellCriteria.getTakeProfitPercent() || isLoss)
             ) {
                 res = true;
