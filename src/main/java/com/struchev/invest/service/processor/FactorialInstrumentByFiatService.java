@@ -580,6 +580,19 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
 
         String key = buildKeyHour(strategy.getName(), candle);
         var buyPrice = getCashedIsBuyValue(key);
+        if (null == buyPrice
+                && strategy.getBuyCriteria().getProfitPercentFromBuyMinPriceLength() > 1
+        ) {
+            String keyPrev = buildKeyHour(strategy.getName(), curHourCandleForFactorial);
+            buyPrice = getCashedIsBuyValue(keyPrev);
+            if (null != buyPrice) {
+                if (buyPrice.isResOverProfit) {
+                    buyPrice = null;
+                } else {
+                    key = keyPrev;
+                }
+            }
+        }
         var resBuy = false;
         if ((buyPrice != null || res)
                 && (null != strategy.getBuyCriteria().getProfitPercentFromBuyMinPrice()
@@ -625,13 +638,18 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             percentDown = 100f * (maxPrice - curPrice) / percentDown;
                         }
                         if (percentDown > strategy.getBuyCriteria().getProfitPercentFromBuyMinPriceRelativeTop()) {
-                            annotation += "percentDown = " + percentDown;
-                            break;
+                            annotation += " percentDown = " + percentDown;
+                            var pDown = 100f * (maxPrice - curPrice) / maxPrice;
+                            annotation += " pDown = " + pDown;
+                            if (strategy.getBuyCriteria().getProfitPercentFromBuyMinPriceRelativeTopMin() == null
+                                    || pDown > strategy.getBuyCriteria().getProfitPercentFromBuyMinPriceRelativeTopMin()) {
+                                break;
+                            }
                         }
                     }
                     annotation += " i = " + i;
-                    annotation += " maxPrice = " + maxPrice;
                 }
+                annotation += " maxPrice = " + maxPrice;
                 buyPrice = addCashedIsBuyValue(key, BuyData.builder()
                         .price(candle.getClosingPrice().doubleValue())
                         .minPrice(minPrice)
