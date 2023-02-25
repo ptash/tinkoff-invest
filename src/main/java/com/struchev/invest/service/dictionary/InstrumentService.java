@@ -23,11 +23,24 @@ public class InstrumentService {
     private final ITinkoffCommonAPI tinkoffCommonAPI;
     private Map<String, Instrument> instrumentByFigi;
 
+    @AllArgsConstructor
+    public enum Type {
+        share("Акция"),
+        future("Фьючерс"),
+        bond("Облигация"),
+        etf("Инвестиционный фонд"),
+        currency("Валюта");
+
+        @Getter
+        String title;
+    }
+
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
     @Builder
     public static class Instrument {
+        Type type;
         String figi;
         String tiket;
         String currency;
@@ -35,6 +48,7 @@ public class InstrumentService {
         int lot;
         BigDecimal minPriceIncrement;
         Boolean isBuyAvailable;
+        Boolean isApiAvailable;
     }
 
     public Instrument getInstrument(String figi) {
@@ -62,18 +76,42 @@ public class InstrumentService {
         instrumentByFigi = new ConcurrentHashMap<>();
 
         var shares = tinkoffCommonAPI.getApi().getInstrumentsService().getAllSharesSync();
-        shares.forEach(i -> instrumentByFigi.put(i.getFigi(), new Instrument(i.getFigi(), i.getTicker(), i.getCurrency(), i.getName(), i.getLot(), TinkoffGRPCAPI.toBigDecimal(i.getMinPriceIncrement(), 8), i.getBuyAvailableFlag())));
+        shares.forEach(i -> instrumentByFigi.put(i.getFigi(), new Instrument(Type.share, i.getFigi(), i.getTicker(), i.getCurrency(), i.getName(), i.getLot(), TinkoffGRPCAPI.toBigDecimal(i.getMinPriceIncrement(), 8),
+                i.getBuyAvailableFlag(),
+                i.getApiTradeAvailableFlag()
+        )));
 
         var futures = tinkoffCommonAPI.getApi().getInstrumentsService().getAllFuturesSync();
-        futures.forEach(i -> instrumentByFigi.put(i.getFigi(), new Instrument(i.getFigi(), i.getTicker(), i.getCurrency(), i.getName(), i.getLot(), TinkoffGRPCAPI.toBigDecimal(i.getMinPriceIncrement(), 8), i.getBuyAvailableFlag())));
+        futures.forEach(i -> instrumentByFigi.put(i.getFigi(), new Instrument(Type.future, i.getFigi(), i.getTicker(), i.getCurrency(), i.getName(), i.getLot(), TinkoffGRPCAPI.toBigDecimal(i.getMinPriceIncrement(), 8),
+                i.getBuyAvailableFlag(),
+                i.getApiTradeAvailableFlag()
+        )));
 
         var bounds = tinkoffCommonAPI.getApi().getInstrumentsService().getAllBondsSync();
-        bounds.forEach(i -> instrumentByFigi.put(i.getFigi(), new Instrument(i.getFigi(), i.getTicker(), i.getCurrency(), i.getName(), i.getLot(), TinkoffGRPCAPI.toBigDecimal(i.getMinPriceIncrement(), 8), i.getBuyAvailableFlag())));
+        bounds.forEach(i -> instrumentByFigi.put(i.getFigi(), new Instrument(Type.bond, i.getFigi(), i.getTicker(), i.getCurrency(), i.getName(), i.getLot(), TinkoffGRPCAPI.toBigDecimal(i.getMinPriceIncrement(), 8),
+                i.getBuyAvailableFlag(),
+                i.getApiTradeAvailableFlag()
+        )));
 
         var etfs = tinkoffCommonAPI.getApi().getInstrumentsService().getAllEtfsSync();
-        etfs.forEach(i -> instrumentByFigi.put(i.getFigi(), new Instrument(i.getFigi(), i.getTicker(), i.getCurrency(), i.getName(), i.getLot(), TinkoffGRPCAPI.toBigDecimal(i.getMinPriceIncrement(), 8), i.getBuyAvailableFlag())));
+        etfs.forEach(i -> instrumentByFigi.put(i.getFigi(), new Instrument(Type.etf, i.getFigi(), i.getTicker(), i.getCurrency(), i.getName(), i.getLot(), TinkoffGRPCAPI.toBigDecimal(i.getMinPriceIncrement(), 8),
+                i.getBuyAvailableFlag(),
+                i.getApiTradeAvailableFlag()
+        )));
 
         var currencies = tinkoffCommonAPI.getApi().getInstrumentsService().getAllCurrenciesSync();
-        currencies.forEach(i -> instrumentByFigi.put(i.getFigi(), new Instrument(i.getFigi(), i.getTicker(), i.getCurrency(), i.getName(), i.getLot(), TinkoffGRPCAPI.toBigDecimal(i.getMinPriceIncrement(), 8), i.getBuyAvailableFlag())));
+        currencies.forEach(i -> instrumentByFigi.put(i.getFigi(), new Instrument(Type.currency, i.getFigi(), i.getTicker(), i.getCurrency(), i.getName(), i.getLot(), TinkoffGRPCAPI.toBigDecimal(i.getMinPriceIncrement(), 8),
+                i.getBuyAvailableFlag(),
+                i.getApiTradeAvailableFlag()
+        )));
+    }
+
+    public void printInstrumentInfo(Instrument instrument) {
+        if (instrument.getType() == InstrumentService.Type.future) {
+            //var feature = tinkoffCommonAPI.getApi().getInstrumentsService().getFutureByFigiSync(instrument.getFigi());
+            //log.info("feature: {}", feature);
+            //var featureMargin = tinkoffCommonAPI.getApi().getInstrumentsService().getFuturesMarginSync(instrument.getFigi());
+            //log.info("featureMargin: {}", featureMargin);
+        }
     }
 }

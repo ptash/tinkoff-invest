@@ -12,6 +12,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -40,6 +41,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                     .lots(result.getLotsRequested() * instrument.getLot())
                     .build();
         } else {
+            checkInstrumentAvailableToBuy(instrument, price, count);
             var result = getApi().getOrdersService().postOrderSync(instrument.getFigi(), quantity, quotation,
                     OrderDirection.ORDER_DIRECTION_BUY, getAccountIdByFigi(instrument), OrderType.ORDER_TYPE_MARKET, uuid);
             return OrderResult.builder()
@@ -173,6 +175,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                     }
                 }
             } else {
+                checkInstrumentAvailableToSell(instrument, count);
                 var result = getApi().getOrdersService().postOrderSync(instrument.getFigi(), quantity, quotation,
                         OrderDirection.ORDER_DIRECTION_SELL, getAccountIdByFigi(instrument), OrderType.ORDER_TYPE_LIMIT, uuid);
                 orderResultBuilder
@@ -217,6 +220,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                     .lots(result.getLotsRequested() * instrument.getLot())
                     .build();
         } else {
+            checkInstrumentAvailableToSell(instrument, count);
             var result = getApi().getOrdersService().postOrderSync(instrument.getFigi(), quantity, quotation,
                     OrderDirection.ORDER_DIRECTION_SELL, getAccountIdByFigi(instrument), OrderType.ORDER_TYPE_MARKET, uuid);
             return OrderResult.builder()
@@ -227,6 +231,56 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                     .lots(result.getLotsRequested() * instrument.getLot())
                     .build();
         }
+    }
+
+    private void checkInstrumentAvailableToSell(InstrumentService.Instrument instrument, Integer count) {
+        var positionsResult = getApi().getOperationsService().getPositionsSync(getAccountIdByFigi(instrument));
+        long balanceCount = 0;
+        var annotate = "";
+        if (instrument.getType() == InstrumentService.Type.share) {
+            var ourSecurities = positionsResult.getSecurities().stream().filter(p -> p.getFigi().equals(instrument.getFigi())).collect(Collectors.toList());
+            if (ourSecurities.size() > 0) {
+                balanceCount = ourSecurities.get(0).getBalance();
+                annotate += " securities: " + balanceCount;
+            }
+        }
+        if (instrument.getType() == InstrumentService.Type.future) {
+            var ourSecurities = positionsResult.getFutures().stream().filter(p -> p.getFigi().equals(instrument.getFigi())).collect(Collectors.toList());
+            if (ourSecurities.size() > 0) {
+                balanceCount = ourSecurities.get(0).getBalance();
+                annotate += " futures: " + balanceCount;
+            }
+        }
+        if (balanceCount >= count) {
+            return;
+        }
+        log.warn("Sell is not available for {} in count of {}. ", instrument.getFigi(), count, annotate);
+        throw new RuntimeException("Sell is not available for " + instrument.getFigi() + " in count of " + count + ". "
+                + annotate);
+    }
+
+    private void checkInstrumentAvailableToBuy(InstrumentService.Instrument instrument, BigDecimal price, Integer count) {
+        var positionsResult = getApi().getOperationsService().getPositionsSync(getAccountIdByFigi(instrument));
+        var money = positionsResult.getMoney().stream().filter(m -> m.getCurrency().equals(instrument.getCurrency())).findFirst().get();
+        BigDecimal balance = BigDecimal.ZERO;
+        var annotate = "";
+        if (null != money) {
+            balance = money.getValue();
+            annotate += " balance: " + balance;
+        }
+        if (instrument.getType() == InstrumentService.Type.future) {
+            var featureMargin = getApi().getInstrumentsService().getFuturesMarginSync(instrument.getFigi());
+            var initialMargin = toBigDecimal(featureMargin.getInitialMarginOnSell(), 8);
+            annotate += " initialMargin: " + initialMargin;
+            price = initialMargin.multiply(BigDecimal.valueOf(2));
+        }
+        var total = price.multiply(BigDecimal.valueOf(count));
+        if (money.getValue().compareTo(total) > 0) {
+            return;
+        }
+        throw new RuntimeException("Buy is not available for " + instrument.getFigi() + " in count of " + count
+                + " price " + price + " = " + total + ". "
+                + annotate);
     }
 
     public Boolean checkGoodSell(InstrumentService.Instrument instrument, BigDecimal price, Integer count, BigDecimal priceError) {
@@ -294,7 +348,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
     private BigDecimal getExecutedCommission(InstrumentService.Instrument instrument, String orderId, MoneyValue initialCommission, MoneyValue executedCommission) {
         var figi = instrument.getFigi();
         if (null != executedCommission) {
-            if (!isZero(executedCommission)) {
+            if (!isZero(executedCommission) || isZero(initialCommission)) {
                 var commission = toBigDecimal(executedCommission, 8);
                 log.info("Receive commission {} for order {} figi {} from postOrderResponse {}", commission, orderId, figi, executedCommission);
                 return commission;
@@ -305,7 +359,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                 log.info("Try number {} to request commission for order {} figi {}", i + 1, orderId, figi);
                 var orderState = getApi().getOrdersService().getOrderStateSync(getAccountIdByFigi(instrument), orderId);
                 if (orderState.hasExecutedCommission()) {
-                    if (!isZero(orderState.getExecutedCommission())) {
+                    if (!isZero(orderState.getExecutedCommission()) || isZero(orderState.getInitialCommission())) {
                         var commission = toBigDecimal(orderState.getExecutedCommission(), 8);
                         log.info("Receive commission {} for order {} figi {} from postOrderState {}", commission, orderId, figi, orderState.getExecutedCommission());
                         return commission;
@@ -318,6 +372,9 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
             }
         }
         var commission = BigDecimal.ZERO;
+        if (null != initialCommission) {
+            commission = toBigDecimal(initialCommission, 8);
+        }
         log.info("Failed to receive commission {} for order {} figi {}. Set zero commission {}", commission, orderId, figi, initialCommission);
         return commission;
     }

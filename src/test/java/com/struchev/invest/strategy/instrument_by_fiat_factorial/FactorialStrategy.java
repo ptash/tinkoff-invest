@@ -15,6 +15,8 @@ public class FactorialStrategy extends AInstrumentByFiatFactorialStrategy {
         //FIGIES.put("BBG00475KKY8", 1); // НОВАТЭК
         //FIGIES.put("BBG006L8G4H1", 1); // Yandex
         FIGIES.put("FUTNG0323000", 1); // NGH3 NG-3.23 Природный газ
+        FIGIES.put("FUTSI1223000", 1); // SiZ3 Si-12.23 Курс доллар - рубль
+        //FIGIES.put("FUTNG0223000", 1); // NGG3 NG-2.23 Природный газ
         //FIGIES.put("BBG00178PGX3", 1); // VK
         //FIGIES.put("BBG00QPYJ5H0", 1); // TCS Group
         //FIGIES.put("BBG004730N88", 10); // SBER

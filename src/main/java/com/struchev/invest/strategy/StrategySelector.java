@@ -48,6 +48,7 @@ public class StrategySelector {
         return figies.keySet().stream().filter(figi -> {
             var instrument = instrumentService.getInstrument(figi);
             log.info("Figi {} currency {}. Target currency {}", figi, instrument.getCurrency(), config.getCurrencies());
+            instrumentService.printInstrumentInfo(instrument);
             return config.getCurrencies().contains(instrument.getCurrency().toUpperCase());
         });
     }
