@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.*;
 
@@ -58,6 +59,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         Double maxPrice;
         Boolean isResOverProfit;
         Boolean isProfitSecond;
+        OffsetDateTime dateTime;
     }
 
     public boolean isShouldBuy(AInstrumentByFiatFactorialStrategy strategy, CandleDomainEntity candle) {
@@ -818,27 +820,34 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         if (sellCriteria.getExitProfitInPercentMax() != null
                 //&& profitPercent.floatValue() > 0
         ) {
+            var purchasePrice = order.getPurchasePrice().doubleValue();
+            var startDate = order.getPurchaseDateTime();
+            String keySell = "sell" + candle.getFigi() + order.getPurchaseDateTime();
+            var sellData = getCashedIsBuyValue(keySell);
+            if (sellData != null) {
+                purchasePrice = sellData.price;
+                startDate = sellData.dateTime;
+            }
             var candleList = candleHistoryService.getCandlesByFigiBetweenDateTimes(candle.getFigi(),
-                    order.getPurchaseDateTime(), candle.getDateTime(), strategy.getInterval());
+                    startDate, candle.getDateTime(), strategy.getInterval());
             var maxPrice = candleList.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).max().orElse(-1);
             var minPrice = candleList.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).min().orElse(-1);
             if (sellCriteria.getIsExitProfitInPercentMaxMax()) {
                 maxPrice = candleList.stream().mapToDouble(value -> value.getHighestPrice().doubleValue()).max().orElse(-1);
                 minPrice = candleList.stream().mapToDouble(value -> value.getLowestPrice().doubleValue()).min().orElse(-1);
             }
-            var priceOne = order.getPurchasePrice().doubleValue();
-            var minPercent = 100f * (order.getPurchasePrice().doubleValue() - minPrice) / order.getPurchasePrice().doubleValue();
+            var minPercent = 100f * (purchasePrice - minPrice) / purchasePrice;
             var isLoss = false;
             if (strategy.getSellCriteria().getExitProfitInPercentMaxForLoss() != null
                     && minPercent > strategy.getSellCriteria().getExitProfitInPercentMaxForLoss()
                     //&& profitPercent.floatValue() < 0
-                    && order.getPurchaseDateTime().isBefore(curBeginHour)
+                    && startDate.isBefore(curBeginHour)
             ) {
                 isLoss = true;
                 annotation += " minHighestPrice=" + minPrice;
-                priceOne = minPrice;
+                purchasePrice = minPrice;
             }
-            var percent = maxPrice - priceOne;
+            var percent = maxPrice - purchasePrice;
             Double percent2 = 0.0;
             if (percent > 0) {
                 percent2 = 100f * (percent - (maxPrice - candle.getClosingPrice().doubleValue())) / percent;
@@ -849,7 +858,14 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     && (percent2 < strategy.getSellCriteria().getExitProfitInPercentMax() || isLoss)
                     && (profitPercent.floatValue() > sellCriteria.getTakeProfitPercent() || isLoss)
             ) {
-                res = true;
+                if (profitPercent.floatValue() < sellCriteria.getTakeProfitPercent()) {
+                    addCashedIsBuyValue(keySell, BuyData.builder()
+                            .price(candle.getClosingPrice().doubleValue())
+                            .dateTime(candle.getDateTime())
+                            .build());
+                } else {
+                    res = true;
+                }
             }
         } else if (sellCriteria.getTakeProfitPercent() != null
                 && profitPercent.floatValue() > sellCriteria.getTakeProfitPercent()
