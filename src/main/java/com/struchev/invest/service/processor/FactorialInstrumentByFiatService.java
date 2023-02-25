@@ -110,6 +110,12 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         var res = false;
         var isResOverProfit = false;
         var isProfitSecond = false;
+        Double curPriceMin = candle.getClosingPrice().doubleValue();
+        Double curPriceMax = candle.getClosingPrice().doubleValue();
+        if (strategy.getBuyCriteria().getIsCurPriceMinMax()) {
+            curPriceMin = candle.getLowestPrice().doubleValue();
+            curPriceMax = candle.getHighestPrice().doubleValue();
+        }
         Double profit = factorial.getProfit();
         Double loss = factorial.getLoss();
         var futureProfit = 100f * (factorial.getProfit() - candle.getClosingPrice().doubleValue()) / candle.getClosingPrice().doubleValue();
@@ -254,7 +260,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
 
             if (!res
                     && strategy.getBuyCriteria().getIsAllUnderLoss()
-                    && candle.getClosingPrice().doubleValue() < loss
+                    && curPriceMin < loss
             ) {
                 annotation += " ok < all loss";
                 res = true;
@@ -263,7 +269,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             //log.info("FactorialInstrumentByFiatService {} from {} to {} {}", candle.getFigi(), factorial.candleListPast.get(0).getDateTime(), candle.getDateTime(), factorial.candleListFeature.size(), annotation);
             if (!res
                     && strategy.getBuyCriteria().getTakeProfitLossPercent() != null
-                    && candle.getClosingPrice().doubleValue() < loss
+                    && curPriceMin < loss
                     && futureProfit > strategy.getBuyCriteria().getTakeProfitLossPercent()
                     //&& (expectLoss + expectProfit) > strategy.getBuyCriteria().getTakeProfitPercent()
                     && expectLoss > 0
@@ -383,12 +389,12 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             }
             if (!res
                     && strategy.getBuyCriteria().getIsAllOverProfit()
-                    && candle.getClosingPrice().doubleValue() > profit
+                    && curPriceMax > profit
             ) {
                 isResOverProfit = true;
             } else if (!res
                     && strategy.getBuyCriteria().getIsOverProfit()
-                    && candle.getClosingPrice().doubleValue() > profit
+                    && curPriceMax > profit
             ) {
                 Boolean isBuyToShort = false;
 

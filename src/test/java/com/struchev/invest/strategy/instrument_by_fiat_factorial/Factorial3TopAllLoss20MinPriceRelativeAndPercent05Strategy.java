@@ -9,6 +9,7 @@ public class Factorial3TopAllLoss20MinPriceRelativeAndPercent05Strategy extends 
         var buy = super.getBuyCriteria();
         buy.setProfitPercentFromBuyMinPriceRelativeTopMin(0.5f);
         buy.setProfitPercentFromBuyMinPriceLength(2);
+        buy.setIsCurPriceMinMax(true);
         return buy;
     }
 
