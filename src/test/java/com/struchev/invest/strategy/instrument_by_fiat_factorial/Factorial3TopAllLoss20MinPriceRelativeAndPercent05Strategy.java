@@ -17,6 +17,10 @@ public class Factorial3TopAllLoss20MinPriceRelativeAndPercent05Strategy extends 
         var sell = super.getSellCriteria();
         sell.setIsExitProfitInPercentMaxMax(true);
         sell.setTakeProfitPercent(0.3f);
+
+        sell.setExitProfitInPercentMax(77.f);
+        sell.setExitProfitInPercentMin(66.f);
+        sell.setExitProfitInPercentMaxForLoss(.5f);
         return sell;
     }
 }
