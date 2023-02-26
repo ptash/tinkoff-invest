@@ -861,7 +861,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 isLoss = true;
                 annotation += " minHighestPrice=" + minPrice;
                 purchasePrice = minPrice;
-                takeProfitPercent2 = sellCriteria.getTakeProfitPercentForLoss();
+                if (sellCriteria.getTakeProfitPercentForLoss() != null) {
+                    takeProfitPercent2 = sellCriteria.getTakeProfitPercentForLoss();
+                }
             }
             var percent = maxPrice - purchasePrice;
             Double percent2 = 0.0;
