@@ -802,7 +802,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         .multiply(BigDecimal.valueOf(100))
                         .divide(purchaseRate, 4, RoundingMode.HALF_DOWN);
                 annotation += " profitPercentPrev(" + strategy.getSellCriteria().getStopLossLength()+ ")=" + profitPercentPrev;
-                if (sellCriteria.getStopLossSoftPercent() != null && profitPercentPrev.floatValue() < -1 * sellCriteria.getStopLossSoftPercent()) {
+                if (sellCriteria.getStopLossPercent() != null && profitPercentPrev.floatValue() < -1 * sellCriteria.getStopLossPercent()) {
                     res = true;
                 }
             } else {
@@ -822,11 +822,26 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         ) {
             var purchasePrice = order.getPurchasePrice().doubleValue();
             var startDate = order.getPurchaseDateTime();
-            String keySell = "sell" + candle.getFigi() + order.getPurchaseDateTime();
+            var profitPercentSell = profitPercent.floatValue();
+            var profitPercentSell2 = profitPercent.floatValue();
+            var exitProfitInPercentMax = strategy.getSellCriteria().getExitProfitInPercentMax();
+            var takeProfitPercent = sellCriteria.getTakeProfitPercent();
+            var takeProfitPercent2 = takeProfitPercent;
+            String keySell = "sell" + candle.getFigi() + notificationService.formatDateTime(order.getPurchaseDateTime());
             var sellData = getCashedIsBuyValue(keySell);
             if (sellData != null) {
                 purchasePrice = sellData.price;
                 startDate = sellData.dateTime;
+                profitPercentSell2 = (float) (100f * (candle.getClosingPrice().floatValue() - purchasePrice) / purchasePrice);
+                annotation += " purchasePrice=" + purchasePrice;
+                annotation += " profitPercentSell2=" + profitPercentSell2;
+                //exitProfitInPercentMax = 100f;
+                if (sellCriteria.getTakeProfitPercentForLoss() != null) {
+                    takeProfitPercent2 = sellCriteria.getTakeProfitPercentForLoss();
+                }
+                if (sellCriteria.getExitProfitInPercentMaxForLoss2() != null) {
+                    exitProfitInPercentMax = sellCriteria.getExitProfitInPercentMaxForLoss2();
+                }
             }
             var candleList = candleHistoryService.getCandlesByFigiBetweenDateTimes(candle.getFigi(),
                     startDate, candle.getDateTime(), strategy.getInterval());
@@ -846,6 +861,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 isLoss = true;
                 annotation += " minHighestPrice=" + minPrice;
                 purchasePrice = minPrice;
+                takeProfitPercent2 = sellCriteria.getTakeProfitPercentForLoss();
             }
             var percent = maxPrice - purchasePrice;
             Double percent2 = 0.0;
@@ -853,17 +869,36 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 percent2 = 100f * (percent - (maxPrice - candle.getClosingPrice().doubleValue())) / percent;
             }
             annotation += " maxHighestPrice=" + maxPrice + "(" + candleList.size() + ")" + " ClosingPrice=" + candle.getClosingPrice()
-                    + " percent=" + percent2;
-            if (percent2 > strategy.getSellCriteria().getExitProfitInPercentMin()
-                    && (percent2 < strategy.getSellCriteria().getExitProfitInPercentMax() || isLoss)
-                    && (profitPercent.floatValue() > sellCriteria.getTakeProfitPercent() || isLoss)
+                    + " percent2=" + percent2;
+            annotation += " exitProfitInPercentMax=" + exitProfitInPercentMax;
+            annotation += " takeProfitPercent=" + takeProfitPercent;
+            annotation += " takeProfitPercent2=" + takeProfitPercent2;
+            var isGoodPrice = (profitPercentSell > takeProfitPercent2
+                    || profitPercentSell2 > takeProfitPercent);
+            if (percent2 >= strategy.getSellCriteria().getExitProfitInPercentMin()
+                    && (percent2 <= exitProfitInPercentMax || isLoss)
+                    && (isGoodPrice || isLoss)
             ) {
-                if (profitPercent.floatValue() < sellCriteria.getTakeProfitPercent()) {
-                    addCashedIsBuyValue(keySell, BuyData.builder()
-                            .price(candle.getClosingPrice().doubleValue())
-                            .dateTime(candle.getDateTime())
-                            .build());
+                if (!isGoodPrice
+                        //&& candle.getClosingPrice().floatValue() > factorial.getLoss()
+                ) {
+                    var isLoopEnable = true;
+                    if (sellCriteria.getExitProfitInPercentMaxLoopIgnoreSize() > 0) {
+                        var candleListPrevLoopIgnore = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
+                                candle.getDateTime(), sellCriteria.getExitProfitInPercentMaxLoopIgnoreSize(), strategy.getFactorialInterval());
+                        isLoopEnable = candleListPrevLoopIgnore.get(0).getDateTime().isAfter(order.getPurchaseDateTime());
+                    }
+                    if (isLoopEnable) {
+                        annotation += " save key " + keySell;
+                        addCashedIsBuyValue(keySell, BuyData.builder()
+                                .price(candle.getClosingPrice().doubleValue())
+                                .dateTime(candle.getDateTime())
+                                .build());
+                    } else {
+                        annotation += " loop ignore";
+                    }
                 } else {
+                    annotation += "ok ExitProfitInPercentMax";
                     res = true;
                 }
             }
