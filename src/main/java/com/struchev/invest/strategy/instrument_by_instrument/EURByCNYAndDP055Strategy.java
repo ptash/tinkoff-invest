@@ -12,9 +12,9 @@ public class EURByCNYAndDP055Strategy extends AInstrumentByInstrumentStrategy {
             "BBG0013HJJ31", 1000 // EUR
     );
 
-    public Map<String, Integer> getFigies() {
-        return FIGIES;
-    }
+    //public Map<String, Integer> getFigies() {
+    //    return FIGIES;
+    //}
 
     @Override
     public float getMinimalDropPercent() {
