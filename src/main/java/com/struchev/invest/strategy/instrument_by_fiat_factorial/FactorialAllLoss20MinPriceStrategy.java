@@ -16,7 +16,7 @@ public class FactorialAllLoss20MinPriceStrategy extends FactorialAllLoss200Strat
     public Integer getFactorialHistoryLength() { return this.getFactorialLength() * 20; }
     public BuyCriteria getBuyCriteria() {
         var buy = super.getBuyCriteria();
-        buy.setProfitPercentFromBuyMinPrice(0.1);
+        buy.setProfitPercentFromBuyMinPrice(0.2);
         buy.setProfitPercentFromBuyMaxPrice(1.0);
         return buy;
     }

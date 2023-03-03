@@ -7,7 +7,7 @@ public class Factorial3TopAllStrategy extends Factorial2TopAllStrategy {
     //public Integer getFactorialHistoryLength() { return this.getFactorialLength() * 20; }
     public BuyCriteria getBuyCriteria() {
         var buy = super.getBuyCriteria();
-        buy.setProfitPercentFromBuyMinPrice(0.1);
+        buy.setProfitPercentFromBuyMinPrice(0.2);
         buy.setProfitPercentFromBuyMaxPrice(1.0);
         buy.setIsProfitPercentFromBuyPriceTop(false);
         buy.setIsProfitPercentFromBuyPriceTopSecond(false);

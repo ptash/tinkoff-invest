@@ -25,4 +25,10 @@ public interface Date {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH");
         return dateInZone.format(formatter);
     }
+
+    static String formatDateTimeToMinute(OffsetDateTime date) {
+        var dateInZone = date.atZoneSameInstant(ZoneId.systemDefault());
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
+        return dateInZone.format(formatter);
+    }
 }

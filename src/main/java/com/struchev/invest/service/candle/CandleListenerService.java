@@ -1,5 +1,6 @@
 package com.struchev.invest.service.candle;
 
+import com.struchev.invest.entity.CandleDomainEntity;
 import com.struchev.invest.expression.Date;
 import com.struchev.invest.service.notification.NotificationService;
 import com.struchev.invest.service.processor.FactorialInstrumentByFiatService;
@@ -44,6 +45,7 @@ public class CandleListenerService {
             tinkoffCommonAPI.getApi().getMarketDataStreamService()
                     .newStream("candles_stream", item -> {
                         log.trace("New data in streaming api: {}", item);
+                        CandleDomainEntity candleDomainEntity = null;
                         if (item.hasCandle()) {
                             var candle = HistoricCandle.newBuilder();
                             candle.setClose(item.getCandle().getClose());
@@ -51,8 +53,20 @@ public class CandleListenerService {
                             candle.setHigh(item.getCandle().getHigh());
                             candle.setLow(item.getCandle().getLow());
                             candle.setTime(item.getCandle().getTime());
-                            var candleDomainEntity = candleHistoryService.addOrReplaceCandles(candle.build(), item.getCandle().getFigi(), interval);
+                            candle.setVolume(item.getCandle().getVolume());
+                            candleDomainEntity = candleHistoryService.addOrReplaceCandles(candle.build(), item.getCandle().getFigi(), interval);
 
+                            var now = OffsetDateTime.now();
+                            var curCandleMinuteExpect = Date.formatDateTimeToMinute(now);
+                            var curCandleMinuteExpect2 = Date.formatDateTimeToMinute(now.minusMinutes(1));
+                            var curCandleMinute = Date.formatDateTimeToMinute(candleDomainEntity.getDateTime());
+                            if (!(curCandleMinute.equals(curCandleMinuteExpect) || curCandleMinuteExpect.equals(curCandleMinuteExpect2))) {
+                                log.trace("Skip candle {}. Now {}", curCandleMinute, curCandleMinuteExpect);
+                                candleDomainEntity = null;
+                            }
+                        }
+
+                        if (null != candleDomainEntity) {
                             var candleHour = candleHistoryService.getAllCandlesByFigiByLength(
                                     candleDomainEntity.getFigi(),
                                     candleDomainEntity.getDateTime(),

@@ -18,7 +18,8 @@ public class Factorial2TopStrategy extends Factorial2Strategy {
     //public Map<String, Integer> getFigies()  { return FIGIES; }
     public BuyCriteria getBuyCriteria() {
         var buy = super.getBuyCriteria();
-        buy.setProfitPercentFromBuyMinPrice(0.1);
+        buy.setProfitPercentFromBuyMinPrice(0.2);
+        buy.setProfitPercentFromBuyMaxPrice(0.2);
         buy.setIsOverProfit(true);
         return buy;
     }
