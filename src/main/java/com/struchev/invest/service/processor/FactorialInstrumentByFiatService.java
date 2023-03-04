@@ -786,20 +786,20 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
 
         if (resBuy && isResOverProfit
                 && (buyCriteria.getOverProfitSkipIfUnderLossPrev() > 0
-                || buyCriteria.getOverProfitSkipIfUnderLossPrev() != null)
+                || buyCriteria.getOverProfitSkipIfSellPrev() != null)
         ) {
             var length = buyCriteria.getOverProfitSkipIfUnderLossPrev();
-            if (buyCriteria.getOverProfitSkipIfUnderLossPrev() != null) {
-                length = Math.max(buyCriteria.getOverProfitSkipIfUnderLossPrev(), length);
+            if (buyCriteria.getOverProfitSkipIfSellPrev() != null) {
+                length = Math.max(buyCriteria.getOverProfitSkipIfSellPrev(), length);
             }
             var candleListPrevPrev = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
                     candle.getDateTime(), length + 1, strategy.getFactorialInterval());
             var isLoss = false;
             var isUnderLoss = false;
             annotation += " ProfitSkip";
-            if (buyCriteria.getOverProfitSkipIfUnderLossPrev() != null) {
+            if (buyCriteria.getOverProfitSkipIfSellPrev() != null) {
                 var order = orderService.findLastByFigiAndStrategy(candle.getFigi(), strategy);
-                var candleFirst = candleListPrevPrev.get(length - buyCriteria.getOverProfitSkipIfUnderLossPrev());
+                var candleFirst = candleListPrevPrev.get(length - buyCriteria.getOverProfitSkipIfSellPrev());
                 annotation += " candleFirst=" + candleFirst.getDateTime();
                 if (order != null && order.getSellDateTime().isAfter(candleFirst.getDateTime())) {
                     annotation += " OverProfitSkipIfUnderLossPrev";
