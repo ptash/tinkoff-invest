@@ -585,6 +585,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     annotation += " false: first wait under profit";
                     res = false;
                 }
+                isResOverProfit = true;
             }
 
             if (!res
