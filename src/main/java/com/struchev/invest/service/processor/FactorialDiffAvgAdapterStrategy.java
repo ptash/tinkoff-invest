@@ -9,6 +9,7 @@ public class FactorialDiffAvgAdapterStrategy extends AInstrumentByFiatFactorialS
     private AInstrumentByFiatFactorialStrategy strategy;
     private Float priceDiffAvgReal;
     private BuyCriteria buy;
+    private SellCriteria sell;
 
     public void setStrategy(AInstrumentByFiatFactorialStrategy strategy) {
         this.strategy = strategy;
@@ -33,14 +34,30 @@ public class FactorialDiffAvgAdapterStrategy extends AInstrumentByFiatFactorialS
         buy.setProfitPercentFromBuyMaxPrice(strategyBuy.getProfitPercentFromBuyMaxPrice() * getPriceDiffAvg());
         buy.setProfitPercentFromBuyMinPriceProfit(strategyBuy.getProfitPercentFromBuyMinPriceProfit() * getPriceDiffAvg());
         buy.setProfitPercentFromBuyMaxPriceProfit(strategyBuy.getProfitPercentFromBuyMaxPriceProfit() * getPriceDiffAvg());
-        buy.setIsAllUnderLoss(true);
-        buy.setIsAllOverProfit(true);
-        buy.setIsOverProfitWaitFirstUnderProfit(true);
         buy.setOverProfitWaitFirstUnderProfitPercent(strategyBuy.getOverProfitWaitFirstUnderProfitPercent() * getPriceDiffAvg());
         buy.setOverProfitSkipWaitFirstOverProfitPercent(strategyBuy.getOverProfitSkipWaitFirstOverProfitPercent() * getPriceDiffAvg());
-        buy.setOverProfitSkipIfUnderLossPrev(3);
-
-        buy.setUnderLostWaitCandleEndInMinutes(5);
         return buy;
+    }
+
+    public SellCriteria getSellCriteria() {
+        if (sell != null) {
+            return sell;
+        }
+        var strategySell = strategy.getSellCriteria();
+        sell = strategySell.clone();
+        sell.setTakeProfitPercent(Math.max(strategy.getPriceDiffAvgPercentMin(), strategySell.getTakeProfitPercent() * getPriceDiffAvg()));
+        sell.setExitProfitLossPercent(Math.max(strategy.getPriceDiffAvgPercentMin(), strategySell.getExitProfitLossPercent() * getPriceDiffAvg()));
+        sell.setStopLossPercent(Math.max(strategy.getPriceDiffAvgPercentMin(), strategySell.getStopLossPercent() * getPriceDiffAvg()));
+        sell.setStopLossSoftPercent(Math.max(strategy.getPriceDiffAvgPercentMin(), strategySell.getStopLossSoftPercent() * getPriceDiffAvg()));
+        sell.setExitLossPercent(Math.max(strategy.getPriceDiffAvgPercentMin(), strategySell.getExitLossPercent() * getPriceDiffAvg()));
+        return sell;
+    }
+
+    public SellLimitCriteria getSellLimitCriteria() {
+        var s = strategy.getSellLimitCriteria();
+        if (s == null) {
+            return null;
+        }
+        return SellLimitCriteria.builder().exitProfitPercent(s.getExitProfitPercent() * getPriceDiffAvg()).build();
     }
 }

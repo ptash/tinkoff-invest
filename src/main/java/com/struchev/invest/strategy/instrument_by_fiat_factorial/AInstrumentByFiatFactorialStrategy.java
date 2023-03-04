@@ -38,7 +38,15 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
 
     @Builder
     @Data
-    public static class SellCriteria {
+    public static class SellCriteria implements Cloneable {
+
+        public SellCriteria clone() {
+            try {
+                return (SellCriteria)super.clone();
+            } catch (CloneNotSupportedException e) {
+                throw new RuntimeException(e);
+            }
+        }
         // Процент (stop loss), если цена покупки падает на него, продаем
         Float stopLossSoftPercent;
         Integer stopLossSoftLength;
@@ -140,9 +148,9 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
                 .takeProfitLossPercent(1.0f)
 
                 .takeProfitPercentBetweenCloseMax(0.5f)
-                .takeProfitPercentBetween(1.5f)
+                //.takeProfitPercentBetween(1.5f)
                 .takeProfitPercentBetweenLength(3)
-                .takeProfitRatio(7f)
+                //.takeProfitRatio(7f)
 
                 .stopLossPercent(0.2f)
                 //.takeLossPercentBetween(1f)
@@ -196,4 +204,6 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
     public Integer getPriceDiffAvgLength() { return null; }
 
     public Float getPriceDiffAvg() { return 2f; }
+
+    public Float getPriceDiffAvgPercentMin() { return 0.1f; }
 }

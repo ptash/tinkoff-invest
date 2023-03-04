@@ -845,7 +845,6 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         String key = buildKeyHour(strategy.getName(), candle);
         addCashedIsBuyValue(key, null);
 
-        var sellCriteria = strategy.getSellCriteria();
         var profitPercent = candle.getClosingPrice().subtract(purchaseRate)
                 .multiply(BigDecimal.valueOf(100))
                 .divide(purchaseRate, 4, RoundingMode.HALF_DOWN);
@@ -855,13 +854,32 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         var curHourCandle = candleListPrev.get(strategy.getFactorialLossIgnoreSize() - 1);
         var factorial = findBestFactorialInPast(strategy, curHourCandle);
         var order = orderService.findActiveByFigiAndStrategy(candle.getFigi(), strategy);
-        Boolean res = false;
         String annotation = " profitPercent=" + profitPercent;
+        var sellCriteria = strategy.getSellCriteria();
+        if (strategy.getPriceDiffAvgLength() != null) {
+            var candleListForAvg = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
+                    candle.getDateTime(), strategy.getPriceDiffAvgLength() + 1, strategy.getFactorialInterval());
+            var priceDiffAvgReal = factorial.getExpectLoss() + factorial.getExpectProfit();
+            for (var i = 0; i < (candleListForAvg.size() - 1); i++) {
+                var factorialForAvg = findBestFactorialInPast(strategy, candleListForAvg.get(i));
+                if (null == factorialForAvg) {
+                    return false;
+                }
+                priceDiffAvgReal += factorialForAvg.getExpectLoss() + factorialForAvg.getExpectProfit();
+            }
+            priceDiffAvgReal = priceDiffAvgReal / candleListForAvg.size();
+            annotation = " priceDiffAvgReal=" + priceDiffAvgReal;
+            var newStrategy = new FactorialDiffAvgAdapterStrategy();
+            newStrategy.setStrategy(strategy);
+            newStrategy.setPriceDiffAvgReal(priceDiffAvgReal);
+            sellCriteria = newStrategy.getSellCriteria();
+        }
+        Boolean res = false;
         var curBeginHour = candle.getDateTime();
         curBeginHour = curBeginHour.minusMinutes(curBeginHour.getMinute() + 1);
         var curEndHour = curBeginHour.plusHours(1);
         annotation += " orderDate=" + order.getPurchaseDateTime() + " curBeginHour=" + curBeginHour;
-        if (strategy.getSellCriteria().getIsSellUnderProfit()
+        if (sellCriteria.getIsSellUnderProfit()
                 && factorial.getProfit() < candle.getClosingPrice().doubleValue()
                 /*&& !(
                         order.getPurchaseDateTime().isBefore(curEndHour)
@@ -884,13 +902,13 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 && factorial.getLoss() < candle.getClosingPrice().doubleValue()
                 && candleListPrev.get(0).getDateTime().isAfter(order.getPurchaseDateTime())
         ) {
-            if (strategy.getSellCriteria().getStopLossSoftLength() > 1) {
+            if (sellCriteria.getStopLossSoftLength() > 1) {
                 var candleList = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
-                        candle.getDateTime(), strategy.getSellCriteria().getStopLossSoftLength(), strategy.getInterval());
+                        candle.getDateTime(), sellCriteria.getStopLossSoftLength(), strategy.getInterval());
                 var profitPercentPrev = candleList.get(0).getClosingPrice().subtract(purchaseRate)
                         .multiply(BigDecimal.valueOf(100))
                         .divide(purchaseRate, 4, RoundingMode.HALF_DOWN);
-                annotation += " profitPercentPrev(" + strategy.getSellCriteria().getStopLossSoftLength()+ ")=" + profitPercentPrev;
+                annotation += " profitPercentPrev(" + sellCriteria.getStopLossSoftLength()+ ")=" + profitPercentPrev;
                 if (sellCriteria.getStopLossSoftPercent() != null && profitPercentPrev.floatValue() < -1 * sellCriteria.getStopLossSoftPercent()) {
                     res = true;
                 }
@@ -903,13 +921,13 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 && factorial.getLoss() < candle.getClosingPrice().doubleValue()
                 && candleListPrev.get(0).getDateTime().isAfter(order.getPurchaseDateTime())
         ) {
-            if (strategy.getSellCriteria().getStopLossLength() > 1) {
+            if (sellCriteria.getStopLossLength() > 1) {
                 var candleList = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
-                        candle.getDateTime(), strategy.getSellCriteria().getStopLossLength(), strategy.getInterval());
+                        candle.getDateTime(), sellCriteria.getStopLossLength(), strategy.getInterval());
                 var profitPercentPrev = candleList.get(0).getClosingPrice().subtract(purchaseRate)
                         .multiply(BigDecimal.valueOf(100))
                         .divide(purchaseRate, 4, RoundingMode.HALF_DOWN);
-                annotation += " profitPercentPrev(" + strategy.getSellCriteria().getStopLossLength()+ ")=" + profitPercentPrev;
+                annotation += " profitPercentPrev(" + sellCriteria.getStopLossLength()+ ")=" + profitPercentPrev;
                 if (sellCriteria.getStopLossPercent() != null && profitPercentPrev.floatValue() < -1 * sellCriteria.getStopLossPercent()) {
                     res = true;
                 }
@@ -932,7 +950,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             var startDate = order.getPurchaseDateTime();
             var profitPercentSell = profitPercent.floatValue();
             var profitPercentSell2 = profitPercent.floatValue();
-            var exitProfitInPercentMax = strategy.getSellCriteria().getExitProfitInPercentMax();
+            var exitProfitInPercentMax = sellCriteria.getExitProfitInPercentMax();
             var takeProfitPercent = sellCriteria.getTakeProfitPercent();
             var takeProfitPercent2 = takeProfitPercent;
             String keySell = "sell" + candle.getFigi() + notificationService.formatDateTime(order.getPurchaseDateTime());
@@ -961,8 +979,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             }
             var minPercent = 100f * (purchasePrice - minPrice) / purchasePrice;
             var isLoss = false;
-            if (strategy.getSellCriteria().getExitProfitInPercentMaxForLoss() != null
-                    && minPercent > strategy.getSellCriteria().getExitProfitInPercentMaxForLoss()
+            if (sellCriteria.getExitProfitInPercentMaxForLoss() != null
+                    && minPercent > sellCriteria.getExitProfitInPercentMaxForLoss()
                     //&& profitPercent.floatValue() < 0
                     && startDate.isBefore(curBeginHour)
             ) {
@@ -985,7 +1003,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             annotation += " takeProfitPercent2=" + takeProfitPercent2;
             var isGoodPrice = (profitPercentSell > takeProfitPercent2
                     || profitPercentSell2 > takeProfitPercent);
-            if (percent2 >= strategy.getSellCriteria().getExitProfitInPercentMin()
+            if (percent2 >= sellCriteria.getExitProfitInPercentMin()
                     && (percent2 <= exitProfitInPercentMax || isLoss)
                     && (isGoodPrice || isLoss)
             ) {
@@ -1015,14 +1033,14 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         } else if (sellCriteria.getTakeProfitPercent() != null
                 && profitPercent.floatValue() > sellCriteria.getTakeProfitPercent()
         ) {
-            if (strategy.getSellCriteria().getExitProfitLossPercent() != null) {
+            if (sellCriteria.getExitProfitLossPercent() != null) {
                 var candleList = candleHistoryService.getCandlesByFigiBetweenDateTimes(candle.getFigi(),
                         order.getPurchaseDateTime(), candle.getDateTime(), strategy.getInterval());
                 var maxPrice = candleList.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).max().orElse(-1);
                 var percent = 100f * (maxPrice - candle.getClosingPrice().doubleValue()) / maxPrice;
                 annotation += " maxPrice=" + maxPrice + "(" + candleList.size() + ")" + " ClosingPrice=" + candle.getClosingPrice()
                         + " percent=" + percent;
-                if (percent > strategy.getSellCriteria().getExitProfitLossPercent()) {
+                if (percent > sellCriteria.getExitProfitLossPercent()) {
                     res = true;
                 }
             } else {
