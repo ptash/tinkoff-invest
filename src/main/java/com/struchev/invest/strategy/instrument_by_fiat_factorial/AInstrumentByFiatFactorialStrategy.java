@@ -1,8 +1,10 @@
 package com.struchev.invest.strategy.instrument_by_fiat_factorial;
 
+import com.struchev.invest.entity.CandleDomainEntity;
 import com.struchev.invest.strategy.AStrategy;
 import lombok.Builder;
 import lombok.Data;
+import org.springframework.data.relational.core.sql.In;
 
 import java.time.Duration;
 import java.util.List;
@@ -80,7 +82,15 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
 
     @Builder
     @Data
-    public static class BuyCriteria {
+    public static class BuyCriteria implements Cloneable {
+        public BuyCriteria clone() {
+            try {
+                return (BuyCriteria)super.clone();
+            } catch (CloneNotSupportedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
         Float takeProfitLossPercent;
         Float takeProfitPercentBetween;
         Float takeProfitPercentBetweenCloseMax;
@@ -182,4 +192,8 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
 
     public String getFactorialInterval() { return "1hour"; }
     public String getInterval() { return "1min"; }
+
+    public Integer getPriceDiffAvgLength() { return null; }
+
+    public Float getPriceDiffAvg() { return 2f; }
 }

@@ -82,8 +82,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         } else {
             var percentProfit = 100.0 * (candle.getClosingPrice().doubleValue() - buyPrice.getMinPrice()) / buyPrice.getMinPrice();
             var percentFromBy = 100.0 * (candle.getClosingPrice().doubleValue() - buyPrice.getPrice()) / buyPrice.getPrice();
-            if (percentProfit > strategy.getBuyCriteria().getProfitPercentFromBuyMinPrice()
-                    && percentFromBy < strategy.getBuyCriteria().getProfitPercentFromBuyMinPrice()
+            if (percentProfit > buyCriteria.getProfitPercentFromBuyMinPrice()
+                    && percentFromBy < buyCriteria.getProfitPercentFromBuyMinPrice()
             ) {
                 resBuy = true;
             } else if (candle.getClosingPrice().doubleValue() < buyPrice.getMinPrice()) {
@@ -110,12 +110,31 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             return false;
         }
         String annotation = curHourCandleForFactorial.getDateTime().toString();
+        var buyCriteria = strategy.getBuyCriteria();
+        if (strategy.getPriceDiffAvgLength() != null) {
+            var candleListForAvg = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
+                    candle.getDateTime(), strategy.getPriceDiffAvgLength() + 1, strategy.getFactorialInterval());
+            var priceDiffAvgReal = factorial.getExpectLoss() + factorial.getExpectProfit();
+            for (var i = 0; i < (candleListForAvg.size() - 1); i++) {
+                var factorialForAvg = findBestFactorialInPast(strategy, candleListForAvg.get(i));
+                if (null == factorialForAvg) {
+                    return false;
+                }
+                priceDiffAvgReal += factorialForAvg.getExpectLoss() + factorialForAvg.getExpectProfit();
+            }
+            priceDiffAvgReal = priceDiffAvgReal / candleListForAvg.size();
+            annotation = " priceDiffAvgReal=" + priceDiffAvgReal;
+            var newStrategy = new FactorialDiffAvgAdapterStrategy();
+            newStrategy.setStrategy(strategy);
+            newStrategy.setPriceDiffAvgReal(priceDiffAvgReal);
+            buyCriteria = newStrategy.getBuyCriteria();
+        }
         var res = false;
         var isResOverProfit = false;
         var isProfitSecond = false;
         Double curPriceMin = candle.getClosingPrice().doubleValue();
         Double curPriceMax = candle.getClosingPrice().doubleValue();
-        if (strategy.getBuyCriteria().getIsCurPriceMinMax()) {
+        if (buyCriteria.getIsCurPriceMinMax()) {
             curPriceMin = candle.getLowestPrice().doubleValue();
             curPriceMax = candle.getHighestPrice().doubleValue();
         }
@@ -142,14 +161,14 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     + "(from " + factorial.candleList.get(0).getDateTime() + " to " + factorial.candleList.get(factorial.candleList.size() - 1).getDateTime() + ")"
                     + "(from " + factorial.candleListFeature.get(0).getDateTime() + " to " + factorial.candleListFeature.get(factorial.candleListFeature.size() - 1).getDateTime() + ")";
             annotation += " expectProfit/expectLoss=" + (expectProfit / expectLoss);
-            if (closeMax < strategy.getBuyCriteria().getTakeProfitPercentBetweenCloseMax()
-                    && ((strategy.getBuyCriteria().getTakeProfitPercentBetween() != null
-                    && expectProfit > strategy.getBuyCriteria().getTakeProfitPercentBetween()
-                    && expectLoss < strategy.getBuyCriteria().getStopLossPercent())
+            if (closeMax < buyCriteria.getTakeProfitPercentBetweenCloseMax()
+                    && ((buyCriteria.getTakeProfitPercentBetween() != null
+                    && expectProfit > buyCriteria.getTakeProfitPercentBetween()
+                    && expectLoss < buyCriteria.getStopLossPercent())
                     || (
-                            strategy.getBuyCriteria().getTakeProfitRatio() != null
-                                    && (expectLoss < strategy.getBuyCriteria().getStopLossPercent()
-                                    && (expectProfit / expectLoss > strategy.getBuyCriteria().getTakeProfitRatio()
+                            buyCriteria.getTakeProfitRatio() != null
+                                    && (expectLoss < buyCriteria.getStopLossPercent()
+                                    && (expectProfit / expectLoss > buyCriteria.getTakeProfitRatio()
                             || expectLoss < 0))
                     ))
                     //&& candleList.get(1).getClosingPrice().doubleValue() > candle.getClosingPrice().doubleValue()
@@ -157,8 +176,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             ) {
                 annotation += " ok";
                 var candleListPrev = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
-                        candle.getDateTime(), strategy.getBuyCriteria().getTakeProfitPercentBetweenLength(), strategy.getFactorialInterval());
-                for (var i = 0; i < strategy.getBuyCriteria().getTakeProfitPercentBetweenLength() - 1; i++) {
+                        candle.getDateTime(), buyCriteria.getTakeProfitPercentBetweenLength(), strategy.getFactorialInterval());
+                for (var i = 0; i < buyCriteria.getTakeProfitPercentBetweenLength() - 1; i++) {
                     var factorialPrev = findBestFactorialInPast(strategy, candleListPrev.get(i));
                     if (factorialPrev == null) {
                         res = false;
@@ -168,14 +187,14 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     var expectLossPrev = factorialPrev.getExpectLoss();
                     annotation +=  " i=" + i + " expectProfitPrev=" + expectProfitPrev
                             + " expectLossPrev=" + expectLossPrev;
-                    if ((strategy.getBuyCriteria().getTakeProfitPercentBetween() != null
-                            && expectProfitPrev > strategy.getBuyCriteria().getTakeProfitPercentBetween()
-                            && expectLossPrev < strategy.getBuyCriteria().getStopLossPercent())
+                    if ((buyCriteria.getTakeProfitPercentBetween() != null
+                            && expectProfitPrev > buyCriteria.getTakeProfitPercentBetween()
+                            && expectLossPrev < buyCriteria.getStopLossPercent())
                             || (
-                                    strategy.getBuyCriteria().getTakeProfitRatio() != null
+                                    buyCriteria.getTakeProfitRatio() != null
                                             && (
-                                            expectLoss < strategy.getBuyCriteria().getStopLossPercent() && (
-                                                    expectProfitPrev / expectLossPrev > strategy.getBuyCriteria().getTakeProfitRatio()
+                                            expectLoss < buyCriteria.getStopLossPercent() && (
+                                                    expectProfitPrev / expectLossPrev > buyCriteria.getTakeProfitRatio()
                                                             || expectLossPrev < 0
                                             ))
                             )
@@ -191,12 +210,12 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
 
             annotation += " expectLoss/expectProfit=" + (expectLoss/expectProfit);
             if (!res
-                    && ((strategy.getBuyCriteria().getTakeLossPercentBetween() != null
-                    && expectProfit < strategy.getBuyCriteria().getStopLossPercent()
-                    && expectLoss > strategy.getBuyCriteria().getTakeLossPercentBetween())
-                    || (strategy.getBuyCriteria().getTakeLossRatio() != null
-                    && expectLoss/expectProfit > strategy.getBuyCriteria().getTakeLossRatio()
-                    && expectLoss < strategy.getBuyCriteria().getTakeLossRatioMax()
+                    && ((buyCriteria.getTakeLossPercentBetween() != null
+                    && expectProfit < buyCriteria.getStopLossPercent()
+                    && expectLoss > buyCriteria.getTakeLossPercentBetween())
+                    || (buyCriteria.getTakeLossRatio() != null
+                    && expectLoss/expectProfit > buyCriteria.getTakeLossRatio()
+                    && expectLoss < buyCriteria.getTakeLossRatioMax()
                     )
                     )
                     //&& candleList.get(0).getClosingPrice().doubleValue() > candle.getClosingPrice().doubleValue()
@@ -204,7 +223,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             ) {
                 annotation += " ok TakeLossPercentBetween";
                 var candleListPrev = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
-                        candle.getDateTime(), strategy.getBuyCriteria().getTakeLossPercentBetweenLength(), strategy.getFactorialInterval());
+                        candle.getDateTime(), buyCriteria.getTakeLossPercentBetweenLength(), strategy.getFactorialInterval());
                 var lowestAvg = candleListPrev.stream().mapToDouble(v -> v.getLowestPrice().doubleValue()).average().orElse(-1);
                 lowestAvg -= candleListPrev.stream().mapToDouble(v -> v.getLowestPrice().doubleValue()).max().orElse(-1) / candleListPrev.size();
                 lowestAvg = candleListPrev.size() * lowestAvg / (candleListPrev.size() - 1);
@@ -215,7 +234,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 //if (lowestAvg < candle.getClosingPrice().doubleValue()
                 //        || candleList.get(0).getClosingPrice().doubleValue() > candle.getClosingPrice().doubleValue()
                 //) {
-                    for (var i = 0; i < strategy.getBuyCriteria().getTakeLossPercentBetweenLength() - 1; i++) {
+                    for (var i = 0; i < buyCriteria.getTakeLossPercentBetweenLength() - 1; i++) {
                         var factorialPrev = findBestFactorialInPast(strategy, candleListPrev.get(i));
                         if (factorialPrev == null) {
                             res = false;
@@ -223,18 +242,18 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         }
                         var expectProfitPrev = factorialPrev.getExpectProfit();
                         var expectLossPrev = factorialPrev.getExpectLoss();
-                        lossPrevAvg += factorialPrev.getLoss() / (strategy.getBuyCriteria().getTakeLossPercentBetweenLength() - 1);
-                        expectProfitPrevAvg += factorialPrev.getExpectProfit() / (strategy.getBuyCriteria().getTakeLossPercentBetweenLength() - 1);
-                        expectLossPrevAvg += factorialPrev.getExpectLoss() / (strategy.getBuyCriteria().getTakeLossPercentBetweenLength() - 1);
+                        lossPrevAvg += factorialPrev.getLoss() / (buyCriteria.getTakeLossPercentBetweenLength() - 1);
+                        expectProfitPrevAvg += factorialPrev.getExpectProfit() / (buyCriteria.getTakeLossPercentBetweenLength() - 1);
+                        expectLossPrevAvg += factorialPrev.getExpectLoss() / (buyCriteria.getTakeLossPercentBetweenLength() - 1);
                         annotation += " i=" + i + " expectProfitPrev=" + expectProfitPrev
                                 + " expectLossPrev=" + expectLossPrev;
                         if (
-                                (strategy.getBuyCriteria().getTakeLossPercentBetween() != null
-                                && expectProfitPrev < strategy.getBuyCriteria().getStopLossPercent()
-                                && expectLossPrev > strategy.getBuyCriteria().getTakeLossPercentBetween())
+                                (buyCriteria.getTakeLossPercentBetween() != null
+                                && expectProfitPrev < buyCriteria.getStopLossPercent()
+                                && expectLossPrev > buyCriteria.getTakeLossPercentBetween())
                                 || (
-                                        strategy.getBuyCriteria().getTakeLossRatio() != null
-                                                && expectLossPrev/expectProfitPrev > strategy.getBuyCriteria().getTakeLossRatio()
+                                        buyCriteria.getTakeLossRatio() != null
+                                                && expectLossPrev/expectProfitPrev > buyCriteria.getTakeLossRatio()
                                 )
                         ) {
                             annotation += " ok";
@@ -249,8 +268,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 /*
                     annotation += " lossPrevAvg=" + lossPrevAvg;
                     if (res
-                            //&& expectProfitPrevAvg < strategy.getBuyCriteria().getStopLossPercent()
-                            //&& expectLossPrevAvg > strategy.getBuyCriteria().getTakeLossPercentBetween()
+                            //&& expectProfitPrevAvg < buyCriteria.getStopLossPercent()
+                            //&& expectLossPrevAvg > buyCriteria.getTakeLossPercentBetween()
                             && lossPrevAvg < loss
                     ) {
                         annotation += " ok";
@@ -262,7 +281,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             }
 
             if (!res
-                    && strategy.getBuyCriteria().getIsAllUnderLoss()
+                    && buyCriteria.getIsAllUnderLoss()
                     && curPriceMin < loss
             ) {
                 annotation += " ok < all loss";
@@ -271,10 +290,10 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
 
             //log.info("FactorialInstrumentByFiatService {} from {} to {} {}", candle.getFigi(), factorial.candleListPast.get(0).getDateTime(), candle.getDateTime(), factorial.candleListFeature.size(), annotation);
             if (!res
-                    && strategy.getBuyCriteria().getTakeProfitLossPercent() != null
+                    && buyCriteria.getTakeProfitLossPercent() != null
                     && curPriceMin < loss
-                    && futureProfit > strategy.getBuyCriteria().getTakeProfitLossPercent()
-                    //&& (expectLoss + expectProfit) > strategy.getBuyCriteria().getTakeProfitPercent()
+                    && futureProfit > buyCriteria.getTakeProfitLossPercent()
+                    //&& (expectLoss + expectProfit) > buyCriteria.getTakeProfitPercent()
                     && expectLoss > 0
             ) {
                 Double expectLossAvg = Double.valueOf(expectLoss);
@@ -343,10 +362,10 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         }
                     }
                     if (isUp
-                            && factorial.getExpectProfit() > strategy.getBuyCriteria().getTakeProfitLossPercent()
+                            && factorial.getExpectProfit() > buyCriteria.getTakeProfitLossPercent()
                             //&& minProfit > loss
-                            //&& (expectLossAvg + expectProfit) > strategy.getBuyCriteria().getTakeProfitPercent()
-                            //&& (expectLoss + expectProfit) > strategy.getBuyCriteria().getTakeProfitPercent()
+                            //&& (expectLossAvg + expectProfit) > buyCriteria.getTakeProfitPercent()
+                            //&& (expectLoss + expectProfit) > buyCriteria.getTakeProfitPercent()
                             //&& expectLossAvg > 0
                     ) {
                         annotation += " ok < lossAvg";
@@ -380,10 +399,10 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         }
                     }
                 } else {
-                    if (futureProfit > strategy.getBuyCriteria().getTakeProfitLossPercent()
-                            //&& (expectLoss + expectProfit) > strategy.getBuyCriteria().getTakeProfitPercent()
+                    if (futureProfit > buyCriteria.getTakeProfitLossPercent()
+                            //&& (expectLoss + expectProfit) > buyCriteria.getTakeProfitPercent()
                             && expectLoss >= 0
-                            && factorial.getExpectProfit() > strategy.getBuyCriteria().getTakeProfitLossPercent()
+                            && factorial.getExpectProfit() > buyCriteria.getTakeProfitLossPercent()
                     ) {
                         annotation += " ok < loss";
                         res = true;
@@ -391,19 +410,19 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 }
             }
             if (!res
-                    && strategy.getBuyCriteria().getIsAllOverProfit()
+                    && buyCriteria.getIsAllOverProfit()
                     && curPriceMax > profit
             ) {
                 isResOverProfit = true;
             } else if (!res
-                    && strategy.getBuyCriteria().getIsOverProfit()
+                    && buyCriteria.getIsOverProfit()
                     && curPriceMax > profit
             ) {
                 Boolean isBuyToShort = false;
 
                 if (expectProfit > 0
-                        && (strategy.getBuyCriteria().getTakeProfitLossPercent() == null
-                        || futureLoss > strategy.getBuyCriteria().getTakeProfitLossPercent())) {
+                        && (buyCriteria.getTakeProfitLossPercent() == null
+                        || futureLoss > buyCriteria.getTakeProfitLossPercent())) {
                     profitAvg = 0.0;
                     if (strategy.getFactorialAvgSize() > 1) {
                         Double maxV = null;
@@ -465,10 +484,10 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             }
                         }
                         if (isDown
-                                && factorial.getExpectLoss() > strategy.getBuyCriteria().getTakeProfitLossPercent()
+                                && factorial.getExpectLoss() > buyCriteria.getTakeProfitLossPercent()
                             //&& minProfit > loss
-                            //&& (expectLossAvg + expectProfit) > strategy.getBuyCriteria().getTakeProfitPercent()
-                            //&& (expectLoss + expectProfit) > strategy.getBuyCriteria().getTakeProfitPercent()
+                            //&& (expectLossAvg + expectProfit) > buyCriteria.getTakeProfitPercent()
+                            //&& (expectLoss + expectProfit) > buyCriteria.getTakeProfitPercent()
                             //&& expectLossAvg > 0
                         ) {
                             annotation += " ok > profitAvg";
@@ -502,10 +521,10 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             }
                         }
                     } else {
-                        if (futureLoss > strategy.getBuyCriteria().getTakeProfitLossPercent()
-                                //&& (expectLoss + expectProfit) > strategy.getBuyCriteria().getTakeProfitPercent()
+                        if (futureLoss > buyCriteria.getTakeProfitLossPercent()
+                                //&& (expectLoss + expectProfit) > buyCriteria.getTakeProfitPercent()
                                 && expectLoss >= 0
-                                && factorial.getExpectLoss() > strategy.getBuyCriteria().getTakeProfitLossPercent()
+                                && factorial.getExpectLoss() > buyCriteria.getTakeProfitLossPercent()
                         ) {
                             annotation += " ok > profit";
                             isBuyToShort = true;
@@ -515,8 +534,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 var overProfitPercent = 100.0 * (candle.getClosingPrice().doubleValue() - profit) / profit;
                 annotation += " overProfitPercent=" + overProfitPercent;
                 if (!isBuyToShort
-                        && (strategy.getBuyCriteria().getOverProfitMaxPercent() == null
-                        || overProfitPercent < strategy.getBuyCriteria().getOverProfitMaxPercent())
+                        && (buyCriteria.getOverProfitMaxPercent() == null
+                        || overProfitPercent < buyCriteria.getOverProfitMaxPercent())
                 ) {
                     isResOverProfit = true;
                     annotation += " notShort";
@@ -540,8 +559,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
 
             var isResOverProfitWaitFirstUnderProfit = false;
             if (!res && !isResOverProfit
-                    && strategy.getBuyCriteria().getIsAllOverProfit()
-                    && strategy.getBuyCriteria().getIsOverProfitWaitFirstUnderProfit()
+                    && buyCriteria.getIsAllOverProfit()
+                    && buyCriteria.getIsOverProfitWaitFirstUnderProfit()
                     && candle.getClosingPrice().floatValue() < factorial.getProfit()
             ) {
                 var candleMinList = candleHistoryService.getCandlesByFigiBetweenDateTimes(
@@ -553,8 +572,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 if (maxPrice > factorial.getProfit()) {
                     var underProfitPercent = 100f * (factorial.getProfit() - candle.getClosingPrice().floatValue()) / factorial.getProfit();
                     annotation += " underProfitPercent=" + underProfitPercent;
-                    if (strategy.getBuyCriteria().getOverProfitWaitFirstUnderProfitPercent() == null
-                        || underProfitPercent > strategy.getBuyCriteria().getOverProfitWaitFirstUnderProfitPercent()
+                    if (buyCriteria.getOverProfitWaitFirstUnderProfitPercent() == null
+                        || underProfitPercent > buyCriteria.getOverProfitWaitFirstUnderProfitPercent()
                     ) {
                         annotation += " WaitFirstUnderProfit";
                         isResOverProfitWaitFirstUnderProfit = true;
@@ -579,8 +598,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     ) {
                         annotation += " ok < all profit";
                         res = true;
-                    } else if (strategy.getBuyCriteria().getAllOverProfitSecondPercent() != null
-                            && percentFromLastSell > strategy.getBuyCriteria().getAllOverProfitSecondPercent()
+                    } else if (buyCriteria.getAllOverProfitSecondPercent() != null
+                            && percentFromLastSell > buyCriteria.getAllOverProfitSecondPercent()
                     ) {
                         annotation += " ok < all profit second";
                         res = true;
@@ -588,11 +607,11 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     }
                 }
 
-                if (res && isResOverProfit && !isProfitSecond && strategy.getBuyCriteria().getIsOverProfitWaitFirstUnderProfit()) {
+                if (res && isResOverProfit && !isProfitSecond && buyCriteria.getIsOverProfitWaitFirstUnderProfit()) {
                     var overProfitPercent = 100f * (candle.getClosingPrice().doubleValue() - factorial.getProfit()) / factorial.getProfit();
                     annotation += " overProfitPercent=" + overProfitPercent;
-                    if (strategy.getBuyCriteria().getOverProfitSkipWaitFirstOverProfitPercent() == null
-                            || strategy.getBuyCriteria().getOverProfitSkipWaitFirstOverProfitPercent() > overProfitPercent
+                    if (buyCriteria.getOverProfitSkipWaitFirstOverProfitPercent() == null
+                            || buyCriteria.getOverProfitSkipWaitFirstOverProfitPercent() > overProfitPercent
                     ) {
                         annotation += " false: first wait under profit";
                         res = false;
@@ -602,9 +621,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             }
 
             if (!res
-                    && strategy.getBuyCriteria().getSplashLossPercentMax() != null
-                    && factorial.getExpectLoss() < strategy.getBuyCriteria().getSplashLossPercentMax()
-                    && factorial.getExpectProfit() > strategy.getBuyCriteria().getSplashProfitPercentMin()
+                    && buyCriteria.getSplashLossPercentMax() != null
+                    && factorial.getExpectLoss() < buyCriteria.getSplashLossPercentMax()
+                    && factorial.getExpectProfit() > buyCriteria.getSplashProfitPercentMin()
                     && factorial.getLoss() < candle.getClosingPrice().doubleValue()
             ) {
                 var factorialPrev = findBestFactorialInPast(strategy, candleList.get(0));
@@ -612,8 +631,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     annotation += " lossRatio=" + (factorialPrev.getExpectLoss() / factorial.getExpectLoss())
                             + " profitRatio=" + factorial.getExpectProfit() / factorialPrev.getExpectProfit()
                             + " factorialPrev.getProfit()=" + factorialPrev.getProfit();
-                    if (factorialPrev.getExpectLoss() / factorial.getExpectLoss() > strategy.getBuyCriteria().getSplashLossRatio()
-                            && factorial.getExpectProfit() / factorialPrev.getExpectProfit() > strategy.getBuyCriteria().getSplashProfitRatio()
+                    if (factorialPrev.getExpectLoss() / factorial.getExpectLoss() > buyCriteria.getSplashLossRatio()
+                            && factorial.getExpectProfit() / factorialPrev.getExpectProfit() > buyCriteria.getSplashProfitRatio()
                         //&& factorialPrev.getProfit() > factorial.getProfit()
                     ) {
                         annotation += "ok splash";
@@ -626,7 +645,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         String key = buildKeyHour(strategy.getName(), candle);
         var buyPrice = getCashedIsBuyValue(key);
         if (null == buyPrice
-                && strategy.getBuyCriteria().getProfitPercentFromBuyMinPriceLength() > 1
+                && buyCriteria.getProfitPercentFromBuyMinPriceLength() > 1
         ) {
             String keyPrev = buildKeyHour(strategy.getName(), curHourCandleForFactorial);
             buyPrice = getCashedIsBuyValue(keyPrev);
@@ -640,25 +659,25 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         }
         var resBuy = false;
         if ((buyPrice != null || res)
-                && (null != strategy.getBuyCriteria().getProfitPercentFromBuyMinPrice()
-                    || null != strategy.getBuyCriteria().getProfitPercentFromBuyMinPriceRelativeMin())
+                && (null != buyCriteria.getProfitPercentFromBuyMinPrice()
+                    || null != buyCriteria.getProfitPercentFromBuyMinPriceRelativeMin())
                 && (!isResOverProfit
-                    || (strategy.getBuyCriteria().getIsProfitPercentFromBuyPriceTop() && isResOverProfit)
-                    || (isProfitSecond && strategy.getBuyCriteria().getIsProfitPercentFromBuyPriceTopSecond())
+                    || (buyCriteria.getIsProfitPercentFromBuyPriceTop() && isResOverProfit)
+                    || (isProfitSecond && buyCriteria.getIsProfitPercentFromBuyPriceTopSecond())
         )) {
             annotation += " key = " + key;
             if (buyPrice == null) {
                 var maxPrice = candle.getClosingPrice().doubleValue();
                 var minPrice = candle.getClosingPrice().doubleValue();
-                if (strategy.getBuyCriteria().getProfitPercentFromBuyMinPriceRelativeMin() != null
-                        && strategy.getBuyCriteria().getProfitPercentFromBuyMinPrice() == null
+                if (buyCriteria.getProfitPercentFromBuyMinPriceRelativeMin() != null
+                        && buyCriteria.getProfitPercentFromBuyMinPrice() == null
                         && !isResOverProfit
                 ) {
                     // определяем с какой цены началось падение
-                    if (strategy.getBuyCriteria().getIsProfitPercentFromBuyMinPriceRelativeMaxMax()) {
+                    if (buyCriteria.getIsProfitPercentFromBuyMinPriceRelativeMaxMax()) {
                         minPrice = candle.getLowestPrice().doubleValue();
                     }
-                    if (strategy.getBuyCriteria().getIsProfitPercentFromBuyMinPriceRelativeMaxMax()) {
+                    if (buyCriteria.getIsProfitPercentFromBuyMinPriceRelativeMaxMax()) {
                         maxPrice = candle.getHighestPrice().doubleValue();
                     }
                     List<CandleDomainEntity> candlePrev;
@@ -672,7 +691,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     for (; i >= 0; i--) {
                         var curPrice = candlePrev.get(i).getClosingPrice().doubleValue();
                         var curMaxPrice = curPrice;
-                        if (strategy.getBuyCriteria().getIsProfitPercentFromBuyMinPriceRelativeMaxMax()) {
+                        if (buyCriteria.getIsProfitPercentFromBuyMinPriceRelativeMaxMax()) {
                             curPrice = curMaxPrice = candlePrev.get(i).getHighestPrice().doubleValue();
                         }
                         if (curMaxPrice > maxPrice) {
@@ -682,12 +701,12 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         if (percentDown > 0) {
                             percentDown = 100f * (maxPrice - curPrice) / percentDown;
                         }
-                        if (percentDown > strategy.getBuyCriteria().getProfitPercentFromBuyMinPriceRelativeTop()) {
+                        if (percentDown > buyCriteria.getProfitPercentFromBuyMinPriceRelativeTop()) {
                             annotation += " percentDown = " + percentDown;
                             var pDown = 100f * (maxPrice - curPrice) / maxPrice;
                             annotation += " pDown = " + pDown;
-                            if (strategy.getBuyCriteria().getProfitPercentFromBuyMinPriceRelativeTopMin() == null
-                                    || pDown > strategy.getBuyCriteria().getProfitPercentFromBuyMinPriceRelativeTopMin()) {
+                            if (buyCriteria.getProfitPercentFromBuyMinPriceRelativeTopMin() == null
+                                    || pDown > buyCriteria.getProfitPercentFromBuyMinPriceRelativeTopMin()) {
                                 break;
                             }
                         }
@@ -704,15 +723,15 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         .build());
             }
             isResOverProfit = buyPrice.isResOverProfit;
-            var profitPercentFromBuyMinPrice = strategy.getBuyCriteria().getProfitPercentFromBuyMinPrice();
-            var profitPercentFromBuyMaxPrice = strategy.getBuyCriteria().getProfitPercentFromBuyMaxPrice();
+            var profitPercentFromBuyMinPrice = buyCriteria.getProfitPercentFromBuyMinPrice();
+            var profitPercentFromBuyMaxPrice = buyCriteria.getProfitPercentFromBuyMaxPrice();
             if (buyPrice.getIsResOverProfit()) {
-                if (strategy.getBuyCriteria().getProfitPercentFromBuyMinPriceProfit() != null) {
-                    profitPercentFromBuyMinPrice = strategy.getBuyCriteria().getProfitPercentFromBuyMinPriceProfit();
+                if (buyCriteria.getProfitPercentFromBuyMinPriceProfit() != null) {
+                    profitPercentFromBuyMinPrice = buyCriteria.getProfitPercentFromBuyMinPriceProfit();
                 }
-                profitPercentFromBuyMaxPrice = strategy.getBuyCriteria().getProfitPercentFromBuyMaxPriceProfit();
+                profitPercentFromBuyMaxPrice = buyCriteria.getProfitPercentFromBuyMaxPriceProfit();
                 if (buyPrice.getIsProfitSecond()) {
-                    profitPercentFromBuyMaxPrice = strategy.getBuyCriteria().getProfitPercentFromBuyMaxPriceProfitSecond();
+                    profitPercentFromBuyMaxPrice = buyCriteria.getProfitPercentFromBuyMaxPriceProfitSecond();
                 }
             }
             var percentProfit = 100.0 * (candle.getClosingPrice().doubleValue() - buyPrice.getMinPrice()) / buyPrice.getMinPrice();
@@ -720,7 +739,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             annotation += " percentProfit = " + percentProfit;
             annotation += " percentFromBy = " + percentFromBy;
             annotation += " minPrice = " + buyPrice.minPrice + " price:" + buyPrice.price;
-            if (strategy.getBuyCriteria().getProfitPercentFromBuyMinPriceRelativeMin() != null
+            if (buyCriteria.getProfitPercentFromBuyMinPriceRelativeMin() != null
                     && profitPercentFromBuyMinPrice == null
             ) {
                 var percentUp = buyPrice.getMaxPrice() - buyPrice.getMinPrice();
@@ -729,8 +748,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 }
                 annotation += "maxPrice = " + buyPrice.maxPrice;
                 annotation += "percentUp = " + percentUp;
-                if (percentUp > strategy.getBuyCriteria().getProfitPercentFromBuyMinPriceRelativeMin()
-                        && percentUp < strategy.getBuyCriteria().getProfitPercentFromBuyMinPriceRelativeMax()
+                if (percentUp > buyCriteria.getProfitPercentFromBuyMinPriceRelativeMin()
+                        && percentUp < buyCriteria.getProfitPercentFromBuyMinPriceRelativeMax()
                 ) {
                     resBuy = true;
                     annotation += " ok loss ProfitPercentFromBuyMinPriceRelative";
@@ -738,14 +757,14 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             } else if (percentProfit > profitPercentFromBuyMinPrice
                     && (false //candle.getClosingPrice().doubleValue() < loss
                             || profitPercentFromBuyMaxPrice == null
-                            || percentFromBy < strategy.getBuyCriteria().getProfitPercentFromBuyMaxPrice()
+                            || percentFromBy < buyCriteria.getProfitPercentFromBuyMaxPrice()
             )) {
                 resBuy = true;
                 annotation += " ok loss ProfitPercentFromBuyMinPrice";
             }
 
             var curMinPrice = candle.getClosingPrice().doubleValue();
-            if (strategy.getBuyCriteria().getIsProfitPercentFromBuyMinPriceRelativeMaxMax()) {
+            if (buyCriteria.getIsProfitPercentFromBuyMinPriceRelativeMaxMax()) {
                 curMinPrice = candle.getLowestPrice().doubleValue();
             }
             if (curMinPrice < buyPrice.getMinPrice()) {
@@ -758,16 +777,16 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
 
         if (resBuy
                 && candle.getClosingPrice().floatValue() < factorial.getLoss()
-                && strategy.getBuyCriteria().getUnderLostWaitCandleEndInMinutes() != null
-                && candle.getDateTime().plusMinutes(strategy.getBuyCriteria().getUnderLostWaitCandleEndInMinutes()).isBefore(curHourCandle.getDateTime().plusHours(1))
+                && buyCriteria.getUnderLostWaitCandleEndInMinutes() != null
+                && candle.getDateTime().plusMinutes(buyCriteria.getUnderLostWaitCandleEndInMinutes()).isBefore(curHourCandle.getDateTime().plusHours(1))
         ) {
             annotation += " UnderLostWaitCandleEndInMinutes";
             resBuy = false;
         }
 
-        if (resBuy && isResOverProfit && strategy.getBuyCriteria().getOverProfitSkipIfUnderLossPrev() > 0) {
+        if (resBuy && isResOverProfit && buyCriteria.getOverProfitSkipIfUnderLossPrev() > 0) {
             var candleListPrevPrev = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
-                    candle.getDateTime(), strategy.getBuyCriteria().getOverProfitSkipIfUnderLossPrev() + 1, strategy.getFactorialInterval());
+                    candle.getDateTime(), buyCriteria.getOverProfitSkipIfUnderLossPrev() + 1, strategy.getFactorialInterval());
             var isLoss = false;
             var isUnderLoss = false;
             annotation += " ProfitSkip";

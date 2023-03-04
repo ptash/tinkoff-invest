@@ -5,6 +5,9 @@ import org.springframework.stereotype.Component;
 @Component
 public class Factorial2TopAll20ExtStrategy extends Factorial2TopAll20Strategy {
 
+    public Integer getPriceDiffAvgLength() { return 4; }
+    //public Float getPriceDiffAvg() { return 3f; }
+
     public BuyCriteria getBuyCriteria() {
         var buy = super.getBuyCriteria();
         buy.setProfitPercentFromBuyMinPrice(0.3);
