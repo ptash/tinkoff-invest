@@ -123,7 +123,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 priceDiffAvgReal += factorialForAvg.getExpectLoss() + factorialForAvg.getExpectProfit();
             }
             priceDiffAvgReal = priceDiffAvgReal / candleListForAvg.size();
-            annotation = " priceDiffAvgReal=" + priceDiffAvgReal;
+            annotation += " priceDiffAvgReal=" + priceDiffAvgReal;
             var newStrategy = new FactorialDiffAvgAdapterStrategy();
             newStrategy.setStrategy(strategy);
             newStrategy.setPriceDiffAvgReal(priceDiffAvgReal);
@@ -784,13 +784,30 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             resBuy = false;
         }
 
-        if (resBuy && isResOverProfit && buyCriteria.getOverProfitSkipIfUnderLossPrev() > 0) {
+        if (resBuy && isResOverProfit
+                && (buyCriteria.getOverProfitSkipIfUnderLossPrev() > 0
+                || buyCriteria.getOverProfitSkipIfUnderLossPrev() != null)
+        ) {
+            var length = buyCriteria.getOverProfitSkipIfUnderLossPrev();
+            if (buyCriteria.getOverProfitSkipIfUnderLossPrev() != null) {
+                length = Math.max(buyCriteria.getOverProfitSkipIfUnderLossPrev(), length);
+            }
             var candleListPrevPrev = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
-                    candle.getDateTime(), buyCriteria.getOverProfitSkipIfUnderLossPrev() + 1, strategy.getFactorialInterval());
+                    candle.getDateTime(), length + 1, strategy.getFactorialInterval());
             var isLoss = false;
             var isUnderLoss = false;
             annotation += " ProfitSkip";
-            for (var i = 0; i < (candleListPrevPrev.size() - 1); i++) {
+            if (buyCriteria.getOverProfitSkipIfUnderLossPrev() != null) {
+                var order = orderService.findLastByFigiAndStrategy(candle.getFigi(), strategy);
+                var candleFirst = candleListPrevPrev.get(length - buyCriteria.getOverProfitSkipIfUnderLossPrev());
+                annotation += " candleFirst=" + candleFirst.getDateTime();
+                if (order != null && order.getSellDateTime().isAfter(candleFirst.getDateTime())) {
+                    annotation += " OverProfitSkipIfUnderLossPrev";
+                    resBuy = false;
+                }
+            }
+
+            for (var i = length + 1 - buyCriteria.getOverProfitSkipIfUnderLossPrev(); i < (candleListPrevPrev.size() - 1); i++) {
                 var factorialPrev = findBestFactorialInPast(strategy, candleListPrevPrev.get(i));
                 var candleMinList = candleHistoryService.getCandlesByFigiBetweenDateTimes(
                         candle.getFigi(),
@@ -868,7 +885,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 priceDiffAvgReal += factorialForAvg.getExpectLoss() + factorialForAvg.getExpectProfit();
             }
             priceDiffAvgReal = priceDiffAvgReal / candleListForAvg.size();
-            annotation = " priceDiffAvgReal=" + priceDiffAvgReal;
+            annotation += " priceDiffAvgReal=" + priceDiffAvgReal;
             var newStrategy = new FactorialDiffAvgAdapterStrategy();
             newStrategy.setStrategy(strategy);
             newStrategy.setPriceDiffAvgReal(priceDiffAvgReal);

@@ -8,6 +8,8 @@ public class Factorial3TopAllAllLoss20MinPriceRelativeAndPercent05Strategy exten
         var buy = super.getBuyCriteria();
         buy.setIsAllUnderLoss(true);
         buy.setIsAllOverProfit(true);
+
+        buy.setOverProfitSkipIfUnderLossPrev(0);
         return buy;
     }
 }
