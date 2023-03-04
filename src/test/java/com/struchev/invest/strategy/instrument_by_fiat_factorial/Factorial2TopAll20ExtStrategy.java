@@ -15,6 +15,7 @@ public class Factorial2TopAll20ExtStrategy extends Factorial2TopAll20Strategy {
         return buy;
     }
 
+    /*
     public SellCriteria getSellCriteria() {
         var sell = super.getSellCriteria();
         sell.setIsExitProfitInPercentMaxMax(false);
@@ -27,7 +28,7 @@ public class Factorial2TopAll20ExtStrategy extends Factorial2TopAll20Strategy {
         sell.setExitProfitInPercentMaxForLoss2(100.f);
         sell.setExitProfitInPercentMaxLoopIgnoreSize(1);
         return sell;
-    }
+    }*/
 
     public Integer getFactorialLossIgnoreSize() { return 4; };
 }
