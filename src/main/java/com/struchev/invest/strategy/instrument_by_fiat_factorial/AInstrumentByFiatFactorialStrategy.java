@@ -102,6 +102,8 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
         Double overProfitWaitFirstUnderProfitPercent;
         Double overProfitMaxPercent;
 
+        Integer underLostWaitCandleEndInMinutes;
+
         Double profitPercentFromBuyMinPrice;
         Boolean isCurPriceMinMax;
         Integer profitPercentFromBuyMinPriceLength;

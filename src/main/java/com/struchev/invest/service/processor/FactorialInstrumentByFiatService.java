@@ -748,8 +748,17 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             resBuy = res;
         }
 
-        if (res) {
-            annotation += " info: " + factorial.getInfo();
+        if (resBuy
+                && candle.getClosingPrice().floatValue() < factorial.getLoss()
+                && strategy.getBuyCriteria().getUnderLostWaitCandleEndInMinutes() != null
+                && candle.getDateTime().plusMinutes(strategy.getBuyCriteria().getUnderLostWaitCandleEndInMinutes()).isBefore(curHourCandle.getDateTime().plusHours(1))
+        ) {
+            annotation += " UnderLostWaitCandleEndInMinutes";
+            resBuy = false;
+        }
+
+        if (resBuy) {
+            //annotation += " info: " + factorial.getInfo();
         }
         notificationService.reportStrategy(
                 strategy,
