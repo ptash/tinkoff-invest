@@ -99,6 +99,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
         Boolean isAllUnderLoss;
         Boolean isOverProfit;
         Boolean isOverProfitWaitFirstUnderProfit;
+        Double overProfitWaitFirstUnderProfitPercent;
         Double overProfitMaxPercent;
 
         Double profitPercentFromBuyMinPrice;

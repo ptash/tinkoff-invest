@@ -14,6 +14,7 @@ public class Factorial2TopAll20ExtStrategy extends Factorial2TopAll20Strategy {
         buy.setIsAllUnderLoss(true);
         buy.setIsAllOverProfit(true);
         buy.setIsOverProfitWaitFirstUnderProfit(true);
+        buy.setOverProfitWaitFirstUnderProfitPercent(0.1);
         return buy;
     }
 

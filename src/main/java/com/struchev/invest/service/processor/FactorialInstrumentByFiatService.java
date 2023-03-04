@@ -550,8 +550,14 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         strategy.getInterval());
                 var maxPrice = candleMinList.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).max().orElse(-1);
                 if (maxPrice > factorial.getProfit()) {
-                    annotation += " WaitFirstUnderProfit";
-                    isResOverProfitWaitFirstUnderProfit = true;
+                    var underProfitPercent = 100f * (factorial.getProfit() - candle.getClosingPrice().floatValue()) / factorial.getProfit();
+                    annotation += " underProfitPercent=" + underProfitPercent;
+                    if (strategy.getBuyCriteria().getOverProfitWaitFirstUnderProfitPercent() == null
+                        || underProfitPercent > strategy.getBuyCriteria().getOverProfitWaitFirstUnderProfitPercent()
+                    ) {
+                        annotation += " WaitFirstUnderProfit";
+                        isResOverProfitWaitFirstUnderProfit = true;
+                    }
                 }
             }
 
