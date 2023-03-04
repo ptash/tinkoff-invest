@@ -102,6 +102,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
         Double overProfitWaitFirstUnderProfitPercent;
         Double overProfitSkipWaitFirstOverProfitPercent;
         Double overProfitMaxPercent;
+        Integer overProfitSkipIfUnderLossPrev;
 
         Integer underLostWaitCandleEndInMinutes;
 
@@ -147,6 +148,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
                 .isOverProfit(false)
                 .isOverProfitWaitFirstUnderProfit(false)
                 //.overProfitMaxPercent(0.2)
+                .overProfitSkipIfUnderLossPrev(0)
                 .isCurPriceMinMax(false)
                 .profitPercentFromBuyMinPrice(null)
                 .profitPercentFromBuyMinPriceLength(1)

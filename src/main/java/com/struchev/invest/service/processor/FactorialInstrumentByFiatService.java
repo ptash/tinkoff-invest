@@ -49,6 +49,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         Float expectLoss;
         Double profit;
         Double loss;
+        OffsetDateTime dateTime;
     }
 
     @Builder
@@ -702,6 +703,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         .isProfitSecond(isProfitSecond)
                         .build());
             }
+            isResOverProfit = buyPrice.isResOverProfit;
             var profitPercentFromBuyMinPrice = strategy.getBuyCriteria().getProfitPercentFromBuyMinPrice();
             var profitPercentFromBuyMaxPrice = strategy.getBuyCriteria().getProfitPercentFromBuyMaxPrice();
             if (buyPrice.getIsResOverProfit()) {
@@ -761,6 +763,40 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         ) {
             annotation += " UnderLostWaitCandleEndInMinutes";
             resBuy = false;
+        }
+
+        if (resBuy && isResOverProfit && strategy.getBuyCriteria().getOverProfitSkipIfUnderLossPrev() > 0) {
+            var candleListPrevPrev = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
+                    candle.getDateTime(), strategy.getBuyCriteria().getOverProfitSkipIfUnderLossPrev() + 1, strategy.getFactorialInterval());
+            var isLoss = false;
+            var isUnderLoss = false;
+            annotation += " ProfitSkip";
+            for (var i = 0; i < (candleListPrevPrev.size() - 1); i++) {
+                var factorialPrev = findBestFactorialInPast(strategy, candleListPrevPrev.get(i));
+                var candleMinList = candleHistoryService.getCandlesByFigiBetweenDateTimes(
+                        candle.getFigi(),
+                        candleListPrevPrev.get(i + 1).getDateTime(),
+                        candleListPrevPrev.get(i + 1).getDateTime().plusHours(1),
+                        strategy.getInterval());
+                annotation += " " + i + " " + candleListPrevPrev.get(i + 1).getDateTime();
+                annotation += " loss=" + factorialPrev.getLoss();
+                var minPrice = candleMinList.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).min().orElse(-1);
+                var maxPrice = candleMinList.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).max().orElse(-1);
+                if (maxPrice > factorial.getProfit()) {
+                    annotation += " maxPrice=" + maxPrice;
+                    isLoss = true;
+                }
+                annotation += " minPrice=" + minPrice;
+                if (factorialPrev.getLoss() > minPrice) {
+                    annotation += " underLoss";
+                    isUnderLoss = true;
+                    break;
+                }
+            }
+            if (isLoss && isUnderLoss) {
+                annotation += " OverProfitSkipIfUnderLossPrev";
+                resBuy = false;
+            }
         }
 
         if (resBuy) {
@@ -1216,6 +1252,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 .expectLoss((float) expectLoss)
                 .profit(candle.getHighestPrice().doubleValue() * (1f + expectProfit / 100f))
                 .loss(candle.getLowestPrice().doubleValue() * (1f - expectLoss / 100f))
+                .dateTime(candleListCash.get(0).getDateTime())
                 .build();
         addCashedValue(key, res);
         return res;

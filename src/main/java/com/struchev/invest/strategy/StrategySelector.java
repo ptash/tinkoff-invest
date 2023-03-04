@@ -44,6 +44,10 @@ public class StrategySelector {
         return getActiveStrategies().stream().flatMap(s -> filterByCurrency(s.getFigies())).collect(Collectors.toSet());
     }
 
+    //public Set<InstrumentService.Instrument> getInstrumentsForActiveStrategies() {
+    //    return getActiveStrategies().stream().flatMap(s -> filterByCurrency(s.getFigies())).collect(Collectors.toSet());
+    //}
+
     public Stream<String> filterByCurrency(Map<String, Integer> figies) {
         return figies.keySet().stream().filter(figi -> {
             var instrument = instrumentService.getInstrument(figi);

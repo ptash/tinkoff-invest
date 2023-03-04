@@ -21,7 +21,7 @@ public class ConvertorUtils {
         return result;
     }
 
-    static OffsetDateTime toOffsetDateTime(long seconds) {
+    public static OffsetDateTime toOffsetDateTime(long seconds) {
         return Instant.ofEpochSecond(seconds).atOffset(ZoneOffset.UTC);
     }
 }
