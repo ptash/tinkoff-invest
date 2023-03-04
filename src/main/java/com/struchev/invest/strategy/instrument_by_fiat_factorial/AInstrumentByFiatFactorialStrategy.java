@@ -98,6 +98,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
         Double splashLossPercentMax;
         Boolean isAllUnderLoss;
         Boolean isOverProfit;
+        Boolean isOverProfitWaitFirstUnderProfit;
         Double overProfitMaxPercent;
 
         Double profitPercentFromBuyMinPrice;
@@ -140,6 +141,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
                 //.splashLossPercentMax(0.2)
                 .isAllUnderLoss(false)
                 .isOverProfit(false)
+                .isOverProfitWaitFirstUnderProfit(false)
                 //.overProfitMaxPercent(0.2)
                 .isCurPriceMinMax(false)
                 .profitPercentFromBuyMinPrice(null)

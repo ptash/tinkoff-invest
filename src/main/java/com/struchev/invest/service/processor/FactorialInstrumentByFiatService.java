@@ -537,7 +537,25 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                  */
             }
 
-            if (!res && isResOverProfit) {
+            var isResOverProfitWaitFirstUnderProfit = false;
+            if (!res && !isResOverProfit
+                    && strategy.getBuyCriteria().getIsAllOverProfit()
+                    && strategy.getBuyCriteria().getIsOverProfitWaitFirstUnderProfit()
+                    && candle.getClosingPrice().floatValue() < factorial.getProfit()
+            ) {
+                var candleMinList = candleHistoryService.getCandlesByFigiBetweenDateTimes(
+                        candle.getFigi(),
+                        curHourCandle.getDateTime(),
+                        candle.getDateTime(),
+                        strategy.getInterval());
+                var maxPrice = candleMinList.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).max().orElse(-1);
+                if (maxPrice > factorial.getProfit()) {
+                    annotation += " WaitFirstUnderProfit";
+                    isResOverProfitWaitFirstUnderProfit = true;
+                }
+            }
+
+            if (!res && (isResOverProfit || isResOverProfitWaitFirstUnderProfit)) {
                 var order = orderService.findLastByFigiAndStrategy(candle.getFigi(), strategy);
                 if (order == null) {
                     annotation += " ok < all profit";
@@ -561,6 +579,11 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         res = true;
                         isProfitSecond = true;
                     }
+                }
+
+                if (res && isResOverProfit && !isProfitSecond && strategy.getBuyCriteria().getIsOverProfitWaitFirstUnderProfit()) {
+                    annotation += " false: first wait under profit";
+                    res = false;
                 }
             }
 
