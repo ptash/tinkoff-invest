@@ -588,8 +588,14 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 }
 
                 if (res && isResOverProfit && !isProfitSecond && strategy.getBuyCriteria().getIsOverProfitWaitFirstUnderProfit()) {
-                    annotation += " false: first wait under profit";
-                    res = false;
+                    var overProfitPercent = 100f * (candle.getClosingPrice().doubleValue() - factorial.getProfit()) / factorial.getProfit();
+                    annotation += " overProfitPercent=" + overProfitPercent;
+                    if (strategy.getBuyCriteria().getOverProfitSkipWaitFirstOverProfitPercent() == null
+                            || strategy.getBuyCriteria().getOverProfitSkipWaitFirstOverProfitPercent() > overProfitPercent
+                    ) {
+                        annotation += " false: first wait under profit";
+                        res = false;
+                    }
                 }
                 isResOverProfit = true;
             }
