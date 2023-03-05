@@ -32,8 +32,21 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
         return Type.instrumentFactorialByFiat;
     }
 
-    public SellLimitCriteria getSellLimitCriteria() {
+    private SellLimitCriteria sellLimit;
+
+    public SellLimitCriteria getSellLimitCriteriaOrig() {
         return SellLimitCriteria.builder().exitProfitPercent(2.0f).build();
+    }
+
+    public SellLimitCriteria getSellLimitCriteria() {
+        if (null == this.sellLimit) {
+            this.sellLimit = this.getSellLimitCriteriaOrig();
+        }
+        return this.sellLimit;
+    }
+
+    public void setSellLimitCriteria(SellLimitCriteria sellLimit) {
+        this.sellLimit = sellLimit;
     }
 
     @Builder

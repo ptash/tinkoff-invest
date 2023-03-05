@@ -30,7 +30,7 @@ public class Factorial3TopAllLoss20MinPriceRelativeAndPercent05Strategy extends 
         return sell;
     }
 
-    public SellLimitCriteria getSellLimitCriteria() {
+    public SellLimitCriteria getSellLimitCriteriaOrig() {
         //return SellLimitCriteria.builder().exitProfitPercent(4.0f).build();
         return SellLimitCriteria.builder().exitProfitPercent(4.0f).build();
     }
