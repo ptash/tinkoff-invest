@@ -1201,11 +1201,16 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             }
         }
         annotation += " res=" + res;
+        BigDecimal limitPrice = null;
+        if (strategy.getSellLimitCriteria() != null) {
+            limitPrice = purchaseRate.multiply(BigDecimal.valueOf((strategy.getSellLimitCriteria().getExitProfitPercent() + 100.) / 100.));
+            annotation += " limit=" + strategy.getSellLimitCriteria().getExitProfitPercent();
+        }
         notificationService.reportStrategy(
                 strategy,
                 candle.getFigi(),
                 "Date|smaSlowest|smaSlow|smaFast|emaFast|ema2|bye|sell|position|deadLineBottom|deadLineTop|investBottom|investTop|smaTube|strategy|average|averageBottom|averageTop|openPrice",
-                "{} | {} | {} | {} | {} | {} | {} | {} |  |  |  |  |  |  |sell {}||||",
+                "{} | {} | {} | {} | {} | {} | {} | {} | {} |  |  |  |  |  |sell {}||||",
                 notificationService.formatDateTime(candle.getDateTime()),
                 candle.getClosingPrice(),
                 candle.getOpenPrice(),
@@ -1214,6 +1219,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 candle.getClosingPrice(),
                 factorial.getProfit(),
                 factorial.getLoss(),
+                limitPrice,
                 annotation
         );
         return res;
