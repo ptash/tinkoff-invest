@@ -160,6 +160,9 @@ public class OrderService {
                 order = setOrderInfo(order, closeResult);
                 lots -= closeResult.getLots().intValue();
             }
+            if (closeResult.getOrderId() != null && closeResult.getOrderId().equals(order.getSellLimitOrderId())) {
+                order.setSellLimitOrderId(closeResult.getOrderId());
+            }
         }
         if (lots > 0) {
             var result = tinkoffOrderAPI.sell(instrument, candle.getClosingPrice(), lots);

@@ -7,9 +7,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import ru.tinkoff.piapi.contract.v1.*;
+import ru.tinkoff.piapi.core.exception.ApiRuntimeException;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -70,9 +72,19 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
             return checkSellLimit(instrument, orderId);
         } catch (Exception e) {
             log.warn("Error in close sellLimit {}", instrument.getFigi(), e);
+            List<OrderState> orders;
+            if (getIsSandboxMode()) {
+                orders = getApi().getSandboxService().getOrdersSync(getAccountIdByFigi(instrument));
+            } else {
+                orders = getApi().getOrdersService().getOrdersSync(getAccountIdByFigi(instrument));
+            }
+            var order = orders.stream().filter(o -> o.getFigi().equals(instrument.getFigi())).findFirst().orElse(null);
+            if (order != null && !order.getOrderId().equals(orderId)) {
+                return closeSellLimit(instrument, order.getOrderId());
+            }
             orderResultBuilder.exception(e);
         }
-        return OrderResult.builder().build();
+        return OrderResult.builder().orderId(orderId).build();
     }
 
     private OrderResult checkSellLimit(InstrumentService.Instrument instrument, String orderId) {
@@ -134,7 +146,14 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
         if (orderId != null) {
             var res = checkSellLimit(instrument, orderId);
             if (res.getActive()) {
-                return res;
+                if (res.getPrice().equals(price)) {
+                    return res;
+                } else {
+                    res = this.closeSellLimit(instrument, orderId);
+                    if (res.getOrderId() != null) {
+                        orderId = res.getOrderId();
+                    }
+                }
             }
             if (res.getLots() != null && res.getLots() > 0) {
                 orderResultBuilder
@@ -193,7 +212,19 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
             }
         } catch (Exception e) {
             log.warn("Error in sellLimit {}", instrument.getFigi(), e);
-            orderResultBuilder.exception(e);
+            List<OrderState> orders;
+            if (getIsSandboxMode()) {
+                orders = getApi().getSandboxService().getOrdersSync(getAccountIdByFigi(instrument));
+            } else {
+                orders = getApi().getOrdersService().getOrdersSync(getAccountIdByFigi(instrument));
+            }
+            var order = orders.stream().filter(o -> o.getFigi().equals(instrument.getFigi())).findFirst().orElse(null);
+            if (order != null && !order.getOrderId().equals(orderId)) {
+                var res = closeSellLimit(instrument, order.getOrderId());
+                orderResultBuilder.orderId(res.getOrderId());
+            } else {
+                orderResultBuilder.exception(e);
+            }
         }
         return orderResultBuilder.build();
     }
