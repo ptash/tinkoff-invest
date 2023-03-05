@@ -29,8 +29,8 @@ public class Factorial2TopAll20ExtStrategy extends Factorial2TopAll20Strategy {
 
     public SellCriteria getSellCriteria() {
         var sell = super.getSellCriteria();
-        sell.setSellDownLength(2);
-        //sell.setSellUpLength(7);
+        sell.setSellDownLength(3);
+        sell.setSellUpLength(10);
         /*sell.setIsExitProfitInPercentMaxMax(false);
         sell.setTakeProfitPercent(0.3f);
 
