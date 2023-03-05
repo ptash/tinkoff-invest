@@ -14,10 +14,10 @@ public class Factorial3TopAllLoss20MinPriceRelativeAndPercent05Strategy extends 
 
         buy.setProfitPercentFromBuyMinPrice(null);
         buy.setProfitPercentFromBuyMinPriceRelativeMin(null);*/
-        //buy.setUnderLostWaitCandleEndInMinutes(5);
-        //buy.setOverProfitSkipIfUnderLossPrev(3);
+        buy.setUnderLostWaitCandleEndInMinutes(5);
+        buy.setOverProfitSkipIfUnderLossPrev(3);
         buy.setSkipIfOutPrevLength(4);
-        //buy.setOverProfitSkipIfOverProfitLength(2);
+        buy.setOverProfitSkipIfOverProfitLength(2);
         return buy;
     }
 

@@ -780,6 +780,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             resBuy = res;
         }
 
+        var clearKey = false;
+
         if (resBuy
                 && candle.getClosingPrice().floatValue() < factorial.getLoss()
                 && buyCriteria.getUnderLostWaitCandleEndInMinutes() != null
@@ -817,10 +819,11 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             if (!isOut) {
                 annotation += " SkipIfOutOk";
                 resBuy = false;
+                clearKey = true;
             }
         }
 
-        if (resBuy && buyCriteria.getOverProfitSkipIfOverProfitLength() != null) {
+        if (resBuy && isResOverProfit && buyCriteria.getOverProfitSkipIfOverProfitLength() != null) {
             var candleListPrevPrev = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
                     candle.getDateTime(), buyCriteria.getOverProfitSkipIfOverProfitLength() + 1, strategy.getFactorialInterval());
             var isOut = true;
@@ -839,9 +842,10 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     break;
                 }
             }
-            if (!isOut) {
+            if (isOut) {
                 annotation += " SkipIfOverProfitOk";
                 resBuy = false;
+                clearKey = true;
             }
         }
 
@@ -894,6 +898,10 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 annotation += " OverProfitSkipIfUnderLossPrev";
                 resBuy = false;
             }
+        }
+
+        if (clearKey) {
+            addCashedIsBuyValue(key, null);
         }
 
         if (resBuy) {
