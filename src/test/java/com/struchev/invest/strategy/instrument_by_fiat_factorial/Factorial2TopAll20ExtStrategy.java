@@ -49,6 +49,6 @@ public class Factorial2TopAll20ExtStrategy extends Factorial2TopAll20Strategy {
     public Integer getFactorialLossIgnoreSize() { return 4; };
 
     public SellLimitCriteria getSellLimitCriteriaOrig() {
-        return SellLimitCriteria.builder().exitProfitPercent(2f).build();
+        return SellLimitCriteria.builder().exitProfitPercent(3f).build();
     }
 }

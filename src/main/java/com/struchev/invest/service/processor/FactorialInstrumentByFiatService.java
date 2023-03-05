@@ -973,8 +973,16 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             var curHourCandleOrder = candleListPrevOrder.get(0);
             var factorialOrder = findBestFactorialInPast(strategy, curHourCandleOrder);
             var orderAvg = (factorialOrder.getLoss() + (factorialOrder.getProfit() - factorialOrder.getLoss()) / 2);
+            var isOrderUnderProfit = orderAvg > order.getPurchasePrice().doubleValue();
+            if (isOrderUnderProfit) {
+                var candleListPrevProfit = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
+                        candle.getDateTime(), 1, strategy.getFactorialInterval());
+                isOrderUnderProfit = candleListPrevProfit.get(0).getDateTime().isAfter(order.getPurchaseDateTime());
+            }
             annotation += " orderAvg=" + orderAvg;
-            if (orderAvg > order.getPurchasePrice().doubleValue()) {
+            if (isOrderUnderProfit
+                    || candleListPrev.get(0).getDateTime().isAfter(order.getPurchaseDateTime())
+            ) {
                 annotation += "profit < close";
                 res = true;
             }
