@@ -21,6 +21,9 @@ public class Factorial2TopAll20ExtStrategy extends Factorial2TopAll20Strategy {
         buy.setOverProfitSkipWaitFirstOverProfitPercent(0.5);
         buy.setOverProfitSkipIfUnderLossPrev(3);
 
+        buy.setSkipIfOutPrevLength(4);
+       //buy.setOverProfitSkipIfOverProfitLength(2);
+
         buy.setProfitPercentFromBuyMinPriceLength(2);
 
         buy.setUnderLostWaitCandleEndInMinutes(5);

@@ -139,6 +139,9 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
         Integer overProfitSkipIfUnderLossPrev;
         Integer overProfitSkipIfSellPrev;
 
+        Integer skipIfOutPrevLength;
+        Integer overProfitSkipIfOverProfitLength;
+
         Integer underLostWaitCandleEndInMinutes;
 
         Double profitPercentFromBuyMinPrice;
