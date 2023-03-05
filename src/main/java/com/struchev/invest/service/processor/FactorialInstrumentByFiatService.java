@@ -563,9 +563,14 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     && buyCriteria.getIsOverProfitWaitFirstUnderProfit()
                     && candle.getClosingPrice().floatValue() < factorial.getProfit()
             ) {
+                var order = orderService.findLastByFigiAndStrategy(candle.getFigi(), strategy);
+                var startDateTime = curHourCandle.getDateTime();
+                if (order != null && order.getSellDateTime().isAfter(startDateTime)) {
+                    startDateTime = order.getSellDateTime();
+                }
                 var candleMinList = candleHistoryService.getCandlesByFigiBetweenDateTimes(
                         candle.getFigi(),
-                        curHourCandle.getDateTime(),
+                        startDateTime,
                         candle.getDateTime(),
                         strategy.getInterval());
                 var maxPrice = candleMinList.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).max().orElse(-1);
