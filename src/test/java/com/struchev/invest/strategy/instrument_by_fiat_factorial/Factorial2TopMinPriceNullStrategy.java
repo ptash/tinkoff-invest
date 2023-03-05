@@ -11,6 +11,6 @@ public class Factorial2TopMinPriceNullStrategy extends Factorial2TopStrategy {
         return buy;
     }
     public boolean isEnabled() {
-        return true;
+        return false;
     }
 }

@@ -9,4 +9,6 @@ public class Factorial3TopAllCloseStrategy extends Factorial3TopAllStrategy {
         sell.setIsExitProfitInPercentMaxMax(false);
         return sell;
     }
+
+    public Boolean isEnable() { return false; }
 }

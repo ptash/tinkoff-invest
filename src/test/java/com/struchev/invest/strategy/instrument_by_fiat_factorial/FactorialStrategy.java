@@ -59,14 +59,14 @@ public class FactorialStrategy extends AInstrumentByFiatFactorialStrategy {
         //FIGIES.put("BBG000K3STR7", 10); // APTK Аптечная сеть 36,6
         //FIGIES.put("BBG0019K04R5", 100); // LIFE Фармсинтез
         //FIGIES.put("BBG003BNWBP3", 100); // PRFN ЧЗПСН
-        //FIGIES.put("BBG000RJWGC4", 100); // AMEZ Ашинский метзавод
+        FIGIES.put("BBG000RJWGC4", 100); // AMEZ Ашинский метзавод
         //FIGIES.put("BBG000VQWH86", 100); // BLNG Белон
         //FIGIES.put("BBG000RP8V70", 1); // CHMK ЧМК
         //
         //FIGIES.put("BBG00Y91R9T3", 1); // OZON
-        FIGIES.put("BBG0029SG1C1", 10); // KZOSP ПАО «КАЗАНЬОРГСИНТЕЗ» - акции привилегированные
+        //FIGIES.put("BBG0029SG1C1", 10); // KZOSP ПАО «КАЗАНЬОРГСИНТЕЗ» - акции привилегированные
         //FIGIES.put("BBG222222222", 100); // Тинькофф Золото
-        FIGIES.put("BBG000NLB2G3", 10); // KROT Красный Октябрь
+        //FIGIES.put("BBG000NLB2G3", 10); // KROT Красный Октябрь
         //FIGIES.put("BBG005DXJS36", 1); // TCS Group (Tinkoff Bank holder)
         FIGIES.put("BBG00KHGQ0H4", 1); // HHR HeadHunter Group PLC
         // HKD hkd
@@ -89,6 +89,6 @@ public class FactorialStrategy extends AInstrumentByFiatFactorialStrategy {
     public Map<String, Integer> getFigies()  { return FIGIES; }
 
     public boolean isEnabled() {
-        return true;
+        return false;
     }
 }
