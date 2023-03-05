@@ -68,6 +68,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
         Boolean isSellUnderProfit;
 
         Integer sellDownLength;
+        Integer sellUpLength;
     }
 
     public SellCriteria getSellCriteria() {

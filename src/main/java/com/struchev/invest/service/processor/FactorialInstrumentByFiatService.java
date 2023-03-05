@@ -1065,23 +1065,47 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             }
         }
 
-        if (sellCriteria.getSellDownLength() != null) {
+        if (sellCriteria.getSellDownLength() != null
+                || sellCriteria.getSellUpLength() != null
+        ) {
             String keySell = "sellDown" + candle.getFigi() + notificationService.formatDateTime(order.getPurchaseDateTime());
             var sellData = getCashedIsBuyValue(keySell);
             if (res || sellData != null) {
+                var length = 0;
+                if (sellCriteria.getSellDownLength() != null) {
+                    length = sellCriteria.getSellDownLength();
+                }
+                if (sellCriteria.getSellUpLength() != null) {
+                    length = Math.max(length, sellCriteria.getSellUpLength());
+                }
                 var candleList = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
-                        candle.getDateTime(), sellCriteria.getSellDownLength() + 1, strategy.getInterval());
-                Boolean isAllDownCandle = true;
-                for (var i = 0; i < sellCriteria.getSellDownLength(); i++) {
-                    var c = candleList.get(1);
-                    if (c.getClosingPrice().doubleValue() > c.getOpenPrice().doubleValue()) {
-                        annotation += " up" + i + " " + c.getClosingPrice() + " > " + c.getOpenPrice().doubleValue();
-                        isAllDownCandle = false;
-                        break;
+                        candle.getDateTime(), length + 1, strategy.getInterval());
+                Boolean isAllDownCandle = false;
+                Boolean isAllUpCandle = false;
+                if (sellCriteria.getSellDownLength() != null) {
+                    isAllDownCandle = true;
+                    for (var i = length - sellCriteria.getSellDownLength(); i < sellCriteria.getSellDownLength(); i++) {
+                        var c = candleList.get(1);
+                        if (c.getClosingPrice().doubleValue() > c.getOpenPrice().doubleValue()) {
+                            annotation += " up" + i + " " + c.getClosingPrice() + " > " + c.getOpenPrice().doubleValue();
+                            isAllDownCandle = false;
+                            break;
+                        }
                     }
                 }
-                if (isAllDownCandle) {
-                    annotation += " UpCandle";
+                if (sellCriteria.getSellUpLength() != null) {
+                    isAllUpCandle = true;
+                    for (var i = length - sellCriteria.getSellUpLength(); i < sellCriteria.getSellUpLength(); i++) {
+                        var c = candleList.get(1);
+                        if (c.getClosingPrice().doubleValue() < c.getOpenPrice().doubleValue()) {
+                            annotation += " down" + i + " " + c.getClosingPrice() + " > " + c.getOpenPrice().doubleValue();
+                            isAllUpCandle = false;
+                            break;
+                        }
+                    }
+                }
+                if (isAllDownCandle || isAllUpCandle) {
+                    annotation += " AllUpDownCandle";
                     res = true;
                 } else {
                     if (res && sellData == null) {
