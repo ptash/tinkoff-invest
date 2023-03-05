@@ -141,6 +141,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
 
         Integer skipIfOutPrevLength;
         Integer overProfitSkipIfOverProfitLength;
+        Integer overProfitSkipIfOverProfitLengthError;
 
         Integer underLostWaitCandleEndInMinutes;
 
@@ -195,6 +196,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
                 .isProfitPercentFromBuyPriceTopSecond(true)
                 .isAllOverProfit(false)
                 .isProfitPercentFromBuyMinPriceRelativeMaxMax(false)
+                .overProfitSkipIfOverProfitLengthError(0)
                 .build();
     }
 

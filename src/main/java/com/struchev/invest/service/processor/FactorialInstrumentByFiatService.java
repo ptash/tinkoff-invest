@@ -680,10 +680,10 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
 
         if (res && isResOverProfit && buyCriteria.getOverProfitSkipIfOverProfitLength() != null) {
             var candleListPrevPrev = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
-                    candle.getDateTime(), buyCriteria.getOverProfitSkipIfOverProfitLength() + 1, strategy.getFactorialInterval());
-            var isOut = true;
+                    candle.getDateTime(), buyCriteria.getOverProfitSkipIfOverProfitLength() + 1 + buyCriteria.getOverProfitSkipIfOverProfitLengthError(), strategy.getFactorialInterval());
+            var outCount = 0;
             annotation += " SkipIfOverProfit";
-            for (var i = 0; i < buyCriteria.getOverProfitSkipIfOverProfitLength(); i++) {
+            for (var i = 0; i < buyCriteria.getOverProfitSkipIfOverProfitLength() + buyCriteria.getOverProfitSkipIfOverProfitLengthError(); i++) {
                 var factorialPrev = findBestFactorialInPast(strategy, candleListPrevPrev.get(i));
                 var candleMinList = candleHistoryService.getCandlesByFigiBetweenDateTimes(
                         candle.getFigi(),
@@ -691,13 +691,12 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         candleListPrevPrev.get(i + 1).getDateTime().plusHours(1),
                         strategy.getInterval());
                 var maxPrice = candleMinList.stream().mapToDouble(value -> value.getHighestPrice().doubleValue()).max().orElse(-1);
-                if (maxPrice < factorialPrev.getProfit()) {
+                if (maxPrice >= factorialPrev.getProfit()) {
                     annotation += " maxPrice=" + maxPrice;
-                    isOut = false;
-                    break;
+                    outCount++;
                 }
             }
-            if (isOut) {
+            if (outCount >= buyCriteria.getOverProfitSkipIfOverProfitLength()) {
                 annotation += " SkipIfOverProfitOk";
                 res = false;
             }
@@ -973,14 +972,15 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             var curHourCandleOrder = candleListPrevOrder.get(0);
             var factorialOrder = findBestFactorialInPast(strategy, curHourCandleOrder);
             var orderAvg = (factorialOrder.getLoss() + (factorialOrder.getProfit() - factorialOrder.getLoss()) / 2);
-            var isOrderUnderProfit = orderAvg > order.getPurchasePrice().doubleValue();
-            if (isOrderUnderProfit) {
+            annotation += " orderAvg=" + orderAvg;
+            var isOrderUnderLoss = orderAvg > order.getPurchasePrice().doubleValue();
+            if (!isOrderUnderLoss) {
                 var candleListPrevProfit = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
                         candle.getDateTime(), 1, strategy.getFactorialInterval());
-                isOrderUnderProfit = candleListPrevProfit.get(0).getDateTime().isAfter(order.getPurchaseDateTime());
+                annotation += " time=" + candleListPrevProfit.get(0).getDateTime();
+                isOrderUnderLoss = candleListPrevProfit.get(0).getDateTime().isAfter(order.getPurchaseDateTime());
             }
-            annotation += " orderAvg=" + orderAvg;
-            if (isOrderUnderProfit
+            if (isOrderUnderLoss
                     || candleListPrev.get(0).getDateTime().isAfter(order.getPurchaseDateTime())
             ) {
                 annotation += "profit < close";
