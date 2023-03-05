@@ -66,6 +66,8 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
         Float exitProfitLossPercent;
         Float exitLossPercent;
         Boolean isSellUnderProfit;
+
+        Integer sellDownLength;
     }
 
     public SellCriteria getSellCriteria() {

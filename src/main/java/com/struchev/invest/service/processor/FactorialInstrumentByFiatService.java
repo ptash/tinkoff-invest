@@ -1064,6 +1064,37 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 res = true;
             }
         }
+
+        if (sellCriteria.getSellDownLength() != null) {
+            String keySell = "sellDown" + candle.getFigi() + notificationService.formatDateTime(order.getPurchaseDateTime());
+            var sellData = getCashedIsBuyValue(keySell);
+            if (res || sellData != null) {
+                var candleList = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
+                        candle.getDateTime(), sellCriteria.getSellDownLength() + 1, strategy.getInterval());
+                Boolean isAllDownCandle = true;
+                for (var i = 0; i < sellCriteria.getSellDownLength(); i++) {
+                    var c = candleList.get(1);
+                    if (c.getClosingPrice().doubleValue() > c.getOpenPrice().doubleValue()) {
+                        annotation += " up" + i + " " + c.getClosingPrice() + " > " + c.getOpenPrice().doubleValue();
+                        isAllDownCandle = false;
+                        break;
+                    }
+                }
+                if (isAllDownCandle) {
+                    annotation += " UpCandle";
+                    res = true;
+                } else {
+                    if (res && sellData == null) {
+                        addCashedIsBuyValue(keySell, BuyData.builder()
+                                .price(candle.getClosingPrice().doubleValue())
+                                .dateTime(candle.getDateTime())
+                                .build());
+                    }
+                    annotation += " AllDownCandle";
+                    res = false;
+                }
+            }
+        }
         annotation += " res=" + res;
         notificationService.reportStrategy(
                 strategy,
