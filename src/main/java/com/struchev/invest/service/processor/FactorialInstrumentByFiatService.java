@@ -1093,24 +1093,32 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 Boolean isAllUpCandle = false;
                 if (sellCriteria.getSellDownLength() != null) {
                     isAllDownCandle = true;
-                    for (var i = length - sellCriteria.getSellDownLength(); i < sellCriteria.getSellDownLength(); i++) {
-                        var c = candleList.get(1);
+                    for (var i = length - sellCriteria.getSellDownLength(); i < length; i++) {
+                        var c = candleList.get(i);
+                        //if (i == (length - sellCriteria.getSellDownLength())) {
+                        //    annotation += " down from " + c.getDateTime();
+                        //}
                         if (c.getClosingPrice().doubleValue() > c.getOpenPrice().doubleValue()) {
                             annotation += " up " + i + " " + c.getClosingPrice() + " > " + c.getOpenPrice().doubleValue();
                             isAllDownCandle = false;
                             break;
                         }
+                        //annotation += " downOk " + i + " " + c.getClosingPrice() + " <= " + c.getOpenPrice().doubleValue();
                     }
                 }
                 if (sellCriteria.getSellUpLength() != null) {
                     isAllUpCandle = true;
-                    for (var i = length - sellCriteria.getSellUpLength(); i < sellCriteria.getSellUpLength(); i++) {
-                        var c = candleList.get(1);
+                    for (var i = length - sellCriteria.getSellUpLength(); i < length; i++) {
+                        var c = candleList.get(i);
+                        //if (i == (length - sellCriteria.getSellUpLength())) {
+                        //    annotation += " up from " + c.getDateTime();
+                        //}
                         if (c.getClosingPrice().doubleValue() < c.getOpenPrice().doubleValue()) {
-                            annotation += " down " + i + " " + c.getClosingPrice() + " > " + c.getOpenPrice().doubleValue();
+                            annotation += " down " + i + " " + c.getClosingPrice() + " < " + c.getOpenPrice().doubleValue();
                             isAllUpCandle = false;
                             break;
                         }
+                        //annotation += " upOk " + i + " " + c.getClosingPrice() + " >= " + c.getOpenPrice().doubleValue();
                     }
                 }
                 if (isAllDownCandle || isAllUpCandle) {
