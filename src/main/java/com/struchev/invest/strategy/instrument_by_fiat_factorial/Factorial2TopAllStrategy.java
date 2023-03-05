@@ -7,11 +7,6 @@ import java.util.Map;
 
 @Component
 public class Factorial2TopAllStrategy extends Factorial2TopStrategy {
-    private static final Map FIGIES = new HashMap<String, Integer>();
-    static {
-        FIGIES.put("BBG00QPYJ5H0", 1); // TCS Group
-    }
-    //public Map<String, Integer> getFigies()  { return FIGIES; }
     public BuyCriteria getBuyCriteria() {
         var buy = super.getBuyCriteria();
         buy.setIsAllUnderLoss(true);

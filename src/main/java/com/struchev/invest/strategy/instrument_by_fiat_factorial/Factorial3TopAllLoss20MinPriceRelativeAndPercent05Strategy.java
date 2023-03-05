@@ -5,16 +5,22 @@ import org.springframework.stereotype.Component;
 @Component
 public class Factorial3TopAllLoss20MinPriceRelativeAndPercent05Strategy extends Factorial3TopAllLoss20Strategy {
 
-    /*public BuyCriteria getBuyCriteria() {
+    public BuyCriteria getBuyCriteria() {
         var buy = super.getBuyCriteria();
-        buy.setProfitPercentFromBuyMinPriceRelativeTopMin(0.5f);
+        //buy.setOverProfitSkipIfSellPrev(0);
+        /*buy.setProfitPercentFromBuyMinPriceRelativeTopMin(0.5f);
         buy.setProfitPercentFromBuyMinPriceLength(2);
         buy.setIsCurPriceMinMax(true);
 
         buy.setProfitPercentFromBuyMinPrice(null);
-        buy.setProfitPercentFromBuyMinPriceRelativeMin(null);
+        buy.setProfitPercentFromBuyMinPriceRelativeMin(null);*/
+        //buy.setUnderLostWaitCandleEndInMinutes(5);
+        //buy.setOverProfitSkipIfUnderLossPrev(3);
+        //buy.setSkipIfOutPrevLength(4);
+        buy.setOverProfitSkipIfOverProfitLength(2);
+        buy.setOverProfitSkipIfOverProfitLengthError(2);
         return buy;
-    }*/
+    }
 
     public SellCriteria getSellCriteria() {
         var sell = super.getSellCriteria();
