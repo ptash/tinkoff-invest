@@ -665,7 +665,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     || (buyCriteria.getIsProfitPercentFromBuyPriceTop() && isResOverProfit)
                     || (isProfitSecond && buyCriteria.getIsProfitPercentFromBuyPriceTopSecond())
         )) {
-            annotation += " key = " + key;
+            annotation += " key = " + key + "(" + res + ")";
             if (buyPrice == null) {
                 var maxPrice = candle.getClosingPrice().doubleValue();
                 var minPrice = candle.getClosingPrice().doubleValue();
@@ -870,6 +870,10 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 candle.getDateTime(), strategy.getFactorialLossIgnoreSize(), strategy.getFactorialInterval());
         var curHourCandle = candleListPrev.get(strategy.getFactorialLossIgnoreSize() - 1);
         var factorial = findBestFactorialInPast(strategy, curHourCandle);
+        if (strategy.getBuyCriteria().getProfitPercentFromBuyMinPriceLength() > 1) {
+            String keyPrev = buildKeyHour(strategy.getName(), curHourCandle);
+            addCashedIsBuyValue(keyPrev, null);
+        }
         var order = orderService.findActiveByFigiAndStrategy(candle.getFigi(), strategy);
         String annotation = " profitPercent=" + profitPercent;
         var sellCriteria = strategy.getSellCriteria();
@@ -1087,7 +1091,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     for (var i = length - sellCriteria.getSellDownLength(); i < sellCriteria.getSellDownLength(); i++) {
                         var c = candleList.get(1);
                         if (c.getClosingPrice().doubleValue() > c.getOpenPrice().doubleValue()) {
-                            annotation += " up" + i + " " + c.getClosingPrice() + " > " + c.getOpenPrice().doubleValue();
+                            annotation += " up " + i + " " + c.getClosingPrice() + " > " + c.getOpenPrice().doubleValue();
                             isAllDownCandle = false;
                             break;
                         }
@@ -1098,7 +1102,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     for (var i = length - sellCriteria.getSellUpLength(); i < sellCriteria.getSellUpLength(); i++) {
                         var c = candleList.get(1);
                         if (c.getClosingPrice().doubleValue() < c.getOpenPrice().doubleValue()) {
-                            annotation += " down" + i + " " + c.getClosingPrice() + " > " + c.getOpenPrice().doubleValue();
+                            annotation += " down " + i + " " + c.getClosingPrice() + " > " + c.getOpenPrice().doubleValue();
                             isAllUpCandle = false;
                             break;
                         }
