@@ -68,12 +68,13 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
     getPricePt(InstrumentService.Instrument instrument, BigDecimal price, FeatureData featureData) {
         BigDecimal pricePt = null;
         if (null != featureData && null != instrument.getBasicAssetSize()) {
-            pricePt = price.divide(instrument.getBasicAssetSize()
-                    .divide(featureData.minPriceIncrement, 8, RoundingMode.HALF_UP)
-                    .multiply(featureData.minPriceIncrementAmount), 8, RoundingMode.HALF_DOWN);
+            pricePt = price.divide(featureData.minPriceIncrementAmount
+                    .divide(featureData.minPriceIncrement, 8, RoundingMode.HALF_DOWN)
+                    //.multiply(instrument.getBasicAssetSize(), 8, RoundingMode.HALF_DOWN)
+            );
             log.info("pricePt of {}: {} = price {} / ((BasicAssetSize {} / minPriceIncrement {}) * PriceIncrementAmount {})",
-                    pricePt,
                     instrument.getFigi(),
+                    pricePt,
                     price,
                     instrument.getBasicAssetSize(),
                     featureData.minPriceIncrement,
@@ -125,6 +126,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
 
         try {
             orderResultBuilder.active(true);
+            orderResultBuilder.isExecuted(false);
             if (getIsSandboxMode()) {
                 var result = getApi().getSandboxService().getOrderStateSync(getAccountIdByFigi(instrument), orderId);
                 orderResultBuilder
@@ -144,6 +146,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                                 .pricePt(getPricePt(instrument, priceOrder, featureData))
                                 .orderPricePt(getPricePt(instrument, priceOrder, featureData))
                                 .orderPrice(priceOrder);
+                        orderResultBuilder.isExecuted(true);
                     }
                 } else if (result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_REJECTED_VALUE
                         || result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_CANCELLED_VALUE
@@ -184,6 +187,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                                 .pricePt(getPricePt(instrument, price, featureData))
                                 .orderPricePt(getPricePt(instrument, priceOrder, featureData))
                                 .orderPrice(priceOrder);
+                        orderResultBuilder.isExecuted(true);
                     }
                 } else if (result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_REJECTED_VALUE
                         || result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_CANCELLED_VALUE

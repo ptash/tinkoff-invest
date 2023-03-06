@@ -134,7 +134,7 @@ public class OrderService {
         if (needSave) {
             order = saveOrder(order);
         }
-        if (null != result.getLots() && result.getLots() > 0) {
+        if (null != result.getLots() && result.getLots() > 0 && result.getIsExecuted()) {
             order.setSellDateTime(candle.getDateTime());
             order = setOrderInfo(order, result);
         }
@@ -160,7 +160,7 @@ public class OrderService {
         }
         if (order.getSellLimitOrderId() != null) {
             var closeResult = tinkoffOrderAPI.closeSellLimit(instrument, order.getSellLimitOrderId());
-            if (null != closeResult.getLots() && closeResult.getLots() > 0) {
+            if (null != closeResult.getLots() && closeResult.getLots() > 0 && closeResult.getIsExecuted()) {
                 order.setSellDateTime(OffsetDateTime.now());
                 order = setOrderInfo(order, closeResult);
                 lots -= closeResult.getLots().intValue();
