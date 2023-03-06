@@ -184,24 +184,14 @@ public class OrderService {
         order.setSellCommissionInitial(result.getCommissionInitial());
         order.setSellCommission(result.getCommission());
         var instrument = instrumentService.getInstrument(order.getFigi());
-        if (result.getOrderPrice() != null) {
-            var priceMoney = result.getOrderPrice().divide(BigDecimal.valueOf(result.getLots()), 8, RoundingMode.HALF_DOWN);
-            if (instrument.getType() == InstrumentService.Type.future) {
-                var pricePt = result.getOrderPricePt().divide(BigDecimal.valueOf(result.getLots()), 8, RoundingMode.HALF_DOWN);
-                order.setSellPriceMoney(priceMoney);
-                order.setSellPrice(pricePt);
-            } else {
-                order.setSellPriceMoney(priceMoney);
-                order.setSellPrice(priceMoney);
-            }
+
+        order.setSellPriceMoney(result.getPrice());
+        if (instrument.getType() == InstrumentService.Type.future) {
+            order.setSellPrice(result.getPricePt());
         } else {
-            order.setSellPriceMoney(result.getPrice());
-            if (instrument.getType() == InstrumentService.Type.future) {
-                order.setSellPrice(result.getPricePt());
-            } else {
-                order.setSellPrice(result.getPrice());
-            }
+            order.setSellPrice(result.getPrice());
         }
+
         if (result.getLots() != null) {
             var lots = order.getCellLots() == null ? 0 : order.getCellLots();
             lots += result.getLots().intValue();

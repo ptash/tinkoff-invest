@@ -71,6 +71,15 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
             pricePt = price.divide(instrument.getBasicAssetSize()
                     .divide(featureData.minPriceIncrement, 8, RoundingMode.HALF_UP)
                     .multiply(featureData.minPriceIncrementAmount), 8, RoundingMode.HALF_DOWN);
+            log.info("pricePt of {}: {} = price {} / ((BasicAssetSize {} / minPriceIncrement {}) * PriceIncrementAmount {})",
+                    pricePt,
+                    instrument.getFigi(),
+                    price,
+                    instrument.getBasicAssetSize(),
+                    featureData.minPriceIncrement,
+                    featureData.minPriceIncrementAmount
+            );
+
         }
         return pricePt;
     }
@@ -124,11 +133,16 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                         || result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_PARTIALLYFILL_VALUE
                 ) {
                     if (result.hasExecutedOrderPrice() && !isZero(result.getExecutedOrderPrice())) {
+                        var featureData = getFeatureData(instrument);
                         var priceExecutedOrder = toBigDecimal(result.getExecutedOrderPrice(), 8);
+                        var lots = result.getLotsExecuted() * instrument.getLot();
+                        var price = priceExecutedOrder.divide(BigDecimal.valueOf(lots), 8, RoundingMode.HALF_DOWN);
                         orderResultBuilder.commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
                                 .commission(toBigDecimal(result.getInitialCommission(), 8))
-                                .lots(result.getLotsExecuted() * instrument.getLot())
-                                .orderPricePt(getPricePt(instrument, priceExecutedOrder, getFeatureData(instrument)))
+                                .lots(lots)
+                                .price(price)
+                                .pricePt(getPricePt(instrument, priceExecutedOrder, featureData))
+                                .orderPricePt(getPricePt(instrument, priceExecutedOrder, featureData))
                                 .orderPrice(priceExecutedOrder);
                     }
                 } else if (result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_REJECTED_VALUE
@@ -145,11 +159,16 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                         || result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_PARTIALLYFILL_VALUE
                 ) {
                     if (result.hasExecutedOrderPrice() && !isZero(result.getExecutedOrderPrice())) {
+                        var featureData = getFeatureData(instrument);
                         var priceExecutedOrder = toBigDecimal(result.getExecutedOrderPrice(), 8);
+                        var lots = result.getLotsExecuted() * instrument.getLot();
+                        var price = priceExecutedOrder.divide(BigDecimal.valueOf(lots), 8, RoundingMode.HALF_DOWN);
                         orderResultBuilder.commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
                                 .commission(getExecutedCommission(result, instrument))
-                                .lots(result.getLotsExecuted() * instrument.getLot())
-                                .orderPricePt(getPricePt(instrument, priceExecutedOrder, getFeatureData(instrument)))
+                                .lots(lots)
+                                .price(price)
+                                .pricePt(getPricePt(instrument, priceExecutedOrder, featureData))
+                                .orderPricePt(getPricePt(instrument, priceExecutedOrder, featureData))
                                 .orderPrice(priceExecutedOrder);
                     }
                 } else if (result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_REJECTED_VALUE
@@ -175,6 +194,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                     curPrice = res.getPricePt();
                 }
                 if (curPrice == null || curPrice.equals(price)) {
+                    log.info("Sell limit for {} with price {}. No need to change to {}", instrument.getFigi(), curPrice, price);
                     return res;
                 } else {
                     log.info("Sell limit for {} changed from {} to {}", instrument.getFigi(), curPrice, price);
