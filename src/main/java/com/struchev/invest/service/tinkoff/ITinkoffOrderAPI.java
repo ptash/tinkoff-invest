@@ -18,6 +18,7 @@ public interface ITinkoffOrderAPI {
         BigDecimal commissionInitial;
         BigDecimal commission;
         BigDecimal price;
+        BigDecimal pricePt;
         BigDecimal orderPrice;
         Long lots;
         Boolean active;

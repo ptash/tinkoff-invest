@@ -40,6 +40,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                     .commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
                     .commission(toBigDecimal(result.getInitialCommission(), 8))
                     .price(toBigDecimal(result.getExecutedOrderPrice(), 8, price))
+                    .pricePt(toBigDecimal(result.getInitialOrderPricePt(), 8))
                     .lots(result.getLotsRequested() * instrument.getLot())
                     .build();
         } else {
@@ -51,6 +52,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                     .commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
                     .commission(getExecutedCommission(result, instrument))
                     .price(toBigDecimal(result.getExecutedOrderPrice(), 8, price))
+                    .pricePt(toBigDecimal(result.getInitialOrderPricePt(), 8))
                     .lots(result.getLotsRequested() * instrument.getLot())
                     .build();
         }
@@ -146,7 +148,9 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
         if (orderId != null) {
             var res = checkSellLimit(instrument, orderId);
             if (res.getActive()) {
-                if (res.getPrice().equals(price)) {
+                if ((instrument.getType() != InstrumentService.Type.future && res.getPrice().equals(price))
+                        || (instrument.getType() == InstrumentService.Type.future && res.getPricePt().equals(price))
+                ) {
                     return res;
                 } else {
                     res = this.closeSellLimit(instrument, orderId);
@@ -159,6 +163,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                 orderResultBuilder
                         .lots(res.lots)
                         .price(res.getPrice())
+                        .pricePt(res.getPricePt())
                         .commission(res.getCommission());
             }
             // новую будем создавать
@@ -248,6 +253,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                     .commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
                     .commission(toBigDecimal(result.getInitialCommission(), 8))
                     .price(toBigDecimal(result.getExecutedOrderPrice(), 8, price))
+                    .pricePt(toBigDecimal(result.getInitialOrderPricePt(), 8))
                     .lots(result.getLotsRequested() * instrument.getLot())
                     .build();
         } else {
@@ -259,6 +265,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                     .commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
                     .commission(getExecutedCommission(result, instrument))
                     .price(toBigDecimal(result.getExecutedOrderPrice(), 8, price))
+                    .pricePt(toBigDecimal(result.getInitialOrderPricePt(), 8))
                     .lots(result.getLotsRequested() * instrument.getLot())
                     .build();
         }

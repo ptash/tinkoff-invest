@@ -35,7 +35,7 @@ public class FactorialStrategy extends AInstrumentByFiatFactorialStrategy {
         //FIGIES.put("BBG004S68BH6", 1); // ПИК
         //FIGIES.put("BBG004TC84Z8", 1); // Трубная Металлургическая Компания
         //FIGIES.put("BBG00Y3XYV94", 1); // MDMG Мать и дитя
-        //FIGIES.put("BBG004PYF2N3", 1); // POLY Polymetal
+        FIGIES.put("BBG004PYF2N3", 1); // POLY Polymetal
         //FIGIES.put("BBG00475K2X9", 1000); // HYDR РусГидро
         //FIGIES.put("BBG004730ZJ9", 10000); // VTBR Банк ВТБ
         //FIGIES.put("BBG004S68B31", 10); // ALRS АЛРОСА
@@ -59,7 +59,7 @@ public class FactorialStrategy extends AInstrumentByFiatFactorialStrategy {
         //FIGIES.put("BBG000K3STR7", 10); // APTK Аптечная сеть 36,6
         //FIGIES.put("BBG0019K04R5", 100); // LIFE Фармсинтез
         //FIGIES.put("BBG003BNWBP3", 100); // PRFN ЧЗПСН
-        FIGIES.put("BBG000RJWGC4", 100); // AMEZ Ашинский метзавод
+        //FIGIES.put("BBG000RJWGC4", 100); // AMEZ Ашинский метзавод
         //FIGIES.put("BBG000VQWH86", 100); // BLNG Белон
         //FIGIES.put("BBG000RP8V70", 1); // CHMK ЧМК
         //

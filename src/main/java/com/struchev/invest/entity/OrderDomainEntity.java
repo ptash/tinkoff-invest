@@ -50,6 +50,8 @@ public class OrderDomainEntity {
 
     @Column(name = "purchase_price", nullable = false, scale = 8, precision = 19)
     private BigDecimal purchasePrice;
+    @Column(name = "purchase_price_money", nullable = true, scale = 8, precision = 19)
+    private BigDecimal purchasePriceMoney;
 
     @Column(name = "purchase_commission_initial", nullable = true, scale = 8, precision = 19)
     private BigDecimal purchaseCommissionInitial;
@@ -74,6 +76,8 @@ public class OrderDomainEntity {
 
     @Column(name = "sell_price", nullable = true, scale = 8, precision = 19)
     private BigDecimal sellPrice;
+    @Column(name = "sell_price_money", nullable = true, scale = 8, precision = 19)
+    private BigDecimal sellPriceMoney;
 
     @Column(name = "sell_price_wanted", nullable = true, scale = 8, precision = 19)
     private BigDecimal sellPriceWanted;

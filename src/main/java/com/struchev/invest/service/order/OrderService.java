@@ -82,7 +82,12 @@ public class OrderService {
         var result = tinkoffOrderAPI.buy(instrument, candle.getClosingPrice(), order.getLots());
         order.setPurchaseCommissionInitial(result.getCommissionInitial());
         order.setPurchaseCommission(result.getCommission());
-        order.setPurchasePrice(result.getPrice());
+        order.setPurchasePriceMoney(result.getPrice());
+        if (instrument.getType() == InstrumentService.Type.future) {
+            order.setPurchasePrice(result.getPricePt());
+        } else {
+            order.setPurchasePrice(result.getPrice());
+        }
         order.setPurchaseOrderId(result.getOrderId());
         order = orderRepository.save(order);
         orders.add(order);
@@ -178,10 +183,22 @@ public class OrderService {
         order.setSellOrderId(result.getOrderId());
         order.setSellCommissionInitial(result.getCommissionInitial());
         order.setSellCommission(result.getCommission());
+        var instrument = instrumentService.getInstrument(order.getFigi());
         if (result.getOrderPrice() != null) {
-            order.setSellPrice(result.getOrderPrice().divide(BigDecimal.valueOf(result.getLots()), 8, RoundingMode.HALF_DOWN));
+            var priceMoney = result.getOrderPrice().divide(BigDecimal.valueOf(result.getLots()), 8, RoundingMode.HALF_DOWN);
+            order.setSellPriceMoney(priceMoney);
+            if (instrument.getType() == InstrumentService.Type.future) {
+                order.setSellPrice(priceMoney); //todo
+            } else {
+                order.setSellPrice(priceMoney);
+            }
         } else {
-            order.setSellPrice(result.getPrice());
+            order.setSellPriceMoney(result.getPrice());
+            if (instrument.getType() == InstrumentService.Type.future) {
+                order.setSellPrice(result.getPricePt());
+            } else {
+                order.setSellPrice(result.getPrice());
+            }
         }
         if (result.getLots() != null) {
             var lots = order.getCellLots() == null ? 0 : order.getCellLots();
