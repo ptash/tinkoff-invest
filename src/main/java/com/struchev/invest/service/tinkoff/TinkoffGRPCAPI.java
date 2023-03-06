@@ -134,47 +134,73 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                 ) {
                     if (result.hasExecutedOrderPrice() && !isZero(result.getExecutedOrderPrice())) {
                         var featureData = getFeatureData(instrument);
-                        var priceExecutedOrder = toBigDecimal(result.getExecutedOrderPrice(), 8);
+                        var priceOrder = toBigDecimal(result.getExecutedOrderPrice(), 8);
                         var lots = result.getLotsExecuted() * instrument.getLot();
-                        var price = priceExecutedOrder.divide(BigDecimal.valueOf(lots), 8, RoundingMode.HALF_DOWN);
+                        var price = priceOrder.divide(BigDecimal.valueOf(lots), 8, RoundingMode.HALF_DOWN);
                         orderResultBuilder.commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
                                 .commission(toBigDecimal(result.getInitialCommission(), 8))
                                 .lots(lots)
                                 .price(price)
-                                .pricePt(getPricePt(instrument, priceExecutedOrder, featureData))
-                                .orderPricePt(getPricePt(instrument, priceExecutedOrder, featureData))
-                                .orderPrice(priceExecutedOrder);
+                                .pricePt(getPricePt(instrument, priceOrder, featureData))
+                                .orderPricePt(getPricePt(instrument, priceOrder, featureData))
+                                .orderPrice(priceOrder);
                     }
                 } else if (result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_REJECTED_VALUE
                         || result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_CANCELLED_VALUE
                 ) {
                     orderResultBuilder.active(false);
+                } else if (result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_NEW_VALUE) {
+                    var featureData = getFeatureData(instrument);
+                    var priceOrder = toBigDecimal(result.getInitialOrderPrice(), 8);
+                    var lots = result.getLotsRequested() * instrument.getLot();
+                    var price = priceOrder.divide(BigDecimal.valueOf(lots), 8, RoundingMode.HALF_DOWN);
+                    orderResultBuilder.commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
+                            .commission(toBigDecimal(result.getInitialCommission(), 8))
+                            .lots(lots)
+                            .price(price)
+                            .pricePt(getPricePt(instrument, price, featureData))
+                            .orderPricePt(getPricePt(instrument, priceOrder, featureData))
+                            .orderPrice(priceOrder);
                 }
             } else {
                 var result = getApi().getOrdersService().getOrderStateSync(getAccountIdByFigi(instrument), orderId);
                 orderResultBuilder
                         .orderId(result.getOrderId());
                 log.info("checkSellLimit result: {}", result);
+                result.getInitialOrderPrice();
+                result.getLotsRequested();
                 if (result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_FILL_VALUE
                         || result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_PARTIALLYFILL_VALUE
                 ) {
                     if (result.hasExecutedOrderPrice() && !isZero(result.getExecutedOrderPrice())) {
                         var featureData = getFeatureData(instrument);
-                        var priceExecutedOrder = toBigDecimal(result.getExecutedOrderPrice(), 8);
+                        var priceOrder = toBigDecimal(result.getExecutedOrderPrice(), 8);
                         var lots = result.getLotsExecuted() * instrument.getLot();
-                        var price = priceExecutedOrder.divide(BigDecimal.valueOf(lots), 8, RoundingMode.HALF_DOWN);
+                        var price = priceOrder.divide(BigDecimal.valueOf(lots), 8, RoundingMode.HALF_DOWN);
                         orderResultBuilder.commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
                                 .commission(getExecutedCommission(result, instrument))
                                 .lots(lots)
                                 .price(price)
-                                .pricePt(getPricePt(instrument, priceExecutedOrder, featureData))
-                                .orderPricePt(getPricePt(instrument, priceExecutedOrder, featureData))
-                                .orderPrice(priceExecutedOrder);
+                                .pricePt(getPricePt(instrument, price, featureData))
+                                .orderPricePt(getPricePt(instrument, priceOrder, featureData))
+                                .orderPrice(priceOrder);
                     }
                 } else if (result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_REJECTED_VALUE
                         || result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_CANCELLED_VALUE
                 ) {
                     orderResultBuilder.active(false);
+                } else if (result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_NEW_VALUE) {
+                    var featureData = getFeatureData(instrument);
+                    var priceOrder = toBigDecimal(result.getInitialOrderPrice(), 8);
+                    var lots = result.getLotsRequested() * instrument.getLot();
+                    var price = priceOrder.divide(BigDecimal.valueOf(lots), 8, RoundingMode.HALF_DOWN);
+                    orderResultBuilder.commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
+                            .commission(toBigDecimal(result.getInitialCommission(), 8))
+                            .lots(lots)
+                            .price(price)
+                            .pricePt(getPricePt(instrument, price, featureData))
+                            .orderPricePt(getPricePt(instrument, priceOrder, featureData))
+                            .orderPrice(priceOrder);
                 }
             }
         } catch (Exception e) {
