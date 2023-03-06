@@ -186,10 +186,12 @@ public class OrderService {
         var instrument = instrumentService.getInstrument(order.getFigi());
         if (result.getOrderPrice() != null) {
             var priceMoney = result.getOrderPrice().divide(BigDecimal.valueOf(result.getLots()), 8, RoundingMode.HALF_DOWN);
-            order.setSellPriceMoney(priceMoney);
             if (instrument.getType() == InstrumentService.Type.future) {
-                order.setSellPrice(priceMoney); //todo
+                var pricePt = result.getOrderPricePt().divide(BigDecimal.valueOf(result.getLots()), 8, RoundingMode.HALF_DOWN);
+                order.setSellPriceMoney(priceMoney);
+                order.setSellPrice(pricePt);
             } else {
+                order.setSellPriceMoney(priceMoney);
                 order.setSellPrice(priceMoney);
             }
         } else {

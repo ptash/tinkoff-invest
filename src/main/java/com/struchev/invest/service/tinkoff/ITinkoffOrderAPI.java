@@ -20,6 +20,7 @@ public interface ITinkoffOrderAPI {
         BigDecimal price;
         BigDecimal pricePt;
         BigDecimal orderPrice;
+        BigDecimal orderPricePt;
         Long lots;
         Boolean active;
         Exception exception;

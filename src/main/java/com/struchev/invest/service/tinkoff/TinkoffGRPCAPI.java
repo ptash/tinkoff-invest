@@ -2,6 +2,8 @@ package com.struchev.invest.service.tinkoff;
 
 import com.struchev.invest.entity.CandleDomainEntity;
 import com.struchev.invest.service.dictionary.InstrumentService;
+import lombok.Builder;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -32,30 +34,45 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
         log.info("Send postOrderSync with: figi {}, quantity {}, quotation {}, direction {}, acc {}, type {}, id {}",
                 instrument.getFigi(), quantity, quotation, OrderDirection.ORDER_DIRECTION_BUY, getAccountIdByFigi(instrument), OrderType.ORDER_TYPE_MARKET, uuid);
 
+        var featureData = getFeatureData(instrument);
         if (getIsSandboxMode()) {
             var result = getApi().getSandboxService().postOrderSync(instrument.getFigi(), quantity, quotation,
                     OrderDirection.ORDER_DIRECTION_BUY, getAccountIdByFigi(instrument), OrderType.ORDER_TYPE_MARKET, uuid);
+            var priceExecuted = toBigDecimal(result.getExecutedOrderPrice(), 8, price);
             return OrderResult.builder()
                     .orderId(result.getOrderId())
                     .commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
                     .commission(toBigDecimal(result.getInitialCommission(), 8))
-                    .price(toBigDecimal(result.getExecutedOrderPrice(), 8, price))
-                    .pricePt(toBigDecimal(result.getInitialOrderPricePt(), 8))
+                    .price(priceExecuted)
+                    .pricePt(getPricePt(instrument, priceExecuted, featureData))
                     .lots(result.getLotsRequested() * instrument.getLot())
                     .build();
         } else {
-            checkInstrumentAvailableToBuy(instrument, price, count);
+            checkInstrumentAvailableToBuy(instrument, price, count, featureData);
             var result = getApi().getOrdersService().postOrderSync(instrument.getFigi(), quantity, quotation,
                     OrderDirection.ORDER_DIRECTION_BUY, getAccountIdByFigi(instrument), OrderType.ORDER_TYPE_MARKET, uuid);
+            var priceExecuted = toBigDecimal(result.getExecutedOrderPrice(), 8, price);
             return OrderResult.builder()
                     .orderId(result.getOrderId())
                     .commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
                     .commission(getExecutedCommission(result, instrument))
-                    .price(toBigDecimal(result.getExecutedOrderPrice(), 8, price))
-                    .pricePt(toBigDecimal(result.getInitialOrderPricePt(), 8))
+                    .price(priceExecuted)
+                    .pricePt(getPricePt(instrument, priceExecuted, featureData))
                     .lots(result.getLotsRequested() * instrument.getLot())
                     .build();
         }
+    }
+
+    public BigDecimal
+
+    getPricePt(InstrumentService.Instrument instrument, BigDecimal price, FeatureData featureData) {
+        BigDecimal pricePt = null;
+        if (null != featureData && null != instrument.getBasicAssetSize()) {
+            pricePt = price.divide(instrument.getBasicAssetSize()
+                    .divide(featureData.minPriceIncrement, 8, RoundingMode.HALF_UP)
+                    .multiply(featureData.minPriceIncrementAmount), 8, RoundingMode.HALF_DOWN);
+        }
+        return pricePt;
     }
 
     public OrderResult closeSellLimit(InstrumentService.Instrument instrument, String orderId) {
@@ -107,10 +124,12 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                         || result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_PARTIALLYFILL_VALUE
                 ) {
                     if (result.hasExecutedOrderPrice() && !isZero(result.getExecutedOrderPrice())) {
+                        var priceExecutedOrder = toBigDecimal(result.getExecutedOrderPrice(), 8);
                         orderResultBuilder.commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
                                 .commission(toBigDecimal(result.getInitialCommission(), 8))
                                 .lots(result.getLotsExecuted() * instrument.getLot())
-                                .orderPrice(toBigDecimal(result.getExecutedOrderPrice(), 8));
+                                .orderPricePt(getPricePt(instrument, priceExecutedOrder, getFeatureData(instrument)))
+                                .orderPrice(priceExecutedOrder);
                     }
                 } else if (result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_REJECTED_VALUE
                         || result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_CANCELLED_VALUE
@@ -121,14 +140,17 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                 var result = getApi().getOrdersService().getOrderStateSync(getAccountIdByFigi(instrument), orderId);
                 orderResultBuilder
                         .orderId(result.getOrderId());
+                log.info("checkSellLimit result: {}", result);
                 if (result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_FILL_VALUE
                         || result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_PARTIALLYFILL_VALUE
                 ) {
                     if (result.hasExecutedOrderPrice() && !isZero(result.getExecutedOrderPrice())) {
+                        var priceExecutedOrder = toBigDecimal(result.getExecutedOrderPrice(), 8);
                         orderResultBuilder.commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
                                 .commission(getExecutedCommission(result, instrument))
                                 .lots(result.getLotsExecuted() * instrument.getLot())
-                                .orderPrice(toBigDecimal(result.getExecutedOrderPrice(), 8));
+                                .orderPricePt(getPricePt(instrument, priceExecutedOrder, getFeatureData(instrument)))
+                                .orderPrice(priceExecutedOrder);
                     }
                 } else if (result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_REJECTED_VALUE
                         || result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_CANCELLED_VALUE
@@ -148,11 +170,14 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
         if (orderId != null) {
             var res = checkSellLimit(instrument, orderId);
             if (res.getActive()) {
-                if ((instrument.getType() != InstrumentService.Type.future && res.getPrice().equals(price))
-                        || (instrument.getType() == InstrumentService.Type.future && res.getPricePt().equals(price))
-                ) {
+                var curPrice = res.getPrice();
+                if (instrument.getType() == InstrumentService.Type.future) {
+                    curPrice = res.getPricePt();
+                }
+                if (curPrice == null || curPrice.equals(price)) {
                     return res;
                 } else {
+                    log.info("Sell limit for {} changed from {} to {}", instrument.getFigi(), curPrice, price);
                     res = this.closeSellLimit(instrument, orderId);
                     if (res.getOrderId() != null) {
                         orderId = res.getOrderId();
@@ -192,9 +217,11 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                         || result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_PARTIALLYFILL_VALUE
                 ) {
                     if (result.hasExecutedOrderPrice() && !isZero(result.getExecutedOrderPrice())) {
+                        var priceExecutedOrder = toBigDecimal(result.getExecutedOrderPrice(), 8);
                         orderResultBuilder.commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
                                 .commission(toBigDecimal(result.getInitialCommission(), 8))
                                 .lots(result.getLotsExecuted() * instrument.getLot())
+                                .orderPricePt(getPricePt(instrument, priceExecutedOrder, getFeatureData(instrument)))
                                 .orderPrice(toBigDecimal(result.getExecutedOrderPrice(), 8));
                     }
                 }
@@ -208,10 +235,12 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                         || result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_PARTIALLYFILL_VALUE
                 ) {
                     if (result.hasExecutedOrderPrice() && !isZero(result.getExecutedOrderPrice())) {
+                        var priceExecutedOrder = toBigDecimal(result.getExecutedOrderPrice(), 8);
                         orderResultBuilder.commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
                                 .commission(getExecutedCommission(result, instrument))
                                 .lots(result.getLotsExecuted() * instrument.getLot())
-                                .orderPrice(toBigDecimal(result.getExecutedOrderPrice(), 8));
+                                .orderPricePt(getPricePt(instrument, priceExecutedOrder, getFeatureData(instrument)))
+                                .orderPrice(priceExecutedOrder);
                     }
                 }
             }
@@ -244,28 +273,30 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
         log.info("Send postOrderSync with: figi {}, quantity {}, quotation {}, direction {}, acc {}, type {}, id {}",
                 instrument.getFigi(), quantity, quotation, OrderDirection.ORDER_DIRECTION_SELL, getAccountIdByFigi(instrument), OrderType.ORDER_TYPE_MARKET, uuid);
 
+        var featureData = getFeatureData(instrument);
         if (getIsSandboxMode()) {
             var result = getApi().getSandboxService().postOrderSync(instrument.getFigi(), quantity, quotation,
                     OrderDirection.ORDER_DIRECTION_SELL, getAccountIdByFigi(instrument), OrderType.ORDER_TYPE_MARKET, uuid);
-            result.getOrderId();
+            var priceExecuted = toBigDecimal(result.getExecutedOrderPrice(), 8, price);
             return OrderResult.builder()
                     .orderId(result.getOrderId())
                     .commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
                     .commission(toBigDecimal(result.getInitialCommission(), 8))
-                    .price(toBigDecimal(result.getExecutedOrderPrice(), 8, price))
-                    .pricePt(toBigDecimal(result.getInitialOrderPricePt(), 8))
+                    .price(priceExecuted)
+                    .pricePt(getPricePt(instrument, priceExecuted, featureData))
                     .lots(result.getLotsRequested() * instrument.getLot())
                     .build();
         } else {
             checkInstrumentAvailableToSell(instrument, count);
             var result = getApi().getOrdersService().postOrderSync(instrument.getFigi(), quantity, quotation,
                     OrderDirection.ORDER_DIRECTION_SELL, getAccountIdByFigi(instrument), OrderType.ORDER_TYPE_MARKET, uuid);
+            var priceExecuted = toBigDecimal(result.getExecutedOrderPrice(), 8, price);
             return OrderResult.builder()
                     .orderId(result.getOrderId())
                     .commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
                     .commission(getExecutedCommission(result, instrument))
-                    .price(toBigDecimal(result.getExecutedOrderPrice(), 8, price))
-                    .pricePt(toBigDecimal(result.getInitialOrderPricePt(), 8))
+                    .price(priceExecuted)
+                    .pricePt(getPricePt(instrument, priceExecuted, featureData))
                     .lots(result.getLotsRequested() * instrument.getLot())
                     .build();
         }
@@ -297,7 +328,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                 + annotate);
     }
 
-    private void checkInstrumentAvailableToBuy(InstrumentService.Instrument instrument, BigDecimal price, Integer count) {
+    private void checkInstrumentAvailableToBuy(InstrumentService.Instrument instrument, BigDecimal price, Integer count, FeatureData featureData) {
         var positionsResult = getApi().getOperationsService().getPositionsSync(getAccountIdByFigi(instrument));
         var money = positionsResult.getMoney().stream().filter(m -> m.getCurrency().equals(instrument.getCurrency())).findFirst().get();
         BigDecimal balance = BigDecimal.ZERO;
@@ -307,10 +338,8 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
             annotate += " balance: " + balance;
         }
         if (instrument.getType() == InstrumentService.Type.future) {
-            var featureMargin = getApi().getInstrumentsService().getFuturesMarginSync(instrument.getFigi());
-            var initialMargin = toBigDecimal(featureMargin.getInitialMarginOnSell(), 8);
-            annotate += " initialMargin: " + initialMargin;
-            price = initialMargin.multiply(BigDecimal.valueOf(2));
+            annotate += " initialMargin: " + featureData.initialMargin;
+            price = featureData.initialMargin.multiply(BigDecimal.valueOf(2));
         }
         var total = price.multiply(BigDecimal.valueOf(count));
         if (money.getValue().compareTo(total) > 0) {
@@ -319,6 +348,29 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
         throw new RuntimeException("Buy is not available for " + instrument.getFigi() + " in count of " + count
                 + " price " + price + " = " + total + ". "
                 + annotate);
+    }
+
+    @Builder
+    @Data
+    public static class FeatureData {
+        BigDecimal initialMargin;
+        BigDecimal minPriceIncrement;
+        BigDecimal minPriceIncrementAmount;
+    }
+
+    private FeatureData getFeatureData(InstrumentService.Instrument instrument) {
+        if (instrument.getType() != InstrumentService.Type.future) {
+            return null;
+        }
+        var featureMargin = getApi().getInstrumentsService().getFuturesMarginSync(instrument.getFigi());
+        var initialMargin = toBigDecimal(featureMargin.getInitialMarginOnSell(), 8);
+        var minPriceIncrement = toBigDecimal(featureMargin.getMinPriceIncrement(), 8);
+        var minPriceIncrementAmount = toBigDecimal(featureMargin.getMinPriceIncrementAmount(), 8);
+        return FeatureData.builder()
+                .initialMargin(initialMargin)
+                .minPriceIncrement(minPriceIncrement)
+                .minPriceIncrementAmount(minPriceIncrementAmount)
+                .build();
     }
 
     public Boolean checkGoodSell(InstrumentService.Instrument instrument, BigDecimal price, Integer count, BigDecimal priceError) {
