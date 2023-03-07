@@ -89,12 +89,18 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
         );
         BigDecimal pricePt = price.divide(featureData.minPriceIncrementAmount
                 .divide(featureData.minPriceIncrement, 8, RoundingMode.HALF_DOWN)
-        );
+        , 8, RoundingMode.HALF_DOWN);
+        pricePt = roundPriceIncrement(instrument, pricePt);
         log.info("pricePt of {} = {}",
                 instrument.getFigi(),
                 pricePt
         );
         return pricePt;
+    }
+
+    private BigDecimal roundPriceIncrement(InstrumentService.Instrument instrument, BigDecimal price)
+    {
+        return price.divide(instrument.getMinPriceIncrement(), 0, RoundingMode.HALF_UP).multiply(instrument.getMinPriceIncrement());
     }
 
     public OrderResult closeSellLimit(InstrumentService.Instrument instrument, String orderId) {
@@ -232,7 +238,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                 if (instrument.getType() == InstrumentService.Type.future) {
                     curPrice = res.getPricePt();
                 }
-                if (curPrice == null || curPrice.equals(price)) {
+                if (curPrice == null || curPrice.compareTo(price) == 0) {
                     log.info("Sell limit for {} with price {}. No need to change to {}", instrument.getFigi(), curPrice, price);
                     return res;
                 } else {
