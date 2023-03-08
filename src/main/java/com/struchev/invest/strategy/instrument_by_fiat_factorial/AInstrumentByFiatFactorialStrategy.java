@@ -79,6 +79,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
         Float exitProfitLossPercent;
         Float exitLossPercent;
         Boolean isSellUnderProfit;
+        Boolean isSellUnderLoss;
 
         Integer sellDownLength;
         Integer sellUpLength;
@@ -98,6 +99,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
 
                 .exitLossPercent(8f)
                 .isSellUnderProfit(false)
+                .isSellUnderLoss(true)
                 .isExitProfitInPercentMaxMax(false)
                 .exitProfitInPercentMaxForLoss(null)
                 .exitProfitInPercentMaxLoopIgnoreSize(0)
@@ -162,6 +164,10 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
         Boolean isProfitPercentFromBuyPriceTopSecond;
         Boolean isAllOverProfit;
         Double allOverProfitSecondPercent;
+
+        Integer notLossSellLength;
+        Float notLossSellPercent;
+        Float notLossSellPercentDiff;
     }
 
     public BuyCriteria getBuyCriteria() {
@@ -197,6 +203,9 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
                 .isAllOverProfit(false)
                 .isProfitPercentFromBuyMinPriceRelativeMaxMax(false)
                 .overProfitSkipIfOverProfitLengthError(0)
+                .notLossSellLength(1)
+                .notLossSellPercent(0.1f)
+                .notLossSellPercentDiff(0.5f)
                 .build();
     }
 

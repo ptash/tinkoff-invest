@@ -18,10 +18,17 @@ public class FactorialStrategy extends AInstrumentByFiatFactorialStrategy {
         //FIGIES.put("FUTNG0323000", 1); // NGH3 NG-3.23 Природный газ
         //FIGIES.put("FUTSI1223000", 1); // SiZ3 Si-12.23 Курс доллар - рубль
         //FIGIES.put("FUTSI0323000", 1); // SiH3 Si-3.23 Курс доллар - рубль
+        //FIGIES.put("FUTRTS032300", 1); // RIH3 RTS-3.23 Индекс РТС
+        //FIGIES.put("FUTSILV09230", 1); // SVU3 SILV-9.23 Серебро
+        //FIGIES.put("FUTBR0423000", 1); // BRJ3 BR-4.23 Нефть Brent
+        //FIGIES.put("FUTMXI032300", 1); // MMH3 MXI-3.23 Индекс МосБиржи (мини)
+        FIGIES.put("FUTNASD03230", 1); // NAH3 NASD-3.23 Nasdaq 100
+        FIGIES.put("FUTGOLD03230", 1); // GDH3 GOLD-3.23 Золото
 
         //FIGIES.put("BBG00178PGX3", 1); // VK
         //FIGIES.put("BBG00QPYJ5H0", 1); // TCS Group
         //FIGIES.put("BBG004730N88", 10); // SBER
+        //FIGIES.put("BBG000QJW156", 10); // BSPB Банк Санкт-Петербург
         //FIGIES.put("BBG004730RP0", 1); // Газпром
         //FIGIES.put("BBG004731032", 1); // LKOH ЛУКОЙЛ
         //FIGIES.put("BBG004730JJ5", 1); // Московская Биржа
@@ -35,7 +42,7 @@ public class FactorialStrategy extends AInstrumentByFiatFactorialStrategy {
         //FIGIES.put("BBG004S68BH6", 1); // ПИК
         //FIGIES.put("BBG004TC84Z8", 1); // Трубная Металлургическая Компания
         //FIGIES.put("BBG00Y3XYV94", 1); // MDMG Мать и дитя
-        FIGIES.put("BBG004PYF2N3", 1); // POLY Polymetal
+        //FIGIES.put("BBG004PYF2N3", 1); // POLY Polymetal
         //FIGIES.put("BBG00475K2X9", 1000); // HYDR РусГидро
         //FIGIES.put("BBG004730ZJ9", 10000); // VTBR Банк ВТБ
         //FIGIES.put("BBG004S68B31", 10); // ALRS АЛРОСА
@@ -67,6 +74,7 @@ public class FactorialStrategy extends AInstrumentByFiatFactorialStrategy {
         //FIGIES.put("BBG0029SG1C1", 10); // KZOSP ПАО «КАЗАНЬОРГСИНТЕЗ» - акции привилегированные
         //FIGIES.put("BBG222222222", 100); // Тинькофф Золото
         //FIGIES.put("BBG000NLB2G3", 10); // KROT Красный Октябрь
+        //FIGIES.put("BBG000N16BP3", 10); // ISKJ ИСКЧ
         //FIGIES.put("BBG005DXJS36", 1); // TCS Group (Tinkoff Bank holder)
         FIGIES.put("BBG00KHGQ0H4", 1); // HHR HeadHunter Group PLC
         // HKD hkd

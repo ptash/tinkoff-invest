@@ -44,9 +44,9 @@ public class StrategySelector {
         return getActiveStrategies().stream().flatMap(s -> filterByCurrency(s.getFigies())).collect(Collectors.toSet());
     }
 
-    //public Set<InstrumentService.Instrument> getInstrumentsForActiveStrategies() {
-    //    return getActiveStrategies().stream().flatMap(s -> filterByCurrency(s.getFigies())).collect(Collectors.toSet());
-    //}
+    public Set<InstrumentService.Instrument> getInstrumentsForActiveStrategies() {
+        return getFigiesForActiveStrategies().stream().map(figi -> instrumentService.getInstrument(figi)).collect(Collectors.toSet());
+    }
 
     public Stream<String> filterByCurrency(Map<String, Integer> figies) {
         return figies.keySet().stream().filter(figi -> {

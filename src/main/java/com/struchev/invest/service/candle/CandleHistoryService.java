@@ -217,18 +217,20 @@ public class CandleHistoryService {
 
         var now = OffsetDateTime.now();
         var figies = strategySelector.getFigiesForActiveStrategies();
+        var instruments = strategySelector.getInstrumentsForActiveStrategies();
         log.info("Start to load history {} days, for figies {}", days, figies);
-        figies.stream().forEach(figi -> {
-            loadCandlesHistory(figi, days, CandleInterval.CANDLE_INTERVAL_1_MIN, now);
+        instruments.stream().forEach(instrument -> {
+            var maxDays = Duration.between(instrument.getFirst1MinCandleDate(), now).toDays();
+            var curDays = days;
+            if (maxDays < days) {
+                log.info("Change loading history for {}: new days {} from {}", instrument.getFigi(), maxDays, instrument.getFirst1MinCandleDate());
+                curDays = maxDays;
+            }
+            loadCandlesHistory(instrument.getFigi(), curDays, CandleInterval.CANDLE_INTERVAL_1_MIN, now);
+            loadCandlesHistory(instrument.getFigi(), curDays, CandleInterval.CANDLE_INTERVAL_DAY, now);
+            loadCandlesHistory(instrument.getFigi(), curDays, CandleInterval.CANDLE_INTERVAL_HOUR, now);
         });
 
-        figies.stream().forEach(figi -> {
-            loadCandlesHistory(figi, days, CandleInterval.CANDLE_INTERVAL_DAY, now);
-        });
-
-        figies.stream().forEach(figi -> {
-            loadCandlesHistory(figi, days, CandleInterval.CANDLE_INTERVAL_HOUR, now);
-        });
         log.info("Loaded to load history for {} days", days);
     }
 

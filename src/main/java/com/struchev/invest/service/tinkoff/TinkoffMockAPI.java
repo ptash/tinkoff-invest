@@ -25,6 +25,8 @@ public class TinkoffMockAPI extends ATinkoffAPI {
                 .commissionInitial(calculateCommission(price, count))
                 .commission(calculateCommission(price, count))
                 .price(price)
+                .pricePt(price)
+                .isExecuted(true)
                 .build();
     }
 
@@ -34,6 +36,8 @@ public class TinkoffMockAPI extends ATinkoffAPI {
                 .commissionInitial(calculateCommission(price, count))
                 .commission(calculateCommission(price, count))
                 .price(price)
+                .pricePt(price)
+                .isExecuted(true)
                 .build();
     }
 
@@ -46,13 +50,17 @@ public class TinkoffMockAPI extends ATinkoffAPI {
                     .lots(count.longValue())
                     .orderPrice(price.multiply(BigDecimal.valueOf(count)))
                     .price(price)
+                    .pricePt(price)
+                    .isExecuted(true)
                     .build();
         }
         return OrderResult.builder().build();
     }
 
     public OrderResult closeSellLimit(InstrumentService.Instrument instrument, String orderId) {
-        return OrderResult.builder().build();
+        return OrderResult.builder()
+                .isExecuted(false)
+                .build();
     }
 
     @Override

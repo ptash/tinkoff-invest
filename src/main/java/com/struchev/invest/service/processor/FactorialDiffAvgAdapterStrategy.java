@@ -42,6 +42,7 @@ public class FactorialDiffAvgAdapterStrategy extends AInstrumentByFiatFactorialS
         buy.setProfitPercentFromBuyMaxPriceProfit(strategyBuy.getProfitPercentFromBuyMaxPriceProfit() * getPriceDiffAvg());
         buy.setOverProfitWaitFirstUnderProfitPercent(strategyBuy.getOverProfitWaitFirstUnderProfitPercent() * getPriceDiffAvg());
         buy.setOverProfitSkipWaitFirstOverProfitPercent(strategyBuy.getOverProfitSkipWaitFirstOverProfitPercent() * getPriceDiffAvg());
+        //buy.setNotLossSellPercentDiff(strategyBuy.getNotLossSellPercentDiff() * getPriceDiffAvg());
         return buy;
     }
 

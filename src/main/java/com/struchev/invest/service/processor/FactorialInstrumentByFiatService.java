@@ -702,6 +702,26 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             }
         }
 
+        if (res && buyCriteria.getNotLossSellLength() > 0) {
+            var order = orderService.findLastByFigiAndStrategy(candle.getFigi(), strategy);
+            if (order != null) {
+                var profitPercent = 100f * (order.getSellPrice().floatValue() - order.getPurchasePrice().floatValue()) / order.getPurchasePrice().floatValue();
+                var profitPercentDiff = 100f * (order.getSellPrice().floatValue() - candle.getClosingPrice().floatValue()) / order.getPurchasePrice().floatValue();
+                annotation += " NotLossSell profitPercent=" + profitPercent;
+                annotation += " profitPercentDiff=" + profitPercentDiff;
+                if (profitPercent < buyCriteria.getNotLossSellPercent()
+                        && profitPercentDiff < buyCriteria.getNotLossSellPercentDiff()
+                ) {
+                    var listCandle = candleHistoryService.getCandlesByFigiBetweenDateTimes(candle.getFigi(), order.getSellDateTime().minusHours(1), candle.getDateTime(), strategy.getFactorialInterval());
+                    annotation += " NotLossSellLength=" + listCandle.size();
+                    if (listCandle.size() <= buyCriteria.getNotLossSellLength()) {
+                        annotation += " skipNotLossSellLength=" + buyCriteria.getNotLossSellLength();
+                        res = false;
+                    }
+                }
+            }
+        }
+
         String key = buildKeyHour(strategy.getName(), candle);
         var buyPrice = getCashedIsBuyValue(key);
         if (null == buyPrice
@@ -960,8 +980,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         curBeginHour = curBeginHour.minusMinutes(curBeginHour.getMinute() + 1);
         var curEndHour = curBeginHour.plusHours(1);
         annotation += " orderDate=" + order.getPurchaseDateTime() + " curBeginHour=" + curBeginHour;
-        if (sellCriteria.getIsSellUnderProfit()
-                && factorial.getProfit() < candle.getClosingPrice().doubleValue()
+        if ((sellCriteria.getIsSellUnderProfit()
+                && factorial.getProfit() < candle.getClosingPrice().doubleValue())
+                || (sellCriteria.getIsSellUnderLoss() && factorial.getLoss() > candle.getClosingPrice().doubleValue())
                 /*&& !(
                         order.getPurchaseDateTime().isBefore(curEndHour)
                                 && order.getPurchasePrice().doubleValue() >= factorial.getProfit()
@@ -973,17 +994,24 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             var factorialOrder = findBestFactorialInPast(strategy, curHourCandleOrder);
             var orderAvg = (factorialOrder.getLoss() + (factorialOrder.getProfit() - factorialOrder.getLoss()) / 2);
             annotation += " orderAvg=" + orderAvg;
-            var isOrderUnderLoss = orderAvg > order.getPurchasePrice().doubleValue();
-            if (!isOrderUnderLoss) {
+            var isOrdeCrossTunen = orderAvg > order.getPurchasePrice().doubleValue();
+            if (factorial.getLoss() > candle.getClosingPrice().doubleValue()) {
+                isOrdeCrossTunen = orderAvg < order.getPurchasePrice().doubleValue();
+            }
+            if (!isOrdeCrossTunen) {
                 var candleListPrevProfit = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
                         candle.getDateTime(), 1, strategy.getFactorialInterval());
                 annotation += " time=" + candleListPrevProfit.get(0).getDateTime();
-                isOrderUnderLoss = candleListPrevProfit.get(0).getDateTime().isAfter(order.getPurchaseDateTime());
+                isOrdeCrossTunen = candleListPrevProfit.get(0).getDateTime().isAfter(order.getPurchaseDateTime());
             }
-            if (isOrderUnderLoss
+            if (isOrdeCrossTunen
                     || candleListPrev.get(0).getDateTime().isAfter(order.getPurchaseDateTime())
             ) {
-                annotation += "profit < close";
+                if (factorial.getProfit() < candle.getClosingPrice().doubleValue()) {
+                    annotation += "profit < close";
+                } else {
+                    annotation += "loss > close";
+                }
                 res = true;
             }
         }
