@@ -79,7 +79,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
         Float exitProfitLossPercent;
         Float exitLossPercent;
         Boolean isSellUnderProfit;
-        Boolean isSellUnderLoss;
+        Integer sellUnderLossLength;
 
         Integer sellDownLength;
         Integer sellUpLength;
@@ -99,7 +99,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
 
                 .exitLossPercent(8f)
                 .isSellUnderProfit(false)
-                .isSellUnderLoss(true)
+                .sellUnderLossLength(2)
                 .isExitProfitInPercentMaxMax(false)
                 .exitProfitInPercentMaxForLoss(null)
                 .exitProfitInPercentMaxLoopIgnoreSize(0)

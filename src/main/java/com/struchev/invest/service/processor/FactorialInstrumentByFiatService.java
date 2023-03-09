@@ -982,7 +982,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         annotation += " orderDate=" + order.getPurchaseDateTime() + " curBeginHour=" + curBeginHour;
         if ((sellCriteria.getIsSellUnderProfit()
                 && factorial.getProfit() < candle.getClosingPrice().doubleValue())
-                || (sellCriteria.getIsSellUnderLoss() && factorial.getLoss() > candle.getClosingPrice().doubleValue())
+                || (sellCriteria.getSellUnderLossLength() > 0 && factorial.getLoss() > candle.getClosingPrice().doubleValue())
                 /*&& !(
                         order.getPurchaseDateTime().isBefore(curEndHour)
                                 && order.getPurchasePrice().doubleValue() >= factorial.getProfit()
@@ -990,21 +990,22 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         ) {
             var candleListPrevOrder = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
                     order.getPurchaseDateTime(), 1, strategy.getFactorialInterval());
-            var curHourCandleOrder = candleListPrevOrder.get(0);
-            var factorialOrder = findBestFactorialInPast(strategy, curHourCandleOrder);
+            var factorialOrder = findBestFactorialInPast(strategy, candleListPrevOrder.get(0));
             var orderAvg = (factorialOrder.getLoss() + (factorialOrder.getProfit() - factorialOrder.getLoss()) / 2);
             annotation += " orderAvg=" + orderAvg;
-            var isOrdeCrossTunen = orderAvg > order.getPurchasePrice().doubleValue();
+            var isOrdeCrossTunel = orderAvg > order.getPurchasePrice().doubleValue();
             if (factorial.getLoss() > candle.getClosingPrice().doubleValue()) {
-                isOrdeCrossTunen = orderAvg < order.getPurchasePrice().doubleValue();
-            }
-            if (!isOrdeCrossTunen) {
                 var candleListPrevProfit = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
-                        candle.getDateTime(), 1, strategy.getFactorialInterval());
+                        candle.getDateTime(),  sellCriteria.getSellUnderLossLength(), strategy.getFactorialInterval());
                 annotation += " time=" + candleListPrevProfit.get(0).getDateTime();
-                isOrdeCrossTunen = candleListPrevProfit.get(0).getDateTime().isAfter(order.getPurchaseDateTime());
+                isOrdeCrossTunel = candleListPrevProfit.get(0).getDateTime().isAfter(order.getPurchaseDateTime());
+            } else {
+                if (!isOrdeCrossTunel) {
+                    annotation += " time=" + curBeginHour;
+                    isOrdeCrossTunel = curBeginHour.isAfter(order.getPurchaseDateTime());
+                }
             }
-            if (isOrdeCrossTunen
+            if (isOrdeCrossTunel
                     || candleListPrev.get(0).getDateTime().isAfter(order.getPurchaseDateTime())
             ) {
                 if (factorial.getProfit() < candle.getClosingPrice().doubleValue()) {
