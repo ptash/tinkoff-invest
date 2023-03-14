@@ -19,11 +19,12 @@ public class FactorialStrategy extends AInstrumentByFiatFactorialStrategy {
         //FIGIES.put("FUTSI1223000", 1); // SiZ3 Si-12.23 Курс доллар - рубль
         //FIGIES.put("FUTSI0323000", 1); // SiH3 Si-3.23 Курс доллар - рубль
         //FIGIES.put("FUTRTS032300", 1); // RIH3 RTS-3.23 Индекс РТС
-        FIGIES.put("FUTSILV09230", 1); // SVU3 SILV-9.23 Серебро
-        //FIGIES.put("FUTBR0423000", 1); // BRJ3 BR-4.23 Нефть Brent
+        //FIGIES.put("FUTSILV09230", 1); // SVU3 SILV-9.23 Серебро
+        FIGIES.put("FUTBR0423000", 1); // BRJ3 BR-4.23 Нефть Brent
         //FIGIES.put("FUTMXI032300", 1); // MMH3 MXI-3.23 Индекс МосБиржи (мини)
         //FIGIES.put("FUTNASD03230", 1); // NAH3 NASD-3.23 Nasdaq 100
         //FIGIES.put("FUTGOLD03230", 1); // GDH3 GOLD-3.23 Золото
+        FIGIES.put("FUTCNY032300", 1); // CRH3 GCNY-3.23 Курс Юань - Рубль
 
         //FIGIES.put("BBG00178PGX3", 1); // VK
         //FIGIES.put("BBG00QPYJ5H0", 1); // TCS Group
@@ -68,6 +69,7 @@ public class FactorialStrategy extends AInstrumentByFiatFactorialStrategy {
         //FIGIES.put("BBG003BNWBP3", 100); // PRFN ЧЗПСН
         //FIGIES.put("BBG000RJWGC4", 100); // AMEZ Ашинский метзавод
         //FIGIES.put("BBG000VQWH86", 100); // BLNG Белон
+        //FIGIES.put("BBG000TY1CD1", 100); // BELU Белуга Групп ПАО ао
         //FIGIES.put("BBG000RP8V70", 1); // CHMK ЧМК
         //
         //FIGIES.put("BBG00Y91R9T3", 1); // OZON

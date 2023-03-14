@@ -882,7 +882,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 var candleFirst = candleListPrevPrev.get(length - buyCriteria.getOverProfitSkipIfSellPrev());
                 annotation += " candleFirst=" + candleFirst.getDateTime();
                 if (order != null && order.getSellDateTime().isAfter(candleFirst.getDateTime())) {
-                    annotation += " OverProfitSkipIfUnderLossPrev";
+                    annotation += " OverProfitSkipIfSellPrev=" + buyCriteria.getOverProfitSkipIfSellPrev();
                     resBuy = false;
                 }
             }
