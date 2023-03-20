@@ -54,11 +54,29 @@ public class FactorialDiffAvgAdapterStrategy extends AInstrumentByFiatFactorialS
         sell = strategySell.clone();
         var getPriceDiffAvg = getPriceDiffAvg();
         /*
-        sell.setTakeProfitPercent(Math.max(strategy.getPriceDiffAvgPercentMin(), strategySell.getTakeProfitPercent() * getPriceDiffAvg));
-        sell.setExitProfitLossPercent(Math.max(strategy.getPriceDiffAvgPercentMin(), strategySell.getExitProfitLossPercent() * getPriceDiffAvg));
-        sell.setStopLossPercent(Math.max(strategy.getPriceDiffAvgPercentMin(), strategySell.getStopLossPercent() * getPriceDiffAvg));
         sell.setStopLossSoftPercent(Math.max(strategy.getPriceDiffAvgPercentMin(), strategySell.getStopLossSoftPercent() * getPriceDiffAvg));
         sell.setExitLossPercent(Math.max(strategy.getPriceDiffAvgPercentMin(), strategySell.getExitLossPercent() * getPriceDiffAvg));
+        sell.setTakeProfitPercent(Math.max(strategy.getPriceDiffAvgPercentMin(), strategySell.getTakeProfitPercent() * getPriceDiffAvg));
+        if (strategySell.getExitProfitPercent() != null) {
+            sell.setExitProfitPercent(Math.max(strategy.getPriceDiffAvgPercentMin(), strategySell.getExitProfitPercent() * getPriceDiffAvg));
+        }
+        if (strategySell.getExitProfitInPercentMax() != null) {
+            sell.setExitProfitInPercentMax(Math.max(strategy.getPriceDiffAvgPercentMin(), strategySell.getExitProfitInPercentMax() * getPriceDiffAvg));
+        }
+        if (strategySell.getExitProfitInPercentMin() != null) {
+            sell.setExitProfitInPercentMin(Math.max(strategy.getPriceDiffAvgPercentMin(), strategySell.getExitProfitInPercentMin() * getPriceDiffAvg));
+        }
+        if (strategySell.getExitProfitInPercentMaxForLoss() != null) {
+            sell.setExitProfitInPercentMaxForLoss(Math.max(strategy.getPriceDiffAvgPercentMin(), strategySell.getExitProfitInPercentMaxForLoss() * getPriceDiffAvg));
+        }
+        if (strategySell.getTakeProfitPercentForLoss() != null) {
+            sell.setTakeProfitPercentForLoss(Math.max(strategy.getPriceDiffAvgPercentMin(), strategySell.getTakeProfitPercentForLoss() * getPriceDiffAvg));
+        }
+        if (strategySell.getExitProfitInPercentMaxForLoss2() != null) {
+            sell.setExitProfitInPercentMaxForLoss2(Math.max(strategy.getPriceDiffAvgPercentMin(), strategySell.getExitProfitInPercentMaxForLoss2() * getPriceDiffAvg));
+        }
+        sell.setExitProfitLossPercent(Math.max(strategy.getPriceDiffAvgPercentMin(), strategySell.getExitProfitLossPercent() * getPriceDiffAvg));
+        sell.setStopLossPercent(Math.max(strategy.getPriceDiffAvgPercentMin(), strategySell.getStopLossPercent() * getPriceDiffAvg));
          */
         return sell;
     }

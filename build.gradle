@@ -51,6 +51,7 @@ dependencies {
 
     implementation 'net.bull.javamelody:javamelody-spring-boot-starter:1.91.0'
     implementation 'commons-io:commons-io:2.11.0'
+    implementation 'com.opencsv:opencsv:5.7.1'
 
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'

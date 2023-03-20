@@ -30,7 +30,7 @@ import static org.junit.Assert.assertTrue;
 class StrategiesByCandleHistoryTests {
     @Autowired
     CandleRepository candleRepository;
-    @Autowired
+        @Autowired
     OrderRepository orderRepository;
     @Autowired
     PurchaseService purchaseService;
@@ -60,7 +60,7 @@ class StrategiesByCandleHistoryTests {
     //private OffsetDateTime dateBefore = OffsetDateTime.parse("2023-03-04T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
     //private OffsetDateTime dateBefore = OffsetDateTime.parse("2023-03-08T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
     //private OffsetDateTime dateBefore = OffsetDateTime.parse("2023-03-10T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
-    private OffsetDateTime dateBefore = OffsetDateTime.parse("2023-03-15T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+    private OffsetDateTime dateBefore = OffsetDateTime.parse("2023-03-16T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
 
 
     @Value("${tinkoff.emulator}")

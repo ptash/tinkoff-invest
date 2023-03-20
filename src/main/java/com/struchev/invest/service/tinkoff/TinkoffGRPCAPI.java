@@ -413,6 +413,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
             price = featureData.initialMargin.multiply(BigDecimal.valueOf(2));
         }
         var total = price.multiply(BigDecimal.valueOf(count));
+        log.info("Checking buy of figi {}: {} > {}", instrument.getFigi(), money, total);
         if (money.getValue().compareTo(total) > 0) {
             return;
         }
@@ -434,7 +435,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
             return null;
         }
         var featureMargin = getApi().getInstrumentsService().getFuturesMarginSync(instrument.getFigi());
-        log.info("featureMargin if {}: {}", instrument.getFigi(), featureMargin);
+        log.info("featureMargin of figi {}: {}", instrument.getFigi(), featureMargin);
         var initialMargin = toBigDecimal(featureMargin.getInitialMarginOnSell(), 8);
         var minPriceIncrement = toBigDecimal(featureMargin.getMinPriceIncrement(), 8);
         var minPriceIncrementAmount = toBigDecimal(featureMargin.getMinPriceIncrementAmount(), 8);

@@ -50,7 +50,9 @@ public class InstrumentService {
         int lot;
         BigDecimal minPriceIncrement;
 
+        String basicAsset;
         BigDecimal basicAssetSize;
+        BigDecimal kLong;
         OffsetDateTime First1MinCandleDate;
         Boolean isBuyAvailable;
         Boolean isApiAvailable;
@@ -83,6 +85,8 @@ public class InstrumentService {
         var shares = tinkoffCommonAPI.getApi().getInstrumentsService().getAllSharesSync();
         shares.forEach(i -> instrumentByFigi.put(i.getFigi(), new Instrument(Type.share, i.getFigi(), i.getTicker(), i.getCurrency(), i.getName(), i.getLot(), TinkoffGRPCAPI.toBigDecimal(i.getMinPriceIncrement(), 8),
                 null,
+                null,
+                TinkoffGRPCAPI.toBigDecimal(i.getKlong(), 8),
                 ConvertorUtils.toOffsetDateTime(i.getFirst1MinCandleDate().getSeconds()),
                 i.getBuyAvailableFlag(),
                 i.getApiTradeAvailableFlag()
@@ -90,7 +94,9 @@ public class InstrumentService {
 
         var futures = tinkoffCommonAPI.getApi().getInstrumentsService().getAllFuturesSync();
         futures.forEach(i -> instrumentByFigi.put(i.getFigi(), new Instrument(Type.future, i.getFigi(), i.getTicker(), i.getCurrency(), i.getName(), i.getLot(), TinkoffGRPCAPI.toBigDecimal(i.getMinPriceIncrement(), 8),
+                i.getBasicAsset(),
                 TinkoffGRPCAPI.toBigDecimal(i.getBasicAssetSize(), 8),
+                TinkoffGRPCAPI.toBigDecimal(i.getKlong(), 8),
                 ConvertorUtils.toOffsetDateTime(i.getFirst1MinCandleDate().getSeconds()),
                 i.getBuyAvailableFlag(),
                 i.getApiTradeAvailableFlag()
@@ -99,6 +105,8 @@ public class InstrumentService {
         var bounds = tinkoffCommonAPI.getApi().getInstrumentsService().getAllBondsSync();
         bounds.forEach(i -> instrumentByFigi.put(i.getFigi(), new Instrument(Type.bond, i.getFigi(), i.getTicker(), i.getCurrency(), i.getName(), i.getLot(), TinkoffGRPCAPI.toBigDecimal(i.getMinPriceIncrement(), 8),
                 null,
+                null,
+                TinkoffGRPCAPI.toBigDecimal(i.getKlong(), 8),
                 ConvertorUtils.toOffsetDateTime(i.getFirst1MinCandleDate().getSeconds()),
                 i.getBuyAvailableFlag(),
                 i.getApiTradeAvailableFlag()
@@ -107,6 +115,8 @@ public class InstrumentService {
         var etfs = tinkoffCommonAPI.getApi().getInstrumentsService().getAllEtfsSync();
         etfs.forEach(i -> instrumentByFigi.put(i.getFigi(), new Instrument(Type.etf, i.getFigi(), i.getTicker(), i.getCurrency(), i.getName(), i.getLot(), TinkoffGRPCAPI.toBigDecimal(i.getMinPriceIncrement(), 8),
                 null,
+                null,
+                TinkoffGRPCAPI.toBigDecimal(i.getKlong(), 8),
                 ConvertorUtils.toOffsetDateTime(i.getFirst1MinCandleDate().getSeconds()),
                 i.getBuyAvailableFlag(),
                 i.getApiTradeAvailableFlag()
@@ -115,6 +125,8 @@ public class InstrumentService {
         var currencies = tinkoffCommonAPI.getApi().getInstrumentsService().getAllCurrenciesSync();
         currencies.forEach(i -> instrumentByFigi.put(i.getFigi(), new Instrument(Type.currency, i.getFigi(), i.getTicker(), i.getCurrency(), i.getName(), i.getLot(), TinkoffGRPCAPI.toBigDecimal(i.getMinPriceIncrement(), 8),
                 null,
+                null,
+                TinkoffGRPCAPI.toBigDecimal(i.getKlong(), 8),
                 ConvertorUtils.toOffsetDateTime(i.getFirst1MinCandleDate().getSeconds()),
                 i.getBuyAvailableFlag(),
                 i.getApiTradeAvailableFlag()
