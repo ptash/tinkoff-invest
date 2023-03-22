@@ -36,13 +36,15 @@ public class FactorialDiffAvgAdapterStrategy extends AInstrumentByFiatFactorialS
         var strategyBuy = strategy.getBuyCriteria();
         buy = strategyBuy.clone();
         buy.setProfitPercentFromBuyMinPrice(strategyBuy.getProfitPercentFromBuyMinPrice() * getPriceDiffAvg());
-        buy.setProfitPercentFromBuyMinPrice(strategyBuy.getProfitPercentFromBuyMinPrice() * getPriceDiffAvg());
         buy.setProfitPercentFromBuyMaxPrice(strategyBuy.getProfitPercentFromBuyMaxPrice() * getPriceDiffAvg());
         buy.setProfitPercentFromBuyMinPriceProfit(strategyBuy.getProfitPercentFromBuyMinPriceProfit() * getPriceDiffAvg());
         buy.setProfitPercentFromBuyMaxPriceProfit(strategyBuy.getProfitPercentFromBuyMaxPriceProfit() * getPriceDiffAvg());
         buy.setOverProfitWaitFirstUnderProfitPercent(strategyBuy.getOverProfitWaitFirstUnderProfitPercent() * getPriceDiffAvg());
         buy.setOverProfitSkipWaitFirstOverProfitPercent(strategyBuy.getOverProfitSkipWaitFirstOverProfitPercent() * getPriceDiffAvg());
         buy.setNotLossSellPercentDiff(strategyBuy.getNotLossSellPercentDiff() * getPriceDiffAvg());
+        if (buy.getCandleIntervalMinPercent() != null) {
+            buy.setCandleIntervalMinPercent(buy.getCandleIntervalMinPercent() * getPriceDiffAvg());
+        }
         return buy;
     }
 
@@ -53,6 +55,7 @@ public class FactorialDiffAvgAdapterStrategy extends AInstrumentByFiatFactorialS
         var strategySell = strategy.getSellCriteria();
         sell = strategySell.clone();
         var getPriceDiffAvg = getPriceDiffAvg();
+        sell.setExitLossPercent(Math.max(strategy.getPriceDiffAvgPercentMin(), strategySell.getExitLossPercent() * getPriceDiffAvg));
         /*
         sell.setStopLossSoftPercent(Math.max(strategy.getPriceDiffAvgPercentMin(), strategySell.getStopLossSoftPercent() * getPriceDiffAvg));
         sell.setExitLossPercent(Math.max(strategy.getPriceDiffAvgPercentMin(), strategySell.getExitLossPercent() * getPriceDiffAvg));

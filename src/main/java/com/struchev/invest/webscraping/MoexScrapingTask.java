@@ -11,13 +11,13 @@ import com.struchev.invest.repository.InstrumentRepository;
 import com.struchev.invest.repository.OrderRepository;
 import com.struchev.invest.service.dictionary.InstrumentService;
 import com.struchev.invest.strategy.StrategySelector;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tomcat.util.json.JSONParser;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -26,16 +26,12 @@ import org.w3c.dom.NodeList;
 import javax.annotation.PostConstruct;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.net.MalformedURLException;
 import java.net.URL;
-import java.sql.Timestamp;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
@@ -48,6 +44,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @DependsOn({"instrumentService"})
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "moex.scraping.enabled", havingValue = "true", matchIfMissing = true)
 public class MoexScrapingTask {
 
     private final CurrencyRateRepository currencyRateRepository;

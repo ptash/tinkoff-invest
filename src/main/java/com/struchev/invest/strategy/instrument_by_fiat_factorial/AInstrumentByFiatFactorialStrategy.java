@@ -97,7 +97,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
                 .stopLossSoftLength(5)
                 .stopLossSoftPercent(0.2f)
 
-                .exitLossPercent(8f)
+                .exitLossPercent(4f)
                 .isSellUnderProfit(false)
                 .sellUnderLossLength(2)
                 .isExitProfitInPercentMaxMax(false)
@@ -168,6 +168,12 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
         Integer notLossSellLength;
         Float notLossSellPercent;
         Float notLossSellPercentDiff;
+
+        Integer candleMinLength;
+        Integer candleMaxLength;
+        Integer candleUpMiddleLength;
+        Integer candleUpLength;
+        Float candleIntervalMinPercent;
     }
 
     public BuyCriteria getBuyCriteria() {
