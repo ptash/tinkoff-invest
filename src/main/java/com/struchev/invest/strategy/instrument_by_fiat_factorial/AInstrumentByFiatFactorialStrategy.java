@@ -83,6 +83,13 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
 
         Integer sellDownLength;
         Integer sellUpLength;
+
+
+        Integer candleMinLength;
+        Integer candleMaxLength;
+        Integer candleUpMiddleLength;
+        Integer candleUpLength;
+        Float candleIntervalMinPercent;
     }
 
     public SellCriteria getSellCriteria() {

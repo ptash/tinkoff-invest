@@ -35,15 +35,29 @@ public class FactorialDiffAvgAdapterStrategy extends AInstrumentByFiatFactorialS
         }
         var strategyBuy = strategy.getBuyCriteria();
         buy = strategyBuy.clone();
-        buy.setProfitPercentFromBuyMinPrice(strategyBuy.getProfitPercentFromBuyMinPrice() * getPriceDiffAvg());
-        buy.setProfitPercentFromBuyMaxPrice(strategyBuy.getProfitPercentFromBuyMaxPrice() * getPriceDiffAvg());
-        buy.setProfitPercentFromBuyMinPriceProfit(strategyBuy.getProfitPercentFromBuyMinPriceProfit() * getPriceDiffAvg());
-        buy.setProfitPercentFromBuyMaxPriceProfit(strategyBuy.getProfitPercentFromBuyMaxPriceProfit() * getPriceDiffAvg());
-        buy.setOverProfitWaitFirstUnderProfitPercent(strategyBuy.getOverProfitWaitFirstUnderProfitPercent() * getPriceDiffAvg());
-        buy.setOverProfitSkipWaitFirstOverProfitPercent(strategyBuy.getOverProfitSkipWaitFirstOverProfitPercent() * getPriceDiffAvg());
-        buy.setNotLossSellPercentDiff(strategyBuy.getNotLossSellPercentDiff() * getPriceDiffAvg());
-        if (buy.getCandleIntervalMinPercent() != null) {
-            buy.setCandleIntervalMinPercent(buy.getCandleIntervalMinPercent() * getPriceDiffAvg());
+        if (null != strategyBuy.getProfitPercentFromBuyMinPrice()) {
+            buy.setProfitPercentFromBuyMinPrice(strategyBuy.getProfitPercentFromBuyMinPrice() * getPriceDiffAvg());
+        }
+        if (null != strategyBuy.getProfitPercentFromBuyMaxPrice()) {
+            buy.setProfitPercentFromBuyMaxPrice(strategyBuy.getProfitPercentFromBuyMaxPrice() * getPriceDiffAvg());
+        }
+        if (null != strategyBuy.getProfitPercentFromBuyMinPriceProfit()) {
+            buy.setProfitPercentFromBuyMinPriceProfit(strategyBuy.getProfitPercentFromBuyMinPriceProfit() * getPriceDiffAvg());
+        }
+        if (null != strategyBuy.getProfitPercentFromBuyMaxPriceProfit()) {
+            buy.setProfitPercentFromBuyMaxPriceProfit(strategyBuy.getProfitPercentFromBuyMaxPriceProfit() * getPriceDiffAvg());
+        }
+        if (null != strategyBuy.getOverProfitWaitFirstUnderProfitPercent()) {
+            buy.setOverProfitWaitFirstUnderProfitPercent(strategyBuy.getOverProfitWaitFirstUnderProfitPercent() * getPriceDiffAvg());
+        }
+        if (null != strategyBuy.getOverProfitSkipWaitFirstOverProfitPercent()) {
+            buy.setOverProfitSkipWaitFirstOverProfitPercent(strategyBuy.getOverProfitSkipWaitFirstOverProfitPercent() * getPriceDiffAvg());
+        }
+        if (null != strategyBuy.getNotLossSellPercentDiff()) {
+            buy.setNotLossSellPercentDiff(strategyBuy.getNotLossSellPercentDiff() * getPriceDiffAvg());
+        }
+        if (strategyBuy.getCandleIntervalMinPercent() != null) {
+            buy.setCandleIntervalMinPercent(strategyBuy.getCandleIntervalMinPercent() * getPriceDiffAvg());
         }
         return buy;
     }
@@ -56,6 +70,9 @@ public class FactorialDiffAvgAdapterStrategy extends AInstrumentByFiatFactorialS
         sell = strategySell.clone();
         var getPriceDiffAvg = getPriceDiffAvg();
         sell.setExitLossPercent(Math.max(strategy.getPriceDiffAvgPercentMin(), strategySell.getExitLossPercent() * getPriceDiffAvg));
+        if (strategySell.getCandleIntervalMinPercent() != null) {
+            sell.setCandleIntervalMinPercent(strategySell.getCandleIntervalMinPercent() * getPriceDiffAvg());
+        }
         /*
         sell.setStopLossSoftPercent(Math.max(strategy.getPriceDiffAvgPercentMin(), strategySell.getStopLossSoftPercent() * getPriceDiffAvg));
         sell.setExitLossPercent(Math.max(strategy.getPriceDiffAvgPercentMin(), strategySell.getExitLossPercent() * getPriceDiffAvg));

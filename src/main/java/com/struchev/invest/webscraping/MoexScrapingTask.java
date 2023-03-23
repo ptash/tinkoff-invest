@@ -44,7 +44,6 @@ import java.util.stream.Collectors;
 @Slf4j
 @DependsOn({"instrumentService"})
 @RequiredArgsConstructor
-@ConditionalOnProperty(name = "moex.scraping.enabled", havingValue = "true", matchIfMissing = true)
 public class MoexScrapingTask {
 
     private final CurrencyRateRepository currencyRateRepository;
@@ -54,8 +53,14 @@ public class MoexScrapingTask {
     private final StrategySelector strategySelector;
     private final InstrumentService instrumentService;
 
+    @Value("${moex.scraping.enabled:true}")
+    Boolean isEnabled;
+
     @Scheduled(cron = "5,10,15 11,16 * * *")
     public void getDerivativeUsdRates() {
+        if (!isEnabled) {
+            return;
+        }
         String from = "USD";
         String to = "RUB";
         String exchangeType = String.format("%s/%s", from, to);
@@ -118,6 +123,9 @@ public class MoexScrapingTask {
 
     @Scheduled(cron = "6,11,16 16,18 * * *")
     public void getContractResults() {
+        if (!isEnabled) {
+            return;
+        }
         var futures = getActiveFutures();
         for (var i = 0; i < futures.size(); i++) {
             var future = futures.get(i);
@@ -163,6 +171,9 @@ public class MoexScrapingTask {
 
     @Scheduled(cron = "6,11,16 11,12 * * *")
     public void getDayContractResults() {
+        if (!isEnabled) {
+            return;
+        }
         var futures = getActiveFutures();
         for (var i = 0; i < futures.size(); i++) {
             var future = futures.get(i);

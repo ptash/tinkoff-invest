@@ -7,12 +7,14 @@ import com.struchev.invest.service.candle.CandleHistoryService;
 import com.struchev.invest.service.order.OrderService;
 import com.struchev.invest.service.processor.PurchaseService;
 import com.struchev.invest.service.report.ReportService;
+import com.struchev.invest.webscraping.MoexScrapingTask;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.ActiveProfiles;
 
@@ -40,6 +42,9 @@ class StrategiesByCandleHistoryTests {
     ReportService reportService;
     @Autowired
     StrategySelector strategySelector;
+
+    @MockBean
+    MoexScrapingTask moexScrapingTask;
 
     @Value("${test.candle.history.duration}")
     private Duration historyDuration;
