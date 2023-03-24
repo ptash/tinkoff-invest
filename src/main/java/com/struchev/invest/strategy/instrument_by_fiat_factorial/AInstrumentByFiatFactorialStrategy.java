@@ -49,9 +49,17 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
         this.sellLimit = sellLimit;
     }
 
+    public interface CandleIntervalInterface {
+        Integer getCandleMinLength();
+        Integer getCandleMaxLength();
+        Integer getCandleUpMiddleLength();
+        Integer getCandleUpLength();
+        Float getCandleIntervalMinPercent();
+        String getCandleInterval();
+    }
     @Builder
     @Data
-    public static class SellCriteria implements Cloneable {
+    public static class SellCriteria implements Cloneable, CandleIntervalInterface {
 
         public SellCriteria clone() {
             try {
@@ -90,6 +98,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
         Integer candleUpMiddleLength;
         Integer candleUpLength;
         Float candleIntervalMinPercent;
+        String candleInterval;
     }
 
     public SellCriteria getSellCriteria() {
@@ -110,12 +119,13 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
                 .isExitProfitInPercentMaxMax(false)
                 .exitProfitInPercentMaxForLoss(null)
                 .exitProfitInPercentMaxLoopIgnoreSize(0)
+                .candleInterval("1min")
                 .build();
     }
 
     @Builder
     @Data
-    public static class BuyCriteria implements Cloneable {
+    public static class BuyCriteria implements Cloneable, CandleIntervalInterface {
         public BuyCriteria clone() {
             try {
                 return (BuyCriteria)super.clone();
@@ -181,6 +191,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
         Integer candleUpMiddleLength;
         Integer candleUpLength;
         Float candleIntervalMinPercent;
+        String candleInterval;
     }
 
     public BuyCriteria getBuyCriteria() {
@@ -219,6 +230,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
                 .notLossSellLength(1)
                 .notLossSellPercent(0.1f)
                 .notLossSellPercentDiff(0.5f)
+                .candleInterval("1min")
                 .build();
     }
 

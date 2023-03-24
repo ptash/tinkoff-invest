@@ -625,74 +625,10 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             }
         }
 
-        if (!res && buyCriteria.getCandleIntervalMinPercent() != null) {
-            var candleIPrev = candleHistoryService.getCandlesByFigiByLength(
-                    candle.getFigi(),
-                    candle.getDateTime(),
-                    buyCriteria.getCandleMaxLength() + 1,
-                    strategy.getInterval()
-            );
-            Collections.reverse(candleIPrev);
-            var isOk = true;
-            var i = 1;
-            var iEndDown = i;
-            for (; i < 1 + buyCriteria.getCandleUpLength(); i++) {
-                if (candleIPrev.get(i).getClosingPrice().compareTo(candleIPrev.get(i).getOpenPrice()) < 0) {
-                    annotation += " i=" + i + " down " + candleIPrev.get(i).getClosingPrice() + " < " + candleIPrev.get(i).getOpenPrice();
-                    isOk = false;
-                    break;
-                }
-            }
-
-            var iUpMiddle = -1;
-            var iUpMiddleLength = 0;
-            var iBeginDown = i;
-            for (; isOk && i < candleIPrev.size(); i++) {
-                if (candleIPrev.get(i).getClosingPrice().compareTo(candleIPrev.get(i).getOpenPrice()) < 0) {
-                    iBeginDown = i;
-                }
-                if (candleIPrev.get(i).getClosingPrice().compareTo(candleIPrev.get(i).getOpenPrice()) > 0) {
-                    if (iUpMiddle == -1) {
-                        iUpMiddle = i;
-                        iUpMiddleLength++;
-                    } else if (iUpMiddle == i - 1) {
-                        iUpMiddle++;
-                        iUpMiddleLength++;
-                    } else {
-                        break;
-                    }
-                }
-            }
-            var iUpMiddleBegin = iUpMiddle;
-            var candleMinLength = buyCriteria.getCandleMinLength();
-            if (iUpMiddleLength > 1) {
-                candleMinLength = buyCriteria.getCandleUpLength() + (candleMinLength - buyCriteria.getCandleUpLength()) * iUpMiddleLength;
-                iUpMiddleBegin = iUpMiddle + iUpMiddleLength - 1;
-            }
-            if (isOk && (iBeginDown - iEndDown) < candleMinLength) {
-                annotation += " iEndDown - iBeginDown < MinLength:" + iBeginDown + " - " + iEndDown + " < " + candleMinLength;
-                isOk = false;
-            }
-            if (isOk && iUpMiddle >= iBeginDown) {
-                annotation += " iUpMiddle >= iBeginDown:" + iUpMiddle + " <= " + iBeginDown;
-                isOk = false;
-            }
-            if (isOk) {
-                var intervalPercent = 100f * (candleIPrev.get(iBeginDown).getOpenPrice().floatValue() - candle.getClosingPrice().floatValue()) / candleIPrev.get(iBeginDown).getOpenPrice().floatValue();
-                annotation += " intervalPercent = " + intervalPercent;
-                if (intervalPercent < buyCriteria.getCandleIntervalMinPercent()) {
-                    annotation += " < " + buyCriteria.getCandleIntervalMinPercent();
-                    isOk = false;
-                }
-            }
-            if (isOk && candleIPrev.get(iUpMiddle).getOpenPrice().compareTo(candleIPrev.get(iEndDown).getClosingPrice()) < 0) {
-                annotation += " iUpMiddleOpen < iUpClose:" + candleIPrev.get(iUpMiddle).getOpenPrice() + " < " + candleIPrev.get(iEndDown).getClosingPrice();
-                isOk = false;
-            }
-            if (isOk) {
-                annotation += " ok CandleInterval";
-                res = true;
-            }
+        if (!res) {
+            var candleIntervalRes = checkCandleInterval(candle, buyCriteria);
+            annotation += candleIntervalRes.annotation;
+            res = candleIntervalRes.res;
         }
 
         if (res && buyCriteria.getSkipIfOutPrevLength() != null) {
@@ -1607,6 +1543,94 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 .build();
         addCashedValue(key, res);
         return res;
+    }
+
+    @Builder
+    @Data
+    public static class ResultData {
+        Boolean res;
+        String annotation;
+    }
+    private ResultData checkCandleInterval(CandleDomainEntity candle, AInstrumentByFiatFactorialStrategy.CandleIntervalInterface buyCriteria) {
+        if (buyCriteria.getCandleIntervalMinPercent() == null) {
+            return ResultData.builder()
+                    .res(false)
+                    .annotation("")
+                    .build();
+        }
+        var res = false;
+        var annotation = "";
+        var candleIPrev = candleHistoryService.getCandlesByFigiByLength(
+                candle.getFigi(),
+                candle.getDateTime(),
+                buyCriteria.getCandleMaxLength() + 1,
+                buyCriteria.getCandleInterval()
+        );
+        Collections.reverse(candleIPrev);
+        var isOk = true;
+        var i = 1;
+        var iEndDown = i;
+        for (; i < 1 + buyCriteria.getCandleUpLength(); i++) {
+            if (candleIPrev.get(i).getClosingPrice().compareTo(candleIPrev.get(i).getOpenPrice()) < 0) {
+                annotation += " i=" + i + " down " + candleIPrev.get(i).getClosingPrice() + " < " + candleIPrev.get(i).getOpenPrice();
+                isOk = false;
+                break;
+            }
+        }
+
+        var iUpMiddle = -1;
+        var iUpMiddleLength = 0;
+        var iBeginDown = i;
+        for (; isOk && i < candleIPrev.size(); i++) {
+            if (candleIPrev.get(i).getClosingPrice().compareTo(candleIPrev.get(i).getOpenPrice()) < 0) {
+                iBeginDown = i;
+            }
+            if (candleIPrev.get(i).getClosingPrice().compareTo(candleIPrev.get(i).getOpenPrice()) > 0) {
+                if (iUpMiddle == -1) {
+                    iUpMiddle = i;
+                    iUpMiddleLength++;
+                } else if (iUpMiddle == i - 1) {
+                    iUpMiddle++;
+                    iUpMiddleLength++;
+                } else {
+                    break;
+                }
+            }
+        }
+        var iUpMiddleBegin = iUpMiddle;
+        var candleMinLength = buyCriteria.getCandleMinLength();
+        if (iUpMiddleLength > 1) {
+            candleMinLength = buyCriteria.getCandleUpLength() + (candleMinLength - buyCriteria.getCandleUpLength()) * iUpMiddleLength;
+            iUpMiddleBegin = iUpMiddle + iUpMiddleLength - 1;
+        }
+        if (isOk && (iBeginDown - iEndDown) < candleMinLength) {
+            annotation += " iEndDown - iBeginDown < MinLength:" + iBeginDown + " - " + iEndDown + " < " + candleMinLength;
+            isOk = false;
+        }
+        if (isOk && iUpMiddle >= iBeginDown) {
+            annotation += " iUpMiddle >= iBeginDown:" + iUpMiddle + " <= " + iBeginDown;
+            isOk = false;
+        }
+        if (isOk) {
+            var intervalPercent = 100f * (candleIPrev.get(iBeginDown).getOpenPrice().floatValue() - candle.getClosingPrice().floatValue()) / candleIPrev.get(iBeginDown).getOpenPrice().floatValue();
+            annotation += " intervalPercent = " + intervalPercent;
+            if (intervalPercent < buyCriteria.getCandleIntervalMinPercent()) {
+                annotation += " < " + buyCriteria.getCandleIntervalMinPercent();
+                isOk = false;
+            }
+        }
+        if (isOk && candleIPrev.get(iUpMiddle).getOpenPrice().compareTo(candleIPrev.get(iEndDown).getClosingPrice()) < 0) {
+            annotation += " iUpMiddleOpen < iUpClose:" + candleIPrev.get(iUpMiddle).getOpenPrice() + " < " + candleIPrev.get(iEndDown).getClosingPrice();
+            isOk = false;
+        }
+        if (isOk) {
+            annotation += " ok CandleInterval";
+            res = true;
+        }
+        return ResultData.builder()
+                .res(res)
+                .annotation(annotation)
+                .build();
     }
 
     private Map<String, FactorialData> factorialCashMap = new LinkedHashMap<>() {
