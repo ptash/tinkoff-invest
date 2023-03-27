@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import org.springframework.data.relational.core.sql.In;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.util.List;
 
@@ -56,6 +57,8 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
         Integer getCandleUpLength();
         Float getCandleIntervalMinPercent();
         String getCandleInterval();
+        Boolean isCandleIntervalTargetDirection(BigDecimal openPrice, BigDecimal closePrice);
+        Boolean isCandleIntervalReverseDirection(BigDecimal openPrice, BigDecimal closePrice);
     }
     @Builder
     @Data
@@ -99,6 +102,13 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
         Integer candleUpLength;
         Float candleIntervalMinPercent;
         String candleInterval;
+
+        public Boolean isCandleIntervalTargetDirection(BigDecimal openPrice, BigDecimal closePrice) {
+            return openPrice.compareTo(closePrice) > 0;
+        }
+        public Boolean isCandleIntervalReverseDirection(BigDecimal openPrice, BigDecimal closePrice) {
+            return openPrice.compareTo(closePrice) < 0;
+        }
     }
 
     public SellCriteria getSellCriteria() {
@@ -192,6 +202,13 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
         Integer candleUpLength;
         Float candleIntervalMinPercent;
         String candleInterval;
+
+        public Boolean isCandleIntervalTargetDirection(BigDecimal openPrice, BigDecimal closePrice) {
+            return openPrice.compareTo(closePrice) < 0;
+        }
+        public Boolean isCandleIntervalReverseDirection(BigDecimal openPrice, BigDecimal closePrice) {
+            return openPrice.compareTo(closePrice) > 0;
+        }
     }
 
     public BuyCriteria getBuyCriteria() {
