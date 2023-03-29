@@ -1494,7 +1494,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         var candleIPrev = candleHistoryService.getCandlesByFigiByLength(
                 candle.getFigi(),
                 candle.getDateTime(),
-                buyCriteria.getCandleMaxLength() * 15 + 1,
+                buyCriteria.getCandleMaxLength() * 200 + 1,
                 buyCriteria.getCandleInterval()
         );
         Collections.reverse(candleIPrev);
@@ -1505,12 +1505,17 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         }
         var i = iBegin;
         var iEndDown = i;
-        for (; i < iBegin + buyCriteria.getCandleUpLength(); i++) {
+        var candleUpLength = 0;
+        for (; i < candleIPrev.size(); i++) {
             if (buyCriteria.isCandleIntervalReverseDirection(candleIPrev.get(i).getOpenPrice(), candleIPrev.get(i).getClosingPrice())) {
                 annotation += " i=" + i + " not target " + candleIPrev.get(i).getOpenPrice() + " - " + candleIPrev.get(i).getClosingPrice();
-                isOk = false;
+                if (candleUpLength < buyCriteria.getCandleUpLength()) {
+                    annotation += " CandleUpLength false: " + candleUpLength + " < " + buyCriteria.getCandleUpLength();
+                    isOk = false;
+                }
                 break;
             }
+            candleUpLength++;
         }
 
         var iUpMiddle = -1;
@@ -1565,12 +1570,23 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             }
         }
         if (iDownMiddleBegin != iBeginDown) {
+            annotation += " candleUpLength=" + candleUpLength;
             annotation += " iDownMiddleBegin=" + iDownMiddleBegin;
             annotation += " iBeginDown=" + iBeginDown;
             annotation += " iUpMiddleEnd=" + iUpMiddleEnd;
             annotation += " iUpMiddleBegin=" + iUpMiddleBegin;
         }
         iUpMiddleLength = iUpMiddleEnd - iUpMiddleBegin + 1;
+
+        if (isOk && iUpMiddleLength/candleUpLength > buyCriteria.getCandleMaxLength()/buyCriteria.getCandleUpLength()) {
+            annotation += " iUpMiddleLength/candleUpLength > k:" + iUpMiddleLength + " / " + candleUpLength + " > " + buyCriteria.getCandleMaxLength()/buyCriteria.getCandleUpLength();
+            isOk = false;
+        }
+        if (isOk && candleUpLength/iUpMiddleLength > buyCriteria.getCandleUpLength()/buyCriteria.getCandleUpMiddleLength()) {
+            annotation += " candleUpLength/iUpMiddleLength > k:" + candleUpLength + " / " + iUpMiddleLength + " > " + buyCriteria.getCandleUpLength()/buyCriteria.getCandleUpMiddleLength();
+            isOk = false;
+        }
+
         var candleMinLength = buyCriteria.getCandleMinLength();
         if (iUpMiddleLength > 1) {
             annotation += " iUpMiddleLength=" + iUpMiddleLength;
