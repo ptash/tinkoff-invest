@@ -31,6 +31,8 @@ public class FactorialCandle20Strategy extends Factorial2Strategy {
         sell.setCandleMaxLength(20);
         sell.setCandleUpMiddleLength(1);
         sell.setCandleUpLength(2);
+
+        sell.setExitLossPercent(2f);
         return sell;
     }
 

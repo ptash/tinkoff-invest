@@ -107,7 +107,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
             return openPrice.compareTo(closePrice) > 0;
         }
         public Boolean isCandleIntervalReverseDirection(BigDecimal openPrice, BigDecimal closePrice) {
-            return openPrice.compareTo(closePrice) < 0;
+            return openPrice.compareTo(closePrice) <= 0;
         }
     }
 
@@ -204,7 +204,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
         String candleInterval;
 
         public Boolean isCandleIntervalTargetDirection(BigDecimal openPrice, BigDecimal closePrice) {
-            return openPrice.compareTo(closePrice) < 0;
+            return openPrice.compareTo(closePrice) <= 0;
         }
         public Boolean isCandleIntervalReverseDirection(BigDecimal openPrice, BigDecimal closePrice) {
             return openPrice.compareTo(closePrice) > 0;
