@@ -640,24 +640,38 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         buyCriteria.getCandleInterval()
                 );
                 Collections.reverse(candleIPrev);
+                ResultData candleIntervalResBuyOk = null;
                 ResultData candleIntervalResSellOk = null;
+                ResultData candleIntervalResSellOk2 = null;
                 for (var i = 1; i < candleIPrev.size(); i++) {
                     if (null == candleIntervalResSellOk) {
                         var candleIntervalResSell = checkCandleInterval(candleIPrev.get(i), sellCriteria);
                         if (candleIntervalResSell.res) {
-                            annotation += " SELL i = " + i + "(" + candleIPrev.get(i).getDateTime() + ")" + candleIntervalResSell.annotation;
+                            annotation += " SELL i = " + i + "(" + candleIPrev.get(i).getDateTime() + ")";
                             candleIntervalResSellOk = candleIntervalResSell;
                         }
                     } else {
+                        var candleIntervalResSell = checkCandleInterval(candleIPrev.get(i), sellCriteria);
+                        if (candleIntervalResSell.res) {
+                            annotation += " SELL i = " + i + "(" + candleIPrev.get(i).getDateTime() + ")";
+                            if (null != candleIntervalResSellOk2) {
+                                candleIntervalResSellOk = candleIntervalResSellOk2;
+                            }
+                            candleIntervalResSellOk2 = candleIntervalResSell;
+                            if (null != candleIntervalResBuyOk) {
+                                annotation += " buy < sell: " + candleIntervalResBuyOk.candle.getClosingPrice() + " (" + candleIntervalResBuyOk.candle.getDateTime() +
+                                        ") < " + candleIntervalResSellOk.candle.getClosingPrice() + "(" + candleIntervalResSellOk.candle.getDateTime() + ")";
+                                if (candleIntervalResBuyOk.candle.getClosingPrice().compareTo(candleIntervalResSellOk.candle.getClosingPrice()) < 0) {
+                                    annotation += " CandleInterval OK";
+                                    res = true;
+                                }
+                                break;
+                            }
+                        }
                         var candleIntervalResBuy = checkCandleInterval(candleIPrev.get(i), buyCriteria);
                         if (candleIntervalResBuy.res) {
-                            annotation += " BUY i = " + i + "(" + candleIPrev.get(i).getDateTime() + ")" + candleIntervalResBuy.annotation;
-                            annotation += " buy < sell: " + candleIntervalResBuy.candle.getClosingPrice() + " < " + candleIntervalResSellOk.candle.getClosingPrice();
-                            if (candleIntervalResBuy.candle.getClosingPrice().compareTo(candleIntervalResSellOk.candle.getClosingPrice()) < 0) {
-                                annotation += " CandleInterval OK";
-                                res = true;
-                            }
-                            break;
+                            candleIntervalResBuyOk = candleIntervalResBuy;
+                            annotation += " BUY i = " + i + "(" + candleIPrev.get(i).getDateTime() + ")";
                         }
                     }
                 }
