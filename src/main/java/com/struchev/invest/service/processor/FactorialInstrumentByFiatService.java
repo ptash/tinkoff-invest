@@ -640,12 +640,25 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         buyCriteria.getCandleInterval()
                 );
                 Collections.reverse(candleIPrev);
+                ResultData candleIntervalResSellOk = null;
                 for (var i = 1; i < candleIPrev.size(); i++) {
-                    var candleIntervalResSell = checkCandleInterval(candleIPrev.get(i), sellCriteria);
-                    if (candleIntervalResSell.res) {
-                        annotation += " SELL i = " + i + "(" + candleIPrev.get(i).getDateTime() + ")" + candleIntervalResSell.annotation;
-                        res = true;
-                        break;
+                    if (null == candleIntervalResSellOk) {
+                        var candleIntervalResSell = checkCandleInterval(candleIPrev.get(i), sellCriteria);
+                        if (candleIntervalResSell.res) {
+                            annotation += " SELL i = " + i + "(" + candleIPrev.get(i).getDateTime() + ")" + candleIntervalResSell.annotation;
+                            candleIntervalResSellOk = candleIntervalResSell;
+                        }
+                    } else {
+                        var candleIntervalResBuy = checkCandleInterval(candleIPrev.get(i), buyCriteria);
+                        if (candleIntervalResBuy.res) {
+                            annotation += " BUY i = " + i + "(" + candleIPrev.get(i).getDateTime() + ")" + candleIntervalResBuy.annotation;
+                            annotation += " buy < sell: " + candleIntervalResBuy.candle.getClosingPrice() + " < " + candleIntervalResSellOk.candle.getClosingPrice();
+                            if (candleIntervalResBuy.candle.getClosingPrice().compareTo(candleIntervalResSellOk.candle.getClosingPrice()) < 0) {
+                                annotation += " CandleInterval OK";
+                                res = true;
+                            }
+                            break;
+                        }
                     }
                 }
             } else {
@@ -1506,12 +1519,14 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
     public static class ResultData {
         Boolean res;
         String annotation;
+        CandleDomainEntity candle;
     }
     private ResultData checkCandleInterval(CandleDomainEntity candle, AInstrumentByFiatFactorialStrategy.CandleIntervalInterface buyCriteria) {
         if (buyCriteria.getCandleIntervalMinPercent() == null) {
             return ResultData.builder()
                     .res(false)
                     .annotation("")
+                    .candle(candle)
                     .build();
         }
         var res = false;
@@ -1681,6 +1696,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         return ResultData.builder()
                 .res(res)
                 .annotation(annotation)
+                .candle(candle)
                 .build();
     }
 
