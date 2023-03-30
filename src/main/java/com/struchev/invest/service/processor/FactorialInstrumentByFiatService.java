@@ -663,6 +663,16 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         if (candleIntervalResSell.res) {
                             annotation += " SELL i = " + i + "(" + candleIPrev.get(i).getDateTime() + ")";
                             candleIntervalResSellOk = candleIntervalResSell;
+                            if (null != order && order.getSellDateTime().isAfter(candleIntervalResSellOk.candle.getDateTime())) {
+                                isOrderFind = true;
+                                if (order.getPurchasePrice().compareTo(order.getSellPrice()) < 0) {
+                                    annotation += " ORDER buy < sell: " + order.getPurchasePrice() + " (" + order.getPurchaseDateTime() +
+                                            ") < " + order.getSellPrice() + "(" +order.getSellProfit() + ")";
+                                    annotation += " CandleInterval OK";
+                                    res = true;
+                                }
+                                break;
+                            }
                         }
                     } else {
                         var candleIntervalResSell = checkCandleInterval(candleIPrev.get(i), sellCriteria);
@@ -985,7 +995,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 strategy,
                 candle.getFigi(),
                 "Date|smaSlowest|smaSlow|smaFast|emaFast|ema2|bye|sell|position|deadLineBottom|deadLineTop|investBottom|investTop|smaTube|strategy|average|averageBottom|averageTop|openPrice",
-                "{} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} ||||by {}||||",
+                "{} | {} | {} | {} | {} | {} | {} | {} | {} | | ||||by {}||||{}",
                 notificationService.formatDateTime(candle.getDateTime()),
                 candle.getClosingPrice(),
                 candle.getOpenPrice(),
@@ -995,10 +1005,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 profit,
                 loss,
                 lossAvg == null ? "" : lossAvg,
-                candleIntervalBuy ? candle.getClosingPrice().subtract(candle.getHighestPrice().subtract(candle.getLowestPrice()).multiply(BigDecimal.valueOf(10))) : "",
-                candleIntervalSell ? candle.getClosingPrice().add(candle.getHighestPrice().subtract(candle.getLowestPrice()).multiply(BigDecimal.valueOf(10))) : "",
-                annotation
-        );
+                annotation,
+                candleIntervalSell ? candle.getClosingPrice().multiply(BigDecimal.valueOf(1.01)) : (candleIntervalBuy ? candle.getClosingPrice().multiply(BigDecimal.valueOf(.99)) : "")
+                );
         return resBuy;
     }
 
@@ -1099,12 +1108,6 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             } else {
                 res = true;
             }
-        }
-
-        if (!res) {
-            var candleIntervalRes = checkCandleInterval(candle, sellCriteria);
-            annotation += candleIntervalRes.annotation;
-            res = candleIntervalRes.res;
         }
 
         if (sellCriteria.getStopLossPercent() != null
@@ -1300,6 +1303,13 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     res = false;
                 }
             }
+        }
+
+        if (!res || profitPercent.floatValue() > 0) {
+            var candleIntervalRes = checkCandleInterval(candle, sellCriteria);
+            annotation += candleIntervalRes.annotation;
+            res = candleIntervalRes.res;
+            annotation += " res candleInterval=" + res;
         }
         annotation += " res=" + res;
         BigDecimal limitPrice = null;
