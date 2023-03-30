@@ -89,6 +89,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         }
         String annotation = curHourCandleForFactorial.getDateTime().toString();
         var buyCriteria = strategy.getBuyCriteria();
+        var sellCriteria = strategy.getSellCriteria();
         if (strategy.getPriceDiffAvgLength() != null) {
             var candleListForAvg = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
                     candle.getDateTime(), strategy.getPriceDiffAvgLength() + 1, strategy.getFactorialInterval());
@@ -106,6 +107,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             newStrategy.setStrategy(strategy);
             newStrategy.setPriceDiffAvgReal(priceDiffAvgReal);
             buyCriteria = newStrategy.getBuyCriteria();
+            sellCriteria = newStrategy.getSellCriteria();
         }
         var res = false;
         var isResOverProfit = false;
@@ -634,15 +636,24 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 var candleIPrev = candleHistoryService.getCandlesByFigiByLength(
                         candle.getFigi(),
                         candle.getDateTime(),
-                        buyCriteria.getCandleMaxInterval(),
+                        buyCriteria.getCandleMaxIntervalLess(),
                         buyCriteria.getCandleInterval()
                 );
+                Collections.reverse(candleIPrev);
                 for (var i = 1; i < candleIPrev.size(); i++) {
-                    var candleIntervalResSell = checkCandleInterval(candleIPrev.get(i), strategy.getSellCriteria());
+                    var candleIntervalResSell = checkCandleInterval(candleIPrev.get(i), sellCriteria);
                     if (candleIntervalResSell.res) {
-                        annotation += " less i = " + i + candleIntervalResSell.annotation;
+                        annotation += " SELL i = " + i + "(" + candleIPrev.get(i).getDateTime() + ")" + candleIntervalResSell.annotation;
                         res = true;
+                        break;
                     }
+                }
+            } else {
+                var candleIntervalResSell = checkCandleInterval(candle, sellCriteria);
+                if (candleIntervalResSell.res) {
+                    annotation += " SELL ok: " + candleIntervalResSell.annotation;
+                } else {
+                    annotation += " SELL false: " + candleIntervalResSell.annotation;
                 }
             }
         }

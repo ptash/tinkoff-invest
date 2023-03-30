@@ -54,6 +54,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
         Integer getCandleMinLength();
         Integer getCandleMaxLength();
         Integer getCandleMaxInterval();
+        Integer getCandleMaxIntervalLess();
         Integer getCandleUpMiddleLength();
         Integer getCandleUpLength();
         Float getCandleIntervalMinPercent();
@@ -100,6 +101,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
         Integer candleMinLength;
         Integer candleMaxLength;
         Integer candleMaxInterval;
+        Integer candleMaxIntervalLess;
         Integer candleUpMiddleLength;
         Integer candleUpLength;
         Float candleIntervalMinPercent;
@@ -201,6 +203,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
         Integer candleMinLength;
         Integer candleMaxLength;
         Integer candleMaxInterval;
+        Integer candleMaxIntervalLess;
         Integer candleUpMiddleLength;
         Integer candleUpLength;
         Float candleIntervalMinPercent;
