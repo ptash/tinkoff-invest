@@ -627,12 +627,15 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             }
         }
 
+        var candleIntervalBuy = false;
+        var candleIntervalSell = false;
         if (!res
                 //&& candle.getClosingPrice().floatValue() < factorial.getProfit()
         ) {
             var candleIntervalRes = checkCandleInterval(candle, buyCriteria);
             annotation += candleIntervalRes.annotation;
             if (candleIntervalRes.res) {
+                candleIntervalBuy = true;
                 var candleIPrev = candleHistoryService.getCandlesByFigiByLength(
                         candle.getFigi(),
                         candle.getDateTime(),
@@ -641,7 +644,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 );
                 var isOrderFind = false;
                 var order = orderService.findLastByFigiAndStrategy(candle.getFigi(), strategy);
-                if (null != order && order.getSellDateTime().isAfter(candleIPrev.get(0).getDateTime())) {
+                if (false && null != order && order.getSellDateTime().isAfter(candleIPrev.get(0).getDateTime())) {
                     isOrderFind = true;
                     if (order.getPurchasePrice().compareTo(order.getSellPrice()) < 0) {
                         annotation += " ORDER buy < sell: " + order.getPurchasePrice() + " (" + order.getPurchaseDateTime() +
@@ -699,6 +702,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             } else {
                 var candleIntervalResSell = checkCandleInterval(candle, sellCriteria);
                 if (candleIntervalResSell.res) {
+                    candleIntervalSell = true;
                     annotation += " SELL ok: " + candleIntervalResSell.annotation;
                 } else {
                     annotation += " SELL false: " + candleIntervalResSell.annotation;
@@ -981,7 +985,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 strategy,
                 candle.getFigi(),
                 "Date|smaSlowest|smaSlow|smaFast|emaFast|ema2|bye|sell|position|deadLineBottom|deadLineTop|investBottom|investTop|smaTube|strategy|average|averageBottom|averageTop|openPrice",
-                "{} | {} | {} | {} | {} | {} | {} | {} | {} ||||||by {}||||",
+                "{} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} ||||by {}||||",
                 notificationService.formatDateTime(candle.getDateTime()),
                 candle.getClosingPrice(),
                 candle.getOpenPrice(),
@@ -991,6 +995,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 profit,
                 loss,
                 lossAvg == null ? "" : lossAvg,
+                candleIntervalBuy ? candle.getClosingPrice().subtract(candle.getHighestPrice().subtract(candle.getLowestPrice()).multiply(BigDecimal.valueOf(10))) : "",
+                candleIntervalSell ? candle.getClosingPrice().add(candle.getHighestPrice().subtract(candle.getLowestPrice()).multiply(BigDecimal.valueOf(10))) : "",
                 annotation
         );
         return resBuy;
