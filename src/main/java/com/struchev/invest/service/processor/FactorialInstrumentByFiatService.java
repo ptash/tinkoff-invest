@@ -630,7 +630,21 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         ) {
             var candleIntervalRes = checkCandleInterval(candle, buyCriteria);
             annotation += candleIntervalRes.annotation;
-            res = candleIntervalRes.res;
+            if (candleIntervalRes.res) {
+                var candleIPrev = candleHistoryService.getCandlesByFigiByLength(
+                        candle.getFigi(),
+                        candle.getDateTime(),
+                        buyCriteria.getCandleMaxInterval(),
+                        buyCriteria.getCandleInterval()
+                );
+                for (var i = 1; i < candleIPrev.size(); i++) {
+                    var candleIntervalResSell = checkCandleInterval(candleIPrev.get(i), strategy.getSellCriteria());
+                    if (candleIntervalResSell.res) {
+                        annotation += " less i = " + i + candleIntervalResSell.annotation;
+                        res = true;
+                    }
+                }
+            }
         }
 
         if (res && buyCriteria.getSkipIfOutPrevLength() != null) {
@@ -1494,7 +1508,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         var candleIPrev = candleHistoryService.getCandlesByFigiByLength(
                 candle.getFigi(),
                 candle.getDateTime(),
-                buyCriteria.getCandleMaxLength() * 200 + 1,
+                buyCriteria.getCandleMaxInterval(),
                 buyCriteria.getCandleInterval()
         );
         Collections.reverse(candleIPrev);
@@ -1521,9 +1535,11 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         var iUpMiddle = -1;
         var iUpMiddleBegin = -1;
         var iUpMiddleEnd = -1;
+        var upMiddleUpLength = 0;
         var iUpMiddleLength = 0;
         var iBeginDown = i;
         var iDownMiddleBegin = -1;
+        var curDownLength = 0;
         for (; isOk && i < candleIPrev.size(); i++) {
             var priceForTargetDirection = candleIPrev.get(i).getOpenPrice().max(candleIPrev.get(i).getClosingPrice());
             if (!buyCriteria.isCandleIntervalTargetDirection(candleIPrev.get(i).getOpenPrice(), candleIPrev.get(i).getClosingPrice())) {
@@ -1552,12 +1568,21 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 )) {
                     iUpMiddleEnd = i;
                 }
+                if (buyCriteria.isCandleIntervalTargetDirection(candleIPrev.get(i).getOpenPrice(), candleIPrev.get(i).getClosingPrice())) {
+                    upMiddleUpLength++;
+                } else {
+                    iUpMiddleLength = iUpMiddleEnd - iUpMiddleBegin + 1;
+                    if ((iUpMiddleLength - upMiddleUpLength) > upMiddleUpLength) {
+                        iDownMiddleBegin = i;
+                    }
+                }
             } else if (buyCriteria.isCandleIntervalReverseDirection(candleIPrev.get(i).getOpenPrice(), candleIPrev.get(i).getClosingPrice())
                     || (iDownMiddleBegin != -1
                     && buyCriteria.isCandleIntervalReverseDirection(priceForReverseDirection, candleIPrev.get(iDownMiddleBegin).getClosingPrice()))
             ) {
                 if (iUpMiddleEnd != -1 && iDownMiddleBegin == -1) {
                     iDownMiddleBegin = iUpMiddleEnd + 1;
+                    iUpMiddleLength = iUpMiddleEnd - iUpMiddleBegin + 1;
                 }
                 if (buyCriteria.isCandleIntervalReverseDirection(candleIPrev.get(i).getOpenPrice(), candleIPrev.get(i).getClosingPrice())
                         && (iBeginDown == -1
@@ -1565,16 +1590,24 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 )) {
                     iBeginDown = i;
                 }
+                if (buyCriteria.isCandleIntervalReverseDirection(candleIPrev.get(i).getOpenPrice(), candleIPrev.get(i).getClosingPrice())) {
+                    curDownLength = 0;
+                } else {
+                    curDownLength++;
+                }
+                //if (curDownLength > 0 && iUpMiddleLength > 0 && curDownLength >= iUpMiddleLength) {
+                //    break;
+                //}
             } else if (iUpMiddleEnd != -1 && iDownMiddleBegin != -1) {
                 break;
             }
         }
         if (iDownMiddleBegin != iBeginDown) {
             annotation += " candleUpLength=" + candleUpLength;
+            annotation += " iUpMiddleBegin=" + iUpMiddleBegin;
+            annotation += " iUpMiddleEnd=" + iUpMiddleEnd;
             annotation += " iDownMiddleBegin=" + iDownMiddleBegin;
             annotation += " iBeginDown=" + iBeginDown;
-            annotation += " iUpMiddleEnd=" + iUpMiddleEnd;
-            annotation += " iUpMiddleBegin=" + iUpMiddleBegin;
         }
         iUpMiddleLength = iUpMiddleEnd - iUpMiddleBegin + 1;
 
@@ -1596,8 +1629,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             annotation += " iEndReverse - iBeginTarget < MinLength:" + iBeginDown + " - " + iEndDown + " < " + candleMinLength;
             isOk = false;
         }
-        if (isOk && iUpMiddle >= iBeginDown) {
-            annotation += " iUpMiddle >= iBeginReverse:" + iUpMiddle + " <= " + iBeginDown;
+        if (isOk && iUpMiddleEnd >= iBeginDown) {
+            annotation += " iUpMiddleEnd >= iBeginReverse:" + iUpMiddleEnd + " <= " + iBeginDown;
             isOk = false;
         }
         //if (isOk && iBeginDown/iUpMiddleLength > buyCriteria.getCandleMaxLength()/buyCriteria.getCandleUpMiddleLength()) {
@@ -1617,6 +1650,14 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             }
         }
         if (isOk && buyCriteria.isCandleIntervalTargetDirection(candleIPrev.get(iUpMiddle).getClosingPrice(), candleIPrev.get(iEndDown).getOpenPrice())) {
+            annotation += " target: iUpMiddleEnd - iEndDown:" + candleIPrev.get(iUpMiddle).getClosingPrice() + "(" + iUpMiddle + ") - " + candleIPrev.get(iEndDown).getOpenPrice() + "(" + iEndDown + ")";
+            annotation += " = false";
+            isOk = false;
+        }
+        if (false && isOk && iUpMiddleEnd != iUpMiddleBegin
+                && buyCriteria.isCandleIntervalTargetDirection(candleIPrev.get(iUpMiddleBegin).getClosingPrice(), candleIPrev.get(iEndDown).getOpenPrice())
+        ) {
+            annotation += " target: iUpMiddleEnd - iEndDown:" + candleIPrev.get(iUpMiddleBegin).getClosingPrice() + "(" + iUpMiddleBegin + ") - " + candleIPrev.get(iEndDown).getOpenPrice() + "(" + iEndDown + ")";
             annotation += " = false";
             isOk = false;
         }

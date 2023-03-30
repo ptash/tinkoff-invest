@@ -16,6 +16,7 @@ public class FactorialCandle20Strategy extends Factorial2Strategy {
         buy.setTakeProfitLossPercent(null);
 
 
+        buy.setCandleMaxInterval(120);
         buy.setCandleIntervalMinPercent(1.f);
         buy.setCandleMinLength(6);
         buy.setCandleMaxLength(12);
@@ -26,6 +27,7 @@ public class FactorialCandle20Strategy extends Factorial2Strategy {
 
     public SellCriteria getSellCriteria() {
         var sell = super.getSellCriteria();
+        sell.setCandleMaxInterval(120);
         sell.setCandleIntervalMinPercent(0.5f);
         sell.setCandleMinLength(6);
         sell.setCandleMaxLength(12);
