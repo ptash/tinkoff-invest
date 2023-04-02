@@ -97,6 +97,8 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
         Integer sellDownLength;
         Integer sellUpLength;
 
+        Float profitPercentFromSellMinPrice;
+        Integer profitPercentFromSellMinPriceLength;
 
         Integer candleMinLength;
         Integer candleMaxLength;

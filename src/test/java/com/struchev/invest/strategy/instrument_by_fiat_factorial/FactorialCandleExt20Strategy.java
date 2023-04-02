@@ -6,12 +6,16 @@ import org.springframework.stereotype.Component;
 public class FactorialCandleExt20Strategy extends FactorialCandle20Strategy {
     public BuyCriteria getBuyCriteria() {
         var buy = super.getBuyCriteria();
+        buy.setProfitPercentFromBuyMinPrice(-0.5);
         return buy;
     }
 
     public SellCriteria getSellCriteria() {
         var sell = super.getSellCriteria();
-        sell.setCandleIntervalMinPercent(0.5f);
+        //sell.setCandleIntervalMinPercent(0.5f);
+        sell.setExitLossPercent(1f);
+        sell.setProfitPercentFromSellMinPrice(0.1f);
+        sell.setProfitPercentFromSellMinPriceLength(2);
         return sell;
     }
 }

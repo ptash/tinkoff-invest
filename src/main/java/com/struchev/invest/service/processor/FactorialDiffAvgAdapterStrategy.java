@@ -73,6 +73,9 @@ public class FactorialDiffAvgAdapterStrategy extends AInstrumentByFiatFactorialS
         if (strategySell.getCandleIntervalMinPercent() != null) {
             sell.setCandleIntervalMinPercent(strategySell.getCandleIntervalMinPercent() * getPriceDiffAvg());
         }
+        if (strategySell.getProfitPercentFromSellMinPrice() != null) {
+            sell.setProfitPercentFromSellMinPrice(strategySell.getProfitPercentFromSellMinPrice() * getPriceDiffAvg());
+        }
         /*
         sell.setStopLossSoftPercent(Math.max(strategy.getPriceDiffAvgPercentMin(), strategySell.getStopLossSoftPercent() * getPriceDiffAvg));
         sell.setExitLossPercent(Math.max(strategy.getPriceDiffAvgPercentMin(), strategySell.getExitLossPercent() * getPriceDiffAvg));

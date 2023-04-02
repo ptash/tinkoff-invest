@@ -64,12 +64,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
     }
 
     public boolean isShouldBuy(AInstrumentByFiatFactorialStrategy strategy, CandleDomainEntity candle) {
-        try {
-            return isShouldBuyFactorial(strategy, candle);
-        } catch (NullPointerException e) {
-            log.info("error in strategy " + strategy.getName(), e);
-            throw e;
-        }
+        return isShouldBuyFactorial(strategy, candle);
     }
 
     public boolean isShouldBuyFactorial(AInstrumentByFiatFactorialStrategy strategy, CandleDomainEntity candle) {
@@ -644,7 +639,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 );
                 var isOrderFind = false;
                 var order = orderService.findLastByFigiAndStrategy(candle.getFigi(), strategy);
-                if (false && null != order && order.getSellDateTime().isAfter(candleIPrev.get(0).getDateTime())) {
+                if (null != order && order.getSellDateTime().isAfter(candleIPrev.get(0).getDateTime())) {
                     isOrderFind = true;
                     if (order.getPurchasePrice().compareTo(order.getSellPrice()) < 0) {
                         annotation += " ORDER buy < sell: " + order.getPurchasePrice() + " (" + order.getPurchaseDateTime() +
@@ -907,7 +902,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     resBuy = true;
                     annotation += " ok loss ProfitPercentFromBuyMinPriceRelative";
                 }
-            } else if (percentProfit > profitPercentFromBuyMinPrice
+            } else if (((profitPercentFromBuyMinPrice > 0 && percentProfit > profitPercentFromBuyMinPrice)
+                    || (profitPercentFromBuyMinPrice <= 0 && percentProfit < profitPercentFromBuyMinPrice))
                     && (false //candle.getClosingPrice().doubleValue() < loss
                             || profitPercentFromBuyMaxPrice == null
                             || percentFromBy < buyCriteria.getProfitPercentFromBuyMaxPrice()
@@ -920,7 +916,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             if (buyCriteria.getIsProfitPercentFromBuyMinPriceRelativeMaxMax()) {
                 curMinPrice = candle.getLowestPrice().doubleValue();
             }
-            if (curMinPrice < buyPrice.getMinPrice()) {
+            if (curMinPrice < buyPrice.getMinPrice()
+                    && (profitPercentFromBuyMinPrice == null || profitPercentFromBuyMinPrice > 0)
+            ) {
                 buyPrice.setMinPrice(curMinPrice);
                 addCashedIsBuyValue(key, buyPrice);
             }
@@ -991,6 +989,14 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         if (resBuy) {
             //annotation += " info: " + factorial.getInfo();
         }
+        var candleIntervalMinPercent = buyCriteria.getCandleIntervalMinPercent();
+        if (null != sellCriteria.getProfitPercentFromSellMinPrice()) {
+            candleIntervalMinPercent = sellCriteria.getProfitPercentFromSellMinPrice();
+        }
+        var profitPercentFromBuyMinPrice = sellCriteria.getCandleIntervalMinPercent();
+        if (null != buyCriteria.getProfitPercentFromBuyMinPrice()) {
+            profitPercentFromBuyMinPrice = (float) -buyCriteria.getProfitPercentFromBuyMinPrice();
+        }
         notificationService.reportStrategy(
                 strategy,
                 candle.getFigi(),
@@ -1005,8 +1011,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 loss,
                 lossAvg == null ? "" : lossAvg,
                 annotation,
-                candleIntervalSell ? candle.getClosingPrice().multiply(BigDecimal.valueOf(1. + buyCriteria.getCandleIntervalMinPercent() / 100))
-                        : (candleIntervalBuy ? candle.getClosingPrice().multiply(BigDecimal.valueOf(1. - sellCriteria.getCandleIntervalMinPercent() / 100)) : "")
+                candleIntervalSell ? candle.getClosingPrice().multiply(BigDecimal.valueOf(1. + candleIntervalMinPercent / 100))
+                        : (candleIntervalBuy ? candle.getClosingPrice().multiply(BigDecimal.valueOf(1. - profitPercentFromBuyMinPrice / 100)) : "")
                 );
         return resBuy;
     }
@@ -1321,12 +1327,51 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 candleIntervalBuy = candleIntervalBuyRes.res;
                 annotation += " res BUY OK candleInterval=" + res;
             }
+            if (sellCriteria.getProfitPercentFromSellMinPrice() != null) {
+                String keySell = "sellUp" + candle.getFigi() + notificationService.formatDateTime(order.getPurchaseDateTime());
+                var sellData = getCashedIsBuyValue(keySell);
+                if (null == sellData
+                        && sellCriteria.getProfitPercentFromSellMinPriceLength() > 1
+                ) {
+                    String keyPrev = buildKeyHour("sellUp" + candle.getFigi(), curHourCandle);
+                    sellData = getCashedIsBuyValue(keyPrev);
+                    if (null != sellData) {
+                        keySell = keyPrev;
+                    }
+                }
+                if (res || null != sellData) {
+                    annotation += " sellUpKEY=" + keySell;
+                    if (res) {
+                        sellData = addCashedIsBuyValue(keySell, BuyData.builder()
+                                .price(candle.getClosingPrice().doubleValue())
+                                .dateTime(candle.getDateTime())
+                                .build());
+                    }
+                    var curProfitPercentFromSellMinPrice = 100f * (candle.getClosingPrice().floatValue() - sellData.getPrice()) / sellData.getPrice();
+                    annotation += " curProfPerFromSell=" + curProfitPercentFromSellMinPrice + " > " + sellCriteria.getProfitPercentFromSellMinPrice();
+                    if (curProfitPercentFromSellMinPrice > sellCriteria.getProfitPercentFromSellMinPrice()) {
+                        annotation += " sell OK";
+                        res = true;
+                    } else {
+                        res = false;
+                    }
+                }
+            }
         }
+
         annotation += " res=" + res;
         BigDecimal limitPrice = null;
         if (strategy.getSellLimitCriteria() != null) {
             limitPrice = purchaseRate.multiply(BigDecimal.valueOf((strategy.getSellLimitCriteria().getExitProfitPercent() + 100.) / 100.));
             annotation += " limit=" + strategy.getSellLimitCriteria().getExitProfitPercent();
+        }
+        var candleIntervalMinPercent = buyCriteria.getCandleIntervalMinPercent();
+        if (null != sellCriteria.getProfitPercentFromSellMinPrice()) {
+            candleIntervalMinPercent = sellCriteria.getProfitPercentFromSellMinPrice();
+        }
+        var profitPercentFromBuyMinPrice = sellCriteria.getCandleIntervalMinPercent();
+        if (null != buyCriteria.getProfitPercentFromBuyMinPrice()) {
+            profitPercentFromBuyMinPrice = (float) -buyCriteria.getProfitPercentFromBuyMinPrice();
         }
         notificationService.reportStrategy(
                 strategy,
@@ -1342,8 +1387,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 factorial.getLoss(),
                 limitPrice,
                 annotation,
-                candleIntervalSell ? candle.getClosingPrice().multiply(BigDecimal.valueOf(1. + buyCriteria.getCandleIntervalMinPercent() / 100))
-                        : (candleIntervalBuy ? candle.getClosingPrice().multiply(BigDecimal.valueOf(1. - sellCriteria.getCandleIntervalMinPercent() / 100)) : "")
+                candleIntervalSell ? candle.getClosingPrice().multiply(BigDecimal.valueOf(1. + candleIntervalMinPercent / 100))
+                        : (candleIntervalBuy ? candle.getClosingPrice().multiply(BigDecimal.valueOf(1. - profitPercentFromBuyMinPrice / 100)) : "")
         );
         return res;
     }
