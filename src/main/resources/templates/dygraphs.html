@@ -145,6 +145,12 @@
                     connectSeparatedPoints: true,
                     showRoller: true
                 },
+                'candleBuySell': {
+                    connectSeparatedPoints: true,
+                    showRoller: true,
+                    drawPoints: true,
+                    pointSize: 2,
+                },
             },
             drawCallback: function(g) {
                 var ann = g.annotations();
@@ -157,8 +163,8 @@
                 }
                 document.getElementById("list").innerHTML = html;
             },
-            plotter2: function candlestickPlotter(e) {
-                if (e.seriesIndex > 3) {
+            plotter: function candlestickPlotter(e) {
+                if (e.seriesIndex > 3 || ['open', 'close', 'high', 'low'].indexOf(e.setName) === false) {
                     Dygraph.Plotters.linePlotter(e);
                     return;
                 }
@@ -193,9 +199,9 @@
 
                 var minBarWidth = 2;
                 var numBars = prices.length + 1; // To compensate the probably removed first "incomplete" bar
-                var barWidth = Math.round((area.w / numBars) / 2);
+                var barWidth = Math.round(area.w / numBars);
                 if (barWidth % 2 !== 0) {
-                    barWidth++;
+                    barWidth--;
                 }
                 barWidth = Math.max(barWidth, minBarWidth);
 
@@ -213,14 +219,14 @@
                     ctx.stroke();
                     var bodyY;
                     if (price.open > price.close) {
-                        ctx.fillStyle ='#d9534f';
+                        ctx.fillStyle = 'rgba(244, 44, 44, 1.0)';//'#d9534f';
                         bodyY = area.h * price.openY + area.y;
                     }
                     else {
-                        ctx.fillStyle ='#5cb85c';
+                        ctx.fillStyle ='#5cb85c';//'rgba(44, 244, 44, 1.0)';
                         bodyY = area.h * price.closeY  + area.y;
                     }
-                    var bodyHeight = area.h * Math.abs(price.openY - price.closeY);
+                    var bodyHeight = area.h * Math.max(0.001, Math.abs(price.openY - price.closeY));
                     ctx.fillRect(centerX - barWidth / 2, bodyY, barWidth,  bodyHeight);
                 }
             },
