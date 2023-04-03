@@ -832,7 +832,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     || (isProfitSecond && buyCriteria.getIsProfitPercentFromBuyPriceTopSecond())
         )) {
             annotation += " key = " + key + "(" + res + ")";
-            if (buyPrice == null) {
+            if (buyPrice == null
+                    || (res && candle.getClosingPrice().doubleValue() < buyPrice.getPrice())
+            ) {
                 var maxPrice = candle.getClosingPrice().doubleValue();
                 var minPrice = candle.getClosingPrice().doubleValue();
                 if (buyCriteria.getProfitPercentFromBuyMinPriceRelativeMin() != null
