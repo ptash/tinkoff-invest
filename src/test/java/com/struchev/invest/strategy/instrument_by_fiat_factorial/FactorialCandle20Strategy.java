@@ -23,6 +23,8 @@ public class FactorialCandle20Strategy extends Factorial2Strategy {
         buy.setCandleMaxLength(12);
         buy.setCandleUpMiddleLength(1);
         buy.setCandleUpLength(2);
+
+        //buy.setProfitPercentFromBuyMinPrice(-0.01);
         return buy;
     }
 
@@ -37,6 +39,9 @@ public class FactorialCandle20Strategy extends Factorial2Strategy {
         sell.setCandleUpLength(2);
 
         sell.setExitLossPercent(2f);
+
+        sell.setProfitPercentFromSellMinPrice(0.01f);
+        sell.setProfitPercentFromSellMinPriceLength(2);
         return sell;
     }
 

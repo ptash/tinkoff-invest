@@ -14,7 +14,6 @@ public class FactorialCandleExt20Strategy extends FactorialCandle20Strategy {
         var sell = super.getSellCriteria();
         //sell.setCandleIntervalMinPercent(0.5f);
         sell.setExitLossPercent(1f);
-        sell.setProfitPercentFromSellMinPrice(0.1f);
         sell.setProfitPercentFromSellMinPriceLength(2);
         return sell;
     }
