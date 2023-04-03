@@ -639,7 +639,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 );
                 var isOrderFind = false;
                 var order = orderService.findLastByFigiAndStrategy(candle.getFigi(), strategy);
-                if (null != order && order.getSellDateTime().isAfter(candleIPrev.get(0).getDateTime())) {
+                if (false && null != order && order.getSellDateTime().isAfter(candleIPrev.get(0).getDateTime())) {
                     isOrderFind = true;
                     if (order.getPurchasePrice().compareTo(order.getSellPrice()) < 0) {
                         annotation += " ORDER buy < sell: " + order.getPurchasePrice() + " (" + order.getPurchaseDateTime() +
@@ -695,6 +695,18 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         }
                     }
                 }
+                if (isOrderFind && !res && null != order
+                        && null != candleIntervalResBuyOk
+                        && order.getSellDateTime().isAfter(candleIntervalResBuyOk.candle.getDateTime())
+                ) {
+                    isOrderFind = true;
+                    if (order.getPurchasePrice().compareTo(order.getSellPrice()) < 0) {
+                        annotation += " ORDER buy < sell: " + order.getPurchasePrice() + " (" + order.getPurchaseDateTime() +
+                                ") < " + order.getSellPrice() + "(" +order.getSellProfit() + ")";
+                        annotation += " CandleInterval OK";
+                        res = true;
+                    }
+                }
                 if (!isOrderFind && null != order && !order.getSellDateTime().isAfter(candleIPrev.get(0).getDateTime())) {
                     isOrderFind = true;
                     if (order.getPurchasePrice().compareTo(order.getSellPrice()) < 0) {
@@ -709,6 +721,12 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 if (candleIntervalResSell.res) {
                     candleIntervalSell = true;
                     annotation += " SELL ok: " + candleIntervalResSell.annotation;
+                    String key = buildKeyHour(strategy.getName(), candle);
+                    addCashedIsBuyValue(key, null);
+                    if (strategy.getBuyCriteria().getProfitPercentFromBuyMinPriceLength() > 1) {
+                        String keyPrev = buildKeyHour(strategy.getName(), curHourCandleForFactorial);
+                        addCashedIsBuyValue(keyPrev, null);
+                    }
                 } else {
                     annotation += " SELL false: " + candleIntervalResSell.annotation;
                 }
@@ -1019,8 +1037,6 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
 
     @Override
     public boolean isShouldSell(AInstrumentByFiatFactorialStrategy strategy, CandleDomainEntity candle, BigDecimal purchaseRate) {
-        String key = buildKeyHour(strategy.getName(), candle);
-        addCashedIsBuyValue(key, null);
 
         var profitPercent = candle.getClosingPrice().subtract(purchaseRate)
                 .multiply(BigDecimal.valueOf(100))
@@ -1030,6 +1046,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 candle.getDateTime(), strategy.getFactorialLossIgnoreSize(), strategy.getFactorialInterval());
         var curHourCandle = candleListPrev.get(strategy.getFactorialLossIgnoreSize() - 1);
         var factorial = findBestFactorialInPast(strategy, curHourCandle);
+
+        String key = buildKeyHour(strategy.getName(), candle);
+        addCashedIsBuyValue(key, null);
         if (strategy.getBuyCriteria().getProfitPercentFromBuyMinPriceLength() > 1) {
             String keyPrev = buildKeyHour(strategy.getName(), curHourCandle);
             addCashedIsBuyValue(keyPrev, null);
