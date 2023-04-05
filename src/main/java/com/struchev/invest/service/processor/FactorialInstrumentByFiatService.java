@@ -83,27 +83,15 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             return false;
         }
         String annotation = curHourCandleForFactorial.getDateTime().toString();
-        var buyCriteria = strategy.getBuyCriteria();
-        var sellCriteria = strategy.getSellCriteria();
-        if (strategy.getPriceDiffAvgLength() != null) {
-            var candleListForAvg = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
-                    candle.getDateTime(), strategy.getPriceDiffAvgLength() + 1, strategy.getFactorialInterval());
-            var priceDiffAvgReal = factorial.getExpectLoss() + factorial.getExpectProfit();
-            for (var i = 0; i < (candleListForAvg.size() - 1); i++) {
-                var factorialForAvg = findBestFactorialInPast(strategy, candleListForAvg.get(i));
-                if (null == factorialForAvg) {
-                    return false;
-                }
-                priceDiffAvgReal += factorialForAvg.getExpectLoss() + factorialForAvg.getExpectProfit();
-            }
-            priceDiffAvgReal = priceDiffAvgReal / candleListForAvg.size();
-            annotation += " priceDiffAvgReal=" + priceDiffAvgReal;
-            var newStrategy = new FactorialDiffAvgAdapterStrategy();
-            newStrategy.setStrategy(strategy);
-            newStrategy.setPriceDiffAvgReal(priceDiffAvgReal);
-            buyCriteria = newStrategy.getBuyCriteria();
-            sellCriteria = newStrategy.getSellCriteria();
+        var newStrategy = buildAvgStrategy(strategy, candle);
+        if (null == newStrategy) {
+            return false;
         }
+        if (null != newStrategy.getPriceDiffAvgReal()) {
+            annotation += " priceDiffAvgReal=" + newStrategy.getPriceDiffAvgReal();
+        }
+        var buyCriteria = newStrategy.getBuyCriteria();
+        var sellCriteria = newStrategy.getSellCriteria();
         var res = false;
         var isResOverProfit = false;
         var isProfitSecond = false;
@@ -653,9 +641,16 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 ResultData candleIntervalResBuyOk = null;
                 ResultData candleIntervalResSellOk = null;
                 ResultData candleIntervalResSellOk2 = null;
+                var candleStrategyCurHour = curHourCandleForFactorial;
+                var candleStrategy = newStrategy;
                 for (var i = 1; i < candleIPrev.size() && !isOrderFind; i++) {
+                    var candleStrategyCurHourI = getCandleHour(strategy, candleIPrev.get(i));
+                    if (candleStrategyCurHourI.getDateTime().compareTo(candleStrategyCurHour.getDateTime()) != 0) {
+                        candleStrategyCurHour = curHourCandleForFactorial;
+                        candleStrategy = buildAvgStrategy(strategy, candleIPrev.get(i));
+                    }
                     if (null == candleIntervalResSellOk) {
-                        var candleIntervalResSell = checkCandleInterval(candleIPrev.get(i), sellCriteria);
+                        var candleIntervalResSell = checkCandleInterval(candleIPrev.get(i), candleStrategy.getSellCriteria());
                         if (candleIntervalResSell.res) {
                             annotation += " SELL i = " + i + "(" + candleIPrev.get(i).getDateTime() + ")";
                             candleIntervalResSellOk = candleIntervalResSell;
@@ -671,7 +666,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             }
                         }
                     } else {
-                        var candleIntervalResSell = checkCandleInterval(candleIPrev.get(i), sellCriteria);
+                        var candleIntervalResSell = checkCandleInterval(candleIPrev.get(i), candleStrategy.getSellCriteria());
                         if (candleIntervalResSell.res) {
                             annotation += " SELL i = " + i + "(" + candleIPrev.get(i).getDateTime() + ")";
                             if (null != candleIntervalResSellOk2) {
@@ -689,7 +684,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                 break;
                             }
                         }
-                        var candleIntervalResBuy = checkCandleInterval(candleIPrev.get(i), buyCriteria);
+                        var candleIntervalResBuy = checkCandleInterval(candleIPrev.get(i), candleStrategy.getBuyCriteria());
                         if (candleIntervalResBuy.res) {
                             candleIntervalResBuyOk = candleIntervalResBuy;
                             annotation += " BUY i = " + i + "(" + candleIPrev.get(i).getDateTime() + ")";
@@ -1059,27 +1054,15 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         }
         var order = orderService.findActiveByFigiAndStrategy(candle.getFigi(), strategy);
         String annotation = " profitPercent=" + profitPercent;
-        var sellCriteria = strategy.getSellCriteria();
-        var buyCriteria = strategy.getBuyCriteria();
-        if (strategy.getPriceDiffAvgLength() != null) {
-            var candleListForAvg = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
-                    candle.getDateTime(), strategy.getPriceDiffAvgLength() + 1, strategy.getFactorialInterval());
-            var priceDiffAvgReal = factorial.getExpectLoss() + factorial.getExpectProfit();
-            for (var i = 0; i < (candleListForAvg.size() - 1); i++) {
-                var factorialForAvg = findBestFactorialInPast(strategy, candleListForAvg.get(i));
-                if (null == factorialForAvg) {
-                    return false;
-                }
-                priceDiffAvgReal += factorialForAvg.getExpectLoss() + factorialForAvg.getExpectProfit();
-            }
-            priceDiffAvgReal = priceDiffAvgReal / candleListForAvg.size();
-            annotation += " priceDiffAvgReal=" + priceDiffAvgReal;
-            var newStrategy = new FactorialDiffAvgAdapterStrategy();
-            newStrategy.setStrategy(strategy);
-            newStrategy.setPriceDiffAvgReal(priceDiffAvgReal);
-            sellCriteria = newStrategy.getSellCriteria();
-            buyCriteria = newStrategy.getBuyCriteria();
+        var newStrategy = buildAvgStrategy(strategy, candle);
+        if (null == newStrategy) {
+            return false;
         }
+        if (null != newStrategy.getPriceDiffAvgReal()) {
+            annotation += " priceDiffAvgReal=" + newStrategy.getPriceDiffAvgReal();
+        }
+        var buyCriteria = newStrategy.getBuyCriteria();
+        var sellCriteria = newStrategy.getSellCriteria();
         Boolean res = false;
         var curBeginHour = candle.getDateTime();
         curBeginHour = curBeginHour.minusMinutes(curBeginHour.getMinute() + 1);
@@ -1833,6 +1816,37 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 .annotation(annotation)
                 .candle(candle)
                 .build();
+    }
+
+    private CandleDomainEntity getCandleHour(AInstrumentByFiatFactorialStrategy strategy, CandleDomainEntity candle)
+    {
+        var candleList = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
+                candle.getDateTime(), 2, strategy.getFactorialInterval());
+        return candleList.get(1);
+    }
+    private FactorialDiffAvgAdapterStrategy buildAvgStrategy(AInstrumentByFiatFactorialStrategy strategy, CandleDomainEntity candle)
+    {
+        var newStrategy = new FactorialDiffAvgAdapterStrategy();
+        newStrategy.setStrategy(strategy);
+        if (strategy.getPriceDiffAvgLength() == null) {
+            return newStrategy;
+        }
+        var curHourCandleForFactorial = getCandleHour(strategy, candle);
+        var factorial = findBestFactorialInPast(strategy, curHourCandleForFactorial);
+
+        var candleListForAvg = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
+                candle.getDateTime(), strategy.getPriceDiffAvgLength() + 1, strategy.getFactorialInterval());
+        var priceDiffAvgReal = factorial.getExpectLoss() + factorial.getExpectProfit();
+        for (var i = 0; i < (candleListForAvg.size() - 1); i++) {
+            var factorialForAvg = findBestFactorialInPast(strategy, candleListForAvg.get(i));
+            if (null == factorialForAvg) {
+                return null;
+            }
+            priceDiffAvgReal += factorialForAvg.getExpectLoss() + factorialForAvg.getExpectProfit();
+        }
+        priceDiffAvgReal = priceDiffAvgReal / candleListForAvg.size();
+        newStrategy.setPriceDiffAvgReal(priceDiffAvgReal);
+        return newStrategy;
     }
 
     private Map<String, FactorialData> factorialCashMap = new LinkedHashMap<>() {

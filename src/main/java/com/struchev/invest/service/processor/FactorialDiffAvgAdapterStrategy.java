@@ -22,7 +22,14 @@ public class FactorialDiffAvgAdapterStrategy extends AInstrumentByFiatFactorialS
         if (null == this.sellLimitOrig) {
             this.sellLimitOrig = this.strategy.getSellLimitCriteriaOrig();
         }
-        this.strategy.setSellLimitCriteria(SellLimitCriteria.builder().exitProfitPercent(this.sellLimitOrig.getExitProfitPercent() * getPriceDiffAvg()).build());
+        if (null != this.sellLimitOrig) {
+            this.strategy.setSellLimitCriteria(SellLimitCriteria.builder().exitProfitPercent(this.sellLimitOrig.getExitProfitPercent() * getPriceDiffAvg()).build());
+        }
+    }
+
+    public Float getPriceDiffAvgReal()
+    {
+        return priceDiffAvgReal;
     }
 
     public Float getPriceDiffAvg() {
@@ -32,6 +39,9 @@ public class FactorialDiffAvgAdapterStrategy extends AInstrumentByFiatFactorialS
     public BuyCriteria getBuyCriteria() {
         if (buy != null) {
             return buy;
+        }
+        if (priceDiffAvgReal == null) {
+            return strategy.getBuyCriteria();
         }
         var strategyBuy = strategy.getBuyCriteria();
         buy = strategyBuy.clone();
@@ -65,6 +75,9 @@ public class FactorialDiffAvgAdapterStrategy extends AInstrumentByFiatFactorialS
     public SellCriteria getSellCriteria() {
         if (sell != null) {
             return sell;
+        }
+        if (priceDiffAvgReal == null) {
+            return strategy.getSellCriteria();
         }
         var strategySell = strategy.getSellCriteria();
         sell = strategySell.clone();
