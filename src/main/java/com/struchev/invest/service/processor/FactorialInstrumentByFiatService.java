@@ -626,6 +626,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         var candleIntervalSell = false;
         if (!res
                 //&& candle.getClosingPrice().floatValue() < factorial.getProfit()
+                && buyCriteria.getCandleIntervalMinPercent() != null
         ) {
             var candleIntervalRes = checkCandleInterval(candle, buyCriteria);
             annotation += candleIntervalRes.annotation;
@@ -1017,9 +1018,10 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         if (null != buyCriteria.getProfitPercentFromBuyMinPrice()) {
             profitPercentFromBuyMinPrice = (float) -buyCriteria.getProfitPercentFromBuyMinPrice();
         }
-        notificationService.reportStrategy(
+        notificationService.reportStrategyExt(
+                res,
                 strategy,
-                candle.getFigi(),
+                candle,
                 "Date|open|high|low|close|ema2|profit|loss|limitPrice|lossAvg|deadLineTop|investBottom|investTop|smaTube|strategy|average|averageBottom|averageTop|candleBuySell",
                 "{} | {} | {} | {} | {} | | {} | {} | | {} | ||||by {}||||{}",
                 notificationService.formatDateTime(candle.getDateTime()),
@@ -1319,7 +1321,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     }
                 }
                 if (isAllDownCandle || isAllUpCandle) {
-                    annotation += " AllUpDownCandle";
+                    annotation += " AllUpDownCandle OK";
                     res = true;
                 } else {
                     if (res && sellData == null) {
@@ -1328,7 +1330,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                 .dateTime(candle.getDateTime())
                                 .build());
                     }
-                    annotation += " AllDownCandle";
+                    annotation += " AllDownCandle FALSE";
                     res = false;
                 }
             }
@@ -1336,7 +1338,10 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
 
         var candleIntervalBuy = false;
         var candleIntervalSell = false;
-        if (!res || profitPercent.floatValue() > 0) {
+        if (
+                (!res || profitPercent.floatValue() > 0)
+                && buyCriteria.getCandleIntervalMinPercent() != null
+        ) {
             var candleIntervalRes = checkCandleInterval(candle, sellCriteria);
             annotation += candleIntervalRes.annotation;
             res = candleIntervalRes.res;
@@ -1394,9 +1399,10 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         if (null != buyCriteria.getProfitPercentFromBuyMinPrice()) {
             profitPercentFromBuyMinPrice = (float) -buyCriteria.getProfitPercentFromBuyMinPrice();
         }
-        notificationService.reportStrategy(
+        notificationService.reportStrategyExt(
+                res,
                 strategy,
-                candle.getFigi(),
+                candle,
                 "Date|open|high|low|close|ema2|profit|loss|limitPrice|lossAvg|deadLineTop|investBottom|investTop|smaTube|strategy|average|averageBottom|averageTop|candleBuySell",
                 "{} | {} | {} | {} | {} | | {} | {} | {} |  |  |  |  |  |sell {}||||{}",
                 notificationService.formatDateTime(candle.getDateTime()),

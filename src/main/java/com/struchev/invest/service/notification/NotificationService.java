@@ -17,8 +17,11 @@ import com.pengrad.telegrambot.request.SendMessage;
 import com.struchev.invest.entity.CandleDomainEntity;
 import com.struchev.invest.entity.OrderDomainEntity;
 import com.struchev.invest.expression.Date;
+import com.struchev.invest.service.processor.FactorialInstrumentByFiatService;
 import com.struchev.invest.strategy.AStrategy;
 import io.micrometer.core.instrument.util.StringUtils;
+import lombok.Builder;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.LoggerFactory;
@@ -37,10 +40,7 @@ import java.nio.file.Paths;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Service to send messages and errors in preconfigured channels
@@ -224,6 +224,54 @@ public class NotificationService {
     public void reportStrategy(AStrategy strategy, String figi, String headerLine, String format, Object... arguments)
     {
         log.info(getStrategyReportLogMarker(strategy, figi, headerLine), format, arguments);
+    }
+
+    @Builder
+    @Data
+    public static class ReportData {
+        CandleDomainEntity candle;
+        String headerLine;
+        String format;
+        Object[] arguments;
+    }
+
+    private Map<String, ReportData> reportDataMap = new LinkedHashMap<>() {
+        @Override
+        protected boolean removeEldestEntry(final Map.Entry eldest) {
+            return size() > 1000;
+        }
+    };
+
+    private synchronized void addReportData(String indent, ReportData v)
+    {
+        reportDataMap.put(indent, v);
+    }
+
+    private synchronized ReportData getReportData(String indent)
+    {
+        if (reportDataMap.containsKey(indent)) {
+            return reportDataMap.get(indent);
+        }
+        return null;
+    }
+
+    public void reportStrategyExt(Boolean res, AStrategy strategy, CandleDomainEntity candle, String headerLine, String format, Object... arguments) {
+        var key = strategy.getName() + candle.getFigi();
+        var reportData = getReportData(key);
+        if (res) {
+            log.info(getStrategyReportLogMarker(strategy, candle.getFigi(), headerLine), format, arguments);
+        } else if (
+                null != reportData
+                && !formatDateTime(reportData.getCandle().getDateTime()).equals(formatDateTime(candle.getDateTime()))
+        ) {
+            log.info(getStrategyReportLogMarker(strategy, candle.getFigi(), reportData.getHeaderLine()), reportData.getFormat(), reportData.getArguments());
+        }
+        addReportData(key, ReportData.builder()
+                .candle(candle)
+                .headerLine(headerLine)
+                .format(format)
+                .arguments(arguments)
+                .build());
     }
 
     private Marker getStrategyReportLogMarker(AStrategy strategy, String figi, String headerLine)
