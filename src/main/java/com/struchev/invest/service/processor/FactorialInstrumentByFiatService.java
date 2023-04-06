@@ -1097,7 +1097,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     || candleListPrev.get(0).getDateTime().isAfter(order.getPurchaseDateTime())
             ) {
                 if (factorial.getProfit() < candle.getClosingPrice().doubleValue()) {
-                    annotation += "profit < close";
+                    annotation += " profit < close";
                 } else {
                     annotation += "loss > close";
                 }
@@ -1124,7 +1124,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             }
         }
 
-        if (sellCriteria.getStopLossPercent() != null
+        if (!res && sellCriteria.getStopLossPercent() != null
                 && profitPercent.floatValue() < -1 * sellCriteria.getStopLossPercent()
                 && factorial.getLoss() < candle.getClosingPrice().doubleValue()
                 && candleListPrev.get(0).getDateTime().isAfter(order.getPurchaseDateTime())
@@ -1143,7 +1143,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 res = true;
             }
         }
-        if (sellCriteria.getExitLossPercent() != null
+        if (!res && sellCriteria.getExitLossPercent() != null
                 && profitPercent.floatValue() < -1 * sellCriteria.getExitLossPercent()
                 //&& factorial.getLoss() < candle.getClosingPrice().doubleValue()
         ) {
@@ -1151,7 +1151,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             res = true;
         }
 
-        if (sellCriteria.getExitProfitInPercentMax() != null
+        if (!res && sellCriteria.getExitProfitInPercentMax() != null
                 //&& profitPercent.floatValue() > 0
         ) {
             var purchasePrice = order.getPurchasePrice().doubleValue();
@@ -1358,7 +1358,10 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     }
                     var curProfitPercentFromSellMinPrice = 100f * (candle.getClosingPrice().floatValue() - sellData.getPrice()) / sellData.getPrice();
                     annotation += " curProfPerFromSell=" + curProfitPercentFromSellMinPrice + " > " + sellCriteria.getProfitPercentFromSellMinPrice();
-                    if (curProfitPercentFromSellMinPrice > sellCriteria.getProfitPercentFromSellMinPrice()) {
+                    if (curProfitPercentFromSellMinPrice > sellCriteria.getProfitPercentFromSellMinPrice()
+                            || (sellCriteria.getProfitPercentFromSellMaxPrice() != null
+                            && curProfitPercentFromSellMinPrice < sellCriteria.getProfitPercentFromSellMaxPrice())
+                    ) {
                         annotation += " sell OK";
                         res = true;
                     } else {

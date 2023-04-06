@@ -82,7 +82,9 @@ public class FactorialDiffAvgAdapterStrategy extends AInstrumentByFiatFactorialS
         var strategySell = strategy.getSellCriteria();
         sell = strategySell.clone();
         var getPriceDiffAvg = getPriceDiffAvg();
-        sell.setExitLossPercent(Math.max(strategy.getPriceDiffAvgPercentMin(), strategySell.getExitLossPercent() * getPriceDiffAvg));
+        if (strategySell.getExitLossPercent() != null) {
+            sell.setExitLossPercent(Math.max(strategy.getPriceDiffAvgPercentMin(), strategySell.getExitLossPercent() * getPriceDiffAvg));
+        }
         if (strategySell.getCandleIntervalMinPercent() != null) {
             sell.setCandleIntervalMinPercent(strategySell.getCandleIntervalMinPercent() * getPriceDiffAvg());
         }
