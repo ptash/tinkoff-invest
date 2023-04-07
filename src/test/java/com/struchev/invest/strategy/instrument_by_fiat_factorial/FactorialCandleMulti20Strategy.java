@@ -12,7 +12,8 @@ public class FactorialCandleMulti20Strategy extends FactorialCandle20Strategy {
         var buy = super.getBuyCriteria();
         buy.setCandlePriceMinFactor(0.5f);
         buy.setCandlePriceMaxFactor(2.5f);
-        buy.setCandlePriceMinMinFactor(0.25f);
+        buy.setCandlePriceMinMinFactor(0.05f);
+        buy.setCandlePriceMinMaxFactor(0.15f);
         buy.setCandleMinFactor(0.5f);
         buy.setCandleMaxFactor(10f);
         return buy;
