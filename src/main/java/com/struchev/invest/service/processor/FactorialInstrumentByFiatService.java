@@ -624,13 +624,13 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 var isOrderFind = false;
                 var order = orderService.findLastByFigiAndStrategy(candle.getFigi(), strategy);
                 var intervalCandles = getCandleIntervals(keyCandles);
+                var candleIPrev = candleHistoryService.getCandlesByFigiByLength(
+                        candle.getFigi(),
+                        candle.getDateTime(),
+                        buyCriteria.getCandleMaxIntervalLess(),
+                        buyCriteria.getCandleInterval()
+                );
                 if (null == intervalCandles) {
-                    var candleIPrev = candleHistoryService.getCandlesByFigiByLength(
-                            candle.getFigi(),
-                            candle.getDateTime(),
-                            buyCriteria.getCandleMaxIntervalLess(),
-                            buyCriteria.getCandleInterval()
-                    );
                     var candleStrategyCurHour = curHourCandleForFactorial;
                     var candleStrategy = newStrategy;
                     for (var i = 1; i < candleIPrev.size() && !isOrderFind; i++) {
@@ -708,14 +708,18 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             res = true;
                         }
                     }
-                    if (!isOrderFind && null != order) {
-                        isOrderFind = true;
-                        if (order.getPurchasePrice().compareTo(order.getSellPrice()) < 0) {
-                            annotation += " ORDER after buy < sell: " + printPrice(order.getPurchasePrice()) + " (" + order.getPurchaseDateTime() +
-                                    ") < " + printPrice(order.getSellPrice()) + "(" +order.getSellProfit() + ")";
-                            annotation += " CandleInterval OK";
-                            res = true;
-                        }
+                    if (
+                            res
+                            && isOrderFind
+                            && null != order
+                            && candleIntervalResBuyOk.candle.getDateTime().isBefore(candleIPrev.get(0).getDateTime())
+                            && order.getSellDateTime().isBefore(candleIPrev.get(0).getDateTime())
+                            && order.getPurchasePrice().compareTo(order.getSellPrice()) > 0
+                    ) {
+                        annotation += " ORDER after buy < sell: " + printPrice(order.getPurchasePrice()) + " (" + order.getPurchaseDateTime() +
+                                ") < " + printPrice(order.getSellPrice()) + "(" +order.getSellProfit() + ")";
+                        annotation += " CandleInterval FALSE";
+                        res = false;
                     }
                 }
                 addCandleInterval(keyCandles, candleIntervalRes);
