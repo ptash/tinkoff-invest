@@ -664,8 +664,11 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                 annotation += " SELL i = " + printPrice(candleRes.getCandle().getClosingPrice()) + "(" + candleRes.getCandle().getDateTime() + ")";
                                 candleIntervalResSellOk = candleRes;
                                 candleIntervalResSellLast = candleRes.candle;
-                                if (null != order && order.getSellDateTime().isAfter(candleIntervalResSellOk.candle.getDateTime())) {
-                                    isOrderFind = true;
+                                if (
+                                        !isOrderFind
+                                        && null != order
+                                        && order.getSellDateTime().isAfter(candleIntervalResSellOk.candle.getDateTime())
+                                ) {
                                     if (order.getPurchasePrice().compareTo(order.getSellPrice()) < 0) {
                                         annotation += " ORDER buy < sell: " + printPrice(order.getPurchasePrice()) + " (" + order.getPurchaseDateTime() +
                                                 ") < " + printPrice(order.getSellPrice()) + "(" +order.getSellProfit() + ")";
@@ -683,8 +686,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                                 1,
                                                 strategy.getInterval()
                                         ).get(0);
+                                        isOrderFind = true;
                                     }
-                                    break;
                                 }
                             }
                         } else {
@@ -735,7 +738,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             && null == buyCriteria.getCandleMinFactor()
                             && isOrderFind
                             && null != order
-                            && candleIntervalResBuyOk.candle.getDateTime().isBefore(candleIPrev.get(0).getDateTime())
+                            && (candleIntervalResBuyOk == null || candleIntervalResBuyOk.candle.getDateTime().isBefore(candleIPrev.get(0).getDateTime()))
                             && order.getSellDateTime().isBefore(candleIPrev.get(0).getDateTime())
                             && order.getPurchasePrice().compareTo(order.getSellPrice()) > 0
                     ) {
@@ -823,7 +826,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     if (null != buyCriteria.getCandleOnlyUpLength()) {
                         annotation += " CandleOnlyUpLength=" + buyCriteria.getCandleOnlyUpLength();
                         var intervalCandles = getCandleIntervals(keyCandles);
-                        if (null != intervalCandles) {
+                        var order = orderService.findLastByFigiAndStrategy(candle.getFigi(), strategy);
+                        if (null != intervalCandles && (order == null || order.getSellProfit().compareTo(BigDecimal.ZERO) > 0)) {
                             List<CandleIntervalResultData> sellPoints = new ArrayList<>();
                             CandleIntervalResultData lastSellPoint = candleIntervalResSell;
                             sellPoints.add(lastSellPoint);
@@ -1486,7 +1490,6 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         }
                     }
                 }
-
             }
             if (candleIntervalRes.res) {
                 candleIntervalSell = true;
@@ -1528,6 +1531,42 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         res = true;
                     } else {
                         res = false;
+                    }
+                }
+            }
+            if (
+                    res
+                    && sellCriteria.getCandleProfitMinPercent() != null
+            ) {
+                annotation += " CandleProfitMinPercent = " + sellCriteria.getCandleProfitMinPercent();
+                if (profitPercent.floatValue() < sellCriteria.getCandleProfitMinPercent()) {
+                    annotation += " SKIP min candleInterval";
+                    res = false;
+                }
+            }
+            if (
+                    !res
+                    && null != buyCriteria.getCandleOnlyUpLength()
+                    && null != sellCriteria.getCandleOnlyUpStopLossPercent()
+            ) {
+                var intervalCandles = getCandleIntervals(keyCandles);
+                if (null != intervalCandles) {
+                    var lastCandleInterval = intervalCandles.get(intervalCandles.size() - 1);
+                    if (!lastCandleInterval.isDown) {
+                        if (sellCriteria.getCandleOnlyUpStopLossPercent() != null) {
+                            var curProfitPercent = profitPercent;
+                            if (lastCandleInterval.getCandle().getClosingPrice().compareTo(purchaseRate) > 0) {
+                                curProfitPercent = candle.getClosingPrice().subtract(lastCandleInterval.getCandle().getClosingPrice())
+                                        .multiply(BigDecimal.valueOf(100))
+                                        .divide(purchaseRate, 4, RoundingMode.HALF_DOWN);
+                                annotation += " curProfitPercent = " + printPrice(curProfitPercent);
+                            }
+                            annotation += " CandleOnlyUpStopLossPercent = " + sellCriteria.getCandleOnlyUpStopLossPercent();
+                            if (curProfitPercent.floatValue() < -sellCriteria.getCandleOnlyUpStopLossPercent()) {
+                                annotation += " OK only up candleInterval";
+                                res = true;
+                            }
+                        }
                     }
                 }
             }
