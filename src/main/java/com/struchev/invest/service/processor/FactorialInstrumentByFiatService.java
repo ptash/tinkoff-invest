@@ -764,8 +764,14 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                 candleIntervalResSellLast.getDateTime(),
                                 strategy.getInterval()
                         );
-                        var minPrice = upCandles.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).min().orElse(-1);
-                        var maxPrice = upCandles.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).max().orElse(-1);
+                        var minPrice = Math.min(
+                                upCandles.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).min().orElse(-1),
+                                downCandles.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).min().orElse(-1)
+                                );
+                        var maxPrice = Math.max(
+                                upCandles.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).max().orElse(-1),
+                                downCandles.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).max().orElse(-1)
+                            );
                         var factorPrice = (maxPrice - candle.getClosingPrice().floatValue())
                                 / (maxPrice - minPrice);
                         annotation += " min = " + printPrice(minPrice);
