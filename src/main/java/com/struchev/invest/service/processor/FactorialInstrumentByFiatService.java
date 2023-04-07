@@ -1,6 +1,7 @@
 package com.struchev.invest.service.processor;
 
 import com.struchev.invest.entity.CandleDomainEntity;
+import com.struchev.invest.entity.OrderDomainEntity;
 import com.struchev.invest.service.candle.CandleHistoryService;
 import com.struchev.invest.service.notification.NotificationService;
 import com.struchev.invest.service.order.OrderService;
@@ -623,6 +624,11 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 candleIntervalBuy = true;
                 var isOrderFind = false;
                 var order = orderService.findLastByFigiAndStrategy(candle.getFigi(), strategy);
+                var upRes = isOrderCandleUp(strategy, candle, order, buyCriteria, sellCriteria);
+                if (upRes.res) {
+                    annotation += upRes.annotation;
+                    order = null;
+                }
                 var intervalCandles = getCandleIntervals(keyCandles);
                 var candleIPrev = candleHistoryService.getCandlesByFigiByLength(
                         candle.getFigi(),
@@ -657,7 +663,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     CandleIntervalResultData candleIntervalResBuyOk = null;
                     CandleIntervalResultData candleIntervalResSellOk = null;
                     CandleIntervalResultData candleIntervalResSellOk2 = null;
-                    for (var i = intervalCandles.size() - 1; i >= 0 && !isOrderFind; i--) {
+                    for (var i = intervalCandles.size() - 1; i >= 0 && !isOrderFind ; i--) {
                         var candleRes = intervalCandles.get(i);
                         if (null == candleIntervalResSellOk) {
                             if (!candleRes.isDown) {
@@ -680,12 +686,12 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                                 1,
                                                 strategy.getInterval()
                                         ).get(0);
-                                        candleIntervalResBuyLast = candleHistoryService.getCandlesByFigiByLength(
+                                        /*candleIntervalResBuyLast = candleHistoryService.getCandlesByFigiByLength(
                                                 candle.getFigi(),
                                                 order.getPurchaseDateTime(),
                                                 1,
                                                 strategy.getInterval()
-                                        ).get(0);
+                                        ).get(0);*/
                                         isOrderFind = true;
                                     }
                                 }
@@ -1463,27 +1469,10 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         var candleIntervalSell = false;
         Boolean isOrderUpCandle = false;
         String keyCandles = strategy.getName() + candle.getFigi();
-        if (
-                !res
-                && buyCriteria.getCandleIntervalMinPercent() != null
-                && null != buyCriteria.getCandleOnlyUpLength()
-                && null != sellCriteria.getCandleOnlyUpProfitMinPercent()
-        ) {
-            var intervalCandles = getCandleIntervals(keyCandles);
-            if (null != intervalCandles) {
-                for (var i = intervalCandles.size() - 1; i >= 0; i--) {
-                    var candleRes = intervalCandles.get(i);
-                    if (order.getPurchaseDateTime().isBefore(candleRes.candle.getDateTime())
-                            && (i - 1) >= 0) {
-                        annotation += " upOrDown: i=" + i + ":" + notificationService.formatDateTime(candleRes.candle.getDateTime());
-                        if (!intervalCandles.get(i - 1).isDown) {
-                            annotation += " UP";
-                            isOrderUpCandle = true;
-                        }
-                        break;
-                    }
-                }
-            }
+        if (!res) {
+            var upRes = isOrderCandleUp(strategy, candle, order, buyCriteria, sellCriteria);
+            isOrderUpCandle = upRes.res;
+            annotation += upRes.annotation;
         }
         if (
                 (!res || profitPercent.floatValue() > 0 || isOrderUpCandle)
@@ -2072,6 +2061,43 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         priceDiffAvgReal = priceDiffAvgReal / candleListForAvg.size();
         newStrategy.setPriceDiffAvgReal(priceDiffAvgReal);
         return newStrategy;
+    }
+
+    private CandleIntervalResultData isOrderCandleUp(
+            AInstrumentByFiatFactorialStrategy strategy,
+            CandleDomainEntity candle,
+            OrderDomainEntity order,
+            AInstrumentByFiatFactorialStrategy.BuyCriteria buyCriteria,
+            AInstrumentByFiatFactorialStrategy.SellCriteria sellCriteria
+    ) {
+        Boolean isOrderUpCandle = false;
+        String annotation = "";
+        String keyCandles = strategy.getName() + candle.getFigi();
+        if (
+                null != order
+                && buyCriteria.getCandleIntervalMinPercent() != null
+                && null != buyCriteria.getCandleOnlyUpLength()
+                && null != sellCriteria.getCandleOnlyUpProfitMinPercent()
+        ) {
+            var intervalCandles = getCandleIntervals(keyCandles);
+            if (null != intervalCandles) {
+                for (var i = intervalCandles.size() - 1; i >= 0; i--) {
+                    var candleRes = intervalCandles.get(i);
+                    if (order.getPurchaseDateTime().isAfter(candleRes.candle.getDateTime())) {
+                        annotation += " upOrDown: i=" + i + ":" + notificationService.formatDateTime(candleRes.candle.getDateTime());
+                        if (!intervalCandles.get(i).isDown) {
+                            annotation += " UP";
+                            isOrderUpCandle = true;
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+        return CandleIntervalResultData.builder()
+                .res(isOrderUpCandle)
+                .annotation(annotation)
+                .build();
     }
 
     private Map<String, FactorialData> factorialCashMap = new LinkedHashMap<>() {
