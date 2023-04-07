@@ -795,6 +795,12 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         ) {
                             annotation += " candleFactor OK";
                             res = true;
+                        } else if (
+                                buyCriteria.getCandlePriceMinMinFactor() != null
+                                && factor < buyCriteria.getCandlePriceMinMinFactor()
+                        ) {
+                            annotation += " candleFactor minmin OK";
+                            res = true;
                         } else {
                             res = false;
                         }
