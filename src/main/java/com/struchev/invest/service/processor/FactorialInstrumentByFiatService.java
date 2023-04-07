@@ -652,8 +652,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     intervalCandles = getCandleIntervals(keyCandles);
                 }
                 if (null != intervalCandles) {
-                    CandleIntervalResultData candleIntervalResBuyLast = null;
-                    CandleIntervalResultData candleIntervalResSellLast = null;
+                    CandleDomainEntity candleIntervalResBuyLast = null;
+                    CandleDomainEntity candleIntervalResSellLast = null;
                     CandleIntervalResultData candleIntervalResBuyOk = null;
                     CandleIntervalResultData candleIntervalResSellOk = null;
                     CandleIntervalResultData candleIntervalResSellOk2 = null;
@@ -663,7 +663,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             if (!candleRes.isDown) {
                                 annotation += " SELL i = " + printPrice(candleRes.getCandle().getClosingPrice()) + "(" + candleRes.getCandle().getDateTime() + ")";
                                 candleIntervalResSellOk = candleRes;
-                                candleIntervalResSellLast = candleRes;
+                                candleIntervalResSellLast = candleRes.candle;
                                 if (null != order && order.getSellDateTime().isAfter(candleIntervalResSellOk.candle.getDateTime())) {
                                     isOrderFind = true;
                                     if (order.getPurchasePrice().compareTo(order.getSellPrice()) < 0) {
@@ -671,6 +671,18 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                                 ") < " + printPrice(order.getSellPrice()) + "(" +order.getSellProfit() + ")";
                                         annotation += " CandleInterval OK";
                                         res = true;
+                                        candleIntervalResSellLast = candleHistoryService.getCandlesByFigiByLength(
+                                                candle.getFigi(),
+                                                order.getSellDateTime(),
+                                                1,
+                                                strategy.getInterval()
+                                        ).get(0);
+                                        candleIntervalResBuyLast = candleHistoryService.getCandlesByFigiByLength(
+                                                candle.getFigi(),
+                                                order.getPurchaseDateTime(),
+                                                1,
+                                                strategy.getInterval()
+                                        ).get(0);
                                     }
                                     break;
                                 }
@@ -695,7 +707,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             }
                             if (candleRes.isDown) {
                                 if (null == candleIntervalResBuyLast) {
-                                    candleIntervalResBuyLast = candleRes;
+                                    candleIntervalResBuyLast = candleRes.candle;
                                 }
                                 candleIntervalResBuyOk = candleRes;
                                 annotation += " BUY i = " + printPrice(candleRes.getCandle().getClosingPrice()) + "(" + candleRes.getCandle().getDateTime() + ")";
@@ -738,23 +750,23 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             && null != candleIntervalResSellLast
                             && null != candleIntervalResBuyLast
                     ) {
-                        annotation += " factor: " + notificationService.formatDateTime(candleIntervalResBuyLast.getCandle().getDateTime())
-                                + " - " + notificationService.formatDateTime(candleIntervalResSellLast.getCandle().getDateTime());
-                        var factorPrice = (candleIntervalResSellLast.candle.getClosingPrice().floatValue() - candle.getClosingPrice().floatValue())
-                                / (candleIntervalResSellLast.candle.getClosingPrice().floatValue() - candleIntervalResBuyLast.candle.getClosingPrice().floatValue());
-                        annotation += " factorPrice = " + printPrice(candleIntervalResSellLast.candle.getClosingPrice().floatValue() - candle.getClosingPrice().floatValue())
-                                + " / " + printPrice(candleIntervalResSellLast.candle.getClosingPrice().floatValue() - candleIntervalResBuyLast.candle.getClosingPrice().floatValue())
+                        annotation += " factor: " + notificationService.formatDateTime(candleIntervalResBuyLast.getDateTime())
+                                + " - " + notificationService.formatDateTime(candleIntervalResSellLast.getDateTime());
+                        var factorPrice = (candleIntervalResSellLast.getClosingPrice().floatValue() - candle.getClosingPrice().floatValue())
+                                / (candleIntervalResSellLast.getClosingPrice().floatValue() - candleIntervalResBuyLast.getClosingPrice().floatValue());
+                        annotation += " factorPrice = " + printPrice(candleIntervalResSellLast.getClosingPrice().floatValue() - candle.getClosingPrice().floatValue())
+                                + " / " + printPrice(candleIntervalResSellLast.getClosingPrice().floatValue() - candleIntervalResBuyLast.getClosingPrice().floatValue())
                                 + " = " + printPrice(factorPrice);
                         var downCandles = candleHistoryService.getCandlesByFigiBetweenDateTimes(
                                 candle.getFigi(),
-                                candleIntervalResSellLast.candle.getDateTime(),
+                                candleIntervalResSellLast.getDateTime(),
                                 candle.getDateTime(),
                                 strategy.getInterval()
                         );
                         var upCandles = candleHistoryService.getCandlesByFigiBetweenDateTimes(
                                 candle.getFigi(),
-                                candleIntervalResBuyLast.candle.getDateTime(),
-                                candleIntervalResSellLast.candle.getDateTime(),
+                                candleIntervalResBuyLast.getDateTime(),
+                                candleIntervalResSellLast.getDateTime(),
                                 strategy.getInterval()
                         );
                         Float factorCandle = 1f * upCandles.size() / downCandles.size();
