@@ -2100,7 +2100,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             if (null != intervalCandles) {
                 for (var i = intervalCandles.size() - 1; i >= 0; i--) {
                     var candleRes = intervalCandles.get(i);
-                    if (order.getPurchaseDateTime().isAfter(candleRes.candle.getDateTime())) {
+                    if (!order.getPurchaseDateTime().isBefore(candleRes.candle.getDateTime())) {
                         annotation += " upOrDown: i=" + i + ":" + notificationService.formatDateTime(candleRes.candle.getDateTime());
                         if (!intervalCandles.get(i).isDown) {
                             annotation += " UP";
