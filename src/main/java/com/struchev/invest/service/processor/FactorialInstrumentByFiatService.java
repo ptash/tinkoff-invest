@@ -752,11 +752,6 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     ) {
                         annotation += " factor: " + notificationService.formatDateTime(candleIntervalResBuyLast.getDateTime())
                                 + " - " + notificationService.formatDateTime(candleIntervalResSellLast.getDateTime());
-                        var factorPrice = (candleIntervalResSellLast.getClosingPrice().floatValue() - candle.getClosingPrice().floatValue())
-                                / (candleIntervalResSellLast.getClosingPrice().floatValue() - candleIntervalResBuyLast.getClosingPrice().floatValue());
-                        annotation += " factorPrice = " + printPrice(candleIntervalResSellLast.getClosingPrice().floatValue() - candle.getClosingPrice().floatValue())
-                                + " / " + printPrice(candleIntervalResSellLast.getClosingPrice().floatValue() - candleIntervalResBuyLast.getClosingPrice().floatValue())
-                                + " = " + printPrice(factorPrice);
                         var downCandles = candleHistoryService.getCandlesByFigiBetweenDateTimes(
                                 candle.getFigi(),
                                 candleIntervalResSellLast.getDateTime(),
@@ -769,6 +764,13 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                 candleIntervalResSellLast.getDateTime(),
                                 strategy.getInterval()
                         );
+                        var minPrice = upCandles.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).min().orElse(-1);
+                        var maxPrice = upCandles.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).max().orElse(-1);
+                        var factorPrice = (minPrice - candle.getClosingPrice().floatValue())
+                                / (maxPrice - minPrice);
+                        annotation += " factorPrice = " + printPrice(minPrice - candle.getClosingPrice().floatValue())
+                                + " / " + printPrice(maxPrice - minPrice)
+                                + " = " + printPrice(factorPrice);
                         Float factorCandle = 1f * upCandles.size() / downCandles.size();
                         annotation += " factorCandle = " + printPrice(1f * upCandles.size())
                                 + " / " + printPrice(1f * downCandles.size())
@@ -2035,6 +2037,11 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
     }
 
     private String printPrice(Float s)
+    {
+        return printPrice(s.toString());
+    }
+
+    private String printPrice(Double s)
     {
         return printPrice(s.toString());
     }
