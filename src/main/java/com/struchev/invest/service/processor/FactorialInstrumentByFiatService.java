@@ -1344,9 +1344,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             } else {
                 var candleIntervalBuyRes = checkCandleInterval(candle, buyCriteria);
                 candleIntervalBuy = candleIntervalBuyRes.res;
-                annotation += " res BUY OK candleInterval=" + res;
                 if (candleIntervalBuyRes.res) {
-                    addCandleInterval(keyCandles, candleIntervalRes);
+                    annotation += " res BUY OK candleInterval: " + candleIntervalBuyRes.annotation;
+                    addCandleInterval(keyCandles, candleIntervalBuyRes);
                 }
             }
             if (sellCriteria.getProfitPercentFromSellMinPrice() != null) {
