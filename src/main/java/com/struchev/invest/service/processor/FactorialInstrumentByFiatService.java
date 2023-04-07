@@ -766,9 +766,11 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         );
                         var minPrice = upCandles.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).min().orElse(-1);
                         var maxPrice = upCandles.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).max().orElse(-1);
-                        var factorPrice = (minPrice - candle.getClosingPrice().floatValue())
+                        var factorPrice = (maxPrice - candle.getClosingPrice().floatValue())
                                 / (maxPrice - minPrice);
-                        annotation += " factorPrice = " + printPrice(minPrice - candle.getClosingPrice().floatValue())
+                        annotation += " min = " + printPrice(minPrice);
+                        annotation += " max = " + printPrice(maxPrice);
+                        annotation += " factorPrice = " + printPrice(maxPrice - candle.getClosingPrice().floatValue())
                                 + " / " + printPrice(maxPrice - minPrice)
                                 + " = " + printPrice(factorPrice);
                         Float factorCandle = 1f * upCandles.size() / downCandles.size();
@@ -783,6 +785,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                 && factorPrice < buyCriteria.getCandleMaxFactor()
                                 && factorCandle < buyCriteria.getCandleMaxFactor()
                                 && factorPrice > buyCriteria.getCandlePriceMinFactor()
+                                && factorPrice < buyCriteria.getCandlePriceMaxFactor()
                         ) {
                             annotation += " candleFactor OK";
                             res = true;
