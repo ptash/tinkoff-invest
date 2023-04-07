@@ -773,8 +773,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         annotation += " factorCandle = " + printPrice(1f * upCandles.size())
                                 + " / " + printPrice(1f * downCandles.size())
                                 + " = " + printPrice(factorCandle);
-                        var factor = factorPrice * factorCandle;
-                        annotation += " factor = " + printPrice(factor);
+                        var factor = factorPrice * factorPrice * Math.sqrt(factorCandle);
+                        annotation += " factor = " + printPrice((float) factor);
                         if (
                                 factor > buyCriteria.getCandleMinFactor()
                                 && factor < buyCriteria.getCandleMaxFactor()
