@@ -780,6 +780,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                 && factor < buyCriteria.getCandleMaxFactor()
                                 && factorPrice < buyCriteria.getCandleMaxFactor()
                                 && factorCandle < buyCriteria.getCandleMaxFactor()
+                                && factorPrice > buyCriteria.getCandlePriceMinFactor()
                         ) {
                             annotation += " candleFactor OK";
                             res = true;

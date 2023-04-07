@@ -10,7 +10,8 @@ public class FactorialCandleMulti20Strategy extends FactorialCandle20Strategy {
     //}
     public BuyCriteria getBuyCriteria() {
         var buy = super.getBuyCriteria();
-        buy.setCandleMinFactor(1f);
+        buy.setCandlePriceMinFactor(0.5f);
+        buy.setCandleMinFactor(1.5f);
         buy.setCandleMaxFactor(10f);
         return buy;
     }
