@@ -1461,33 +1461,51 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
 
         var candleIntervalBuy = false;
         var candleIntervalSell = false;
+        Boolean isOrderUpCandle = false;
+        String keyCandles = strategy.getName() + candle.getFigi();
         if (
-                (!res || profitPercent.floatValue() > 0)
+                !res
+                && buyCriteria.getCandleIntervalMinPercent() != null
+                && null != buyCriteria.getCandleOnlyUpLength()
+                && null != sellCriteria.getCandleOnlyUpProfitMinPercent()
+        ) {
+            var intervalCandles = getCandleIntervals(keyCandles);
+            if (null != intervalCandles) {
+                for (var i = intervalCandles.size() - 1; i >= 0; i--) {
+                    var candleRes = intervalCandles.get(i);
+                    if (order.getPurchaseDateTime().isBefore(candleRes.candle.getDateTime())
+                            && (i - 1) >= 0) {
+                        annotation += " upOrDown: i=" + i + ":" + notificationService.formatDateTime(candleRes.candle.getDateTime());
+                        if (!intervalCandles.get(i - 1).isDown) {
+                            annotation += " UP";
+                            isOrderUpCandle = true;
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+        if (
+                (!res || profitPercent.floatValue() > 0 || isOrderUpCandle)
                 && buyCriteria.getCandleIntervalMinPercent() != null
         ) {
             var candleIntervalRes = checkCandleInterval(candle, sellCriteria);
             annotation += candleIntervalRes.annotation;
             res = candleIntervalRes.res;
             annotation += " res candleInterval=" + res;
-            String keyCandles = strategy.getName() + candle.getFigi();
             String keySell = "sellUp" + candle.getFigi() + notificationService.formatDateTime(order.getPurchaseDateTime());
             if (
                     candleIntervalRes.res
                     && null != buyCriteria.getCandleOnlyUpLength()
                     && null != sellCriteria.getCandleOnlyUpProfitMinPercent()
+                    && isOrderUpCandle
             ) {
-                var intervalCandles = getCandleIntervals(keyCandles);
-                if (null != intervalCandles) {
-                    var lastCandleInterval = intervalCandles.get(intervalCandles.size() - 1);
-                    if (!lastCandleInterval.isDown) {
-                        var sellData = getCashedIsBuyValue(keySell);
-                        if (sellData == null) {
-                            annotation += " CandleOnlyUpProfitMinPercent = " + sellCriteria.getCandleOnlyUpProfitMinPercent();
-                            if (profitPercent.floatValue() < sellCriteria.getCandleOnlyUpProfitMinPercent()) {
-                                annotation += " SKIP only up candleInterval";
-                                res = false;
-                            }
-                        }
+                var sellData = getCashedIsBuyValue(keySell);
+                if (sellData == null) {
+                    annotation += " CandleOnlyUpProfitMinPercent = " + sellCriteria.getCandleOnlyUpProfitMinPercent();
+                    if (profitPercent.floatValue() < sellCriteria.getCandleOnlyUpProfitMinPercent()) {
+                        annotation += " SKIP only up candleInterval";
+                        res = false;
                     }
                 }
             }
@@ -1548,6 +1566,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     !res
                     && null != buyCriteria.getCandleOnlyUpLength()
                     && null != sellCriteria.getCandleOnlyUpStopLossPercent()
+                    && isOrderUpCandle
             ) {
                 var intervalCandles = getCandleIntervals(keyCandles);
                 if (null != intervalCandles) {
