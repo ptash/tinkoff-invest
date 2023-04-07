@@ -108,6 +108,8 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
         Integer candleUpMiddleLength;
         Integer candleUpLength;
         Float candleIntervalMinPercent;
+        Float candleOnlyUpProfitMinPercent;
+
         String candleInterval;
 
         public Boolean isCandleIntervalTargetDirection(BigDecimal openPrice, BigDecimal closePrice) {
@@ -217,7 +219,9 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
         Float candlePriceMinMaxFactor;
         Float candleMinFactor;
         Float candleMaxFactor;
-        Float candleSellPercent;
+        Float candleOnlyUpPercent;
+        Integer candleOnlyUpPointLength;
+        Integer candleOnlyUpLength;
 
 
         String candleInterval;
