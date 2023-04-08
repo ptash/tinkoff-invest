@@ -843,7 +843,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         CandleIntervalResultData candleResDownPrev;
                         CandleIntervalResultData candleResUpFirst = null;
                         CandleIntervalResultData candleResUp;
+                        Float lastBottomPrice = null;
                         Float lastTopPrice = null;
+                        Float lastBetweenPrice = null;
                         if (null != intervalCandles) {
                             candleResDown = intervalCandles.stream().filter(c -> c.isDown).reduce((first, second) -> second).orElse(null);
                             if (null != candleResDown) {
@@ -858,7 +860,10 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             if (null != candleResUp) {
                                 annotation += " candleResUpLast = " + notificationService.formatDateTime(candleResUp.getCandle().getDateTime());
                                 lastTopPrice = candleResUp.getCandle().getClosingPrice().floatValue();
+                                lastBottomPrice = candleResDown.getCandle().getClosingPrice().floatValue();
                                 annotation += " lastTopPrice = " + printPrice(lastTopPrice);
+                                lastBetweenPrice = lastTopPrice - lastBottomPrice;
+                                annotation += " lastBetweenPrice = " + printPrice(lastBetweenPrice);
                                 CandleIntervalResultData finalCandleResUp = candleResUp;
                                 candleResDownPrev = intervalCandles.stream().filter(c ->
                                         c.isDown
@@ -887,7 +892,10 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                 var minPrice = candlesBetween.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).min().orElse(-1);
                                 var maxPrice = candlesBetween.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).max().orElse(-1);
                                 lastTopPrice = (float) (maxPrice);
+                                lastBottomPrice = (float) minPrice;
                                 annotation += " new lastTopPrice = " + printPrice(lastTopPrice);
+                                lastBetweenPrice = (float) (maxPrice - minPrice);
+                                annotation += " lastBetweenPrice = " + printPrice(lastBetweenPrice);
                             }
                             if (
                                     null != candleResDown
@@ -947,10 +955,10 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                             var percentOrderFromDown = 100f * (order.getSellPrice().floatValue() - order.getPurchasePrice().floatValue()) / order.getPurchasePrice().floatValue();
                                             Float priceFromDown = null;
                                             if (
-                                                    null != candleResDown
+                                                    null != lastBottomPrice
                                                     //&& candleResDown.getCandle().getClosingPrice().compareTo(order.getPurchasePrice()) < 0
                                             ) {
-                                                priceFromDown = candle.getClosingPrice().floatValue() - candleResDown.getCandle().getClosingPrice().floatValue();
+                                                priceFromDown = candle.getClosingPrice().floatValue() - lastBottomPrice;
                                                 annotation += " candleResDown = " + printPrice(priceFromDown);
                                                 percentOrderFromDown = 100f * (order.getSellPrice().floatValue() - candleResDown.getCandle().getClosingPrice().floatValue()) / candleResDown.getCandle().getClosingPrice().floatValue();
                                             }
@@ -958,6 +966,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                             annotation += " percentB = " + printPrice(percent) + " > " + printPrice(percentOrderFromDown);
                                             if (percent > percentOrderFromDown
                                                     && (lastTopPrice == null || lastTopPrice < candle.getClosingPrice().floatValue())
+                                                    && (lastBetweenPrice == null || priceFromDown == null || lastBetweenPrice < priceFromDown)
+                                                    && (lastBetweenPrice == null || priceFromDown == null || 3 * lastBetweenPrice > priceFromDown)
                                             ) {
                                                 annotation += " candle UP OK";
                                                 var resBetween = true;
