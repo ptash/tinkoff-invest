@@ -1500,8 +1500,10 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             res = candleIntervalRes.res;
             annotation += " res candleInterval=" + res;
             String keySell = "sellUp" + candle.getFigi() + notificationService.formatDateTime(order.getPurchaseDateTime());
+            var isSkipOnlyUp = false;
             if (
-                    candleIntervalRes.res
+                    true
+                    // && candleIntervalRes.res
                     && null != buyCriteria.getCandleOnlyUpLength()
                     && null != sellCriteria.getCandleOnlyUpProfitMinPercent()
                     && isOrderUpCandle
@@ -1511,6 +1513,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     annotation += " CandleOnlyUpProfitMinPercent = " + sellCriteria.getCandleOnlyUpProfitMinPercent();
                     if (profitPercent.floatValue() < sellCriteria.getCandleOnlyUpProfitMinPercent()) {
                         annotation += " SKIP only up candleInterval";
+                        isSkipOnlyUp = true;
                         res = false;
                     }
                 }
@@ -1569,15 +1572,18 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 }
             }
             if (
-                    !res
-                    && null != buyCriteria.getCandleOnlyUpLength()
+                    null != buyCriteria.getCandleOnlyUpLength()
                     && null != sellCriteria.getCandleOnlyUpStopLossPercent()
                     && isOrderUpCandle
             ) {
                 var intervalCandles = getCandleIntervals(keyCandles);
                 if (null != intervalCandles) {
                     var lastCandleInterval = intervalCandles.get(intervalCandles.size() - 1);
-                    if (!lastCandleInterval.isDown) {
+                    if (
+                            !res
+                            && !lastCandleInterval.isDown
+                            && order.getPurchasePrice().compareTo(candle.getClosingPrice()) < 0
+                    ) {
                         if (sellCriteria.getCandleOnlyUpStopLossPercent() != null) {
                             var curProfitPercent = profitPercent;
                             if (lastCandleInterval.getCandle().getClosingPrice().compareTo(purchaseRate) > 0) {
@@ -1592,6 +1598,22 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                 res = true;
                             }
                         }
+                    } else if (
+                            !isSkipOnlyUp
+                            && null != sellCriteria.getCandleExitProfitInPercentMax()
+                    ) {
+                        var candles = candleHistoryService.getCandlesByFigiBetweenDateTimes(
+                                candle.getFigi(),
+                                order.getPurchaseDateTime(),
+                                candle.getDateTime(),
+                                strategy.getInterval()
+                        );
+                        Double maxPrice = candles.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).max().orElse(-1);
+                        Double minPrice = candles.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).min().orElse(-1);
+                        var percent = (candle.getClosingPrice().doubleValue() - minPrice) / (maxPrice - minPrice);
+                        annotation += " CandleExitProfitInPercentMax: " + percent + " > " + sellCriteria.getCandleExitProfitInPercentMax();
+                        res = percent < sellCriteria.getCandleExitProfitInPercentMax();
+                        annotation += " = " + res;
                     }
                 }
             }

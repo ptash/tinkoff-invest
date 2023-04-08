@@ -11,7 +11,7 @@ public class FactorialCandleFactorUp20Strategy extends FactorialCandleFactor20St
     public BuyCriteria getBuyCriteria() {
         var buy = super.getBuyCriteria();
 
-        buy.setCandleOnlyUpLength(3);
+        buy.setCandleOnlyUpLength(2);
         buy.setCandleOnlyUpPointLength(5);
         buy.setCandleOnlyUpBetweenPercent(0.25f);
         return buy;
@@ -21,7 +21,8 @@ public class FactorialCandleFactorUp20Strategy extends FactorialCandleFactor20St
         var sell = super.getSellCriteria();
 
         sell.setCandleOnlyUpProfitMinPercent(0.5f);
-        sell.setCandleOnlyUpStopLossPercent(0.2f);
+        sell.setCandleOnlyUpStopLossPercent(0.3f);
+        sell.setCandleExitProfitInPercentMax(80f);
         return sell;
     }
 }
