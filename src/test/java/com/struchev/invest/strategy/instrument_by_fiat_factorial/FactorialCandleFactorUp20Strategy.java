@@ -13,7 +13,7 @@ public class FactorialCandleFactorUp20Strategy extends FactorialCandleFactor20St
 
         buy.setCandleOnlyUpLength(2);
         buy.setCandleOnlyUpPointLength(5);
-        buy.setCandleOnlyUpBetweenPercent(0.8f);
+        buy.setCandleOnlyUpBetweenPercent(0.6f);
         buy.setCandleOnlyUpBetweenPointsPercent(0.25f);
         return buy;
     }
@@ -23,7 +23,7 @@ public class FactorialCandleFactorUp20Strategy extends FactorialCandleFactor20St
 
         sell.setCandleOnlyUpProfitMinPercent(0.5f);
         sell.setCandleOnlyUpStopLossPercent(0.6f);
-        sell.setCandleExitProfitInPercentMax(70f);
+        sell.setCandleExitProfitInPercentMax(50f);
         return sell;
     }
 }

@@ -833,6 +833,11 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         annotation += " CandleOnlyUpLength=" + buyCriteria.getCandleOnlyUpLength();
                         var intervalCandles = getCandleIntervals(keyCandles);
                         var order = orderService.findLastByFigiAndStrategy(candle.getFigi(), strategy);
+                        var upRes = isOrderCandleUp(strategy, candle, order, buyCriteria, sellCriteria);
+                        if (upRes.res) {
+                            annotation += upRes.annotation;
+                            order = null;
+                        }
                         if (
                                 null != intervalCandles
                                 && (order == null || order.getSellProfit().compareTo(BigDecimal.ZERO) > 0)
