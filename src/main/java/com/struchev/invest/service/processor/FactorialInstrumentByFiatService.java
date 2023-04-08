@@ -838,9 +838,22 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             annotation += upRes.annotation;
                             order = null;
                         }
+                        CandleIntervalResultData candleResDown = null;
+                        if (null != intervalCandles) {
+                            candleResDown = intervalCandles.stream().filter(c -> c.isDown).reduce((first, second) -> second).orElse(null);
+                            if (
+                                    null != candleResDown
+                                    && null != order
+                                    && candleResDown.getCandle().getClosingPrice().compareTo(order.getSellPrice()) > 0
+                            ) {
+                                annotation += " down after order";
+                                order = null;
+                            }
+                        }
                         if (
                                 null != intervalCandles
-                                && (order == null || order.getSellProfit().compareTo(BigDecimal.ZERO) > 0)
+                                && null != order
+                                && order.getSellProfit().compareTo(BigDecimal.ZERO) > 0
                         ) {
                             List<CandleIntervalResultData> sellPoints = new ArrayList<>();
                             CandleIntervalResultData lastSellPoint = candleIntervalResSell;
@@ -880,7 +893,6 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                     if (buyCriteria.getCandleOnlyUpBetweenPercent() != null) {
                                         if (order != null) {
                                             var percentOrderFromDown = 100f * (order.getSellPrice().floatValue() - order.getPurchasePrice().floatValue()) / order.getPurchasePrice().floatValue();
-                                            var candleResDown = intervalCandles.stream().filter(c -> c.isDown).reduce((first, second) -> second).orElse(null);
                                             if (
                                                     null != candleResDown
                                                     && candleResDown.getCandle().getClosingPrice().compareTo(order.getPurchasePrice()) < 0
