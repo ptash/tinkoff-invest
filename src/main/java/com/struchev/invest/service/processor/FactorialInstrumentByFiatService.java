@@ -883,14 +883,20 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                  null != candleResUpFirst
                             ) {
                                 annotation += " candleResUpFirst = " + notificationService.formatDateTime(candleResUpFirst.getCandle().getDateTime());
-                                var candlesBetween = candleHistoryService.getCandlesByFigiBetweenDateTimes(
+                                var candlesBetweenLast = candleHistoryService.getCandlesByFigiBetweenDateTimes(
+                                        candle.getFigi(),
+                                        candleResUp.getCandle().getDateTime(),
+                                        candleResDown.getCandle().getDateTime(),
+                                        strategy.getInterval()
+                                );
+                                var minPrice = candlesBetweenLast.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).min().orElse(-1);
+                                var candlesBetweenFirst = candleHistoryService.getCandlesByFigiBetweenDateTimes(
                                         candle.getFigi(),
                                         candleResUpFirst.getCandle().getDateTime(),
                                         candleResDown.getCandle().getDateTime(),
                                         strategy.getInterval()
                                 );
-                                var minPrice = candlesBetween.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).min().orElse(-1);
-                                var maxPrice = candlesBetween.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).max().orElse(-1);
+                                var maxPrice = candlesBetweenFirst.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).max().orElse(-1);
                                 lastTopPrice = (float) (maxPrice);
                                 lastBottomPrice = (float) minPrice;
                                 annotation += " new lastTopPrice = " + printPrice(lastTopPrice);
