@@ -1643,9 +1643,16 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                 candle.getDateTime(),
                                 strategy.getInterval()
                         );
-                        Double maxPrice = candles.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).max().orElse(-1);
-                        Double minPrice = candles.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).min().orElse(-1);
+                        Double maxPrice = intervalCandles.stream().filter(i -> i.getCandle().getDateTime().isAfter(order.getPurchaseDateTime()))
+                                .mapToDouble(i -> i.getCandle().getClosingPrice().doubleValue()).max().orElse(-1);
+                        Double minPrice = intervalCandles.stream().filter(i -> i.getCandle().getDateTime().isAfter(order.getPurchaseDateTime()))
+                                .mapToDouble(i -> i.getCandle().getClosingPrice().doubleValue()).max().orElse(-1);
+                        minPrice = Math.min(minPrice, order.getPurchasePrice().doubleValue());
+                        //Double maxPrice = candles.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).max().orElse(-1);
+                        //Double minPrice = candles.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).min().orElse(-1);
                         var percent = 100f * (candle.getClosingPrice().doubleValue() - minPrice) / (maxPrice - minPrice);
+                        annotation += " minPrice = " + printPrice(minPrice);
+                        annotation += " maxPrice = " + printPrice(maxPrice);
                         annotation += " CandleExitProfitInPercentMax: " + percent + " < " + sellCriteria.getCandleExitProfitInPercentMax();
                         res = percent < sellCriteria.getCandleExitProfitInPercentMax();
                         annotation += " = " + res;
