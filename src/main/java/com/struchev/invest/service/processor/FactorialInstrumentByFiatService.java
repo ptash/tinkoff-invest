@@ -879,9 +879,18 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                 if (sellPoints.size() > buyCriteria.getCandleOnlyUpLength()) {
                                     if (buyCriteria.getCandleOnlyUpBetweenPercent() != null) {
                                         if (order != null) {
+                                            var percentOrderFromDown = 100f * (order.getSellPrice().floatValue() - order.getPurchasePrice().floatValue()) / order.getPurchasePrice().floatValue();
+                                            var candleResDown = intervalCandles.stream().filter(c -> c.isDown).reduce((first, second) -> second).orElse(null);
+                                            if (
+                                                    null != candleResDown
+                                                    && candleResDown.getCandle().getClosingPrice().compareTo(order.getPurchasePrice()) < 0
+                                            ) {
+                                                annotation += " candleResDown = " + printPrice(candleResDown.getCandle().getClosingPrice());
+                                                percentOrderFromDown = 100f * (order.getSellPrice().floatValue() - candleResDown.getCandle().getClosingPrice().floatValue()) / candleResDown.getCandle().getClosingPrice().floatValue();
+                                            }
                                             var percent = 100f * (candle.getClosingPrice().floatValue() - order.getSellPrice().floatValue()) / candle.getClosingPrice().floatValue();
-                                            annotation += " percentB = " + printPrice(percent) + " > " + buyCriteria.getCandleOnlyUpBetweenPercent();
-                                            if (percent > buyCriteria.getCandleOnlyUpBetweenPercent()) {
+                                            annotation += " percentB = " + printPrice(percent) + " > " + printPrice(percentOrderFromDown);
+                                            if (percent > percentOrderFromDown) {
                                                 annotation += " candle UP OK";
                                                 var resBetween = true;
                                                 for (var iC = 0; iC < buyCriteria.getCandleOnlyUpLength() - 1 && null != buyCriteria.getCandleOnlyUpBetweenPointsPercent(); iC++) {
