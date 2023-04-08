@@ -1582,7 +1582,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     if (
                             !res
                             && !lastCandleInterval.isDown
-                            && order.getPurchasePrice().compareTo(candle.getClosingPrice()) < 0
+                            && order.getPurchasePrice().compareTo(candle.getClosingPrice()) > 0
                     ) {
                         if (sellCriteria.getCandleOnlyUpStopLossPercent() != null) {
                             var curProfitPercent = profitPercent;
@@ -1610,8 +1610,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         );
                         Double maxPrice = candles.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).max().orElse(-1);
                         Double minPrice = candles.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).min().orElse(-1);
-                        var percent = (candle.getClosingPrice().doubleValue() - minPrice) / (maxPrice - minPrice);
-                        annotation += " CandleExitProfitInPercentMax: " + percent + " > " + sellCriteria.getCandleExitProfitInPercentMax();
+                        var percent = 100f * (candle.getClosingPrice().doubleValue() - minPrice) / (maxPrice - minPrice);
+                        annotation += " CandleExitProfitInPercentMax: " + percent + " < " + sellCriteria.getCandleExitProfitInPercentMax();
                         res = percent < sellCriteria.getCandleExitProfitInPercentMax();
                         annotation += " = " + res;
                     }
