@@ -843,7 +843,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         CandleIntervalResultData candleResDownPrev;
                         CandleIntervalResultData candleResUpFirst = null;
                         CandleIntervalResultData candleResUp;
-                        Float lastDownPrice = null;
+                        Float lastTopPrice = null;
                         if (null != intervalCandles) {
                             candleResDown = intervalCandles.stream().filter(c -> c.isDown).reduce((first, second) -> second).orElse(null);
                             if (null != candleResDown) {
@@ -857,8 +857,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             }
                             if (null != candleResUp) {
                                 annotation += " candleResUpLast = " + notificationService.formatDateTime(candleResUp.getCandle().getDateTime());
-                                lastDownPrice = candleResUp.getCandle().getClosingPrice().floatValue() - candleResDown.getCandle().getClosingPrice().floatValue();
-                                annotation += " lastDownPrice = " + printPrice(lastDownPrice);
+                                lastTopPrice = candleResUp.getCandle().getClosingPrice().floatValue();
+                                annotation += " lastTopPrice = " + printPrice(lastTopPrice);
                                 CandleIntervalResultData finalCandleResUp = candleResUp;
                                 candleResDownPrev = intervalCandles.stream().filter(c ->
                                         c.isDown
@@ -886,8 +886,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                 );
                                 var minPrice = candlesBetween.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).min().orElse(-1);
                                 var maxPrice = candlesBetween.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).max().orElse(-1);
-                                lastDownPrice = (float) (maxPrice - minPrice);
-                                annotation += " new lastDownPrice = " + printPrice(lastDownPrice);
+                                lastTopPrice = (float) (maxPrice);
+                                annotation += " new lastTopPrice = " + printPrice(lastTopPrice);
                             }
                             if (
                                     null != candleResDown
@@ -957,7 +957,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                             var percent = 100f * (candle.getClosingPrice().floatValue() - order.getSellPrice().floatValue()) / candle.getClosingPrice().floatValue();
                                             annotation += " percentB = " + printPrice(percent) + " > " + printPrice(percentOrderFromDown);
                                             if (percent > percentOrderFromDown
-                                                    && (priceFromDown == null && lastDownPrice == null || lastDownPrice < priceFromDown)
+                                                    && (lastTopPrice == null || lastTopPrice < candle.getClosingPrice().floatValue())
                                             ) {
                                                 annotation += " candle UP OK";
                                                 var resBetween = true;
@@ -1648,15 +1648,6 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             }
             if (sellCriteria.getProfitPercentFromSellMinPrice() != null) {
                 var sellData = getCashedIsBuyValue(keySell);
-                if (null == sellData
-                        && sellCriteria.getProfitPercentFromSellMinPriceLength() > 1
-                ) {
-                    String keyPrev = buildKeyHour("sellUp" + candle.getFigi(), curHourCandle);
-                    sellData = getCashedIsBuyValue(keyPrev);
-                    if (null != sellData) {
-                        keySell = keyPrev;
-                    }
-                }
                 if (res || null != sellData) {
                     annotation += " sellUpKEY=" + keySell;
                     if (res) {
