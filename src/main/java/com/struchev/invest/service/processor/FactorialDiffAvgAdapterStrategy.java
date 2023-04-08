@@ -72,6 +72,9 @@ public class FactorialDiffAvgAdapterStrategy extends AInstrumentByFiatFactorialS
         if (strategyBuy.getCandleOnlyUpBetweenPercent() != null) {
             buy.setCandleOnlyUpBetweenPercent(strategyBuy.getCandleOnlyUpBetweenPercent() * getPriceDiffAvg());
         }
+        if (strategyBuy.getCandleOnlyUpBetweenPointsPercent() != null) {
+            buy.setCandleOnlyUpBetweenPointsPercent(strategyBuy.getCandleOnlyUpBetweenPointsPercent() * getPriceDiffAvg());
+        }
         return buy;
     }
 

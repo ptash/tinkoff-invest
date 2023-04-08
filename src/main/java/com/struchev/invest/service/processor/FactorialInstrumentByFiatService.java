@@ -879,7 +879,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                             if (percent > buyCriteria.getCandleOnlyUpBetweenPercent()) {
                                                 annotation += " candle UP OK";
                                                 var resBetween = true;
-                                                for (var iC = 0; iC < buyCriteria.getCandleOnlyUpLength() - 1; iC++) {
+                                                for (var iC = 0; iC < buyCriteria.getCandleOnlyUpLength() - 1 && null != buyCriteria.getCandleOnlyUpBetweenPointsPercent(); iC++) {
                                                     var pointUp = sellPoints.get(iC);
                                                     var pointDown = sellPoints.get(iC + 1);
                                                     if (pointUp.candle.getClosingPrice().compareTo(pointDown.candle.getClosingPrice()) < 0) {
@@ -898,8 +898,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                                     );
                                                     var minPrice = candlesBetween.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).min().orElse(-1);
                                                     var percentMin = 100f * (pointDown.getCandle().getClosingPrice().doubleValue() - minPrice) / minPrice;
-                                                    annotation += "percentMin = " + printPrice(percentMin) + " < " + printPrice(buyCriteria.getCandleOnlyUpBetweenPercent());
-                                                    if (percentMin > buyCriteria.getCandleOnlyUpBetweenPercent()) {
+                                                    annotation += "percentMin = " + printPrice(percentMin) + " < " + printPrice(buyCriteria.getCandleOnlyUpBetweenPointsPercent());
+                                                    if (percentMin > buyCriteria.getCandleOnlyUpBetweenPointsPercent()) {
                                                         resBetween = false;
                                                         annotation += " FALSE";
                                                         break;
