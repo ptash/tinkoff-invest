@@ -970,7 +970,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                             }
                                             var percent = 100f * (candle.getClosingPrice().floatValue() - order.getSellPrice().floatValue()) / candle.getClosingPrice().floatValue();
                                             annotation += " percentB = " + printPrice(percent) + " > " + printPrice(percentOrderFromDown);
-                                            if (percent > percentOrderFromDown
+                                            if (true
+                                                    //&& percent > percentOrderFromDown
                                                     && (lastTopPrice == null || lastTopPrice < candle.getClosingPrice().floatValue())
                                                     && (lastBetweenPrice == null || priceFromDown == null || lastBetweenPrice < priceFromDown)
                                                     && (lastBetweenPrice == null || priceFromDown == null || 3 * lastBetweenPrice > priceFromDown)
@@ -1641,6 +1642,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     && null != sellCriteria.getCandleOnlyUpProfitMinPercent()
                     && isOrderUpCandle
             ) {
+                res = false;
                 var sellData = getCashedIsBuyValue(keySell);
                 if (sellData == null) {
                     annotation += " CandleOnlyUpProfitMinPercent = " + sellCriteria.getCandleOnlyUpProfitMinPercent();
