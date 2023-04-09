@@ -16,7 +16,7 @@ public class FactorialCandle20Strategy extends Factorial2Strategy {
         buy.setTakeProfitLossPercent(null);
 
 
-        buy.setCandleMaxIntervalLess(400);
+        buy.setCandleMaxIntervalLess(2400);
         buy.setCandleMaxInterval(180);
         buy.setCandleIntervalMinPercent(1.f);
         buy.setCandleMinLength(6);

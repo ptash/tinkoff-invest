@@ -30,7 +30,7 @@ public class FactorialStrategy extends AInstrumentByFiatFactorialStrategy {
         //FIGIES.put("FUTNASD03230", 1); // NAH3 NASD-3.23 Nasdaq 100
         //FIGIES.put("FUTNASD06230", 1); // NAM3 NASD-6.23 Nasdaq 100
         //FIGIES.put("FUTGOLD03230", 1); // GDH3 GOLD-3.23 Золото
-        //FIGIES.put("FUTGOLD06230", 1); // GDM3 GOLD-6.23 Золото
+        FIGIES.put("FUTGOLD06230", 1); // GDM3 GOLD-6.23 Золото
         //FIGIES.put("FUTCNY032300", 1); // CRH3 GCNY-3.23 Курс Юань - Рубль
         //FIGIES.put("FUTCNY062300", 1); // CRM3 CNY-6.23 Курс Юань - Рубль
 
