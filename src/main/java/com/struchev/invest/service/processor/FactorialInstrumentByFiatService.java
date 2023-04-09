@@ -972,6 +972,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                             annotation += " percentB = " + printPrice(percent) + " > " + printPrice(percentOrderFromDown);
                                             if (true
                                                     //&& percent > percentOrderFromDown
+                                                    && percent > 0
                                                     && (lastTopPrice == null || lastTopPrice < candle.getClosingPrice().floatValue())
                                                     && (lastBetweenPrice == null || priceFromDown == null || lastBetweenPrice < priceFromDown)
                                                     && (lastBetweenPrice == null || priceFromDown == null || 3 * lastBetweenPrice > priceFromDown)
