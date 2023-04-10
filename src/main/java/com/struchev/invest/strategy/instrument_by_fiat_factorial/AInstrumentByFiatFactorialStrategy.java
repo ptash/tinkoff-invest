@@ -1,10 +1,8 @@
 package com.struchev.invest.strategy.instrument_by_fiat_factorial;
 
-import com.struchev.invest.entity.CandleDomainEntity;
 import com.struchev.invest.strategy.AStrategy;
 import lombok.Builder;
 import lombok.Data;
-import org.springframework.data.relational.core.sql.In;
 
 import java.math.BigDecimal;
 import java.time.Duration;
@@ -227,7 +225,10 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
         Float candleOnlyUpBetweenPointsPercent;
         Integer candleOnlyUpPointLength;
         Integer candleOnlyUpLength;
+        Integer candleUpDownSkipLength;
         Integer candleUpSkipLength;
+        Float candleUpMinFactor;
+        Float candleUpMaxFactor;
 
 
         String candleInterval;

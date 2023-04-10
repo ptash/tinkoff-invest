@@ -15,7 +15,10 @@ public class FactorialCandleFactorUp20Strategy extends FactorialCandleFactor20St
         buy.setCandleOnlyUpPointLength(5);
         buy.setCandleOnlyUpBetweenPercent(0.8f);
         buy.setCandleOnlyUpBetweenPointsPercent(null);
-        buy.setCandleUpSkipLength(5);
+        buy.setCandleUpDownSkipLength(5);
+        buy.setCandleUpSkipLength(4);
+        buy.setCandleUpMinFactor(0.5f);
+        buy.setCandleUpMaxFactor(2f);
         return buy;
     }
 

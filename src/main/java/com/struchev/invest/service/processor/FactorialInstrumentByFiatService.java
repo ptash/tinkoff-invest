@@ -911,12 +911,21 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                             //annotation += " percentB = " + printPrice(percent) + " > " + printPrice(percentOrderFromDown);
                                             var percent = 100f * (candle.getClosingPrice().floatValue() - lastTopPrice) / lastTopPrice;
                                             annotation += " percentB = " + printPrice(percent) + " > " + printPrice(sellCriteria.getCandleProfitMinPercent());
+                                            var upSize = intervalCandles.stream().filter(ic ->
+                                                    !ic.isDown
+                                                    && ic.getCandle().getDateTime().isAfter(candleResDown.getCandle().getDateTime())
+                                                    && ic.getCandle().getClosingPrice().floatValue() > lastTopPrice
+                                            ).count() + 1;
+                                            annotation += " upSize=" + upSize;
                                             if (true
                                                     //&& percent > sellCriteria.getCandleProfitMinPercent()
                                                     && percent > 0
+                                                    && ((buyCriteria.getCandleUpSkipLength() == null || upSize > buyCriteria.getCandleUpSkipLength())
+                                                        || ((buyCriteria.getCandleUpSkipLength() == null && buyCriteria.getCandleMinFactor() == null)
+                                                                && buyCriteria.getCandleMinFactor() * lastBetweenPrice < priceFromDown))
                                                     && (lastTopPrice == null || lastTopPrice < candle.getClosingPrice().floatValue())
                                                     && (lastBetweenPrice == null || priceFromDown == null || lastBetweenPrice < priceFromDown)
-                                                    && (lastBetweenPrice == null || priceFromDown == null || 2 * lastBetweenPrice > priceFromDown)
+                                                    && (lastBetweenPrice == null || priceFromDown == null || buyCriteria.getCandleMaxFactor() == null || buyCriteria.getCandleMaxFactor() * lastBetweenPrice > priceFromDown)
                                             ) {
                                                 annotation += " candle UP OK";
                                                 var resBetween = true;
@@ -2313,12 +2322,12 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             finalCandleResUpFirst.getCandle().getDateTime().compareTo(c.getCandle().getDateTime()) <= 0
                                 && finalCandleResUp1.getCandle().getDateTime().compareTo(c.getCandle().getDateTime()) >= 0
                     ).collect(Collectors.toList());
-                    annotation += "+" + upCount + " intervalsBetweenLast.size=" + intervalsBetweenLast.size();
-                    if (null != strategy.getBuyCriteria().getCandleUpSkipLength() && (intervalsBetweenLast.size() + upCount) < strategy.getBuyCriteria().getCandleUpSkipLength()) {
-                        annotation += " < " + strategy.getBuyCriteria().getCandleUpSkipLength();
+                    annotation += " intervalsBetweenLast.size=" + intervalsBetweenLast.size() + "+" + upCount;
+                    if (null != strategy.getBuyCriteria().getCandleUpDownSkipLength() && (intervalsBetweenLast.size() + upCount) < strategy.getBuyCriteria().getCandleUpDownSkipLength()) {
+                        annotation += " < " + strategy.getBuyCriteria().getCandleUpDownSkipLength();
+                        upCount += intervalsBetweenLast.size();
                         continue;
                     }
-                    upCount += intervalsBetweenLast.size();
                     var candlesBetweenLast = candleHistoryService.getCandlesByFigiBetweenDateTimes(
                             candle.getFigi(),
                             candleResUp.getCandle().getDateTime(),
