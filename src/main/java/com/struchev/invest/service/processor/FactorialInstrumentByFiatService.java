@@ -919,16 +919,18 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                             annotation += " upSize=" + upSize;
                                             var priceFromTop = candle.getClosingPrice().floatValue() - lastTopPrice;
                                             annotation += " priceFromTop=" + priceFromTop;
-                                            annotation += " MinFactorPrice=" + printPrice(buyCriteria.getCandleMinFactor() * lastBetweenPrice);
+                                            annotation += " MinFactorPrice=" + printPrice(buyCriteria.getCandleUpMinFactor() * lastBetweenPrice);
                                             if (true
                                                     //&& percent > sellCriteria.getCandleProfitMinPercent()
                                                     && percent > 0
                                                     && ((buyCriteria.getCandleUpSkipLength() == null || upSize > buyCriteria.getCandleUpSkipLength())
                                                         || ((buyCriteria.getCandleUpSkipLength() == null && buyCriteria.getCandleMinFactor() == null)
-                                                                || buyCriteria.getCandleMinFactor() * lastBetweenPrice < priceFromTop))
+                                                                || (buyCriteria.getCandleUpMinFactor() * lastBetweenPrice < priceFromTop
+                                                                        //&& percent > sellCriteria.getCandleProfitMinPercent()
+                                                                    )))
                                                     && (lastTopPrice == null || lastTopPrice < candle.getClosingPrice().floatValue())
                                                     && (lastBetweenPrice == null || priceFromDown == null || lastBetweenPrice < priceFromDown)
-                                                    && (lastBetweenPrice == null || priceFromDown == null || buyCriteria.getCandleMaxFactor() == null || buyCriteria.getCandleMaxFactor() * lastBetweenPrice > priceFromDown)
+                                                    && (lastBetweenPrice == null || priceFromDown == null || buyCriteria.getCandleUpMaxFactor() == null || buyCriteria.getCandleUpMaxFactor() * lastBetweenPrice > priceFromDown)
                                             ) {
                                                 annotation += " candle UP OK";
                                                 var resBetween = true;
