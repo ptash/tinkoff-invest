@@ -926,7 +926,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                                     && ((buyCriteria.getCandleUpSkipLength() == null || upSize > buyCriteria.getCandleUpSkipLength())
                                                         || ((buyCriteria.getCandleUpSkipLength() == null && buyCriteria.getCandleMinFactor() == null)
                                                                 || (buyCriteria.getCandleUpMinFactor() * lastBetweenPrice < priceFromTop
-                                                                        //&& percent > sellCriteria.getCandleProfitMinPercent()
+                                                                        && percent > sellCriteria.getCandleProfitMinPercent()
                                                                     )))
                                                     && (lastTopPrice == null || lastTopPrice < candle.getClosingPrice().floatValue())
                                                     && (lastBetweenPrice == null || priceFromDown == null || lastBetweenPrice < priceFromDown)
