@@ -917,12 +917,15 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                                     && ic.getCandle().getClosingPrice().floatValue() > lastTopPrice
                                             ).count() + 1;
                                             annotation += " upSize=" + upSize;
+                                            var priceFromTop = candle.getClosingPrice().floatValue() - lastTopPrice;
+                                            annotation += " priceFromTop=" + priceFromTop;
+                                            annotation += " MinFactorPrice=" + printPrice(buyCriteria.getCandleMinFactor() * lastBetweenPrice);
                                             if (true
                                                     //&& percent > sellCriteria.getCandleProfitMinPercent()
                                                     && percent > 0
                                                     && ((buyCriteria.getCandleUpSkipLength() == null || upSize > buyCriteria.getCandleUpSkipLength())
                                                         || ((buyCriteria.getCandleUpSkipLength() == null && buyCriteria.getCandleMinFactor() == null)
-                                                                && buyCriteria.getCandleMinFactor() * lastBetweenPrice < priceFromDown))
+                                                                || buyCriteria.getCandleMinFactor() * lastBetweenPrice < priceFromTop))
                                                     && (lastTopPrice == null || lastTopPrice < candle.getClosingPrice().floatValue())
                                                     && (lastBetweenPrice == null || priceFromDown == null || lastBetweenPrice < priceFromDown)
                                                     && (lastBetweenPrice == null || priceFromDown == null || buyCriteria.getCandleMaxFactor() == null || buyCriteria.getCandleMaxFactor() * lastBetweenPrice > priceFromDown)
