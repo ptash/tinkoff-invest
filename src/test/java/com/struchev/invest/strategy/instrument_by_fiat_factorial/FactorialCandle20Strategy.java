@@ -30,7 +30,7 @@ public class FactorialCandle20Strategy extends Factorial2Strategy {
 
     public SellCriteria getSellCriteria() {
         var sell = super.getSellCriteria();
-        sell.setCandleMaxIntervalLess(400);
+        sell.setCandleMaxIntervalLess(2400);
         sell.setCandleMaxInterval(180);
         sell.setCandleIntervalMinPercent(0.5f);
         sell.setCandleMinLength(6);

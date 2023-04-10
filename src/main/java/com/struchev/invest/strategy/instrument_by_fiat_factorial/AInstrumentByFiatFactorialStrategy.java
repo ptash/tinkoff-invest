@@ -227,6 +227,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
         Float candleOnlyUpBetweenPointsPercent;
         Integer candleOnlyUpPointLength;
         Integer candleOnlyUpLength;
+        Integer candleUpSkipLength;
 
 
         String candleInterval;

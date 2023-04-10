@@ -18,6 +18,7 @@ import java.math.RoundingMode;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -840,6 +841,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             order = null;
                         }
 
+                        annotation += candleIntervalUpDownData.annotation;
                         CandleIntervalResultData candleResDown = candleIntervalUpDownData.endPost;
                         Float lastBottomPrice = candleIntervalUpDownData.minClose;
                         Float lastTopPrice = candleIntervalUpDownData.maxClose;
@@ -2242,69 +2244,95 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         var intervalCandles = getCandleIntervals(keyCandles);
 
         CandleIntervalResultData candleResDown;
-        CandleIntervalResultData candleResDownPrev;
+        CandleIntervalResultData candleResDownLast = null;
+        CandleIntervalResultData candleResDownPrev = null;
         CandleIntervalResultData candleResUpFirst = null;
-        CandleIntervalResultData candleResUp;
+        CandleIntervalResultData candleResUp = null;
         Float lastBottomPrice = null;
         Float lastTopPrice = null;
         Float lastBetweenPrice = null;
         String annotation = "";
         if (null != intervalCandles) {
-            candleResDown = intervalCandles.stream().filter(c -> c.isDown).reduce((first, second) -> second).orElse(null);
-            if (null != candleResDown) {
-                annotation += " candleResDown = " + notificationService.formatDateTime(candleResDown.getCandle().getDateTime());
-                candleResUp = intervalCandles.stream().filter(c ->
-                        !c.isDown
-                                && candleResDown.getCandle().getDateTime().compareTo(c.getCandle().getDateTime()) > 0
-                ).reduce((first, second) -> second).orElse(null);
-            } else {
-                candleResUp = null;
-            }
-            if (null != candleResUp) {
-                annotation += " candleResUpLast = " + notificationService.formatDateTime(candleResUp.getCandle().getDateTime());
-                lastTopPrice = candleResUp.getCandle().getClosingPrice().floatValue();
-                lastBottomPrice = candleResDown.getCandle().getClosingPrice().floatValue();
-                annotation += " lastTopPrice = " + printPrice(lastTopPrice);
-                lastBetweenPrice = lastTopPrice - lastBottomPrice;
-                annotation += " lastBetweenPrice = " + printPrice(lastBetweenPrice);
-                CandleIntervalResultData finalCandleResUp = candleResUp;
-                candleResDownPrev = intervalCandles.stream().filter(c ->
-                        c.isDown
-                                && finalCandleResUp.getCandle().getDateTime().compareTo(c.getCandle().getDateTime()) > 0
-                ).reduce((first, second) -> second).orElse(null);
-            } else {
-                candleResDownPrev = null;
-            }
-            if (null != candleResDownPrev) {
-                candleResUpFirst = intervalCandles.stream().filter(c ->
-                        !c.isDown
-                                && candleResDownPrev.getCandle().getDateTime().compareTo(c.getCandle().getDateTime()) < 0
-                                && candleResDown.getCandle().getDateTime().compareTo(c.getCandle().getDateTime()) > 0
-                ).findFirst().orElse(null);
-            }
-            if (
-                    null != candleResUpFirst
-            ) {
-                annotation += " candleResUpFirst = " + notificationService.formatDateTime(candleResUpFirst.getCandle().getDateTime());
-                var candlesBetweenLast = candleHistoryService.getCandlesByFigiBetweenDateTimes(
-                        candle.getFigi(),
-                        candleResUp.getCandle().getDateTime(),
-                        candleResDown.getCandle().getDateTime(),
-                        strategy.getInterval()
-                );
-                var minPrice = candlesBetweenLast.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).min().orElse(-1);
-                var candlesBetweenFirst = candleHistoryService.getCandlesByFigiBetweenDateTimes(
-                        candle.getFigi(),
-                        candleResUpFirst.getCandle().getDateTime(),
-                        candleResDown.getCandle().getDateTime(),
-                        strategy.getInterval()
-                );
-                var maxPrice = candlesBetweenFirst.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).max().orElse(-1);
-                lastTopPrice = (float) (maxPrice);
-                lastBottomPrice = (float) minPrice;
-                annotation += " new lastTopPrice = " + printPrice(lastTopPrice);
-                lastBetweenPrice = (float) (maxPrice - minPrice);
-                annotation += " lastBetweenPrice = " + printPrice(lastBetweenPrice);
+            for (var iC = 0; iC < 200; iC ++) {
+                if (null == candleResUpFirst) {
+                    candleResDownLast = candleResDown = intervalCandles.stream().filter(c -> c.isDown).reduce((first, second) -> second).orElse(null);
+                } else {
+                    CandleIntervalResultData finalCandleResUpFirst1 = candleResUpFirst;
+                    candleResDown = intervalCandles.stream().filter(c ->
+                            c.isDown
+                            && finalCandleResUpFirst1.getCandle().getDateTime().compareTo(c.getCandle().getDateTime()) > 0
+                    ).reduce((first, second) -> second).orElse(null);
+                }
+                if (null != candleResDown) {
+                    annotation += " candleResDown = " + notificationService.formatDateTime(candleResDown.getCandle().getDateTime());
+                    CandleIntervalResultData finalCandleResDown = candleResDown;
+                    candleResUp = intervalCandles.stream().filter(c ->
+                            !c.isDown
+                                    && finalCandleResDown.getCandle().getDateTime().compareTo(c.getCandle().getDateTime()) > 0
+                    ).reduce((first, second) -> second).orElse(null);
+                } else {
+                    candleResUp = null;
+                    break;
+                }
+                if (null != candleResUp) {
+                    annotation += " candleResUpLast = " + notificationService.formatDateTime(candleResUp.getCandle().getDateTime());
+                    lastTopPrice = candleResUp.getCandle().getClosingPrice().floatValue();
+                    lastBottomPrice = candleResDown.getCandle().getClosingPrice().floatValue();
+                    annotation += " lastTopPrice = " + printPrice(lastTopPrice);
+                    lastBetweenPrice = lastTopPrice - lastBottomPrice;
+                    annotation += " lastBetweenPrice = " + printPrice(lastBetweenPrice);
+                    CandleIntervalResultData finalCandleResUp = candleResUp;
+                    candleResDownPrev = intervalCandles.stream().filter(c ->
+                            c.isDown
+                                    && finalCandleResUp.getCandle().getDateTime().compareTo(c.getCandle().getDateTime()) > 0
+                    ).reduce((first, second) -> second).orElse(null);
+                } else {
+                    candleResDownPrev = null;
+                }
+                if (null != candleResDownPrev) {
+                    CandleIntervalResultData finalCandleResDownPrev = candleResDownPrev;
+                    CandleIntervalResultData finalCandleResDown1 = candleResDown;
+                    candleResUpFirst = intervalCandles.stream().filter(c ->
+                            !c.isDown
+                                    && finalCandleResDownPrev.getCandle().getDateTime().compareTo(c.getCandle().getDateTime()) < 0
+                                    && finalCandleResDown1.getCandle().getDateTime().compareTo(c.getCandle().getDateTime()) > 0
+                    ).findFirst().orElse(null);
+                }
+
+                if (null != candleResUpFirst) {
+                    annotation += " candleResUpFirst = " + notificationService.formatDateTime(candleResUpFirst.getCandle().getDateTime());
+                    CandleIntervalResultData finalCandleResUpFirst = candleResUpFirst;
+                    CandleIntervalResultData finalCandleResUp1 = candleResUp;
+                    var intervalsBetweenLast = intervalCandles.stream().filter(c ->
+                            finalCandleResUpFirst.getCandle().getDateTime().compareTo(c.getCandle().getDateTime()) <= 0
+                                && finalCandleResUp1.getCandle().getDateTime().compareTo(c.getCandle().getDateTime()) >= 0
+                    ).collect(Collectors.toList());
+                    annotation += " intervalsBetweenLast.size=" + intervalsBetweenLast.size();
+                    if (null != strategy.getBuyCriteria().getCandleUpSkipLength() && intervalsBetweenLast.size() < strategy.getBuyCriteria().getCandleUpSkipLength()) {
+                        annotation += " < " + strategy.getBuyCriteria().getCandleUpSkipLength();
+                        continue;
+                    }
+                    var candlesBetweenLast = candleHistoryService.getCandlesByFigiBetweenDateTimes(
+                            candle.getFigi(),
+                            candleResUp.getCandle().getDateTime(),
+                            candleResDownLast.getCandle().getDateTime(),
+                            strategy.getInterval()
+                    );
+                    var minPrice = candlesBetweenLast.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).min().orElse(-1);
+                    var candlesBetweenFirst = candleHistoryService.getCandlesByFigiBetweenDateTimes(
+                            candle.getFigi(),
+                            candleResUpFirst.getCandle().getDateTime(),
+                            candleResDownLast.getCandle().getDateTime(),
+                            strategy.getInterval()
+                    );
+                    var maxPrice = candlesBetweenFirst.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).max().orElse(-1);
+                    lastTopPrice = (float) (maxPrice);
+                    lastBottomPrice = (float) minPrice;
+                    annotation += " new lastTopPrice = " + printPrice(lastTopPrice);
+                    lastBetweenPrice = (float) (maxPrice - minPrice);
+                    annotation += " lastBetweenPrice = " + printPrice(lastBetweenPrice);
+                    break;
+                }
             }
         } else {
             candleResDownPrev = null;
@@ -2317,11 +2345,11 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 .minClose(lastBottomPrice)
                 .maxClose(lastTopPrice)
                 .priceBegin(candleResUp == null ? null : candleResUp.getCandle().getClosingPrice().floatValue())
-                .priceEnd(candleResDown == null ? null : candleResDown.getCandle().getClosingPrice().floatValue())
+                .priceEnd(candleResDownLast == null ? null : candleResDownLast.getCandle().getClosingPrice().floatValue())
                 .beginPre(candleResDownPrev)
                 .begin(candleResUpFirst)
                 .end(candleResUp)
-                .endPost(candleResDown)
+                .endPost(candleResDownLast)
                 .isDown(true)
                 .build();
     }
