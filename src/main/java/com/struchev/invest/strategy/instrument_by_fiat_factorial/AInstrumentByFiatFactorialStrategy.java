@@ -138,7 +138,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
 
                 .exitLossPercent(4f)
                 .isSellUnderProfit(false)
-                .sellUnderLossLength(2)
+                .sellUnderLossLength(3)
                 .isExitProfitInPercentMaxMax(false)
                 .exitProfitInPercentMaxForLoss(null)
                 .exitProfitInPercentMaxLoopIgnoreSize(0)

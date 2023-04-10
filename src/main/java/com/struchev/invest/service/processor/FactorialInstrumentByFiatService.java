@@ -843,7 +843,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         CandleIntervalResultData candleResDown = candleIntervalUpDownData.endPost;
                         Float lastBottomPrice = candleIntervalUpDownData.minClose;
                         Float lastTopPrice = candleIntervalUpDownData.maxClose;
-                        Float lastBetweenPrice = lastTopPrice - lastBottomPrice;
+                        Float lastBetweenPrice = lastTopPrice != null && lastBottomPrice != null ? lastTopPrice - lastBottomPrice : null;
 
                         if (
                                 null != candleResDown
@@ -1323,8 +1323,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             var isOrdeCrossTunel = orderAvg > order.getPurchasePrice().doubleValue();
             if (factorial.getLoss() > candle.getClosingPrice().doubleValue()) {
                 var candleListPrevProfit = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
-                        candle.getDateTime(),  sellCriteria.getSellUnderLossLength(), strategy.getFactorialInterval());
-                annotation += " time=" + candleListPrevProfit.get(0).getDateTime();
+                        candle.getDateTime().plusHours(1), sellCriteria.getSellUnderLossLength(), strategy.getFactorialInterval());
+                annotation += " time=" + candleListPrevProfit.get(0).getDateTime() + "(" + sellCriteria.getSellUnderLossLength() + ")";
                 isOrdeCrossTunel = candleListPrevProfit.get(0).getDateTime().isAfter(order.getPurchaseDateTime());
             } else {
                 if (!isOrdeCrossTunel) {
@@ -2316,8 +2316,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 .annotation(annotation)
                 .minClose(lastBottomPrice)
                 .maxClose(lastTopPrice)
-                .priceBegin(candleResUp.getCandle().getClosingPrice().floatValue())
-                .priceEnd(candleResDown.getCandle().getClosingPrice().floatValue())
+                .priceBegin(candleResUp == null ? null : candleResUp.getCandle().getClosingPrice().floatValue())
+                .priceEnd(candleResDown == null ? null : candleResDown.getCandle().getClosingPrice().floatValue())
                 .beginPre(candleResDownPrev)
                 .begin(candleResUpFirst)
                 .end(candleResUp)

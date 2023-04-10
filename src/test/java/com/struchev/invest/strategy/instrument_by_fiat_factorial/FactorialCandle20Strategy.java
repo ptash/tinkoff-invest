@@ -47,7 +47,7 @@ public class FactorialCandle20Strategy extends Factorial2Strategy {
         sell.setStopLossSoftPercent(null);
 
         sell.setIsSellUnderProfit(true);
-        sell.setSellUnderLossLength(1);
+        sell.setSellUnderLossLength(2);
 
         sell.setProfitPercentFromSellMinPrice(0.01f);
         sell.setProfitPercentFromSellMaxPrice(0.05f);
