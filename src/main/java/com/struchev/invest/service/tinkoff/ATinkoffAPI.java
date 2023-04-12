@@ -62,6 +62,10 @@ public abstract class ATinkoffAPI implements ITinkoffCommonAPI, ITinkoffOrderAPI
         if (null == token || token.isEmpty()) {
             throw new RuntimeException("Token is empty");
         }
+        log.info("Current token: {}***", token.substring(0, 5));
+        if (isSandboxMode) {
+            log.info("Sandbox Mode");
+        }
         api = isSandboxMode ? InvestApi.createSandbox(token, "roman-struchev") : InvestApi.create(token, "roman-struchev");
 
         // Проверяем, что аккаунт существует (если задан в конфигах) или выбираем первый
@@ -72,7 +76,8 @@ public abstract class ATinkoffAPI implements ITinkoffCommonAPI, ITinkoffOrderAPI
         var account = accounts.stream()
                 .filter(a -> a.getType() == AccountType.ACCOUNT_TYPE_TINKOFF)
                 .filter(a -> StringUtils.isEmpty(accountId) || accountId.equals(a.getId()))
-                .findFirst().orElseThrow(() -> new RuntimeException("Account was not found for token " + token));
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Account was not found for token " + token));
         log.info("Will use Account id {}, name {}", account.getId(), account.getName());
         accountId = account.getId();
         config.getAccountIdByCurrency().forEach((k, v) -> log.info("Account by {}: {}", k, v));
