@@ -258,20 +258,20 @@ public class NotificationService {
     public void reportStrategyExt(Boolean res, AStrategy strategy, CandleDomainEntity candle, String headerLine, String format, Object... arguments) {
         var key = strategy.getName() + candle.getFigi();
         var reportData = getReportData(key);
-        if (res) {
-            log.info(getStrategyReportLogMarker(strategy, candle.getFigi(), headerLine), format, arguments);
-        } else if (
-                null != reportData
-                && !formatDateTime(reportData.getCandle().getDateTime()).equals(formatDateTime(candle.getDateTime()))
+        if (
+            null != reportData
+            && !formatDateTime(reportData.getCandle().getDateTime()).equals(formatDateTime(candle.getDateTime()))
         ) {
             log.info(getStrategyReportLogMarker(strategy, candle.getFigi(), reportData.getHeaderLine()), reportData.getFormat(), reportData.getArguments());
+        } else if (res) {
+            log.info(getStrategyReportLogMarker(strategy, candle.getFigi(), headerLine), format, arguments);
         }
         addReportData(key, ReportData.builder()
-                .candle(candle)
-                .headerLine(headerLine)
-                .format(format)
-                .arguments(arguments)
-                .build());
+            .candle(candle)
+            .headerLine(headerLine)
+            .format(format)
+            .arguments(arguments)
+            .build());
     }
 
     private Marker getStrategyReportLogMarker(AStrategy strategy, String figi, String headerLine)

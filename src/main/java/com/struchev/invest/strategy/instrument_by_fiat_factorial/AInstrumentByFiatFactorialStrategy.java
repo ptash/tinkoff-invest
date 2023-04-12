@@ -109,6 +109,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
         Float candleOnlyUpProfitMinPercent;
         Float candleOnlyUpStopLossPercent;
         Float candleProfitMinPercent;
+        Float candlePriceMinFactor;
         Float candleExitProfitInPercentMax;
 
 
@@ -221,6 +222,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
         Float candlePriceMinMaxFactor;
         Float candleMinFactor;
         Float candleMaxFactor;
+        Float candleProfitMinPercent;
         Float candleOnlyUpBetweenPercent;
         Float candleOnlyUpBetweenPointsPercent;
         Integer candleOnlyUpPointLength;
@@ -229,6 +231,10 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
         Integer candleUpSkipLength;
         Float candleUpMinFactor;
         Float candleUpMaxFactor;
+        Float candleUpMinSizePercent;
+        Boolean isCandleUpAny;
+        Float candleUpMinFactorAny;
+        Float candleUpMaxFactorAny;
 
 
         String candleInterval;
@@ -277,6 +283,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
                 .notLossSellLength(1)
                 .notLossSellPercent(0.1f)
                 .notLossSellPercentDiff(0.5f)
+                .isCandleUpAny(false)
                 .candleInterval("1min")
                 .build();
     }

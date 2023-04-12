@@ -36,6 +36,13 @@ public class FactorialDiffAvgAdapterStrategy extends AInstrumentByFiatFactorialS
         return priceDiffAvgReal / this.strategy.getPriceDiffAvg();
     }
 
+    public String getName() {
+        if (null == strategy) {
+            return super.getName();
+        }
+        return strategy.getName();
+    }
+
     public BuyCriteria getBuyCriteria() {
         if (buy != null) {
             return buy;

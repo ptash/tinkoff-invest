@@ -16,12 +16,15 @@ public class FactorialCandleFactor20Strategy extends FactorialCandle20Strategy {
         buy.setCandlePriceMinMaxFactor(0.15f);
         buy.setCandleMinFactor(0.5f);
         buy.setCandleMaxFactor(10f);
+        buy.setCandleProfitMinPercent(0.24f);
         return buy;
     }
 
     public SellCriteria getSellCriteria() {
         var sell = super.getSellCriteria();
         sell.setCandleProfitMinPercent(0.12f);
+        sell.setCandlePriceMinFactor(0.5f);
+        //sell.setSellUnderLossLength(2);
         return sell;
     }
 }
