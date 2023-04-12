@@ -1354,8 +1354,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     isOrdeCrossTunel = curBeginHour.isAfter(order.getPurchaseDateTime());
                 }
             }
+            annotation += " isOrdeCrossTunel = " + isOrdeCrossTunel;
             if (isOrdeCrossTunel
-                    || candleListPrev.get(0).getDateTime().isAfter(order.getPurchaseDateTime())
+                    //|| candleListPrev.get(0).getDateTime().isAfter(order.getPurchaseDateTime())
             ) {
                 if (factorial.getProfit() < candle.getClosingPrice().doubleValue()) {
                     annotation += " profit < close";
@@ -1626,7 +1627,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             ) {
                 annotation += " CandleProfitMinPercent = " + sellCriteria.getCandleProfitMinPercent();
                 var factorPrice = (candle.getClosingPrice().floatValue() - candleIntervalUpDownData.minClose)
-                        / (candleIntervalUpDownData.priceBegin - candleIntervalUpDownData.minClose);
+                        / (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose);
                 annotation += " factorPrice = " + factorPrice + " > " + sellCriteria.getCandlePriceMinFactor();
                 if (
                         profitPercent.floatValue() < sellCriteria.getCandleProfitMinPercent()
@@ -1634,6 +1635,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             || factorPrice < sellCriteria.getCandlePriceMinFactor()
                         )
                 ) {
+                    annotation += candleIntervalUpDownData.annotation;
                     annotation += " SKIP min candleInterval";
                     res = false;
                 }
