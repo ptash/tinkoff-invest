@@ -2303,9 +2303,17 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         Float lastBottomPrice = null;
         Float lastTopPrice = null;
         Float lastBetweenPrice = null;
+
+        CandleIntervalResultData beginPre = null;
+        CandleIntervalResultData begin = null;
+        CandleIntervalResultData end = null;
+        CandleIntervalResultData endPost = null;
+
         String annotation = "";
         if (null != intervalCandles) {
             Integer upCount = 0;
+            Double maxPricePrev = null;
+            Double minPricePrev = null;
             for (var iC = 0; iC < 200; iC ++) {
                 if (null == candleResUpFirst) {
                     candleResDownLast = candleResDown = intervalCandles.stream().filter(c -> c.isDown).reduce((first, second) -> second).orElse(null);
@@ -2374,14 +2382,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                 && finalCandleResUp1.getCandle().getDateTime().compareTo(c.getCandle().getDateTime()) >= 0
                     ).collect(Collectors.toList());
                     annotation += " intervalsBetweenLast.size=" + intervalsBetweenLast.size() + "+" + upCount;
-                    if (null != strategy.getBuyCriteria().getCandleUpDownSkipLength() && (intervalsBetweenLast.size() + upCount) < strategy.getBuyCriteria().getCandleUpDownSkipLength()) {
-                        annotation += " < " + strategy.getBuyCriteria().getCandleUpDownSkipLength();
-                        upCount += intervalsBetweenLast.size();
-                        continue;
-                    }
                     var candlesBetweenLast = candleHistoryService.getCandlesByFigiBetweenDateTimes(
                             candle.getFigi(),
-                            candleResUp.getCandle().getDateTime(),
+                            candleResDown.getCandle().getDateTime(),
                             candleResDownLast.getCandle().getDateTime(),
                             strategy.getInterval()
                     );
@@ -2393,11 +2396,45 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             strategy.getInterval()
                     );
                     var maxPrice = candlesBetweenFirst.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).max().orElse(-1);
-                    lastTopPrice = (float) (maxPrice);
-                    lastBottomPrice = (float) minPrice;
-                    annotation += " new lastTopPrice = " + printPrice(lastTopPrice);
+                    annotation += " maxPrice = " + printPrice(maxPrice);
+                    annotation += " minPrice = " + printPrice(minPrice);
                     lastBetweenPrice = (float) (maxPrice - minPrice);
-                    annotation += " lastBetweenPrice = " + printPrice(lastBetweenPrice);
+                    annotation += " between = " + printPrice(lastBetweenPrice);
+                    var isOk = true;
+                    if (
+                            null != maxPricePrev
+                            && null != strategy.getBuyCriteria().getCandleUpDownSkipDeviationPercent()
+                    ) {
+                        var maxLength = Math.max(maxPricePrev - minPricePrev, maxPrice - minPrice);
+                        var deviationPercentSize = 100f * Math.abs((maxPricePrev - minPricePrev) - (maxPrice - minPrice)) / maxLength;
+                        var deviationPercentPosition = 100f * Math.abs(maxPricePrev - maxPrice) / maxLength;
+                        annotation += " deviationPercentSize = " + deviationPercentSize;
+                        annotation += " deviationPercentPosition = " + deviationPercentPosition;
+                        if (
+                                deviationPercentSize < strategy.getBuyCriteria().getCandleUpDownSkipDeviationPercent()
+                                        && deviationPercentPosition < strategy.getBuyCriteria().getCandleUpDownSkipDeviationPercent()
+                        ) {
+                            isOk = false;
+                        } else if (maxPrice < maxPricePrev) {
+                            isOk = false;
+                        }
+                    }
+                    if (isOk) {
+                        lastTopPrice = (float) (maxPrice);
+                        lastBottomPrice = (float) minPrice;
+
+                        beginPre = candleResDownPrev;
+                        begin = candleResUpFirst;
+                        end = candleResUp;
+                        endPost = candleResDownLast;
+                    }
+                    if (null != strategy.getBuyCriteria().getCandleUpDownSkipLength() && (intervalsBetweenLast.size() + upCount) < strategy.getBuyCriteria().getCandleUpDownSkipLength()) {
+                        annotation += " < " + strategy.getBuyCriteria().getCandleUpDownSkipLength();
+                        upCount += intervalsBetweenLast.size();
+                        maxPricePrev = maxPrice;
+                        minPricePrev = minPrice;
+                        continue;
+                    }
                     break;
                 }
             }
@@ -2411,12 +2448,12 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 .annotation(annotation)
                 .minClose(lastBottomPrice)
                 .maxClose(lastTopPrice)
-                .priceBegin(candleResUp == null ? null : candleResUp.getCandle().getClosingPrice().floatValue())
-                .priceEnd(candleResDownLast == null ? null : candleResDownLast.getCandle().getClosingPrice().floatValue())
-                .beginPre(candleResDownPrev)
-                .begin(candleResUpFirst)
-                .end(candleResUp)
-                .endPost(candleResDownLast)
+                .priceBegin(end == null ? null : end.getCandle().getClosingPrice().floatValue())
+                .priceEnd(endPost == null ? null : endPost.getCandle().getClosingPrice().floatValue())
+                .beginPre(beginPre)
+                .begin(begin)
+                .end(end)
+                .endPost(endPost)
                 .isDown(true)
                 .build();
     }

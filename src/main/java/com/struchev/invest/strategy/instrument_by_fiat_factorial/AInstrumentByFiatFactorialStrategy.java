@@ -228,6 +228,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
         Integer candleOnlyUpPointLength;
         Integer candleOnlyUpLength;
         Integer candleUpDownSkipLength;
+        Float candleUpDownSkipDeviationPercent;
         Integer candleUpSkipLength;
         Float candleUpMinFactor;
         Float candleUpMaxFactor;
