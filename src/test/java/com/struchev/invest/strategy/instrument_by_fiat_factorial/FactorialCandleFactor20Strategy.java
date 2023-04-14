@@ -17,7 +17,7 @@ public class FactorialCandleFactor20Strategy extends FactorialCandle20Strategy {
         buy.setCandleMinFactor(0.5f);
         buy.setCandleMaxFactor(10f);
         buy.setCandleMinFactorCandle(0.3f);
-        buy.setCandleProfitMinPercent(0.30f);
+        buy.setCandleProfitMinPercent(0.25f);
         return buy;
     }
 
