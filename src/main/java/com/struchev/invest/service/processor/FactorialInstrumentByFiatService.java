@@ -811,9 +811,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                 && factor < buyCriteria.getCandlePriceMinMaxFactor()
                                 && factor > buyCriteria.getCandlePriceMinMinFactor()
                         ) {
-                            annotation += " minmin f > " + printPrice(buyCriteria.getCandleProfitMinPercent() / factor);
+                            annotation += " minmin f > " + printPrice(buyCriteria.getCandleProfitMinPercent() / factorPrice);
                             if (buyCriteria.getCandleProfitMinPercent() == null
-                                    || profitPercent > (buyCriteria.getCandleProfitMinPercent() / factor)) {
+                                    || profitPercent > (buyCriteria.getCandleProfitMinPercent() / factorPrice)) {
                                 annotation += " candleFactor minmin OK";
                                 res = true;
                             }
@@ -1620,6 +1620,13 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             annotation += candleIntervalRes.annotation;
             res = candleIntervalRes.res;
             annotation += " res candleInterval=" + res;
+            if (!candleIntervalRes.res && !isOrderUpCandle && sellCriteria.getCandleUpLength() > 1) {
+                var sellCriteriaSimple = sellCriteria.clone();
+                sellCriteriaSimple.setCandleUpLength(sellCriteria.getCandleUpLength() / 2);
+                candleIntervalRes = checkCandleInterval(candle, sellCriteriaSimple);
+                annotation += " res candleIntervalSimple=" + res;
+                res = candleIntervalRes.res;
+            }
             String keySell = "sellUp" + strategy.getName() + candle.getFigi() + notificationService.formatDateTime(order.getPurchaseDateTime());
             var isSkipOnlyUp = false;
             if (
@@ -1672,6 +1679,12 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 candleIntervalBuy = candleIntervalBuyRes.res;
                 if (candleIntervalBuyRes.res) {
                     annotation += " res BUY OK candleInterval: " + candleIntervalBuyRes.annotation;
+                    var intervalCandles = getCandleIntervals(newStrategy, candle);
+                    var upCount = intervalCandles.stream().filter(ic -> !ic.isDown && order.getPurchaseDateTime().isBefore(ic.getCandle().getDateTime())).count();
+                    if (upCount > 0) {
+                        annotation += " candleInterval OK DOWN AFTER UP: " + upCount;
+                        res = true;
+                    }
                     addCandleInterval(keyCandles, candleIntervalBuyRes);
                 }
             }
