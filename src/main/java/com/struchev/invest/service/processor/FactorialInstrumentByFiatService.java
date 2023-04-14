@@ -1623,6 +1623,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             if (!candleIntervalRes.res && !isOrderUpCandle && sellCriteria.getCandleUpLength() > 1) {
                 var sellCriteriaSimple = sellCriteria.clone();
                 sellCriteriaSimple.setCandleUpLength(sellCriteria.getCandleUpLength() / 2);
+                sellCriteriaSimple.setCandleIntervalMinPercent(sellCriteria.getCandleIntervalMinPercent() * 2);
                 candleIntervalRes = checkCandleInterval(candle, sellCriteriaSimple);
                 annotation += " res candleIntervalSimple=" + res;
                 res = candleIntervalRes.res;
@@ -1666,7 +1667,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         )
                         && (sellCriteria.getCandlePriceMinFactor() == null
                             || factorPrice < sellCriteria.getCandlePriceMinFactor()
-                            || factorPriceOrder < sellCriteria.getCandlePriceMinFactor()
+                            || factorPriceOrder > sellCriteria.getCandlePriceMinFactor()
                         )
                         && candle.getClosingPrice().floatValue() > Math.min(candleIntervalUpDownData.minClose, candleIntervalUpDownData.priceEnd)
                 ) {
@@ -1686,7 +1687,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     var intervalCandles = getCandleIntervals(newStrategy, candle);
                     var upCount = intervalCandles.stream().filter(ic -> !ic.isDown && order.getPurchaseDateTime().isBefore(ic.getCandle().getDateTime())).collect(Collectors.toList());
                     if (upCount.size() > 0) {
-                        annotation += " candleInterval OK DOWN AFTER UP: " + upCount + ": " + notificationService.formatDateTime(upCount.get(1).candle.getDateTime());
+                        annotation += " candleInterval OK DOWN AFTER UP: " + upCount.size() + ": " + notificationService.formatDateTime(upCount.get(0).candle.getDateTime());
                         res = true;
                     }
                     addCandleInterval(keyCandles, candleIntervalBuyRes);
