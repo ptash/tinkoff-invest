@@ -2320,7 +2320,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             Integer upCount = 0;
             Double maxPricePrev = null;
             Double minPricePrev = null;
-            for (var iC = 0; iC < 200; iC ++) {
+            for (var upDownCount = 0; upDownCount < 200; upDownCount ++) {
                 if (null == candleResUpFirst) {
                     candleResDownLast = candleResDown = intervalCandles.stream().filter(c -> c.isDown).reduce((first, second) -> second).orElse(null);
                 } else {
@@ -2435,7 +2435,10 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         end = candleResUp;
                         endPost = candleResDown;
                     }
-                    if (null != strategy.getBuyCriteria().getCandleUpDownSkipLength() && (intervalsBetweenLast.size() + upCount) < strategy.getBuyCriteria().getCandleUpDownSkipLength()) {
+                    if (null != strategy.getBuyCriteria().getCandleUpDownSkipLength()
+                            && (intervalsBetweenLast.size() + upCount) < strategy.getBuyCriteria().getCandleUpDownSkipLength()
+                            && (null == strategy.getBuyCriteria().getCandleUpDownSkipCount() || upDownCount < strategy.getBuyCriteria().getCandleUpDownSkipCount())
+                    ) {
                         annotation += " < " + strategy.getBuyCriteria().getCandleUpDownSkipLength();
                         upCount += intervalsBetweenLast.size();
                         maxPricePrev = maxPrice;
