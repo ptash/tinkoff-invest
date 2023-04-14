@@ -793,12 +793,13 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                 + " = " + printPrice(factorCandle);
                         var factor = factorPrice * factorPrice * Math.sqrt(factorCandle);
                         annotation += " factor = " + printPrice((float) factor);
+                        res = false;
                         if (
                                 factor > buyCriteria.getCandleMinFactor()
                                 && factor < buyCriteria.getCandleMaxFactor()
                                 && (buyCriteria.getCandleProfitMinPercent() == null || profitPercent > buyCriteria.getCandleProfitMinPercent())
                                 && factorCandle < buyCriteria.getCandleMaxFactor()
-                                && factorCandle > buyCriteria.getCandleMinFactor()
+                                && factorCandle > factorPrice * buyCriteria.getCandleMinFactorCandle()
                                 && factorPrice < buyCriteria.getCandleMaxFactor()
                                 && factorPrice > buyCriteria.getCandlePriceMinFactor()
                                 && factorPrice < buyCriteria.getCandlePriceMaxFactor()
@@ -810,10 +811,12 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                 && factor < buyCriteria.getCandlePriceMinMaxFactor()
                                 && factor > buyCriteria.getCandlePriceMinMinFactor()
                         ) {
-                            annotation += " candleFactor minmin OK";
-                            res = true;
-                        } else {
-                            res = false;
+                            annotation += " minmin f > " + printPrice(buyCriteria.getCandleProfitMinPercent() / factor);
+                            if (buyCriteria.getCandleProfitMinPercent() == null
+                                    || profitPercent > (buyCriteria.getCandleProfitMinPercent() / factor)) {
+                                annotation += " candleFactor minmin OK";
+                                res = true;
+                            }
                         }
                     }
                 }
@@ -1648,10 +1651,13 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         / (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose);
                 annotation += " factorPrice = " + factorPrice + " > " + sellCriteria.getCandlePriceMinFactor();
                 if (
-                        profitPercent.floatValue() < sellCriteria.getCandleProfitMinPercent()
+                        (profitPercent.floatValue() < sellCriteria.getCandleProfitMinPercent()
+                                || -profitPercent.floatValue() > sellCriteria.getCandleProfitMinPercent()
+                        )
                         && (sellCriteria.getCandlePriceMinFactor() == null
                             || factorPrice < sellCriteria.getCandlePriceMinFactor()
                         )
+                        && candle.getClosingPrice().floatValue() > Math.min(candleIntervalUpDownData.minClose, candleIntervalUpDownData.priceEnd)
                 ) {
                     annotation += candleIntervalUpDownData.annotation;
                     annotation += " SKIP min candleInterval";
@@ -2416,10 +2422,11 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         ) {
                             isOk = false;
                         } else if (maxPrice < maxPricePrev) {
-                            isOk = false;
+                            //isOk = false;
                         }
                     }
                     if (isOk) {
+                        annotation += " isOk";
                         lastTopPrice = (float) (maxPrice);
                         lastBottomPrice = (float) minPrice;
 
