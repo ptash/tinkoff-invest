@@ -2425,10 +2425,24 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             finalCandleResUpFirst.getCandle().getDateTime().compareTo(c.getCandle().getDateTime()) <= 0
                                 && finalCandleResUp1.getCandle().getDateTime().compareTo(c.getCandle().getDateTime()) >= 0
                     ).collect(Collectors.toList());
+
+                    CandleIntervalResultData finalCandleResDownPrev1 = candleResDownPrev;
+                    var candleResUpPrev = intervalCandles.stream().filter(c ->
+                            !c.isDown
+                                    && finalCandleResDownPrev1.getCandle().getDateTime().compareTo(c.getCandle().getDateTime()) > 0
+                    ).reduce((first, second) -> second).orElse(null);
+                    annotation += " candleResUpPrev = " + notificationService.formatDateTime(candleResUpPrev.getCandle().getDateTime());
+                    var candleResDownPrevFirst = intervalCandles.stream().filter(c ->
+                            c.isDown
+                            && finalCandleResDownPrev1.getCandle().getDateTime().compareTo(c.getCandle().getDateTime()) >= 0
+                            && (candleResUpPrev == null || candleResUpPrev.getCandle().getDateTime().compareTo(c.getCandle().getDateTime()) < 0)
+                    ).findFirst().orElse(null);
+                    annotation += " candleResDownPrevFirst = " + notificationService.formatDateTime(candleResDownPrevFirst.getCandle().getDateTime());
+
                     annotation += " intervalsBetweenLast.size=" + intervalsBetweenLast.size() + "+" + upCount;
                     var candlesBetweenLast = candleHistoryService.getCandlesByFigiBetweenDateTimes(
                             candle.getFigi(),
-                            candleResDownPrev.getCandle().getDateTime(),
+                            candleResDownPrevFirst.getCandle().getDateTime(),
                             candleResUp.getCandle().getDateTime(),
                             strategy.getInterval()
                     );
