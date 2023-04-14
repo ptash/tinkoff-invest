@@ -2455,9 +2455,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         annotation += " deviationPercentSize = " + deviationPercentSize;
                         annotation += " deviationPercentPosition = " + deviationPercentPosition;
                         if (
-                                deviationPercentSize < strategy.getBuyCriteria().getCandleUpDownSkipDeviationPercent()
-                                && deviationPercentPosition < strategy.getBuyCriteria().getCandleUpDownSkipDeviationPercent()
-                                && (maxPricePrev - minPricePrev) > (maxPrice - minPrice)
+                                (deviationPercentSize < strategy.getBuyCriteria().getCandleUpDownSkipDeviationPercent()
+                                && deviationPercentPosition < strategy.getBuyCriteria().getCandleUpDownSkipDeviationPercent())
+                                || (maxPricePrev - minPricePrev) > (maxPrice - minPrice)
                         ) {
                             isOk = false;
                         } else if (maxPrice < maxPricePrev) {
