@@ -791,7 +791,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         annotation += " factorCandle = " + printPrice(1f * upCandles.size())
                                 + " / " + printPrice(1f * downCandles.size())
                                 + " = " + printPrice(factorCandle);
-                        var factor = factorPrice * factorPrice * Math.sqrt(factorCandle);
+                        var factor = factorPrice * factorPrice * Math.sqrt(Math.sqrt(factorCandle));
                         annotation += " factor = " + printPrice((float) factor);
                         res = false;
                         if (
@@ -1620,10 +1620,14 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             annotation += candleIntervalRes.annotation;
             res = candleIntervalRes.res;
             annotation += " res candleInterval=" + res;
-            if (!candleIntervalRes.res && !isOrderUpCandle && sellCriteria.getCandleUpLength() > 1) {
+            if (!candleIntervalRes.res
+                    && !isOrderUpCandle
+                    && sellCriteria.getCandleUpLength() > 1
+                    && null != sellCriteria.getCandleTrySimple()
+            ) {
                 var sellCriteriaSimple = sellCriteria.clone();
-                sellCriteriaSimple.setCandleUpLength(sellCriteria.getCandleUpLength() / 2);
-                sellCriteriaSimple.setCandleIntervalMinPercent(sellCriteria.getCandleIntervalMinPercent() * 2);
+                sellCriteriaSimple.setCandleUpLength(sellCriteria.getCandleUpLength() / sellCriteria.getCandleTrySimple());
+                sellCriteriaSimple.setCandleIntervalMinPercent(sellCriteria.getCandleIntervalMinPercent() * sellCriteria.getCandleTrySimple());
                 candleIntervalRes = checkCandleInterval(candle, sellCriteriaSimple);
                 annotation += " res candleIntervalSimple=" + res;
                 res = candleIntervalRes.res;
@@ -1682,7 +1686,10 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             } else {
                 var candleIntervalBuyRes = checkCandleInterval(candle, buyCriteria);
                 candleIntervalBuy = candleIntervalBuyRes.res;
-                if (candleIntervalBuyRes.res) {
+                if (
+                        candleIntervalBuyRes.res
+                        && candle.getClosingPrice().floatValue() < candleIntervalUpDownData.minClose
+                ) {
                     annotation += " res BUY OK candleInterval: " + candleIntervalBuyRes.annotation;
                     var intervalCandles = getCandleIntervals(newStrategy, candle);
                     var upCount = intervalCandles.stream().filter(ic -> !ic.isDown && order.getPurchaseDateTime().isBefore(ic.getCandle().getDateTime())).collect(Collectors.toList());

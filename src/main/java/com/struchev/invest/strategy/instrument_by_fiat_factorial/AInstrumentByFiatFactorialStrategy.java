@@ -111,6 +111,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
         Float candleProfitMinPercent;
         Float candlePriceMinFactor;
         Float candleExitProfitInPercentMax;
+        Integer candleTrySimple;
 
 
         String candleInterval;
