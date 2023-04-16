@@ -10,7 +10,7 @@ public class FactorialCandleFactor20Strategy extends FactorialCandle20Strategy {
     //}
     public BuyCriteria getBuyCriteria() {
         var buy = super.getBuyCriteria();
-        buy.setCandlePriceMinFactor(0.5f);
+        buy.setCandlePriceMinFactor(0.65f);
         buy.setCandlePriceMaxFactor(2.5f);
         buy.setCandlePriceMinMinFactor(0.05f);
         buy.setCandlePriceMinMaxFactor(0.15f);
@@ -23,7 +23,7 @@ public class FactorialCandleFactor20Strategy extends FactorialCandle20Strategy {
 
     public SellCriteria getSellCriteria() {
         var sell = super.getSellCriteria();
-        sell.setCandleProfitMinPercent(0.12f);
+        sell.setCandleProfitMinPercent(0.15f);
         sell.setCandlePriceMinFactor(0.5f);
         sell.setCandleTrySimple(2);
         //sell.setSellUnderLossLength(2);
