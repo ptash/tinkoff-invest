@@ -2503,7 +2503,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     annotation += " intervalsBetweenLast.size=" + intervalsBetweenLast.size() + "+" + upCount;
                     var candlesBetweenLast = candleHistoryService.getCandlesByFigiBetweenDateTimes(
                             candle.getFigi(),
-                            candleResDownPrevFirst.getCandle().getDateTime(),
+                            candleResUpPrev == null ? candleResDownPrevFirst.getCandle().getDateTime() : candleResUpPrev.getCandle().getDateTime(),
                             candleResUp.getCandle().getDateTime(),
                             strategy.getInterval()
                     );
