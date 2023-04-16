@@ -1767,11 +1767,15 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                 .dateTime(candle.getDateTime())
                                 .build());
                     }
+                    annotation += " sellPrice=" + printPrice(sellData.getPrice());
                     var curProfitPercentFromSellMinPrice = 100f * (candle.getClosingPrice().floatValue() - sellData.getPrice()) / sellData.getPrice();
-                    annotation += " curProfPerFromSell=" + curProfitPercentFromSellMinPrice + " > " + sellCriteria.getProfitPercentFromSellMinPrice();
+                    annotation += " curProfPerFromSell=" + curProfitPercentFromSellMinPrice
+                            + " > " + sellCriteria.getProfitPercentFromSellMinPrice()
+                            + " < " + sellCriteria.getProfitPercentFromSellMaxPrice()
+                    ;
                     if (curProfitPercentFromSellMinPrice > sellCriteria.getProfitPercentFromSellMinPrice()
-                            || (sellCriteria.getProfitPercentFromSellMaxPrice() != null
-                            && curProfitPercentFromSellMinPrice < sellCriteria.getProfitPercentFromSellMaxPrice())
+                            //|| (sellCriteria.getProfitPercentFromSellMaxPrice() != null
+                            //&& curProfitPercentFromSellMinPrice < sellCriteria.getProfitPercentFromSellMaxPrice())
                     ) {
                         annotation += " sell OK";
                         res = true;
@@ -2486,7 +2490,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             !c.isDown
                                     && finalCandleResDownPrev1.getCandle().getDateTime().compareTo(c.getCandle().getDateTime()) > 0
                     ).reduce((first, second) -> second).orElse(null);
-                    annotation += " candleResUpPrev = " + notificationService.formatDateTime(candleResUpPrev.getCandle().getDateTime());
+                    if (candleResUpPrev != null) {
+                        annotation += " candleResUpPrev = " + notificationService.formatDateTime(candleResUpPrev.getCandle().getDateTime());
+                    }
                     var candleResDownPrevFirst = intervalCandles.stream().filter(c ->
                             c.isDown
                             && finalCandleResDownPrev1.getCandle().getDateTime().compareTo(c.getCandle().getDateTime()) >= 0
@@ -2681,7 +2687,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             } else {
                 var candleIntervalResBuy = checkCandleInterval(candleIPrev.get(i), candleStrategy.getBuyCriteria());
                 if (candleIntervalResBuy.res) {
-                    results.add(candleIntervalResSell);
+                    results.add(candleIntervalResBuy);
                     downCount++;
                     if (!prevIsDown) {
                         upDownCount++;
