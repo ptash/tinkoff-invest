@@ -781,8 +781,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                 upCandles.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).max().orElse(-1),
                                 downCandles.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).max().orElse(-1)
                             );
-                        minPrice = candleIntervalUpDownData.minClose;
-                        maxPrice = candleIntervalUpDownData.maxClose;
+                        //minPrice = candleIntervalUpDownData.minClose;
+                        //maxPrice = candleIntervalUpDownData.maxClose;
                         var factorPrice = (maxPrice - candle.getClosingPrice().floatValue())
                                 / (maxPrice - minPrice);
                         var profitPercent = 100f * (maxPrice - minPrice) / minPrice;
@@ -1776,8 +1776,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             + " < " + sellCriteria.getProfitPercentFromSellMaxPrice()
                     ;
                     if (curProfitPercentFromSellMinPrice > sellCriteria.getProfitPercentFromSellMinPrice()
-                            //|| (sellCriteria.getProfitPercentFromSellMaxPrice() != null
-                            //&& curProfitPercentFromSellMinPrice < sellCriteria.getProfitPercentFromSellMaxPrice())
+                            || (sellCriteria.getProfitPercentFromSellMaxPrice() != null
+                            && !res
+                            && curProfitPercentFromSellMinPrice < -sellCriteria.getProfitPercentFromSellMaxPrice())
                     ) {
                         annotation += " sell OK";
                         res = true;
