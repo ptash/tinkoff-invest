@@ -1776,10 +1776,10 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             + " < " + sellCriteria.getProfitPercentFromSellMaxPrice()
                     ;
                     if (curProfitPercentFromSellMinPrice > sellCriteria.getProfitPercentFromSellMinPrice()
-                            || (sellCriteria.getProfitPercentFromSellMaxPrice() != null
-                            && !res
-                            && candle.getClosingPrice().floatValue() < Math.max(candleIntervalUpDownData.minClose, candleIntervalUpDownData.priceEnd)
-                            && curProfitPercentFromSellMinPrice < -sellCriteria.getProfitPercentFromSellMaxPrice())
+                            //|| (sellCriteria.getProfitPercentFromSellMaxPrice() != null
+                            //&& !res
+                            //&& candle.getClosingPrice().floatValue() < Math.max(candleIntervalUpDownData.minClose, candleIntervalUpDownData.priceEnd)
+                            //&& curProfitPercentFromSellMinPrice < -sellCriteria.getProfitPercentFromSellMaxPrice())
                     ) {
                         annotation += " sell OK";
                         res = true;
