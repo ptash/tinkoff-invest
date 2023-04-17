@@ -16,7 +16,7 @@ public class FactorialCandle20Strategy extends Factorial2Strategy {
         buy.setTakeProfitLossPercent(null);
 
 
-        buy.setCandleMaxIntervalLess(400);
+        buy.setCandleMaxIntervalLess(2400);
         buy.setCandleMaxInterval(180);
         buy.setCandleIntervalMinPercent(1.f);
         buy.setCandleMinLength(6);
@@ -24,13 +24,17 @@ public class FactorialCandle20Strategy extends Factorial2Strategy {
         buy.setCandleUpMiddleLength(1);
         buy.setCandleUpLength(2);
 
+        buy.setCandleUpDownSkipCount(1);
+        buy.setCandleUpDownSkipLength(5);
+        buy.setCandleUpDownSkipDeviationPercent(40f);
+
         //buy.setProfitPercentFromBuyMinPrice(-0.01);
         return buy;
     }
 
     public SellCriteria getSellCriteria() {
         var sell = super.getSellCriteria();
-        sell.setCandleMaxIntervalLess(400);
+        sell.setCandleMaxIntervalLess(2400);
         sell.setCandleMaxInterval(180);
         sell.setCandleIntervalMinPercent(0.5f);
         sell.setCandleMinLength(6);
@@ -40,7 +44,17 @@ public class FactorialCandle20Strategy extends Factorial2Strategy {
 
         sell.setExitLossPercent(2f);
 
+        sell.setTakeProfitPercent(null);
+        sell.setExitProfitInPercentMax(null);
+        sell.setExitLossPercent(null);
+        sell.setStopLossPercent(null);
+        sell.setStopLossSoftPercent(null);
+
+        sell.setIsSellUnderProfit(true);
+        sell.setSellUnderLossLength(2);
+
         sell.setProfitPercentFromSellMinPrice(0.01f);
+        sell.setProfitPercentFromSellMaxPrice(0.05f);
         sell.setProfitPercentFromSellMinPriceLength(2);
         return sell;
     }
