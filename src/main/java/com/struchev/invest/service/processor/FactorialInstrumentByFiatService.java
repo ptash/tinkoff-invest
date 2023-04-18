@@ -1745,14 +1745,20 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 candleIntervalBuy = candleIntervalBuyRes.res;
                 if (
                         candleIntervalBuyRes.res
-                        && candle.getClosingPrice().floatValue() < candleIntervalUpDownData.minClose
                 ) {
-                    annotation += " res BUY OK candleInterval: " + candleIntervalBuyRes.annotation;
-                    var intervalCandles = getCandleIntervals(newStrategy, candle);
-                    var upCount = intervalCandles.stream().filter(ic -> !ic.isDown && order.getPurchaseDateTime().isBefore(ic.getCandle().getDateTime())).collect(Collectors.toList());
-                    if (upCount.size() > 0) {
-                        annotation += " candleInterval OK DOWN AFTER UP: " + upCount.size() + ": " + notificationService.formatDateTime(upCount.get(0).candle.getDateTime());
-                        res = true;
+                    if (candleIntervalUpDownData.minClose != null
+                            && candle.getClosingPrice().floatValue() < candleIntervalUpDownData.minClose)
+                    {
+                        annotation += " res BUY OK candleInterval: " + candleIntervalBuyRes.annotation;
+                        var intervalCandles = getCandleIntervals(newStrategy, candle);
+                        var upCount = intervalCandles.stream().filter(ic -> !ic.isDown && order.getPurchaseDateTime().isBefore(ic.getCandle().getDateTime())).collect(Collectors.toList());
+                        if (upCount.size() > 0) {
+                            annotation += " candleInterval OK DOWN AFTER UP: " + upCount.size() + ": " + notificationService.formatDateTime(upCount.get(0).candle.getDateTime());
+                            res = true;
+                        }
+                    } else if (candleIntervalUpDownData.minClose == null) {
+                        annotation += " minClose NULL";
+                        annotation += candleIntervalUpDownData.annotation;
                     }
                 }
                 if (candleIntervalBuyRes.res) {
@@ -2734,6 +2740,12 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     return super.add(present);
                 }
             };
+        }
+        if (results.size() > 0) {
+            var last = results.get(results.size() - 1);
+            if (notificationService.formatDateTime(last.candle.getDateTime()).equals(notificationService.formatDateTime(v.candle.getDateTime()))) {
+                results.remove(results.size() - 1);
+            }
         }
         results.add(v);
         candleIntervalResult.put(indent, results);
