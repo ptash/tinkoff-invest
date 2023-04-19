@@ -151,6 +151,14 @@
                     drawPoints: true,
                     pointSize: 2,
                 },
+                'maxClose': {
+                    strokeWidth: 3.0,
+                    color: 'green',
+                },
+                'minClose': {
+                    strokeWidth: 3.0,
+                    color: 'red',
+                },
             },
             drawCallback: function(g) {
                 var ann = g.annotations();
@@ -287,7 +295,7 @@
                         }
                         if (index !== undefined) {
                             annotations.push({
-                                series: 'ema2',
+                                series: 'close',
                                 xval: index,
                                 x: inFields[0] + ' profit ' + profit.toFixed(2) + '%' + (annotationIndex[index] ? ' ' + annotationIndex[index] : ''),
                                 shortText: inFields[1],

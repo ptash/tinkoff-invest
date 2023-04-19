@@ -16,7 +16,7 @@ public class FactorialStrategy extends AInstrumentByFiatFactorialStrategy {
         //FIGIES.put("BBG006L8G4H1", 1); // Yandex
 
         //FIGIES.put("FUTNG0323000", 1); // NGH3 NG-3.23 Природный газ
-        //FIGIES.put("FUTNG0423001", 1); // NGJ3 NG-4.23 Природный газ
+        FIGIES.put("FUTNG0423001", 1); // NGJ3 NG-4.23 Природный газ
         //FIGIES.put("FUTSI1223000", 1); // SiZ3 Si-12.23 Курс доллар - рубль
         //FIGIES.put("FUTSI0323000", 1); // SiH3 Si-3.23 Курс доллар - рубль
         //FIGIES.put("FUTSI0623000", 1); // SiM3 Si-6.23 Курс доллар - рубль
@@ -32,7 +32,7 @@ public class FactorialStrategy extends AInstrumentByFiatFactorialStrategy {
         //FIGIES.put("FUTGOLD03230", 1); // GDH3 GOLD-3.23 Золото
         //FIGIES.put("FUTGOLD06230", 1); // GDM3 GOLD-6.23 Золото
         //FIGIES.put("FUTCNY032300", 1); // CRH3 GCNY-3.23 Курс Юань - Рубль
-        FIGIES.put("FUTCNY062300", 1); // CRM3 CNY-6.23 Курс Юань - Рубль
+        //FIGIES.put("FUTCNY062300", 1); // CRM3 CNY-6.23 Курс Юань - Рубль
 
         //FIGIES.put("BBG00178PGX3", 1); // VK
         //FIGIES.put("BBG00QPYJ5H0", 1); // TCS Group

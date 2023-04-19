@@ -656,25 +656,25 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                         && null != order
                                         && order.getSellDateTime().isAfter(candleIntervalResSellOk.candle.getDateTime())
                                 ) {
+                                    annotation += " ORDER buy < sell: " + printPrice(order.getPurchasePrice()) + " (" + order.getPurchaseDateTime() +
+                                            ") < " + printPrice(order.getSellPrice()) + "(" +order.getSellProfit() + ")";
                                     if (order.getPurchasePrice().compareTo(order.getSellPrice()) < 0) {
-                                        annotation += " ORDER buy < sell: " + printPrice(order.getPurchasePrice()) + " (" + order.getPurchaseDateTime() +
-                                                ") < " + printPrice(order.getSellPrice()) + "(" +order.getSellProfit() + ")";
-                                        annotation += " CandleInterval OK";
+                                        annotation += " CandleInterval ?";
                                         //res = true;
-                                        candleIntervalResSellLast = candleHistoryService.getCandlesByFigiByLength(
-                                                candle.getFigi(),
-                                                order.getSellDateTime(),
-                                                1,
-                                                strategy.getInterval()
-                                        ).get(0);
                                         /*candleIntervalResBuyLast = candleHistoryService.getCandlesByFigiByLength(
                                                 candle.getFigi(),
                                                 order.getPurchaseDateTime(),
                                                 1,
                                                 strategy.getInterval()
                                         ).get(0);*/
-                                        isOrderFind = true;
                                     }
+                                    candleIntervalResSellLast = candleHistoryService.getCandlesByFigiByLength(
+                                            candle.getFigi(),
+                                            order.getSellDateTime(),
+                                            1,
+                                            strategy.getInterval()
+                                    ).get(0);
+                                    isOrderFind = true;
                                 }
                             }
                         } else {
@@ -721,7 +721,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         }
                     }
                     if (
-                            res
+                            true
+                            //res
                             && null == buyCriteria.getCandleMinFactor()
                             && isOrderFind
                             && null != order
@@ -729,12 +730,12 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                     //|| candleIntervalResBuyOk.candle.getDateTime().isBefore(candleIPrev.get(0).getDateTime())
                             )
                             //&& order.getSellDateTime().isBefore(candleIPrev.get(0).getDateTime())
-                            && order.getPurchasePrice().compareTo(order.getSellPrice()) > 0
+                            && order.getPurchasePrice().compareTo(order.getSellPrice()) < 0
                     ) {
                         annotation += " ORDER after buy < sell: " + printPrice(order.getPurchasePrice()) + " (" + order.getPurchaseDateTime() +
                                 ") < " + printPrice(order.getSellPrice()) + "(" +order.getSellProfit() + ")";
-                        annotation += " CandleInterval FALSE";
-                        res = false;
+                        annotation += " CandleInterval OK";
+                        res = true;
                     }
 
                     //CandleDomainEntity candleIntervalResBuyLast = null;
@@ -1324,6 +1325,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         if (null != buyCriteria.getProfitPercentFromBuyMinPrice()) {
             profitPercentFromBuyMinPrice = (float) -buyCriteria.getProfitPercentFromBuyMinPrice();
         }
+        annotation = " " + res + " " + annotation;
         notificationService.reportStrategyExt(
                 res,
                 strategy,

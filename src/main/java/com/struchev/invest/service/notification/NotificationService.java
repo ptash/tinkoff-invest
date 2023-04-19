@@ -263,7 +263,8 @@ public class NotificationService {
             && !formatDateTime(reportData.getCandle().getDateTime()).equals(formatDateTime(candle.getDateTime()))
         ) {
             log.info(getStrategyReportLogMarker(strategy, candle.getFigi(), reportData.getHeaderLine()), reportData.getFormat(), reportData.getArguments());
-        } else if (res) {
+        }
+        if (res) {
             log.info(getStrategyReportLogMarker(strategy, candle.getFigi(), headerLine), format, arguments);
         }
         addReportData(key, ReportData.builder()
