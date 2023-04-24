@@ -51,23 +51,24 @@ public class MainController {
         return new ModelAndView("report_instrument_by_fiat", Map.of("reportInstrumentByFiat", report));
     }
 
-        @GetMapping(path = {"/strategy_dygraphs_by_fiat"})
-    public ModelAndView strategyDygraphsByFiat(@RequestParam String strategy, @RequestParam String figi) {
+    @GetMapping(path = {"/strategy_dygraphs_by_fiat"})
+    public ModelAndView strategyDygraphsByFiat(@RequestParam String strategy, @RequestParam String figi, @RequestParam(defaultValue = "2") Integer size) {
         return new ModelAndView("dygraphs", Map.of(
                 "strategy", strategy,
                 "figi", figi,
+                "size", size,
                 "visibility", getStrategyDygraphsVisibility(strategy, figi, "Strategy")
         ));
     }
 
     @GetMapping(path = {"/strategy_dygraphs_by_fiat.csv"})
-    public void strategyDygraphsByFiatCsv(@RequestParam String strategy, @RequestParam String figi, HttpServletResponse response) {
-        outputStrategyDygraphsCsvData(strategy, figi, response, "Strategy");
+    public void strategyDygraphsByFiatCsv(@RequestParam String strategy, @RequestParam String figi, @RequestParam Integer size, HttpServletResponse response) {
+        outputStrategyDygraphsCsvData(strategy, figi, response, "Strategy", size);
     }
 
     @GetMapping(path = {"/strategy_dygraphs_by_fiat_orders.csv"})
-    public void strategyDygraphsByFiatOrdersCsv(@RequestParam String strategy, @RequestParam String figi, HttpServletResponse response) {
-        outputStrategyDygraphsCsvData(strategy, figi, response, "Offer");
+    public void strategyDygraphsByFiatOrdersCsv(@RequestParam String strategy, @RequestParam String figi, @RequestParam Integer size, HttpServletResponse response) {
+        outputStrategyDygraphsCsvData(strategy, figi, response, "Offer", size);
     }
 
     private String getStrategyDygraphsVisibility(String strategy, String figi, String suffix) {
@@ -97,12 +98,12 @@ public class MainController {
         return visibility;
     }
 
-    private void outputStrategyDygraphsCsvData(String strategy, String figi, HttpServletResponse response, String suffix) {
+    private void outputStrategyDygraphsCsvData(String strategy, String figi, HttpServletResponse response, String suffix, Integer size) {
         File[] fileList = new File(loggingPath).listFiles((dir, name) -> {
             return name.contains(strategy + figi + suffix);
         });
         Arrays.sort(fileList);
-        int max = 2;
+        int max = size;
         for (int i = Math.max(0, fileList.length - max); i < fileList.length; i++) {
             File file = fileList[i];
             try {

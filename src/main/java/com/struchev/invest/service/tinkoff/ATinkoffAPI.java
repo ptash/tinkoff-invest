@@ -72,6 +72,11 @@ public abstract class ATinkoffAPI implements ITinkoffCommonAPI, ITinkoffOrderAPI
         var accounts = isSandboxMode
                 ? api.getSandboxService().getAccountsSync() : api.getUserService().getAccountsSync();
         log.info("Available accounts: {}, need = {}", accounts.size(), StringUtils.isEmpty(accountId) ? "first" : accountId);
+        if (isSandboxMode && accounts.size() == 0) {
+            String newAccount = api.getSandboxService().openAccountSync();
+            accounts = api.getSandboxService().getAccountsSync();
+            log.info("Available accounts: {}, need = {}", accounts.size(), StringUtils.isEmpty(accountId) ? "first" : accountId);
+        }
         accounts.forEach(a -> log.info("Account id {}, name {}", a.getId(), a.getName()));
         var account = accounts.stream()
                 .filter(a -> a.getType() == AccountType.ACCOUNT_TYPE_TINKOFF)

@@ -32,6 +32,7 @@
 /*<![CDATA[*/
     var strategy = /*[[${strategy}]]*/ 'Strategy';
     var figi = /*[[${figi}]]*/ 'figi';
+    var size = /*[[${size}]]*/ 'size';
     var visibilityValue = /*[[${visibility}]]*/ 'visibility';
     visibilityValue = visibilityValue.split(",");
     function nameAnnotation(ann) {
@@ -41,7 +42,7 @@
     var annotationIndex = [];
     g = new Dygraph(
         document.getElementById("graphdiv2"),
-        "/strategy_dygraphs_by_fiat.csv?strategy=" + strategy + "&figi=" + figi, // path to CSV file
+        "/strategy_dygraphs_by_fiat.csv?strategy=" + strategy + "&figi=" + figi + "&size=" + size, // path to CSV file
         {
             delimiter: '|',
             visibility: visibilityValue,
@@ -333,11 +334,11 @@
                     }
                 }
             }
-            req.open("GET", '/strategy_dygraphs_by_fiat_orders.csv?strategy=' + strategy + "&figi=" + figi, true);
+            req.open("GET", '/strategy_dygraphs_by_fiat_orders.csv?strategy=' + strategy + "&figi=" + figi + "&size=" + size, true);
             req.send(null);
         }
 
-        req2.open("GET", '/strategy_dygraphs_by_fiat.csv?strategy=' + strategy + "&figi=" + figi, true);
+        req2.open("GET", '/strategy_dygraphs_by_fiat.csv?strategy=' + strategy + "&figi=" + figi + "&size=" + size, true);
         req2.send(null);
     });
 /*]]>*/

@@ -1079,6 +1079,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             annotation += " SkipIfOverProfit";
             for (var i = 0; i < buyCriteria.getOverProfitSkipIfOverProfitLength() + buyCriteria.getOverProfitSkipIfOverProfitLengthError(); i++) {
                 var factorialPrev = findBestFactorialInPast(strategy, candleListPrevPrev.get(i));
+                if (null == factorialPrev) {
+                    return false;
+                }
                 var candleMinList = candleHistoryService.getCandlesByFigiBetweenDateTimes(
                         candle.getFigi(),
                         candleListPrevPrev.get(i + 1).getDateTime(),
