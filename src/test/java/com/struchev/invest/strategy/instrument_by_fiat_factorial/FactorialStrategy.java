@@ -17,10 +17,10 @@ public class FactorialStrategy extends AInstrumentByFiatFactorialStrategy {
 
         //FIGIES.put("FUTNG0323000", 1); // NGH3 NG-3.23 Природный газ
         //FIGIES.put("FUTNG0423001", 1); // NGJ3 NG-4.23 Природный газ
-        FIGIES.put("FUTNG0523002", 1); // NGK3 NG-5.23 Природный газ
+        //FIGIES.put("FUTNG0523002", 1); // NGK3 NG-5.23 Природный газ
         //FIGIES.put("FUTSI1223000", 1); // SiZ3 Si-12.23 Курс доллар - рубль
         //FIGIES.put("FUTSI0323000", 1); // SiH3 Si-3.23 Курс доллар - рубль
-        //FIGIES.put("FUTSI0623000", 1); // SiM3 Si-6.23 Курс доллар - рубль
+        FIGIES.put("FUTSI0623000", 1); // SiM3 Si-6.23 Курс доллар - рубль
         //FIGIES.put("FUTRTS032300", 1); // RIH3 RTS-3.23 Индекс РТС
         //FIGIES.put("FUTRTS062300", 1); // RIM3 RTS-6.23 Индекс РТС
         //FIGIES.put("FUTSILV09230", 1); // SVU3 SILV-9.23 Серебро
