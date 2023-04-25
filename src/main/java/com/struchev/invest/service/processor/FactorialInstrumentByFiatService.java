@@ -2520,14 +2520,27 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                         && factor > buyCriteria.getCandlePriceMinMinFactor()))
                             //&& isIntervalUp
                         ) {
+                            var isBoth = ((factor2 < buyCriteria.getCandlePriceMinMaxFactor()
+                                    && factor2 > buyCriteria.getCandlePriceMinMinFactor())
+                                    && (factor < buyCriteria.getCandlePriceMinMaxFactor()
+                                    && factor > buyCriteria.getCandlePriceMinMinFactor()));
                             var f2 = buyCriteria.getCandleProfitMinPercent() / Math.sqrt(factorPrice);
                             if (factor2 < buyCriteria.getCandlePriceMinMaxFactor()
                                     && factor2 > buyCriteria.getCandlePriceMinMinFactor()) {
                                 f2 = buyCriteria.getCandleProfitMinPercent() / Math.sqrt(factor2);
                             }
                             annotation += " minmin f > " + printPrice(f2);
-                            if (buyCriteria.getCandleProfitMinPercent() == null
-                                    || profitPercent > f2) {
+                            var isOk = true;
+                            if (buyCriteria.getCandleDownMinMinMaxLength() != null) {
+                                var points = getIntervalBuyPoints(newStrategy, candle, candleIntervalRes, buyCriteria.getCandleDownMinMinPointLength(), buyCriteria.getCandleDownMinMinMaxLength());
+                                if (!isBoth && points.size() <= buyCriteria.getCandleDownMinMinMaxLength()) {
+                                    annotation += " SKIP by size: " + points.size() + "<=" + buyCriteria.getCandleDownMinMinMaxLength();
+                                    isOk = false;
+                                }
+                            }
+                            if (isOk
+                                && (buyCriteria.getCandleProfitMinPercent() == null
+                                    || profitPercent > f2)) {
                                 annotation += " candleFactor minmin OK";
                                 res = true;
                             }
@@ -2718,6 +2731,49 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             var candleRes = intervalCandles.get(i);
             if (
                     candleRes.isDown
+                            && sellPoints.size() != upLength
+            ) {
+                break;
+            }
+            var upCandles = candleHistoryService.getCandlesByFigiBetweenDateTimes(
+                    candle.getFigi(),
+                    candleRes.getCandle().getDateTime(),
+                    lastSellPoint.getCandle().getDateTime(),
+                    strategy.getInterval()
+            );
+            if (
+                    upCandles.size() > pointLength
+            ) {
+                //annotation += " new point = " + lastPointI + ":" + notificationService.formatDateTime(candleRes.getCandle().getDateTime());
+                //if (candleRes.candle.getClosingPrice().compareTo(lastSellPoint.candle.getClosingPrice()) < 0) {
+                sellPoints.add(candleRes);
+                lastPointI = sellPoints.size() - 1;
+            } else {
+                sellPoints.set(lastPointI, candleRes);
+            }
+            lastSellPoint = candleRes;
+            if (sellPoints.size() > upLength) {
+                break;
+            }
+        }
+        return sellPoints;
+    }
+
+    private List<CandleIntervalResultData> getIntervalBuyPoints(
+            AInstrumentByFiatFactorialStrategy strategy,
+            CandleDomainEntity candle,
+            CandleIntervalResultData lastSellPoint,
+            Integer pointLength,
+            Integer upLength
+    ) {
+        var intervalCandles = getCandleIntervals(strategy, candle);
+        List<CandleIntervalResultData> sellPoints = new ArrayList<>();
+        sellPoints.add(lastSellPoint);
+        Integer lastPointI = sellPoints.size() - 1;
+        for (var i = intervalCandles.size() - 1; i >= 0; i--) {
+            var candleRes = intervalCandles.get(i);
+            if (
+                    !candleRes.isDown
                             && sellPoints.size() != upLength
             ) {
                 break;
