@@ -612,460 +612,16 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             }
         }
 
-        var candleIntervalBuy = false;
-        var candleIntervalSell = false;
-        var candleIntervalUpDownData = getCurCandleIntervalUpDownData(newStrategy, candle);
+        var candleBuyRes = getCandleBuyRes(newStrategy, candle);
+        var candleIntervalBuy = candleBuyRes.candleIntervalBuy;
+        var candleIntervalSell = candleBuyRes.candleIntervalSell;
+        var candleIntervalUpDownData = candleBuyRes.candleIntervalUpDownData;
         if (!res
                 //&& candle.getClosingPrice().floatValue() < factorial.getProfit()
                 && buyCriteria.getCandleIntervalMinPercent() != null
         ) {
-            String keyCandles = strategy.getName() + candle.getFigi();
-            var candleIntervalRes = checkCandleInterval(candle, buyCriteria);
-            annotation += candleIntervalRes.annotation;
-            if (candleIntervalRes.res) {
-                var intervalCandles = getCandleIntervals(newStrategy, candle);
-
-                addCandleInterval(keyCandles, candleIntervalRes);
-                candleIntervalUpDownData = getCurCandleIntervalUpDownData(newStrategy, candle);
-
-                candleIntervalBuy = true;
-                var isOrderFind = false;
-                var order = orderService.findLastByFigiAndStrategy(candle.getFigi(), strategy);
-                var upRes = isOrderCandleUp(newStrategy, candle, order, buyCriteria, sellCriteria);
-                if (upRes.res) {
-                    annotation += upRes.annotation;
-                    order = null;
-                }
-                if (null != intervalCandles) {
-                    CandleDomainEntity candleIntervalResBuyLast = null;
-                    CandleDomainEntity candleIntervalResSellLast = null;
-                    CandleIntervalResultData candleIntervalResBuyOk = null;
-                    CandleIntervalResultData candleIntervalResSellOk = null;
-                    CandleIntervalResultData candleIntervalResSellOk2 = null;
-                    annotation += " intervalCandles.size() = " + intervalCandles.size() + ": " + intervalCandles.get(0).getCandle().getDateTime()
-                            + " - " + intervalCandles.get(intervalCandles.size() - 1).getCandle().getDateTime();
-                    for (var i = intervalCandles.size() - 1; i >= 0 && !isOrderFind && null == buyCriteria.getCandleMinFactor() ; i--) {
-                        var candleRes = intervalCandles.get(i);
-                        if (null == candleIntervalResSellOk) {
-                            if (!candleRes.isDown) {
-                                annotation += " SELL i = " + printPrice(candleRes.getCandle().getClosingPrice()) + "(" + candleRes.getCandle().getDateTime() + ")";
-                                candleIntervalResSellOk = candleRes;
-                                candleIntervalResSellLast = candleRes.candle;
-                                if (
-                                        !isOrderFind
-                                        && null != order
-                                        && order.getSellDateTime().isAfter(candleIntervalResSellOk.candle.getDateTime())
-                                ) {
-                                    annotation += " ORDER buy < sell: " + printPrice(order.getPurchasePrice()) + " (" + order.getPurchaseDateTime() +
-                                            ") < " + printPrice(order.getSellPrice()) + "(" +order.getSellProfit() + ")";
-                                    if (order.getPurchasePrice().compareTo(order.getSellPrice()) < 0) {
-                                        annotation += " CandleInterval ?";
-                                        //res = true;
-                                        /*candleIntervalResBuyLast = candleHistoryService.getCandlesByFigiByLength(
-                                                candle.getFigi(),
-                                                order.getPurchaseDateTime(),
-                                                1,
-                                                strategy.getInterval()
-                                        ).get(0);*/
-                                    }
-                                    candleIntervalResSellLast = candleHistoryService.getCandlesByFigiByLength(
-                                            candle.getFigi(),
-                                            order.getSellDateTime(),
-                                            1,
-                                            strategy.getInterval()
-                                    ).get(0);
-                                    isOrderFind = true;
-                                }
-                            }
-                        } else {
-                            if (!candleRes.isDown) {
-                                annotation += " SELL i = " + printPrice(candleRes.getCandle().getClosingPrice()) + "(" + candleRes.getCandle().getDateTime() + ")";
-                                if (null != candleIntervalResSellOk2) {
-                                    candleIntervalResSellOk = candleIntervalResSellOk2;
-                                }
-                                candleIntervalResSellOk2 = candleRes;
-                                if (null != candleIntervalResBuyOk) {
-                                    annotation += " buy < sell: " + printPrice(candleIntervalResBuyOk.candle.getClosingPrice()) + " (" + candleIntervalResBuyOk.candle.getDateTime() +
-                                            ") < " + printPrice(candleIntervalResSellOk.candle.getClosingPrice()) + "(" + candleIntervalResSellOk.candle.getDateTime() + ")";
-                                    if (candleIntervalResBuyOk.candle.getClosingPrice().compareTo(candleIntervalResSellOk.candle.getClosingPrice()) < 0) {
-                                        annotation += " CandleInterval OK";
-                                        res = true;
-                                    }
-                                    isOrderFind = true;
-                                    break;
-                                }
-                            }
-                            if (candleRes.isDown) {
-                                if (null == candleIntervalResBuyLast) {
-                                    candleIntervalResBuyLast = candleRes.candle;
-                                }
-                                candleIntervalResBuyOk = candleRes;
-                                annotation += " BUY i = " + printPrice(candleRes.getCandle().getClosingPrice()) + "(" + candleRes.getCandle().getDateTime() + ")";
-                            }
-                        }
-                    }
-                    if (
-                            isOrderFind
-                            && null == buyCriteria.getCandleMinFactor()
-                            && !res
-                            && null != order
-                            && null != candleIntervalResBuyOk
-                            && order.getSellDateTime().isAfter(candleIntervalResBuyOk.candle.getDateTime())
-                    ) {
-                        isOrderFind = true;
-                        if (order.getPurchasePrice().compareTo(order.getSellPrice()) < 0) {
-                            annotation += " ORDER buy < sell: " + printPrice(order.getPurchasePrice()) + " (" + order.getPurchaseDateTime() +
-                                    ") < " + printPrice(order.getSellPrice()) + "(" +order.getSellProfit() + ")";
-                            annotation += " CandleInterval OK";
-                            res = true;
-                        }
-                    }
-                    if (
-                            true
-                            //res
-                            && null == buyCriteria.getCandleMinFactor()
-                            && isOrderFind
-                            && null != order
-                            && (candleIntervalResBuyOk == null
-                                    //|| candleIntervalResBuyOk.candle.getDateTime().isBefore(candleIPrev.get(0).getDateTime())
-                            )
-                            //&& order.getSellDateTime().isBefore(candleIPrev.get(0).getDateTime())
-                            && order.getPurchasePrice().compareTo(order.getSellPrice()) < 0
-                    ) {
-                        annotation += " ORDER after buy < sell: " + printPrice(order.getPurchasePrice()) + " (" + order.getPurchaseDateTime() +
-                                ") < " + printPrice(order.getSellPrice()) + "(" +order.getSellProfit() + ")";
-                        annotation += " CandleInterval OK";
-                        res = true;
-                    }
-
-                    //CandleDomainEntity candleIntervalResBuyLast = null;
-                    //CandleDomainEntity candleIntervalResDownFirst = null;
-                    CandleIntervalUpDownData candleIntervalUpDownDataPrev = null;
-                    if (null != buyCriteria.getCandleMinFactor()) {
-                        annotation += candleIntervalUpDownData.annotation;
-                        if (null != candleIntervalUpDownData.beginPre) {
-                            candleIntervalResBuyLast = candleIntervalUpDownData.beginPre.candle;
-                            candleIntervalResSellLast = candleIntervalUpDownData.end.candle;
-                            candleIntervalResBuyLast = candleIntervalUpDownData.minCandle;
-                            candleIntervalResSellLast = candleIntervalUpDownData.maxCandle;
-                            candleIntervalUpDownDataPrev = getCurCandleIntervalUpDownData(newStrategy, candleIntervalUpDownData.beginPre.candle);
-                            if (candleIntervalUpDownDataPrev != null) {
-                                var candleIntervalUpDownDataPrevPrev = getCurCandleIntervalUpDownData(newStrategy, candleIntervalUpDownDataPrev.beginPre.candle);
-                                if (null != candleIntervalUpDownDataPrevPrev
-                                        && candleIntervalUpDownDataPrevPrev.minClose != null
-                                ) {
-                                    candleIntervalUpDownDataPrev.minClose = Math.min(candleIntervalUpDownDataPrev.minClose, candleIntervalUpDownDataPrevPrev.minClose);
-                                    candleIntervalUpDownDataPrev.maxClose = Math.max(candleIntervalUpDownDataPrev.maxClose, candleIntervalUpDownDataPrevPrev.maxClose);
-                                }
-                            }
-                            //annotation += " candleIntervalUpDownDataPrev: " + candleIntervalUpDownDataPrev.annotation;
-                        }
-                        //if (null != candleIntervalUpDownData.endPost) {
-                        //    candleIntervalResDownFirst = candleIntervalUpDownData.endPost.candle;
-                        //}
-                    }
-                    if (
-                            null != buyCriteria.getCandleMinFactor()
-                            && null != candleIntervalResSellLast
-                            && null != candleIntervalResBuyLast
-                            && null != candleIntervalUpDownData.minClose
-                            //&& null != candleIntervalResDownFirst
-                    ) {
-                        annotation += " factor: " + notificationService.formatDateTime(candleIntervalResBuyLast.getDateTime())
-                                + " - " + notificationService.formatDateTime(candleIntervalResSellLast.getDateTime());
-                        var downCandles = candleHistoryService.getCandlesByFigiBetweenDateTimes(
-                                candle.getFigi(),
-                                candleIntervalResSellLast.getDateTime(),
-                                candle.getDateTime(),
-                                strategy.getInterval()
-                        );
-                        var upCandles = candleHistoryService.getCandlesByFigiBetweenDateTimes(
-                                candle.getFigi(),
-                                candleIntervalResBuyLast.getDateTime(),
-                                candleIntervalResSellLast.getDateTime(),
-                                strategy.getInterval()
-                        );
-                        /*var minPrice = Math.min(
-                                upCandles.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).min().orElse(-1),
-                                downCandles.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).min().orElse(-1)
-                                );*/
-                        var minPrice = upCandles.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).min().orElse(-1);
-                        var maxPrice = Math.max(
-                                upCandles.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).max().orElse(-1),
-                                downCandles.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).max().orElse(-1)
-                            );
-                        minPrice = candleIntervalUpDownData.minClose;
-                        maxPrice = candleIntervalUpDownData.maxClose;
-                        var factorPrice = (maxPrice - candle.getClosingPrice().floatValue())
-                                / (maxPrice - minPrice);
-                        var profitPercent = 100f * (maxPrice - minPrice) / minPrice;
-                        annotation += " min = " + printPrice(minPrice);
-                        annotation += " max = " + printPrice(maxPrice);
-                        annotation += " profitPercent = " + printPrice(profitPercent) + " > " + buyCriteria.getCandleProfitMinPercent();
-                        annotation += " factorPrice = " + printPrice(maxPrice - candle.getClosingPrice().floatValue())
-                                + " / " + printPrice(maxPrice - minPrice)
-                                + " = " + printPrice(factorPrice) + " < " + buyCriteria.getCandlePriceMaxFactor();
-                        Float factorCandle = 1f * upCandles.size() / downCandles.size();
-                        annotation += " factorCandle = " + printPrice(1f * upCandles.size())
-                                + " / " + printPrice(1f * downCandles.size())
-                                + " = " + printPrice(factorCandle);
-                        var factor2 = factorPrice * factorPrice * Math.sqrt(Math.sqrt(Math.sqrt(factorCandle)));
-                        var factor = factorPrice * factorPrice * Math.sqrt(factorCandle);
-                        annotation += " factor = " + printPrice((float) factor);
-                        annotation += " factor2 = " + printPrice((float) factor2);
-                        var candlePriceMinFactor = buyCriteria.getCandlePriceMinFactor();
-                        var candlePriceMaxFactor = buyCriteria.getCandlePriceMaxFactor();
-                        var isIntervalDown = false;
-                        var isIntervalUp = false;
-                        if (null != candleIntervalUpDownDataPrev) {
-                            var size = Math.max(
-                                    candleIntervalUpDownDataPrev.maxClose - candleIntervalUpDownDataPrev.minClose,
-                                    candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose
-                            );
-                            var minPercent = 100f * (candleIntervalUpDownDataPrev.minClose - candleIntervalUpDownData.minClose) / size;
-                            var maxPercent = 100f * (candleIntervalUpDownData.maxClose - candleIntervalUpDownDataPrev.maxClose) / size;
-                            annotation += " minPercent = " + minPercent;
-                            annotation += " maxPercent = " + maxPercent;
-                            if (minPercent > 5f
-                                    //&& maxPercent > 5
-                            ) {
-                                isIntervalDown = true;
-                                candlePriceMinFactor = 1f + (minPercent - 15f)/100f;
-                                annotation += " new candlePriceMinFactor = " + candlePriceMinFactor;
-                            } else if ((maxPercent + 5f) < 0
-                                    && (maxPercent + 5f) < minPercent) {
-                                isIntervalDown = true;
-                                candlePriceMinFactor = candlePriceMinFactor - (minPercent + 5f)/100f;
-                                annotation += " new candlePriceMinFactor = " + candlePriceMinFactor;
-                            }
-                            if (maxPercent > 5f
-                            ) {
-                                isIntervalUp = true;
-                                annotation += " IS_UP";
-                                //candlePriceMinFactor = 1f + (minPercent - 15f)/100f;
-                                //annotation += " new candlePriceMinFactor = " + candlePriceMinFactor;
-                            }
-                        }
-                        res = false;
-                        if (
-                                (factor > buyCriteria.getCandleMinFactor() || factor2 > buyCriteria.getCandleMinFactor())
-                                && (factor < buyCriteria.getCandleMaxFactor() || factor2 < buyCriteria.getCandleMaxFactor())
-                                && (buyCriteria.getCandleProfitMinPercent() == null || profitPercent > buyCriteria.getCandleProfitMinPercent())
-                                && factorCandle < buyCriteria.getCandleMaxFactor()
-                                && factorCandle > factorPrice * buyCriteria.getCandleMinFactorCandle()
-                                && factorPrice < buyCriteria.getCandleMaxFactor()
-                                && factorPrice > candlePriceMinFactor
-                                && factorPrice < candlePriceMaxFactor
-                        ) {
-                            annotation += " candleFactor OK";
-                            res = true;
-                        } else if (
-                                buyCriteria.getCandlePriceMinMaxFactor() != null
-                                        && ((factor2 < buyCriteria.getCandlePriceMinMaxFactor()
-                                        && factor2 > buyCriteria.getCandlePriceMinMinFactor())
-                                        && (factor < buyCriteria.getCandlePriceMinMaxFactor()
-                                        && factor > buyCriteria.getCandlePriceMinMinFactor()))
-                                        //&& isIntervalUp
-                        ) {
-                            var f2 = buyCriteria.getCandleProfitMinPercent() / Math.sqrt(factorPrice);
-                            if (factor2 < buyCriteria.getCandlePriceMinMaxFactor()
-                                    && factor2 > buyCriteria.getCandlePriceMinMinFactor()) {
-                                f2 = buyCriteria.getCandleProfitMinPercent() / Math.sqrt(factor2);
-                            }
-                            annotation += " minmin f > " + printPrice(f2);
-                            if (buyCriteria.getCandleProfitMinPercent() == null
-                                    || profitPercent > f2) {
-                                annotation += " candleFactor minmin OK";
-                                res = true;
-                            }
-                        }
-                    }
-                }
-            } else {
-                var candleIntervalResSell = checkCandleInterval(candle, sellCriteria);
-                if (candleIntervalResSell.res) {
-                    candleIntervalSell = true;
-                    annotation += " SELL ok: " + candleIntervalResSell.annotation;
-                    String key = buildKeyHour(strategy.getName(), candle);
-                    addCashedIsBuyValue(key, null);
-                    if (strategy.getBuyCriteria().getProfitPercentFromBuyMinPriceLength() > 1) {
-                        String keyPrev = buildKeyHour(strategy.getName(), curHourCandleForFactorial);
-                        addCashedIsBuyValue(keyPrev, null);
-                    }
-
-                    if (null != buyCriteria.getCandleOnlyUpLength()) {
-                        annotation += " CandleOnlyUpLength=" + buyCriteria.getCandleOnlyUpLength();
-                        var intervalCandles = getCandleIntervals(newStrategy, candle);
-                        var order = orderService.findLastByFigiAndStrategy(candle.getFigi(), strategy);
-                        var upRes = isOrderCandleUp(newStrategy, candle, order, buyCriteria, sellCriteria);
-                        if (upRes.res) {
-                            annotation += upRes.annotation;
-                            order = null;
-                        }
-
-                        annotation += candleIntervalUpDownData.annotation;
-                        CandleIntervalResultData candleResDown = candleIntervalUpDownData.endPost;
-                        Float lastBottomPrice = candleIntervalUpDownData.minClose;
-                        Float lastTopPrice = candleIntervalUpDownData.maxClose;
-                        Float lastBetweenPrice = lastTopPrice != null && lastBottomPrice != null ? lastTopPrice - lastBottomPrice : null;
-
-                        if (
-                                null != candleResDown
-                                && null != order
-                                && candleResDown.getCandle().getDateTime().compareTo(order.getSellDateTime()) > 0
-                        ) {
-                            annotation += " down after order";
-                            order = null;
-                        }
-                        if (
-                                null != intervalCandles
-                                        && null != order
-                                        && order.getSellProfit().compareTo(BigDecimal.ZERO) > 0
-                        ) {
-                            List<CandleIntervalResultData> sellPoints = new ArrayList<>();
-                            CandleIntervalResultData lastSellPoint = candleIntervalResSell;
-                            sellPoints.add(lastSellPoint);
-                            Integer lastPointI = sellPoints.size() - 1;
-                            for (var i = intervalCandles.size() - 1; i >= 0; i--) {
-                                var candleRes = intervalCandles.get(i);
-                                if (
-                                        candleRes.isDown
-                                                && sellPoints.size() != buyCriteria.getCandleOnlyUpLength()
-                                ) {
-                                    break;
-                                }
-                                var upCandles = candleHistoryService.getCandlesByFigiBetweenDateTimes(
-                                        candle.getFigi(),
-                                        candleRes.getCandle().getDateTime(),
-                                        lastSellPoint.getCandle().getDateTime(),
-                                        strategy.getInterval()
-                                );
-                                if (
-                                        upCandles.size() > buyCriteria.getCandleOnlyUpPointLength()
-                                ) {
-                                    annotation += " new point = " + lastPointI + ":" + notificationService.formatDateTime(candleRes.getCandle().getDateTime());
-                                    //if (candleRes.candle.getClosingPrice().compareTo(lastSellPoint.candle.getClosingPrice()) < 0) {
-                                    sellPoints.add(candleRes);
-                                    lastPointI = sellPoints.size() - 1;
-                                    //} else {
-                                    //    annotation += " break down: " + printPrice(candleRes.candle.getClosingPrice()) + " >= "
-                                    //            + printPrice(lastSellPoint.candle.getClosingPrice()) + "(" + notificationService.formatDateTime(lastSellPoint.candle.getDateTime()) + ")";
-                                    //    break;
-                                    //}
-                                } else {
-                                    sellPoints.set(lastPointI, candleRes);
-                                }
-                                lastSellPoint = candleRes;
-                                if (sellPoints.size() > buyCriteria.getCandleOnlyUpLength()) {
-                                    if (buyCriteria.getCandleOnlyUpBetweenPercent() != null) {
-                                        if (order != null) {
-                                            var percentOrderFromDown = 100f * (order.getSellPrice().floatValue() - order.getPurchasePrice().floatValue()) / order.getPurchasePrice().floatValue();
-                                            Float priceFromDown = null;
-                                            if (
-                                                    null != lastBottomPrice
-                                                //&& candleResDown.getCandle().getClosingPrice().compareTo(order.getPurchasePrice()) < 0
-                                            ) {
-                                                priceFromDown = candle.getClosingPrice().floatValue() - lastBottomPrice;
-                                                annotation += " candleResDown = " + printPrice(priceFromDown);
-                                                percentOrderFromDown = 100f * (order.getSellPrice().floatValue() - candleResDown.getCandle().getClosingPrice().floatValue()) / candleResDown.getCandle().getClosingPrice().floatValue();
-                                            }
-                                            //var percent = 100f * (candle.getClosingPrice().floatValue() - order.getSellPrice().floatValue()) / candle.getClosingPrice().floatValue();
-                                            //annotation += " percentB = " + printPrice(percent) + " > " + printPrice(percentOrderFromDown);
-                                            var percent = 100f * (candle.getClosingPrice().floatValue() - lastTopPrice) / lastTopPrice;
-                                            annotation += " percentB = " + printPrice(percent) + " > " + printPrice(sellCriteria.getCandleProfitMinPercent());
-                                            var upSize = intervalCandles.stream().filter(ic ->
-                                                    !ic.isDown
-                                                            && ic.getCandle().getDateTime().isAfter(candleResDown.getCandle().getDateTime())
-                                                            && ic.getCandle().getClosingPrice().floatValue() > lastTopPrice
-                                            ).count() + 1;
-                                            annotation += " upSize=" + upSize;
-                                            var priceFromTop = candle.getClosingPrice().floatValue() - lastTopPrice;
-                                            annotation += " priceFromTop=" + priceFromTop;
-                                            annotation += " MinFactorPrice=" + printPrice(buyCriteria.getCandleUpMinFactor() * lastBetweenPrice);
-                                            var candleSizePercent = 100f * (lastTopPrice - lastBottomPrice) / lastBottomPrice;
-                                            annotation += " candleSizePercent: " + printPrice(candleSizePercent) + " > " + printPrice(buyCriteria.getCandleOnlyUpBetweenPercent());
-                                            if (true
-                                                    //&& percent > sellCriteria.getCandleProfitMinPercent()
-                                                    && percent > 0
-                                                    && ((buyCriteria.getCandleUpSkipLength() == null || upSize > buyCriteria.getCandleUpSkipLength())
-                                                        || ((buyCriteria.getCandleUpSkipLength() == null && buyCriteria.getCandleMinFactor() == null)
-                                                                || (buyCriteria.getCandleUpMinFactor() * lastBetweenPrice < priceFromTop
-                                                                        && percent > sellCriteria.getCandleProfitMinPercent()
-                                                                    )))
-                                                    && (lastTopPrice == null || lastTopPrice < candle.getClosingPrice().floatValue())
-                                                    && (lastBetweenPrice == null || priceFromDown == null || lastBetweenPrice < priceFromDown)
-                                                    && (lastBetweenPrice == null || priceFromDown == null || buyCriteria.getCandleUpMaxFactor() == null || buyCriteria.getCandleUpMaxFactor() * lastBetweenPrice > priceFromDown)
-                                            ) {
-                                                annotation += " candle UP OK";
-                                                var resBetween = true;
-                                                for (var iC = 0; iC < buyCriteria.getCandleOnlyUpLength() - 1 && null != buyCriteria.getCandleOnlyUpBetweenPointsPercent(); iC++) {
-                                                    var pointUp = sellPoints.get(iC);
-                                                    var pointDown = sellPoints.get(iC + 1);
-                                                    if (pointUp.candle.getClosingPrice().compareTo(pointDown.candle.getClosingPrice()) < 0) {
-                                                        resBetween = false;
-                                                        annotation += " break down: " + printPrice(pointUp.candle.getClosingPrice()) + "(" + notificationService.formatDateTime(pointUp.candle.getDateTime()) + ") >= "
-                                                                + printPrice(pointDown.candle.getClosingPrice()) + "(" + notificationService.formatDateTime(pointDown.candle.getDateTime()) + ")";
-                                                        break;
-                                                    }
-                                                    annotation += " point i" + i + ": " + notificationService.formatDateTime(pointDown.getCandle().getDateTime())
-                                                            + " - " + notificationService.formatDateTime(pointUp.getCandle().getDateTime());
-                                                    var candlesBetween = candleHistoryService.getCandlesByFigiBetweenDateTimes(
-                                                            candle.getFigi(),
-                                                            pointDown.getCandle().getDateTime(),
-                                                            pointUp.getCandle().getDateTime(),
-                                                            strategy.getInterval()
-                                                    );
-                                                    var minPrice = candlesBetween.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).min().orElse(-1);
-                                                    var percentMin = 100f * (pointDown.getCandle().getClosingPrice().doubleValue() - minPrice) / minPrice;
-                                                    annotation += "percentMin = " + printPrice(percentMin) + " < " + printPrice(buyCriteria.getCandleOnlyUpBetweenPointsPercent());
-                                                    if (percentMin > buyCriteria.getCandleOnlyUpBetweenPointsPercent()) {
-                                                        resBetween = false;
-                                                        annotation += " FALSE";
-                                                        break;
-                                                    }
-                                                }
-                                                if (resBetween) {
-                                                    res = true;
-                                                    annotation += " candle UP OK BETWEEN";
-                                                }
-                                            }
-                                        }
-                                    } else {
-                                        annotation += " candle UP OK";
-                                        res = true;
-                                    }
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                    addCandleInterval(keyCandles, candleIntervalResSell);
-                } else {
-                    annotation += " SELL false: " + candleIntervalResSell.annotation;
-                    if (buyCriteria.getIsCandleUpAny()
-                            && candleIntervalUpDownData.maxClose != null
-                            && candleIntervalUpDownData.maxClose < candle.getClosingPrice().floatValue()
-                    ) {
-                        var priceFromTop = candle.getClosingPrice().floatValue() - candleIntervalUpDownData.maxClose;
-                        annotation += " priceFromTop=" + priceFromTop;
-                        var minFactorPrice = buyCriteria.getCandleUpMinFactorAny() * (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose);
-                        var maxFactorPrice = buyCriteria.getCandleUpMaxFactorAny() * (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose);
-                        annotation += " minFactorPrice=" + printPrice(minFactorPrice);
-                        annotation += " maxFactorPrice=" + printPrice(maxFactorPrice);
-                        var order = orderService.findLastByFigiAndStrategy(candle.getFigi(), strategy);
-                        var upRes = isOrderCandleUp(newStrategy, candle, order, buyCriteria, sellCriteria);
-                        if (
-                                priceFromTop > minFactorPrice
-                                && priceFromTop < maxFactorPrice
-                                && (order == null && !upRes.res)
-                                && (order == null || order.getSellProfit().compareTo(BigDecimal.ZERO) > 0)
-                        ) {
-                            annotation += " candle UP ANY";
-                            res = true;
-                        }
-                    }
-                }
-            }
+            res = candleBuyRes.res;
+            annotation += candleBuyRes.annotation;
         }
 
         if (res && buyCriteria.getSkipIfOutPrevLength() != null) {
@@ -1787,6 +1343,13 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         if (upCount.size() > 0) {
                             annotation += " candleInterval OK DOWN AFTER UP: " + upCount.size() + ": " + notificationService.formatDateTime(upCount.get(0).candle.getDateTime());
                             res = true;
+                        } else {
+                            var candleBuyRes = getCandleBuyRes(newStrategy, candle);
+                            annotation += " candleInterval BUY: " + candleBuyRes.annotation;
+                            if (!candleBuyRes.res) {
+                                annotation += " SELL OK";
+                                res = true;
+                            }
                         }
                     } else if (candleIntervalUpDownData.minClose == null) {
                         annotation += " minClose NULL";
@@ -2664,6 +2227,489 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 .end(end)
                 .endPost(endPost)
                 .isDown(true)
+                .build();
+    }
+
+    @Builder
+    @Data
+    public static class CandleIntervalBuyResult {
+        Boolean candleIntervalBuy;
+        Boolean candleIntervalSell;
+        Boolean res;
+        String annotation;
+        CandleIntervalUpDownData candleIntervalUpDownData;
+    }
+
+    private CandleIntervalBuyResult getCandleBuyRes(
+            AInstrumentByFiatFactorialStrategy newStrategy,
+            CandleDomainEntity candle)
+    {
+        var candleIntervalBuy = false;
+        var candleIntervalSell = false;
+        var buyCriteria = newStrategy.getBuyCriteria();
+        var sellCriteria = newStrategy.getSellCriteria();
+        var strategy = newStrategy;
+        var annotation = "";
+        var res = false;
+        var candleIntervalUpDownData = getCurCandleIntervalUpDownData(newStrategy, candle);
+        String keyCandles = strategy.getName() + candle.getFigi();
+        var candleIntervalRes = checkCandleInterval(candle, buyCriteria);
+        annotation += candleIntervalRes.annotation;
+        if (buyCriteria.getCandleIntervalMinPercent() != null) {
+            if (candleIntervalRes.res) {
+                var intervalCandles = getCandleIntervals(newStrategy, candle);
+
+                addCandleInterval(keyCandles, candleIntervalRes);
+                candleIntervalUpDownData = getCurCandleIntervalUpDownData(newStrategy, candle);
+
+                candleIntervalBuy = true;
+                var isOrderFind = false;
+                var order = orderService.findLastByFigiAndStrategy(candle.getFigi(), strategy);
+                var upRes = isOrderCandleUp(newStrategy, candle, order, buyCriteria, sellCriteria);
+                if (upRes.res) {
+                    annotation += upRes.annotation;
+                    order = null;
+                }
+                if (null != intervalCandles) {
+                    CandleDomainEntity candleIntervalResBuyLast = null;
+                    CandleDomainEntity candleIntervalResSellLast = null;
+                    CandleIntervalResultData candleIntervalResBuyOk = null;
+                    CandleIntervalResultData candleIntervalResSellOk = null;
+                    CandleIntervalResultData candleIntervalResSellOk2 = null;
+                    annotation += " intervalCandles.size() = " + intervalCandles.size() + ": " + intervalCandles.get(0).getCandle().getDateTime()
+                            + " - " + intervalCandles.get(intervalCandles.size() - 1).getCandle().getDateTime();
+                    for (var i = intervalCandles.size() - 1; i >= 0 && !isOrderFind && null == buyCriteria.getCandleMinFactor(); i--) {
+                        var candleRes = intervalCandles.get(i);
+                        if (null == candleIntervalResSellOk) {
+                            if (!candleRes.isDown) {
+                                annotation += " SELL i = " + printPrice(candleRes.getCandle().getClosingPrice()) + "(" + candleRes.getCandle().getDateTime() + ")";
+                                candleIntervalResSellOk = candleRes;
+                                candleIntervalResSellLast = candleRes.candle;
+                                if (
+                                        !isOrderFind
+                                                && null != order
+                                                && order.getSellDateTime().isAfter(candleIntervalResSellOk.candle.getDateTime())
+                                ) {
+                                    annotation += " ORDER buy < sell: " + printPrice(order.getPurchasePrice()) + " (" + order.getPurchaseDateTime() +
+                                            ") < " + printPrice(order.getSellPrice()) + "(" + order.getSellProfit() + ")";
+                                    if (order.getPurchasePrice().compareTo(order.getSellPrice()) < 0) {
+                                        annotation += " CandleInterval ?";
+                                        //res = true;
+                                    /*candleIntervalResBuyLast = candleHistoryService.getCandlesByFigiByLength(
+                                            candle.getFigi(),
+                                            order.getPurchaseDateTime(),
+                                            1,
+                                            strategy.getInterval()
+                                    ).get(0);*/
+                                    }
+                                    candleIntervalResSellLast = candleHistoryService.getCandlesByFigiByLength(
+                                            candle.getFigi(),
+                                            order.getSellDateTime(),
+                                            1,
+                                            strategy.getInterval()
+                                    ).get(0);
+                                    isOrderFind = true;
+                                }
+                            }
+                        } else {
+                            if (!candleRes.isDown) {
+                                annotation += " SELL i = " + printPrice(candleRes.getCandle().getClosingPrice()) + "(" + candleRes.getCandle().getDateTime() + ")";
+                                if (null != candleIntervalResSellOk2) {
+                                    candleIntervalResSellOk = candleIntervalResSellOk2;
+                                }
+                                candleIntervalResSellOk2 = candleRes;
+                                if (null != candleIntervalResBuyOk) {
+                                    annotation += " buy < sell: " + printPrice(candleIntervalResBuyOk.candle.getClosingPrice()) + " (" + candleIntervalResBuyOk.candle.getDateTime() +
+                                            ") < " + printPrice(candleIntervalResSellOk.candle.getClosingPrice()) + "(" + candleIntervalResSellOk.candle.getDateTime() + ")";
+                                    if (candleIntervalResBuyOk.candle.getClosingPrice().compareTo(candleIntervalResSellOk.candle.getClosingPrice()) < 0) {
+                                        annotation += " CandleInterval OK";
+                                        res = true;
+                                    }
+                                    isOrderFind = true;
+                                    break;
+                                }
+                            }
+                            if (candleRes.isDown) {
+                                if (null == candleIntervalResBuyLast) {
+                                    candleIntervalResBuyLast = candleRes.candle;
+                                }
+                                candleIntervalResBuyOk = candleRes;
+                                annotation += " BUY i = " + printPrice(candleRes.getCandle().getClosingPrice()) + "(" + candleRes.getCandle().getDateTime() + ")";
+                            }
+                        }
+                    }
+                    if (
+                            isOrderFind
+                                    && null == buyCriteria.getCandleMinFactor()
+                                    && !res
+                                    && null != order
+                                    && null != candleIntervalResBuyOk
+                                    && order.getSellDateTime().isAfter(candleIntervalResBuyOk.candle.getDateTime())
+                    ) {
+                        isOrderFind = true;
+                        if (order.getPurchasePrice().compareTo(order.getSellPrice()) < 0) {
+                            annotation += " ORDER buy < sell: " + printPrice(order.getPurchasePrice()) + " (" + order.getPurchaseDateTime() +
+                                    ") < " + printPrice(order.getSellPrice()) + "(" + order.getSellProfit() + ")";
+                            annotation += " CandleInterval OK";
+                            res = true;
+                        }
+                    }
+                    if (
+                            true
+                                    //res
+                                    && null == buyCriteria.getCandleMinFactor()
+                                    && isOrderFind
+                                    && null != order
+                                    && (candleIntervalResBuyOk == null
+                                    //|| candleIntervalResBuyOk.candle.getDateTime().isBefore(candleIPrev.get(0).getDateTime())
+                            )
+                                    //&& order.getSellDateTime().isBefore(candleIPrev.get(0).getDateTime())
+                                    && order.getPurchasePrice().compareTo(order.getSellPrice()) < 0
+                    ) {
+                        annotation += " ORDER after buy < sell: " + printPrice(order.getPurchasePrice()) + " (" + order.getPurchaseDateTime() +
+                                ") < " + printPrice(order.getSellPrice()) + "(" + order.getSellProfit() + ")";
+                        annotation += " CandleInterval OK";
+                        res = true;
+                    }
+
+                    //CandleDomainEntity candleIntervalResBuyLast = null;
+                    //CandleDomainEntity candleIntervalResDownFirst = null;
+                    CandleIntervalUpDownData candleIntervalUpDownDataPrev = null;
+                    if (null != buyCriteria.getCandleMinFactor()) {
+                        annotation += candleIntervalUpDownData.annotation;
+                        if (null != candleIntervalUpDownData.beginPre) {
+                            candleIntervalResBuyLast = candleIntervalUpDownData.beginPre.candle;
+                            candleIntervalResSellLast = candleIntervalUpDownData.end.candle;
+                            //candleIntervalResBuyLast = candleIntervalUpDownData.minCandle;
+                            //candleIntervalResSellLast = candleIntervalUpDownData.maxCandle;
+                            candleIntervalUpDownDataPrev = getCurCandleIntervalUpDownData(newStrategy, candleIntervalUpDownData.beginPre.candle);
+                            if (candleIntervalUpDownDataPrev != null) {
+                                var candleIntervalUpDownDataPrevPrev = getCurCandleIntervalUpDownData(newStrategy, candleIntervalUpDownDataPrev.beginPre.candle);
+                                if (null != candleIntervalUpDownDataPrevPrev
+                                        && candleIntervalUpDownDataPrevPrev.minClose != null
+                                ) {
+                                    candleIntervalUpDownDataPrev.minClose = Math.min(candleIntervalUpDownDataPrev.minClose, candleIntervalUpDownDataPrevPrev.minClose);
+                                    candleIntervalUpDownDataPrev.maxClose = Math.max(candleIntervalUpDownDataPrev.maxClose, candleIntervalUpDownDataPrevPrev.maxClose);
+                                }
+                            }
+                            //annotation += " candleIntervalUpDownDataPrev: " + candleIntervalUpDownDataPrev.annotation;
+                        }
+                        //if (null != candleIntervalUpDownData.endPost) {
+                        //    candleIntervalResDownFirst = candleIntervalUpDownData.endPost.candle;
+                        //}
+                    }
+                    if (
+                            null != buyCriteria.getCandleMinFactor()
+                                    && null != candleIntervalResSellLast
+                                    && null != candleIntervalResBuyLast
+                                    && null != candleIntervalUpDownData.minClose
+                        //&& null != candleIntervalResDownFirst
+                    ) {
+                        annotation += " factor: " + notificationService.formatDateTime(candleIntervalResBuyLast.getDateTime())
+                                + " - " + notificationService.formatDateTime(candleIntervalResSellLast.getDateTime());
+                        var downCandles = candleHistoryService.getCandlesByFigiBetweenDateTimes(
+                                candle.getFigi(),
+                                candleIntervalResSellLast.getDateTime(),
+                                candle.getDateTime(),
+                                strategy.getInterval()
+                        );
+                        var upCandles = candleHistoryService.getCandlesByFigiBetweenDateTimes(
+                                candle.getFigi(),
+                                candleIntervalResBuyLast.getDateTime(),
+                                candleIntervalResSellLast.getDateTime(),
+                                strategy.getInterval()
+                        );
+                    /*var minPrice = Math.min(
+                            upCandles.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).min().orElse(-1),
+                            downCandles.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).min().orElse(-1)
+                            );*/
+                        var minPrice = upCandles.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).min().orElse(-1);
+                        var maxPrice = Math.max(
+                                upCandles.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).max().orElse(-1),
+                                downCandles.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).max().orElse(-1)
+                        );
+                        minPrice = candleIntervalUpDownData.minClose;
+                        maxPrice = candleIntervalUpDownData.maxClose;
+                        var factorPrice = (maxPrice - candle.getClosingPrice().floatValue())
+                                / (maxPrice - minPrice);
+                        var profitPercent = 100f * (maxPrice - minPrice) / minPrice;
+                        annotation += " min = " + printPrice(minPrice);
+                        annotation += " max = " + printPrice(maxPrice);
+                        annotation += " profitPercent = " + printPrice(profitPercent) + " > " + buyCriteria.getCandleProfitMinPercent();
+                        annotation += " factorPrice = " + printPrice(maxPrice - candle.getClosingPrice().floatValue())
+                                + " / " + printPrice(maxPrice - minPrice)
+                                + " = " + printPrice(factorPrice) + " < " + buyCriteria.getCandlePriceMaxFactor();
+                        Float factorCandle = 1f * upCandles.size() / downCandles.size();
+                        annotation += " factorCandle = " + printPrice(1f * upCandles.size())
+                                + " / " + printPrice(1f * downCandles.size())
+                                + " = " + printPrice(factorCandle);
+                        var factor2 = factorPrice * factorPrice * Math.sqrt(Math.sqrt(Math.sqrt(factorCandle)));
+                        var factor = factorPrice * factorPrice * Math.sqrt(factorCandle);
+                        annotation += " factor = " + printPrice((float) factor);
+                        annotation += " factor2 = " + printPrice((float) factor2);
+                        var candlePriceMinFactor = buyCriteria.getCandlePriceMinFactor();
+                        var candlePriceMaxFactor = buyCriteria.getCandlePriceMaxFactor();
+                        var isIntervalDown = false;
+                        var isIntervalUp = false;
+                        if (null != candleIntervalUpDownDataPrev) {
+                            var size = Math.max(
+                                    candleIntervalUpDownDataPrev.maxClose - candleIntervalUpDownDataPrev.minClose,
+                                    candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose
+                            );
+                            var minPercent = 100f * (candleIntervalUpDownDataPrev.minClose - candleIntervalUpDownData.minClose) / size;
+                            var maxPercent = 100f * (candleIntervalUpDownData.maxClose - candleIntervalUpDownDataPrev.maxClose) / size;
+                            annotation += " minPercent = " + minPercent;
+                            annotation += " maxPercent = " + maxPercent;
+                            if (maxPercent > 5f
+                            ) {
+                                isIntervalUp = true;
+                                annotation += " IS_UP";
+                                //candlePriceMinFactor = 1f + (minPercent - 15f)/100f;
+                                //annotation += " new candlePriceMinFactor = " + candlePriceMinFactor;
+                            }
+                            if (minPercent > 5f
+                                //&& maxPercent > 5
+                            ) {
+                                isIntervalDown = true;
+                                candlePriceMinFactor = 1f + (minPercent - 15f) / 100f;
+                                annotation += " new candlePriceMinFactor = " + candlePriceMinFactor;
+                            } else if ((maxPercent + 5f) < 0
+                                    && (maxPercent + 5f) < minPercent) {
+                                isIntervalDown = true;
+                                candlePriceMinFactor = candlePriceMinFactor - (minPercent + 5f) / 100f;
+                                annotation += " new candlePriceMinFactor = " + candlePriceMinFactor;
+                            }
+                        }
+                        res = false;
+                        if (
+                                (factor > buyCriteria.getCandleMinFactor() || factor2 > buyCriteria.getCandleMinFactor())
+                                        && (factor < buyCriteria.getCandleMaxFactor() || factor2 < buyCriteria.getCandleMaxFactor())
+                                        && (buyCriteria.getCandleProfitMinPercent() == null || profitPercent > buyCriteria.getCandleProfitMinPercent())
+                                        && factorCandle < buyCriteria.getCandleMaxFactor()
+                                        && factorCandle > factorPrice * buyCriteria.getCandleMinFactorCandle()
+                                        && factorPrice < buyCriteria.getCandleMaxFactor()
+                                        && factorPrice > candlePriceMinFactor
+                                        && factorPrice < candlePriceMaxFactor
+                        ) {
+                            annotation += " candleFactor OK";
+                            res = true;
+                        } else if (
+                                buyCriteria.getCandlePriceMinMaxFactor() != null
+                                        && ((factor2 < buyCriteria.getCandlePriceMinMaxFactor()
+                                        && factor2 > buyCriteria.getCandlePriceMinMinFactor())
+                                        && (factor < buyCriteria.getCandlePriceMinMaxFactor()
+                                        && factor > buyCriteria.getCandlePriceMinMinFactor()))
+                            //&& isIntervalUp
+                        ) {
+                            var f2 = buyCriteria.getCandleProfitMinPercent() / Math.sqrt(factorPrice);
+                            if (factor2 < buyCriteria.getCandlePriceMinMaxFactor()
+                                    && factor2 > buyCriteria.getCandlePriceMinMinFactor()) {
+                                f2 = buyCriteria.getCandleProfitMinPercent() / Math.sqrt(factor2);
+                            }
+                            annotation += " minmin f > " + printPrice(f2);
+                            if (buyCriteria.getCandleProfitMinPercent() == null
+                                    || profitPercent > f2) {
+                                annotation += " candleFactor minmin OK";
+                                res = true;
+                            }
+                        }
+                    }
+                }
+            } else {
+                var candleIntervalResSell = checkCandleInterval(candle, sellCriteria);
+                var candleList = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
+                        candle.getDateTime(), 2, strategy.getFactorialInterval());
+                var curHourCandleForFactorial = candleList.get(1);
+                if (candleIntervalResSell.res) {
+                    candleIntervalSell = true;
+                    annotation += " SELL ok: " + candleIntervalResSell.annotation;
+                    String key = buildKeyHour(strategy.getName(), candle);
+                    addCashedIsBuyValue(key, null);
+                    if (strategy.getBuyCriteria().getProfitPercentFromBuyMinPriceLength() > 1) {
+                        String keyPrev = buildKeyHour(strategy.getName(), curHourCandleForFactorial);
+                        addCashedIsBuyValue(keyPrev, null);
+                    }
+
+                    if (null != buyCriteria.getCandleOnlyUpLength()) {
+                        annotation += " CandleOnlyUpLength=" + buyCriteria.getCandleOnlyUpLength();
+                        var intervalCandles = getCandleIntervals(newStrategy, candle);
+                        var order = orderService.findLastByFigiAndStrategy(candle.getFigi(), strategy);
+                        var upRes = isOrderCandleUp(newStrategy, candle, order, buyCriteria, sellCriteria);
+                        if (upRes.res) {
+                            annotation += upRes.annotation;
+                            order = null;
+                        }
+
+                        annotation += candleIntervalUpDownData.annotation;
+                        CandleIntervalResultData candleResDown = candleIntervalUpDownData.endPost;
+                        Float lastBottomPrice = candleIntervalUpDownData.minClose;
+                        Float lastTopPrice = candleIntervalUpDownData.maxClose;
+                        Float lastBetweenPrice = lastTopPrice != null && lastBottomPrice != null ? lastTopPrice - lastBottomPrice : null;
+
+                        if (
+                                null != candleResDown
+                                        && null != order
+                                        && candleResDown.getCandle().getDateTime().compareTo(order.getSellDateTime()) > 0
+                        ) {
+                            annotation += " down after order";
+                            order = null;
+                        }
+                        if (
+                                null != intervalCandles
+                                        && null != order
+                                        && order.getSellProfit().compareTo(BigDecimal.ZERO) > 0
+                        ) {
+                            List<CandleIntervalResultData> sellPoints = new ArrayList<>();
+                            CandleIntervalResultData lastSellPoint = candleIntervalResSell;
+                            sellPoints.add(lastSellPoint);
+                            Integer lastPointI = sellPoints.size() - 1;
+                            for (var i = intervalCandles.size() - 1; i >= 0; i--) {
+                                var candleRes = intervalCandles.get(i);
+                                if (
+                                        candleRes.isDown
+                                                && sellPoints.size() != buyCriteria.getCandleOnlyUpLength()
+                                ) {
+                                    break;
+                                }
+                                var upCandles = candleHistoryService.getCandlesByFigiBetweenDateTimes(
+                                        candle.getFigi(),
+                                        candleRes.getCandle().getDateTime(),
+                                        lastSellPoint.getCandle().getDateTime(),
+                                        strategy.getInterval()
+                                );
+                                if (
+                                        upCandles.size() > buyCriteria.getCandleOnlyUpPointLength()
+                                ) {
+                                    annotation += " new point = " + lastPointI + ":" + notificationService.formatDateTime(candleRes.getCandle().getDateTime());
+                                    //if (candleRes.candle.getClosingPrice().compareTo(lastSellPoint.candle.getClosingPrice()) < 0) {
+                                    sellPoints.add(candleRes);
+                                    lastPointI = sellPoints.size() - 1;
+                                    //} else {
+                                    //    annotation += " break down: " + printPrice(candleRes.candle.getClosingPrice()) + " >= "
+                                    //            + printPrice(lastSellPoint.candle.getClosingPrice()) + "(" + notificationService.formatDateTime(lastSellPoint.candle.getDateTime()) + ")";
+                                    //    break;
+                                    //}
+                                } else {
+                                    sellPoints.set(lastPointI, candleRes);
+                                }
+                                lastSellPoint = candleRes;
+                                if (sellPoints.size() > buyCriteria.getCandleOnlyUpLength()) {
+                                    if (buyCriteria.getCandleOnlyUpBetweenPercent() != null) {
+                                        if (order != null) {
+                                            var percentOrderFromDown = 100f * (order.getSellPrice().floatValue() - order.getPurchasePrice().floatValue()) / order.getPurchasePrice().floatValue();
+                                            Float priceFromDown = null;
+                                            if (
+                                                    null != lastBottomPrice
+                                                //&& candleResDown.getCandle().getClosingPrice().compareTo(order.getPurchasePrice()) < 0
+                                            ) {
+                                                priceFromDown = candle.getClosingPrice().floatValue() - lastBottomPrice;
+                                                annotation += " candleResDown = " + printPrice(priceFromDown);
+                                                percentOrderFromDown = 100f * (order.getSellPrice().floatValue() - candleResDown.getCandle().getClosingPrice().floatValue()) / candleResDown.getCandle().getClosingPrice().floatValue();
+                                            }
+                                            //var percent = 100f * (candle.getClosingPrice().floatValue() - order.getSellPrice().floatValue()) / candle.getClosingPrice().floatValue();
+                                            //annotation += " percentB = " + printPrice(percent) + " > " + printPrice(percentOrderFromDown);
+                                            var percent = 100f * (candle.getClosingPrice().floatValue() - lastTopPrice) / lastTopPrice;
+                                            annotation += " percentB = " + printPrice(percent) + " > " + printPrice(sellCriteria.getCandleProfitMinPercent());
+                                            var upSize = intervalCandles.stream().filter(ic ->
+                                                    !ic.isDown
+                                                            && ic.getCandle().getDateTime().isAfter(candleResDown.getCandle().getDateTime())
+                                                            && ic.getCandle().getClosingPrice().floatValue() > lastTopPrice
+                                            ).count() + 1;
+                                            annotation += " upSize=" + upSize;
+                                            var priceFromTop = candle.getClosingPrice().floatValue() - lastTopPrice;
+                                            annotation += " priceFromTop=" + priceFromTop;
+                                            annotation += " MinFactorPrice=" + printPrice(buyCriteria.getCandleUpMinFactor() * lastBetweenPrice);
+                                            var candleSizePercent = 100f * (lastTopPrice - lastBottomPrice) / lastBottomPrice;
+                                            annotation += " candleSizePercent: " + printPrice(candleSizePercent) + " > " + printPrice(buyCriteria.getCandleOnlyUpBetweenPercent());
+                                            if (true
+                                                    //&& percent > sellCriteria.getCandleProfitMinPercent()
+                                                    && percent > 0
+                                                    && ((buyCriteria.getCandleUpSkipLength() == null || upSize > buyCriteria.getCandleUpSkipLength())
+                                                    || ((buyCriteria.getCandleUpSkipLength() == null && buyCriteria.getCandleMinFactor() == null)
+                                                    || (buyCriteria.getCandleUpMinFactor() * lastBetweenPrice < priceFromTop
+                                                    && percent > sellCriteria.getCandleProfitMinPercent()
+                                            )))
+                                                    && (lastTopPrice == null || lastTopPrice < candle.getClosingPrice().floatValue())
+                                                    && (lastBetweenPrice == null || priceFromDown == null || lastBetweenPrice < priceFromDown)
+                                                    && (lastBetweenPrice == null || priceFromDown == null || buyCriteria.getCandleUpMaxFactor() == null || buyCriteria.getCandleUpMaxFactor() * lastBetweenPrice > priceFromDown)
+                                            ) {
+                                                annotation += " candle UP OK";
+                                                var resBetween = true;
+                                                for (var iC = 0; iC < buyCriteria.getCandleOnlyUpLength() - 1 && null != buyCriteria.getCandleOnlyUpBetweenPointsPercent(); iC++) {
+                                                    var pointUp = sellPoints.get(iC);
+                                                    var pointDown = sellPoints.get(iC + 1);
+                                                    if (pointUp.candle.getClosingPrice().compareTo(pointDown.candle.getClosingPrice()) < 0) {
+                                                        resBetween = false;
+                                                        annotation += " break down: " + printPrice(pointUp.candle.getClosingPrice()) + "(" + notificationService.formatDateTime(pointUp.candle.getDateTime()) + ") >= "
+                                                                + printPrice(pointDown.candle.getClosingPrice()) + "(" + notificationService.formatDateTime(pointDown.candle.getDateTime()) + ")";
+                                                        break;
+                                                    }
+                                                    annotation += " point i" + i + ": " + notificationService.formatDateTime(pointDown.getCandle().getDateTime())
+                                                            + " - " + notificationService.formatDateTime(pointUp.getCandle().getDateTime());
+                                                    var candlesBetween = candleHistoryService.getCandlesByFigiBetweenDateTimes(
+                                                            candle.getFigi(),
+                                                            pointDown.getCandle().getDateTime(),
+                                                            pointUp.getCandle().getDateTime(),
+                                                            strategy.getInterval()
+                                                    );
+                                                    var minPrice = candlesBetween.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).min().orElse(-1);
+                                                    var percentMin = 100f * (pointDown.getCandle().getClosingPrice().doubleValue() - minPrice) / minPrice;
+                                                    annotation += "percentMin = " + printPrice(percentMin) + " < " + printPrice(buyCriteria.getCandleOnlyUpBetweenPointsPercent());
+                                                    if (percentMin > buyCriteria.getCandleOnlyUpBetweenPointsPercent()) {
+                                                        resBetween = false;
+                                                        annotation += " FALSE";
+                                                        break;
+                                                    }
+                                                }
+                                                if (resBetween) {
+                                                    res = true;
+                                                    annotation += " candle UP OK BETWEEN";
+                                                }
+                                            }
+                                        }
+                                    } else {
+                                        annotation += " candle UP OK";
+                                        res = true;
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    addCandleInterval(keyCandles, candleIntervalResSell);
+                } else {
+                    annotation += " SELL false: " + candleIntervalResSell.annotation;
+                    if (buyCriteria.getIsCandleUpAny()
+                            && candleIntervalUpDownData.maxClose != null
+                            && candleIntervalUpDownData.maxClose < candle.getClosingPrice().floatValue()
+                    ) {
+                        var priceFromTop = candle.getClosingPrice().floatValue() - candleIntervalUpDownData.maxClose;
+                        annotation += " priceFromTop=" + priceFromTop;
+                        var minFactorPrice = buyCriteria.getCandleUpMinFactorAny() * (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose);
+                        var maxFactorPrice = buyCriteria.getCandleUpMaxFactorAny() * (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose);
+                        annotation += " minFactorPrice=" + printPrice(minFactorPrice);
+                        annotation += " maxFactorPrice=" + printPrice(maxFactorPrice);
+                        var order = orderService.findLastByFigiAndStrategy(candle.getFigi(), strategy);
+                        var upRes = isOrderCandleUp(newStrategy, candle, order, buyCriteria, sellCriteria);
+                        if (
+                                priceFromTop > minFactorPrice
+                                        && priceFromTop < maxFactorPrice
+                                        && (order == null && !upRes.res)
+                                        && (order == null || order.getSellProfit().compareTo(BigDecimal.ZERO) > 0)
+                        ) {
+                            annotation += " candle UP ANY";
+                            res = true;
+                        }
+                    }
+                }
+            }
+        }
+        return CandleIntervalBuyResult.builder()
+                .candleIntervalSell(candleIntervalSell)
+                .candleIntervalBuy(candleIntervalBuy)
+                .res(res)
+                .annotation(annotation)
+                .candleIntervalUpDownData(candleIntervalUpDownData)
                 .build();
     }
 
