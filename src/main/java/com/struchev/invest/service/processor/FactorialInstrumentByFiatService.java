@@ -1364,7 +1364,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             annotation += " candleInterval BUY: " + candleBuyRes.annotation;
                             if (!candleBuyRes.res) {
                                 annotation += " SELL OK";
-                                res = true;
+                                //res = true;
                             }
                         }
                     } else if (candleIntervalUpDownData.minClose == null) {
@@ -2494,11 +2494,17 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                 //candlePriceMinFactor = 1f + (minPercent - 15f)/100f;
                                 //annotation += " new candlePriceMinFactor = " + candlePriceMinFactor;
                             }
-                            if (minPercent > 5f
+                            var avgPercent = (minPercent - maxPercent) / 2;
+                            annotation += " avgPercent = " + avgPercent;
+                            if (avgPercent > 5f
                                 //&& maxPercent > 5
                             ) {
                                 isIntervalDown = true;
-                                candlePriceMinFactor = 1f + (minPercent - 15f) / 100f;
+                                if (maxPercent > 0f) {
+                                    candlePriceMinFactor = 1f;
+                                } else {
+                                    candlePriceMinFactor = 1f + (avgPercent - 15f) / 100f;
+                                }
                                 annotation += " new candlePriceMinFactor = " + candlePriceMinFactor;
                             } else if ((maxPercent + 5f) < 0
                                     && (maxPercent + 5f) < minPercent) {
