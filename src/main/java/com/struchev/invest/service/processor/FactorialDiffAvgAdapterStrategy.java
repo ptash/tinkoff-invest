@@ -17,6 +17,10 @@ public class FactorialDiffAvgAdapterStrategy extends AInstrumentByFiatFactorialS
         this.strategy = strategy;
     }
 
+    public AInstrumentByFiatFactorialStrategy getStrategy() {
+        return this.strategy;
+    }
+
     public void setPriceDiffAvgReal(Float priceDiffAvgReal) {
         this.priceDiffAvgReal = priceDiffAvgReal;
         if (null == this.sellLimitOrig) {

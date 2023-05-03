@@ -1996,7 +1996,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
     }
 
     private CandleIntervalResultData isOrderCandleUp(
-            AInstrumentByFiatFactorialStrategy strategy,
+            FactorialDiffAvgAdapterStrategy strategy,
             CandleDomainEntity candle,
             OrderDomainEntity order,
             AInstrumentByFiatFactorialStrategy.BuyCriteria buyCriteria,
@@ -2033,7 +2033,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
     }
 
     private CandleIntervalUpDownData getCurCandleIntervalUpDownData(
-            AInstrumentByFiatFactorialStrategy strategy,
+            FactorialDiffAvgAdapterStrategy strategy,
             CandleDomainEntity candle)
     {
         var intervalCandles = getCandleIntervals(strategy, candle);
@@ -2149,7 +2149,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             && (candleResUpPrev == null || candleResUpPrev.getCandle().getDateTime().compareTo(c.getCandle().getDateTime()) < 0)
                     ).collect(Collectors.toList());
                     var candleResDownPrevFirst = candleResDownPrevList.get(0);
-                    annotation += " candleResDownPrevFirst = " + notificationService.formatDateTime(candleResDownPrevFirst.getCandle().getDateTime());
+                    annotation += " candleResDownPrevFirst = " + notificationService.formatDateTime(candleResDownPrevFirst.getCandle().getDateTime())
+                        + "(" + candleResDownPrevList.size() + ")";
 
                     annotation += " intervalsBetweenLast.size=" + intervalsBetweenLast.size() + "+" + upCount;
                     var candlesBetweenLast = candleHistoryService.getCandlesByFigiBetweenDateTimes(
@@ -2164,6 +2165,18 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             candleResDownFirst.getCandle().getDateTime(),
                             strategy.getInterval()
                     );
+
+                    CandleIntervalResultData finalCandleResDown2 = candleResDown;
+                    var candles = intervalCandles.stream().filter(c ->
+                                    candleResUpPrev.getCandle().getDateTime().compareTo(c.getCandle().getDateTime()) >= 0
+                                    && finalCandleResDown2.getCandle().getDateTime().compareTo(c.getCandle().getDateTime()) <= 0
+                    ).collect(Collectors.toList());
+
+                    annotation += " size=" + candles.size();
+                    for (var i = 0; i < candles.size(); i++) {
+                        var c = candles.get(i);
+                        annotation += " " + i + (c.isDown ? " DOWN ": " UP ") + printDateTime(c.getCandle().getDateTime());
+                    }
 
                     var minPrice = candlesBetweenLast.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).min().orElse(-1);
                     var minCandle = candlesBetweenLast.stream().reduce((first, second) ->
@@ -2277,7 +2290,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
     }
 
     private CandleIntervalBuyResult getCandleBuyRes(
-            AInstrumentByFiatFactorialStrategy newStrategy,
+            FactorialDiffAvgAdapterStrategy newStrategy,
             CandleDomainEntity candle)
     {
         var candleIntervalBuy = false;
@@ -2799,7 +2812,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
     }
 
     private List<CandleIntervalResultData> getIntervalSellPoints(
-            AInstrumentByFiatFactorialStrategy strategy,
+            FactorialDiffAvgAdapterStrategy strategy,
             CandleDomainEntity candle,
             CandleIntervalResultData lastSellPoint,
             Integer pointLength,
@@ -2842,7 +2855,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
     }
 
     private List<CandleIntervalResultData> getIntervalBuyPoints(
-            AInstrumentByFiatFactorialStrategy strategy,
+            FactorialDiffAvgAdapterStrategy strategy,
             CandleDomainEntity candle,
             CandleIntervalResultData lastSellPoint,
             Integer pointLength,
@@ -2946,7 +2959,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         }
     };
 
-    private synchronized List<CandleIntervalResultData> getCandleIntervals(AInstrumentByFiatFactorialStrategy strategy, CandleDomainEntity candle)
+    private synchronized List<CandleIntervalResultData> getCandleIntervals(FactorialDiffAvgAdapterStrategy strategy, CandleDomainEntity candle)
     {
         String keyCandles = strategy.getName() + candle.getFigi();
         if (candleIntervalResult.containsKey(keyCandles)) {
@@ -2975,7 +2988,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             var candleStrategyCurHourI = getCandleHour(strategy, candleIPrev.get(i));
             if (candleStrategyCurHour == null || candleStrategyCurHourI.getDateTime().compareTo(candleStrategyCurHour.getDateTime()) != 0) {
                 candleStrategyCurHour = candleStrategyCurHourI;
-                candleStrategy = buildAvgStrategy(strategy, candleIPrev.get(i));
+                candleStrategy = buildAvgStrategy(strategy.getStrategy(), candleIPrev.get(i));
             }
             var candleIntervalResSell = checkCandleInterval(candleIPrev.get(i), candleStrategy.getSellCriteria());
             if (candleIntervalResSell.res) {
