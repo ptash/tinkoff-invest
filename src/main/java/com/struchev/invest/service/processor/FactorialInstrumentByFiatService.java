@@ -620,8 +620,17 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 //&& candle.getClosingPrice().floatValue() < factorial.getProfit()
                 && buyCriteria.getCandleIntervalMinPercent() != null
         ) {
-            res = candleBuyRes.res;
             annotation += candleBuyRes.annotation;
+            if (candleBuyRes.res) {
+                var order = orderService.findLastByFigiAndStrategy(candle.getFigi(), strategy);
+                annotation += " endPost: " + printDateTime(candleBuyRes.candleIntervalUpDownData.endPost.candle.getDateTime());
+                if (null == order
+                        || candleBuyRes.candleIntervalUpDownData.endPost.candle.getDateTime().isAfter(order.getPurchaseDateTime())
+                ) {
+                    res = candleBuyRes.res;
+                    annotation += " BYU OK";
+                }
+            }
         }
 
         if (res && buyCriteria.getSkipIfOutPrevLength() != null) {
@@ -2399,6 +2408,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     //CandleDomainEntity candleIntervalResBuyLast = null;
                     //CandleDomainEntity candleIntervalResDownFirst = null;
                     CandleIntervalUpDownData candleIntervalUpDownDataPrev = null;
+                    CandleIntervalUpDownData candleIntervalUpDownDataPrevPrev = null;
                     if (null != buyCriteria.getCandleMinFactor()) {
                         annotation += candleIntervalUpDownData.annotation;
                         if (null != candleIntervalUpDownData.beginPre) {
@@ -2409,14 +2419,16 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             }
                             //candleIntervalResBuyLast = candleIntervalUpDownData.minCandle;
                             //candleIntervalResSellLast = candleIntervalUpDownData.maxCandle;
-                            candleIntervalUpDownDataPrev = getCurCandleIntervalUpDownData(newStrategy, candleIntervalUpDownData.beginPre.candle);
+                            candleIntervalUpDownDataPrevPrev = candleIntervalUpDownDataPrev = getCurCandleIntervalUpDownData(newStrategy, candleIntervalUpDownData.beginPre.candle);
                             if (candleIntervalUpDownDataPrev != null) {
-                                var candleIntervalUpDownDataPrevPrev = getCurCandleIntervalUpDownData(newStrategy, candleIntervalUpDownDataPrev.beginPre.candle);
+                                candleIntervalUpDownDataPrevPrev = getCurCandleIntervalUpDownData(newStrategy, candleIntervalUpDownDataPrev.beginPre.candle);
                                 if (null != candleIntervalUpDownDataPrevPrev
                                         && candleIntervalUpDownDataPrevPrev.minClose != null
                                 ) {
                                     candleIntervalUpDownDataPrev.minClose = Math.min(candleIntervalUpDownDataPrev.minClose, candleIntervalUpDownDataPrevPrev.minClose);
                                     candleIntervalUpDownDataPrev.maxClose = Math.max(candleIntervalUpDownDataPrev.maxClose, candleIntervalUpDownDataPrevPrev.maxClose);
+                                } else {
+                                    candleIntervalUpDownDataPrevPrev = candleIntervalUpDownDataPrev;
                                 }
                             }
                             //annotation += " candleIntervalUpDownDataPrev: " + candleIntervalUpDownDataPrev.annotation;
@@ -2485,8 +2497,20 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             );
                             var minPercent = 100f * (candleIntervalUpDownDataPrev.minClose - candleIntervalUpDownData.minClose) / size;
                             var maxPercent = 100f * (candleIntervalUpDownData.maxClose - candleIntervalUpDownDataPrev.maxClose) / size;
+                            var minPercentPrev = minPercent;
+                            var maxPercentPrev = maxPercent;
+                            if (candleIntervalUpDownDataPrevPrev != null) {
+                                var sizePrev = Math.max(
+                                        candleIntervalUpDownDataPrevPrev.maxClose - candleIntervalUpDownDataPrevPrev.minClose,
+                                        candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose
+                                );
+                                minPercentPrev = 100f * (candleIntervalUpDownDataPrevPrev.minClose - candleIntervalUpDownData.minClose) / size;
+                                maxPercentPrev = 100f * (candleIntervalUpDownData.maxClose - candleIntervalUpDownDataPrevPrev.maxClose) / size;
+                            }
                             annotation += " minPercent = " + minPercent;
                             annotation += " maxPercent = " + maxPercent;
+                            annotation += " minPercentPrev = " + minPercentPrev;
+                            annotation += " maxPercentPrev = " + maxPercentPrev;
                             if (maxPercent > 5f
                             ) {
                                 isIntervalUp = true;
@@ -2494,23 +2518,45 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                 //candlePriceMinFactor = 1f + (minPercent - 15f)/100f;
                                 //annotation += " new candlePriceMinFactor = " + candlePriceMinFactor;
                             }
+                            var avgPercentPrev = (minPercentPrev - maxPercentPrev) / 2;
                             var avgPercent = (minPercent - maxPercent) / 2;
-                            annotation += " avgPercent = " + avgPercent;
-                            if (avgPercent > 5f
+                            annotation += " avgPercentPrev = " + avgPercentPrev;
+                            if (avgPercentPrev > 5f
+                                    //&& minPercentPrev > 0f
                                 //&& maxPercent > 5
                             ) {
                                 isIntervalDown = true;
                                 if (maxPercent > 0f) {
-                                    candlePriceMinFactor = 1f;
+                                    candlePriceMinFactor = Math.min(candlePriceMinFactor, 1f + ((avgPercentPrev + avgPercent) / 2  - 15f) / 100f);
                                 } else {
-                                    candlePriceMinFactor = 1f + (avgPercent - 15f) / 100f;
+                                    //if (maxPercent > 5f && maxPercentPrev > 0f) {
+                                    //    candlePriceMinFactor = 1f;
+                                    //} else {
+                                    candlePriceMinFactor = 1f + (avgPercentPrev - 15f) / 100f;
+                                    //}
                                 }
                                 annotation += " new candlePriceMinFactor = " + candlePriceMinFactor;
-                            } else if ((maxPercent + 5f) < 0
-                                    && (maxPercent + 5f) < minPercent) {
-                                isIntervalDown = true;
-                                candlePriceMinFactor = candlePriceMinFactor - (minPercent + 5f) / 100f;
-                                annotation += " new candlePriceMinFactor = " + candlePriceMinFactor;
+                                if (
+                                        maxPercent < 0f
+                                ) {
+                                    candlePriceMaxFactor = 1f;
+                                    annotation += " new candlePriceMaxFactor = " + candlePriceMaxFactor;
+                                }
+                            } else {
+                                if (
+                                        (maxPercentPrev + 5f) < 0
+                                        && (maxPercentPrev + 5f) < minPercentPrev
+                                ) {
+                                    isIntervalDown = true;
+                                    candlePriceMinFactor = candlePriceMinFactor - (minPercentPrev + 5f) / 100f;
+                                    annotation += " new candlePriceMinFactor = " + candlePriceMinFactor;
+                                } else if (
+                                        minPercent < -5f
+                                        && maxPercent < 0f
+                                ) {
+                                    candlePriceMinFactor = 2f;
+                                    annotation += " new candlePriceMinFactor = " + candlePriceMinFactor;
+                                }
                             }
                         }
                         res = false;
@@ -2532,7 +2578,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                         && factor2 > buyCriteria.getCandlePriceMinMinFactor())
                                         || (factor < buyCriteria.getCandlePriceMinMaxFactor()
                                         && factor > buyCriteria.getCandlePriceMinMinFactor()))
-                            //&& isIntervalUp
+                                        && !isIntervalDown
                         ) {
                             var isBoth = ((factor2 < buyCriteria.getCandlePriceMinMaxFactor()
                                     && factor2 > buyCriteria.getCandlePriceMinMinFactor())
@@ -2994,5 +3040,10 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
     private String printPrice(String s)
     {
         return s.indexOf(".") < 0 ? s : s.replaceAll("0*$", "").replaceAll("\\.$", "");
+    }
+
+    private String printDateTime(OffsetDateTime dt)
+    {
+        return notificationService.formatDateTime(dt);
     }
 }

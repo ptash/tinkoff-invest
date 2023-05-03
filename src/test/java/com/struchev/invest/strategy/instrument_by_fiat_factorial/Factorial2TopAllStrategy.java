@@ -10,7 +10,5 @@ public class Factorial2TopAllStrategy extends Factorial2TopStrategy {
         buy.setIsAllOverProfit(true);
         return buy;
     }
-    public boolean isEnabled() {
-        return true;
-    }
+    public boolean isEnabled() { return true; }
 }

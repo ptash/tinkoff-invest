@@ -10,7 +10,5 @@ public class Factorial2TopMinPriceNullStrategy extends Factorial2TopStrategy {
         buy.setIsOverProfit(true);
         return buy;
     }
-    public boolean isEnabled() {
-        return false;
-    }
+    public boolean isEnabled() { return false; }
 }

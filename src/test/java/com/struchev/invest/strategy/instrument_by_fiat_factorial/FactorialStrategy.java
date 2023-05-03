@@ -108,7 +108,5 @@ public class FactorialStrategy extends AInstrumentByFiatFactorialStrategy {
     @Override
     public Map<String, Integer> getFigies()  { return FIGIES; }
 
-    public boolean isEnabled() {
-        return false;
-    }
+    public boolean isEnabled() { return false; }
 }

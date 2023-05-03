@@ -11,7 +11,5 @@ public class Factorial3TopAllLoss200Strategy extends Factorial3TopAllStrategy {
         buy.setProfitPercentFromBuyMinPrice(null);
         return buy;
     }
-    public boolean isEnabled() {
-        return true;
-    }
+    public boolean isEnabled() { return true; }
 }
