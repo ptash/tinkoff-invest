@@ -1285,6 +1285,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     }
                 }
             }
+            var isSkip = false;
             if (
                     res
                     && !isOrderUpCandle
@@ -1351,11 +1352,13 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         annotation += candleIntervalUpDownData.annotation;
                         res = false;
                     }
+                    isSkip = skip;
                 }
             }
             var isMiddleOk = false;
             if (
                     !isOrderUpCandle
+                    && !isSkip
                     && null != sellCriteria.getCandleUpPointLength()
                     && null != sellCriteria.getCandleUpMiddleFactor()
             ) {
@@ -1365,16 +1368,42 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         candleIntervalRes,
                         //CandleIntervalResultData.builder().res(false).build(),
                         sellCriteria.getCandleUpPointLength(),
-                        10
+                        20
                 );
                 annotation += " sellPoints.size(): " + sellPoints.size();
-                if (sellPoints.size() > 1) {
-                    var prevPoint = Math.max(sellPoints.get(0).candle.getClosingPrice().doubleValue(), sellPoints.get(0).candle.getOpenPrice().doubleValue());
-                    var curPoint = Math.min(sellPoints.get(1).candle.getClosingPrice().doubleValue(), sellPoints.get(1).candle.getOpenPrice().doubleValue());
+                var prevPoint = order.getPurchasePrice().doubleValue();
+                Double curPoint = null;
+                if (sellPoints.size() > 0) {
+                    curPoint = Math.max(sellPoints.get(0).candle.getClosingPrice().doubleValue(), sellPoints.get(0).candle.getOpenPrice().doubleValue());
+                    var candleResDown = getCandleIntervals(newStrategy, candle).stream().filter(
+                            c -> c.isDown
+                                    && !c.candle.getDateTime().isAfter(candle.getDateTime())
+                    ).reduce((first, second) -> second).orElse(null);
+                    if (null != candleResDown) {
+                        prevPoint = Math.min(
+                                prevPoint,
+                                Math.min(candleResDown.candle.getClosingPrice().doubleValue(), candleResDown.candle.getOpenPrice().doubleValue())
+                        );
+                    }
+                }
+                if (sellPoints.size() > 1 && null != curPoint) {
+                    annotation += " prevPoint: " + printPrice(prevPoint);
+                    for(var i = sellPoints.size() - 1; i > 0; i--) {
+                        var pp = Math.min(sellPoints.get(i).candle.getClosingPrice().doubleValue(), sellPoints.get(i).candle.getOpenPrice().doubleValue());
+                        if ((curPoint - pp) > (pp - prevPoint)) {
+                            annotation += " new prevPoint: " + printPrice(pp) + ": " + printPrice(curPoint - pp) + ">" + printPrice(pp - prevPoint);
+                            prevPoint = Math.max(
+                                    prevPoint,
+                                    pp
+                            );
+                        }
+                    }
+                }
+                if (null != curPoint) {
                     var middlePrice = (prevPoint + curPoint) / sellCriteria.getCandleUpMiddleFactor();
                     var candlesPrevArray = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(), candle.getDateTime(), 2, strategy.getInterval());
                     var candlePrev = candlesPrevArray.get(0);
-                    var candlePrevMaxPrice = candlePrev.getHighestPrice().doubleValue();
+                    var candlePrevMaxPrice = candlePrev.getClosingPrice().doubleValue();
                     annotation += " middlePrice: " + printPrice(candlePrevMaxPrice) + " < " + printPrice(middlePrice) + "(" + printPrice(prevPoint) + " - " + printPrice(curPoint) + ")";
                     res = candlePrevMaxPrice < middlePrice;
                     if (res) {
