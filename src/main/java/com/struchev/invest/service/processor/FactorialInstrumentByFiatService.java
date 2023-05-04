@@ -2166,6 +2166,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             strategy.getInterval()
                     );
 
+                    /*
                     CandleIntervalResultData finalCandleResDown2 = candleResDown;
                     var candles = intervalCandles.stream().filter(c ->
                                     candleResUpPrev.getCandle().getDateTime().compareTo(c.getCandle().getDateTime()) >= 0
@@ -2177,6 +2178,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         var c = candles.get(i);
                         annotation += " " + i + (c.isDown ? " DOWN ": " UP ") + printDateTime(c.getCandle().getDateTime());
                     }
+                     */
 
                     var minPrice = candlesBetweenLast.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).min().orElse(-1);
                     var minCandle = candlesBetweenLast.stream().reduce((first, second) ->
