@@ -33,8 +33,15 @@ public class FactorialCandleFactorUp20Strategy extends FactorialCandleFactor20St
         //sell.setCandleOnlyUpStopLossPercent(0.6f);
         //sell.setCandleExitProfitInPercentMax(null);
 
-        sell.setCandleUpMiddleFactor(2f);
+        sell.setSellUnderLossLength(0);
+
+        sell.setCandleUpSkipLength(4);
+        sell.setCandleUpMiddleFactor(0.3f);
         return sell;
+    }
+
+    public SellLimitCriteria getSellLimitCriteriaOrig() {
+        return SellLimitCriteria.builder().exitProfitPercent(5.0f).build();
     }
 
     public boolean isEnabled() { return true; }

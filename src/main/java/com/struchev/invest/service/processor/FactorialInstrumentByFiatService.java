@@ -1015,7 +1015,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 if (factorial.getProfit() < candle.getClosingPrice().doubleValue()) {
                     annotation += " profit < close";
                 } else {
-                    annotation += "loss > close";
+                    annotation += " loss > close";
                 }
                 res = true;
             }
@@ -1326,7 +1326,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 }
                 if (
                         (profitPercent.floatValue() < sellCriteria.getCandleProfitMinPercent()
-                                || -profitPercent.floatValue() > sellCriteria.getCandleProfitMinPercent()
+                                && profitPercent.floatValue() > -sellCriteria.getCandleProfitMinPercent()
                         )
                         && isFactorPrice
                         && (candle.getClosingPrice().floatValue() > Math.min(candleIntervalUpDownData.minClose, candleIntervalUpDownData.priceEnd)
@@ -1334,16 +1334,16 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         )
                 ) {
                     var skip = true;
-                    if (null != sellCriteria.getCandleUpLength()) {
+                    if (null != sellCriteria.getCandleUpSkipLength()) {
                         List<CandleIntervalResultData> sellPoints = getIntervalSellPoints(
                                 newStrategy,
                                 candle,
                                 candleIntervalRes,
                                 sellCriteria.getCandleUpPointLength(),
-                                sellCriteria.getCandleUpLength()
+                                sellCriteria.getCandleUpSkipLength()
                         );
-                        if (sellPoints.size() > sellCriteria.getCandleUpLength()) {
-                            annotation += " SKIP MIN SKIP by size: " + sellPoints.size() + " > " + sellCriteria.getCandleUpLength();
+                        if (sellPoints.size() > sellCriteria.getCandleUpSkipLength()) {
+                            annotation += " SKIP MIN SKIP by size: " + sellPoints.size() + " > " + sellCriteria.getCandleUpSkipLength();
                             skip = false;
                         }
                     }
@@ -1376,7 +1376,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 annotation += " sellPoints.size(): " + sellPoints.size();
                 var prevPoint = order.getPurchasePrice().doubleValue();
                 Double curPoint = null;
-                if (sellPoints.size() > 0) {
+                if (sellPoints.size() > 1 || (sellPoints.size() == 1 && res)) {
                     curPoint = Math.max(sellPoints.get(0).candle.getClosingPrice().doubleValue(), sellPoints.get(0).candle.getOpenPrice().doubleValue());
                     var candleResDown = getCandleIntervals(newStrategy, candle).stream().filter(
                             c -> c.isDown
@@ -1392,24 +1392,26 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 if (sellPoints.size() > 1 && null != curPoint) {
                     var prevPointInit = prevPoint;
                     annotation += " prevPoint: " + printPrice(prevPoint);
+                    var num = 1;
                     for(var i = sellPoints.size() - 1; i > 0; i--) {
                         var pp = Math.min(sellPoints.get(i).candle.getClosingPrice().doubleValue(), sellPoints.get(i).candle.getOpenPrice().doubleValue());
                         if (
-                                (curPoint - pp) > (pp - prevPoint)
-                                && (pp - prevPointInit) <= (curPoint - prevPoint)
+                                (curPoint - pp) > num * (pp - prevPoint)
+                                && num * (pp - prevPointInit) <= (curPoint - prevPoint)
                         ) {
-                            annotation += " new prevPoint: " + printPrice(pp) + ": "
+                            annotation += " new prevPoint: " + i + " " + printPrice(pp) + ": "
                                     + printPrice(curPoint - pp) + ">" + printPrice(pp - prevPoint)
-                                    + printPrice(pp - prevPointInit) + "<=" + printPrice(curPoint - prevPoint);
+                                    + ": " + printPrice(pp - prevPointInit) + "<=" + printPrice(curPoint - prevPoint);
                             prevPoint = Math.max(
                                     prevPoint,
                                     pp
                             );
+                            num++;
                         }
                     }
                 }
                 if (null != curPoint) {
-                    var middlePrice = (prevPoint + curPoint) / sellCriteria.getCandleUpMiddleFactor();
+                    var middlePrice = prevPoint + (curPoint - prevPoint) * sellCriteria.getCandleUpMiddleFactor();
                     var candlesPrevArray = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(), candle.getDateTime(), 2, strategy.getInterval());
                     var candlePrev = candlesPrevArray.get(0);
                     var candlePrevMaxPrice = candlePrev.getClosingPrice().doubleValue();
@@ -2646,7 +2648,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                 if (
                                         maxPercent < 0f
                                 ) {
-                                    candlePriceMaxFactor = 1f;
+                                    candlePriceMaxFactor = 1f - maxPercent / 100f;
                                     annotation += " new candlePriceMaxFactor = " + candlePriceMaxFactor;
                                 }
                             } else {
