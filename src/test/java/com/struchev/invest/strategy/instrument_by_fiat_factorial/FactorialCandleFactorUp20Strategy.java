@@ -11,6 +11,7 @@ public class FactorialCandleFactorUp20Strategy extends FactorialCandleFactor20St
     public BuyCriteria getBuyCriteria() {
         var buy = super.getBuyCriteria();
 
+        /*
         buy.setCandleOnlyUpLength(2);
         buy.setCandleOnlyUpPointLength(5);
         buy.setCandleOnlyUpBetweenPercent(0.8f);
@@ -21,17 +22,20 @@ public class FactorialCandleFactorUp20Strategy extends FactorialCandleFactor20St
         buy.setIsCandleUpAny(true);
         buy.setCandleUpMinFactorAny(0.25f);
         buy.setCandleUpMaxFactorAny(1f);
+         */
         return buy;
     }
 
     public SellCriteria getSellCriteria() {
         var sell = super.getSellCriteria();
 
-        sell.setCandleOnlyUpProfitMinPercent(0.5f);
-        sell.setCandleOnlyUpStopLossPercent(0.6f);
-        sell.setCandleExitProfitInPercentMax(null);
+        //sell.setCandleOnlyUpProfitMinPercent(0.5f);
+        //sell.setCandleOnlyUpStopLossPercent(0.6f);
+        //sell.setCandleExitProfitInPercentMax(null);
+
+        sell.setCandleUpMiddleFactor(2f);
         return sell;
     }
 
-    public boolean isEnabled() { return false; }
+    public boolean isEnabled() { return true; }
 }

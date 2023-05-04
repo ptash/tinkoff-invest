@@ -1357,6 +1357,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             if (
                     !isOrderUpCandle
                     && null != sellCriteria.getCandleUpPointLength()
+                    && null != sellCriteria.getCandleUpMiddleFactor()
             ) {
                 List<CandleIntervalResultData> sellPoints = getIntervalSellPoints(
                         newStrategy,
@@ -1370,7 +1371,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 if (sellPoints.size() > 1) {
                     var prevPoint = Math.max(sellPoints.get(0).candle.getClosingPrice().doubleValue(), sellPoints.get(0).candle.getOpenPrice().doubleValue());
                     var curPoint = Math.min(sellPoints.get(1).candle.getClosingPrice().doubleValue(), sellPoints.get(1).candle.getOpenPrice().doubleValue());
-                    var middlePrice = (prevPoint + curPoint) / 2f;
+                    var middlePrice = (prevPoint + curPoint) / sellCriteria.getCandleUpMiddleFactor();
                     var candlesPrevArray = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(), candle.getDateTime(), 2, strategy.getInterval());
                     var candlePrev = candlesPrevArray.get(0);
                     var candlePrevMaxPrice = candlePrev.getHighestPrice().doubleValue();
