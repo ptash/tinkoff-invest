@@ -1351,8 +1351,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         annotation += " SKIP MIN CANDLE INTERVAL";
                         annotation += candleIntervalUpDownData.annotation;
                         res = false;
+                        isSkip = true;
                     }
-                    isSkip = skip;
                 }
             }
             var isMiddleOk = false;
