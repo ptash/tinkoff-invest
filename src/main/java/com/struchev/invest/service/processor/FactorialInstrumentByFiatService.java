@@ -2543,7 +2543,11 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             var avgPercentPrev = (minPercentPrev - maxPercentPrev) / 2;
                             var avgPercent = (minPercent - maxPercent) / 2;
                             annotation += " avgPercentPrev = " + avgPercentPrev;
-                            if (
+                            if (candleIntervalUpDownDataPrev.minClose > candleIntervalUpDownData.maxClose) {
+                                // isIntervalDown = true;
+                                candlePriceMinFactor = 0.5f;
+                                annotation += " new candlePriceMinFactor = " + candlePriceMinFactor;
+                            } else if (
                                     candleIntervalUpDownDataPrevPrev != null
                                     && candleIntervalUpDownDataPrevPrev.minClose > candleIntervalUpDownDataPrev.maxClose
                             ) {
@@ -2552,10 +2556,6 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                 candlePriceMaxFactor = candlePriceMinFactor + 0.5f;
                                 annotation += " new candlePriceMinFactor = " + candlePriceMinFactor;
                                 annotation += " new candlePriceMaxFactor = " + candlePriceMaxFactor;
-                            } else if (candleIntervalUpDownDataPrev.minClose > candleIntervalUpDownData.maxClose) {
-                                // isIntervalDown = true;
-                                candlePriceMinFactor = 0.5f;
-                                annotation += " new candlePriceMinFactor = " + candlePriceMinFactor;
                             } else if (avgPercentPrev > 5f
                                     //&& minPercentPrev > 0f
                                 //&& maxPercent > 5
