@@ -1352,30 +1352,31 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         res = false;
                     }
                 }
-
-                if (
-                        isFactorPrice
-                        //&& res
-                        && null != sellCriteria.getCandleUpLength()
-                ) {
-                    List<CandleIntervalResultData> sellPoints = getIntervalSellPoints(
-                            newStrategy,
-                            candle,
-                            candleIntervalRes,
-                            sellCriteria.getCandleUpPointLength(),
-                            10
-                    );
-                    if (sellPoints.size() > 1) {
-                        var middlePrice = (sellPoints.get(0).candle.getClosingPrice().doubleValue()
-                                + sellPoints.get(1).candle.getClosingPrice().doubleValue()) / 2f;
-                        var candlesPrevArray = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(), candle.getDateTime(), 2, strategy.getInterval());
-                        var candlePrev = candlesPrevArray.get(0);
-                        var candlePrevMaxPrice = candlePrev.getHighestPrice().doubleValue();
-                        annotation += " middlePrice: " + printPrice(candlePrevMaxPrice) + " < " + printPrice(middlePrice);
-                        res = candlePrevMaxPrice < middlePrice;
-                        if (res) {
-                            annotation += " MIDDLE CANDLE OK";
-                        }
+            }
+            var isMiddleOk = false;
+            if (
+                    !isOrderUpCandle
+                    && null != sellCriteria.getCandleUpPointLength()
+            ) {
+                List<CandleIntervalResultData> sellPoints = getIntervalSellPoints(
+                        newStrategy,
+                        candle,
+                        candleIntervalRes,
+                        sellCriteria.getCandleUpPointLength(),
+                        10
+                );
+                annotation += " sellPoints.size(): " + sellPoints.size();
+                if (sellPoints.size() > 1) {
+                    var middlePrice = (sellPoints.get(0).candle.getHighestPrice().doubleValue()
+                            + sellPoints.get(1).candle.getLowestPrice().doubleValue()) / 2f;
+                    var candlesPrevArray = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(), candle.getDateTime(), 2, strategy.getInterval());
+                    var candlePrev = candlesPrevArray.get(0);
+                    var candlePrevMaxPrice = candlePrev.getHighestPrice().doubleValue();
+                    annotation += " middlePrice: " + printPrice(candlePrevMaxPrice) + " < " + printPrice(middlePrice);
+                    res = candlePrevMaxPrice < middlePrice;
+                    if (res) {
+                        annotation += " MIDDLE CANDLE OK";
+                        isMiddleOk = true;
                     }
                 }
             }
@@ -1414,7 +1415,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     addCandleInterval(keyCandles, candleIntervalBuyRes);
                 }
             }
-            if (sellCriteria.getProfitPercentFromSellMinPrice() != null) {
+            if (sellCriteria.getProfitPercentFromSellMinPrice() != null && !isMiddleOk) {
                 var sellData = getCashedIsBuyValue(keySell);
                 if (res || null != sellData) {
                     annotation += " sellUpKEY=" + keySell;
@@ -2852,7 +2853,11 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
     ) {
         var intervalCandles = getCandleIntervals(strategy, candle);
         List<CandleIntervalResultData> sellPoints = new ArrayList<>();
-        sellPoints.add(lastSellPoint);
+        if (lastSellPoint.res && !lastSellPoint.isDown) {
+            sellPoints.add(lastSellPoint);
+        } else {
+            lastSellPoint = null;
+        }
         Integer lastPointI = sellPoints.size() - 1;
         for (var i = intervalCandles.size() - 1; i >= 0; i--) {
             var candleRes = intervalCandles.get(i);
@@ -2862,21 +2867,26 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             ) {
                 break;
             }
-            var upCandles = candleHistoryService.getCandlesByFigiBetweenDateTimes(
-                    candle.getFigi(),
-                    candleRes.getCandle().getDateTime(),
-                    lastSellPoint.getCandle().getDateTime(),
-                    strategy.getInterval()
-            );
-            if (
-                    upCandles.size() > pointLength
-            ) {
-                //annotation += " new point = " + lastPointI + ":" + notificationService.formatDateTime(candleRes.getCandle().getDateTime());
-                //if (candleRes.candle.getClosingPrice().compareTo(lastSellPoint.candle.getClosingPrice()) < 0) {
+            if (null == lastSellPoint) {
                 sellPoints.add(candleRes);
                 lastPointI = sellPoints.size() - 1;
             } else {
-                sellPoints.set(lastPointI, candleRes);
+                var upCandles = candleHistoryService.getCandlesByFigiBetweenDateTimes(
+                        candle.getFigi(),
+                        candleRes.getCandle().getDateTime(),
+                        lastSellPoint.getCandle().getDateTime(),
+                        strategy.getInterval()
+                );
+                if (
+                        upCandles.size() > pointLength
+                ) {
+                    //annotation += " new point = " + lastPointI + ":" + notificationService.formatDateTime(candleRes.getCandle().getDateTime());
+                    //if (candleRes.candle.getClosingPrice().compareTo(lastSellPoint.candle.getClosingPrice()) < 0) {
+                    sellPoints.add(candleRes);
+                    lastPointI = sellPoints.size() - 1;
+                } else {
+                    sellPoints.set(lastPointI, candleRes);
+                }
             }
             lastSellPoint = candleRes;
             if (sellPoints.size() > upLength) {
