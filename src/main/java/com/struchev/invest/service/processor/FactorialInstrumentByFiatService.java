@@ -1352,6 +1352,32 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         res = false;
                     }
                 }
+
+                if (
+                        isFactorPrice
+                        //&& res
+                        && null != sellCriteria.getCandleUpLength()
+                ) {
+                    List<CandleIntervalResultData> sellPoints = getIntervalSellPoints(
+                            newStrategy,
+                            candle,
+                            candleIntervalRes,
+                            sellCriteria.getCandleUpPointLength(),
+                            10
+                    );
+                    if (sellPoints.size() > 1) {
+                        var middlePrice = (sellPoints.get(0).candle.getClosingPrice().doubleValue()
+                                + sellPoints.get(1).candle.getClosingPrice().doubleValue()) / 2f;
+                        var candlesPrevArray = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(), candle.getDateTime(), 2, strategy.getInterval());
+                        var candlePrev = candlesPrevArray.get(0);
+                        var candlePrevMaxPrice = candlePrev.getHighestPrice().doubleValue();
+                        annotation += " middlePrice: " + printPrice(candlePrevMaxPrice) + " < " + printPrice(middlePrice);
+                        res = candlePrevMaxPrice < middlePrice;
+                        if (res) {
+                            annotation += " MIDDLE CANDLE OK";
+                        }
+                    }
+                }
             }
             if (candleIntervalRes.res) {
                 candleIntervalSell = true;
@@ -2543,7 +2569,11 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             var avgPercentPrev = (minPercentPrev - maxPercentPrev) / 2;
                             var avgPercent = (minPercent - maxPercent) / 2;
                             annotation += " avgPercentPrev = " + avgPercentPrev;
-                            if (candleIntervalUpDownDataPrev.minClose > candleIntervalUpDownData.maxClose) {
+                            if (
+                                    candleIntervalUpDownDataPrev.minClose > candleIntervalUpDownData.maxClose
+                                    && (candleIntervalUpDownDataPrev.minClose - candleIntervalUpDownData.maxClose)
+                                            > ((candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) / 2)
+                            ) {
                                 // isIntervalDown = true;
                                 candlePriceMinFactor = 0.5f;
                                 annotation += " new candlePriceMinFactor = " + candlePriceMinFactor;
