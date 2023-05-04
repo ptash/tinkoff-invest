@@ -13,5 +13,5 @@ public class Factorial2Strategy extends FactorialStrategy {
         sell.setIsSellUnderProfit(true);
         return sell;
     }
-    public boolean isEnabled() { return true; }
+    public boolean isEnabled() { return false; }
 }

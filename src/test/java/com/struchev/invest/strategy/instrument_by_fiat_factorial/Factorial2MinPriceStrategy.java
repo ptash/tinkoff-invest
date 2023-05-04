@@ -10,5 +10,5 @@ public class Factorial2MinPriceStrategy extends Factorial2Strategy {
         buy.setProfitPercentFromBuyMaxPrice(0.3);
         return buy;
     }
-    public boolean isEnabled() { return true; }
+    public boolean isEnabled() { return false; }
 }

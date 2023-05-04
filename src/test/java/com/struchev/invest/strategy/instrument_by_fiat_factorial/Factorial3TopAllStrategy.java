@@ -44,5 +44,5 @@ public class Factorial3TopAllStrategy extends Factorial2TopAllStrategy {
         //return SellLimitCriteria.builder().exitProfitPercent(4.0f).build();
         return SellLimitCriteria.builder().exitProfitPercent(4.0f).build();
     }
-    public boolean isEnabled() { return true; }
+    public boolean isEnabled() { return false; }
 }

@@ -20,5 +20,5 @@ public class Factorial3TopAllLoss20MinPriceRelativeStrategy extends Factorial3To
         sell.setIsExitProfitInPercentMaxMax(false);
         return sell;
     }
-    //public boolean isEnabled() { return false; }
+    public boolean isEnabled() { return true; }
 }

@@ -18,4 +18,6 @@ public class FactorialCandleExt20Strategy extends FactorialCandle20Strategy {
         sell.setProfitPercentFromSellMinPriceLength(2);
         return sell;
     }
+
+    public boolean isEnabled() { return false; }
 }

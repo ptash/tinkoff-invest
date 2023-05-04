@@ -11,4 +11,6 @@ public class FactorialCandleFactor20MinMin2Strategy extends FactorialCandleFacto
         buy.setCandleDownMinMinMaxLength(2);
         return buy;
     }
+
+    public boolean isEnabled() { return false; }
 }

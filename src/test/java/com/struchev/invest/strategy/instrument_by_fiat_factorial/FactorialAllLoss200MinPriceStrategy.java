@@ -11,5 +11,5 @@ public class FactorialAllLoss200MinPriceStrategy extends FactorialAllLoss200Stra
         buy.setProfitPercentFromBuyMaxPrice(1.0);
         return buy;
     }
-    public boolean isEnabled() { return true; }
+    public boolean isEnabled() { return false; }
 }

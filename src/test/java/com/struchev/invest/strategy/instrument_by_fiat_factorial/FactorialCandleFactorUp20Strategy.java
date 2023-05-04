@@ -32,4 +32,6 @@ public class FactorialCandleFactorUp20Strategy extends FactorialCandleFactor20St
         sell.setCandleExitProfitInPercentMax(null);
         return sell;
     }
+
+    public boolean isEnabled() { return false; }
 }
