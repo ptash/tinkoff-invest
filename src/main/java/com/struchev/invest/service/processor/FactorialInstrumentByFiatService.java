@@ -1287,7 +1287,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             }
             var isSkip = false;
             if (
-                    res
+                    true
                     && !isOrderUpCandle
                     && sellCriteria.getCandleProfitMinPercent() != null
                 //&& profitPercent.floatValue() > 0
@@ -1350,10 +1350,13 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     if (skip) {
                         annotation += " SKIP MIN CANDLE INTERVAL";
                         annotation += candleIntervalUpDownData.annotation;
-                        res = false;
+                        //res = false;
                         isSkip = true;
                     }
                 }
+            }
+            if (res && isSkip) {
+                res = false;
             }
             var isMiddleOk = false;
             if (
@@ -1387,11 +1390,17 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     }
                 }
                 if (sellPoints.size() > 1 && null != curPoint) {
+                    var prevPointInit = prevPoint;
                     annotation += " prevPoint: " + printPrice(prevPoint);
                     for(var i = sellPoints.size() - 1; i > 0; i--) {
                         var pp = Math.min(sellPoints.get(i).candle.getClosingPrice().doubleValue(), sellPoints.get(i).candle.getOpenPrice().doubleValue());
-                        if ((curPoint - pp) > (pp - prevPoint)) {
-                            annotation += " new prevPoint: " + printPrice(pp) + ": " + printPrice(curPoint - pp) + ">" + printPrice(pp - prevPoint);
+                        if (
+                                (curPoint - pp) > (pp - prevPoint)
+                                && (pp - prevPointInit) <= (curPoint - prevPoint)
+                        ) {
+                            annotation += " new prevPoint: " + printPrice(pp) + ": "
+                                    + printPrice(curPoint - pp) + ">" + printPrice(pp - prevPoint)
+                                    + printPrice(pp - prevPointInit) + "<=" + printPrice(curPoint - prevPoint);
                             prevPoint = Math.max(
                                     prevPoint,
                                     pp

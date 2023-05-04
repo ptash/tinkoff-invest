@@ -25,7 +25,7 @@ public class CalculatorFacade {
     public <T extends AStrategy> boolean isShouldBuy(T strategy, CandleDomainEntity candle) {
         try {
             return calculateServiceByType.get(strategy.getType()).isShouldBuy(strategy, candle);
-        } catch (NullPointerException e) {
+        } catch (RuntimeException e) {
             log.info("error in strategy " + strategy.getName(), e);
             throw e;
         }
@@ -34,7 +34,7 @@ public class CalculatorFacade {
     public <T extends AStrategy> boolean isShouldSell(T strategy, CandleDomainEntity candle, BigDecimal purchaseRate) {
         try {
             return calculateServiceByType.get(strategy.getType()).isShouldSell(strategy, candle, purchaseRate);
-        } catch (NullPointerException e) {
+        } catch (RuntimeException e) {
             log.info("error in strategy " + strategy.getName(), e);
             throw e;
         }
