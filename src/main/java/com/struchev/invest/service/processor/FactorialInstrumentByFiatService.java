@@ -1450,7 +1450,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                     candle,
                                     candleIntervalBuyRes,
                                     sellCriteria.getCandleUpPointLength(),
-                                    1
+                                    3
                             );
                             if (
                                     points.size() > 0
@@ -1458,9 +1458,16 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                     && points.get(0).getCandle().getDateTime().isBefore(upCount.get(upCount.size() - 1).getCandle().getDateTime())
                             ) {
                                 annotation += " DOWN AFTER UP SKIP: " + upCount.size() + ": " + points.size() + ": " + printDateTime(points.get(0).getCandle().getDateTime()) + " < " + printDateTime(upCount.get(upCount.size() - 1).getCandle().getDateTime());
+                            } else if (points.size() > 2
+                                    && points.get(0).isDown
+                                    && !points.get(1).isDown
+                                    && points.get(2).isDown
+                            ) {
+                                annotation += " DOWN AFTER UP SKIP UP-DOWN";
+                            } else {
+                                annotation += " candleInterval OK DOWN AFTER UP: " + upCount.size() + ": " + notificationService.formatDateTime(upCount.get(0).candle.getDateTime());
+                                res = true;
                             }
-                            annotation += " candleInterval OK DOWN AFTER UP: " + upCount.size() + ": " + notificationService.formatDateTime(upCount.get(0).candle.getDateTime());
-                            res = true;
                         } else {
                             var candleBuyRes = getCandleBuyRes(newStrategy, candle);
                             annotation += " candleInterval BUY: " + candleBuyRes.annotation;
