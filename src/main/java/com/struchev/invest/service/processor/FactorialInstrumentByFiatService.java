@@ -1463,7 +1463,12 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                     && !points.get(1).isDown
                                     && points.get(2).isDown
                             ) {
-                                annotation += " DOWN AFTER UP SKIP UP-DOWN";
+                                annotation += " DOWN AFTER UP SKIP UP-DOWN 2";
+                            } else if (points.size() > 1
+                                    && !points.get(0).isDown
+                                    && points.get(1).isDown
+                            ) {
+                                annotation += " DOWN AFTER UP SKIP UP-DOWN 1";
                             } else {
                                 annotation += " candleInterval OK DOWN AFTER UP: " + upCount.size() + ": " + notificationService.formatDateTime(upCount.get(0).candle.getDateTime());
                                 res = true;
@@ -2663,7 +2668,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                     //if (maxPercent > 5f && maxPercentPrev > 0f) {
                                     //    candlePriceMinFactor = 1f;
                                     //} else {
-                                    candlePriceMinFactor = 1f + (avgPercentPrev - 15f) / 100f;
+                                    candlePriceMinFactor = 1f + ((avgPercentPrev + avgPercent) / 2 - 15f) / 100f;
                                     //}
                                 }
                                 annotation += " new candlePriceMinFactor = " + candlePriceMinFactor;
@@ -2676,9 +2681,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             } else if (avgPercent > 5f) {
                                 isIntervalDown = true;
                                 if (maxPercentPrev > 0f) {
-                                    candlePriceMinFactor = Math.min(candlePriceMinFactor, 1f + ((avgPercentPrev + avgPercent) / 2 - 15f) / 100f);
-                                } else {
                                     candlePriceMinFactor = 1f + (avgPercent - 15f) / 100f;
+                                } else {
+                                    candlePriceMinFactor = 1f + ((avgPercentPrev + avgPercent) / 2 - 15f) / 100f;
                                 }
                                 annotation += " new candlePriceMinFactor = " + candlePriceMinFactor;
                                 if (
