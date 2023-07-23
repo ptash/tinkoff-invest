@@ -15,7 +15,7 @@ configurations {
 }
 
 repositories {
-    maven { url 'https://repo.spring.io/release' }
+    maven { url 'https://repo1.maven.org/maven2/' }
     mavenCentral()
 }
 
@@ -78,5 +78,11 @@ bootBuildImage {
 
 bootRun {
     systemProperties = System.properties
+}
+
+compileJava.options.encoding = 'UTF-8'
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
 }
 

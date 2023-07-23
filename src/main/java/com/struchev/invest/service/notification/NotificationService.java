@@ -177,7 +177,7 @@ public class NotificationService {
 
     private void buildDygraphsPage(String instanceName, String headerLine)
     {
-        String fileName = loggingPath + "/" + instanceName + "Dygraphs-" + dateTime.toString() + ".html";
+        String fileName = loggingPath + "/" + instanceName + "Dygraphs-" + dateTime.toString().replace(":", "_") + ".html";
         File f = new File(fileName);
         File fTemplate = new File("./dygraphs/dygraphs.html");
         if (f.exists() || !fTemplate.exists()) {
@@ -195,8 +195,8 @@ public class NotificationService {
                 visibility += ",true";
             }
             content = content.replace("'%visibility%'", visibility);
-            content = content.replace("s.csv", instanceName + "Strategy-" + dateTime.toString() + ".csv");
-            content = content.replace("a.csv",  instanceName + "Offer-" + dateTime.toString() + ".csv");
+            content = content.replace("s.csv", instanceName + "Strategy-" + dateTime.toString().replace(":", "_") + ".csv");
+            content = content.replace("a.csv",  instanceName + "Offer-" + dateTime.toString().replace(":", "_") + ".csv");
 
             BufferedWriter bufferedWriter = Files.newBufferedWriter(Paths.get(fileName));
             bufferedWriter.write(content); // to write some data
@@ -293,7 +293,7 @@ public class NotificationService {
     private Marker createReportLogMarker(String instanceName, String headerLine) {
         Marker marker = MarkerFactory.getMarker(instanceName);
         LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-        String fileName = loggingPath + "/" + instanceName + "-" + dateTime.toString() + ".csv";
+        String fileName = loggingPath + "/" + instanceName + "-" + dateTime.toString().replace(":", "_") + ".csv";
         log.info("Create log file {}", fileName);
         FileAppender fileAppender = new FileAppender();
         fileAppender.setContext(loggerContext);

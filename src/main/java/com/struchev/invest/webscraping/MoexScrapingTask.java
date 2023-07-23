@@ -54,7 +54,7 @@ public class MoexScrapingTask {
     private final InstrumentService instrumentService;
 
     @Value("${moex.scraping.enabled:true}")
-    Boolean isEnabled;
+    Boolean isEnabled = false;
 
     @Scheduled(cron = "5,10,15 11,16 * * *")
     public void getDerivativeUsdRates() {
