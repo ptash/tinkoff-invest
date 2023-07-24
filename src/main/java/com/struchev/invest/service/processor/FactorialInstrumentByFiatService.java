@@ -1297,7 +1297,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         / (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose);
                 var factorPriceOrder = (order.getPurchasePrice().floatValue() - candleIntervalUpDownData.minClose)
                         / (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose);
-                annotation += " factorPrice = " + factorPrice + " > " + sellCriteria.getCandlePriceMinFactor();
+                annotation += " factorPrice = " + factorPrice + " < " + sellCriteria.getCandlePriceMinFactor();
                 annotation += " factorPriceOrder = " + factorPriceOrder;
                 var isFactorPrice = false;
                 if (sellCriteria.getCandlePriceMinFactor() == null
@@ -1325,12 +1325,15 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     }
                 }
                 if (
+                        // в коридоре минимального процента около цены покупки
                         (profitPercent.floatValue() < sellCriteria.getCandleProfitMinPercent()
                                 && profitPercent.floatValue() > -sellCriteria.getCandleProfitMinPercent()
                         )
+                        // текущая цена близка к дну или цена покупки около потолка
                         && isFactorPrice
+                        // текущая цена выше дна или ?? цена покупки меньше дна
                         && (candle.getClosingPrice().floatValue() > Math.min(candleIntervalUpDownData.minClose, candleIntervalUpDownData.priceEnd)
-                                || factorPriceOrder < Math.min(candleIntervalUpDownData.minClose, candleIntervalUpDownData.priceEnd)
+                                || order.getPurchasePrice().floatValue() < Math.min(candleIntervalUpDownData.minClose, candleIntervalUpDownData.priceEnd)
                         )
                 ) {
                     var skip = true;
@@ -1358,7 +1361,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             if (res && isSkip) {
                 res = false;
             }
-            var isMiddleOk = false;
+            var isMiddleOk = isSkip;
             if (
                     !isOrderUpCandle
                     && !isSkip
@@ -1436,6 +1439,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 candleIntervalBuy = candleIntervalBuyRes.res;
                 if (
                         candleIntervalBuyRes.res
+                        && !isMiddleOk
                 ) {
                     if (candleIntervalUpDownData.minClose != null
                             //&& order.getPurchasePrice().doubleValue() < candle.getClosingPrice().doubleValue()
