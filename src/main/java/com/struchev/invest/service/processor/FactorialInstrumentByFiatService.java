@@ -1286,6 +1286,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 }
             }
             var isSkip = false;
+            var isSkipDown = false;
             if (
                     true
                     && !isOrderUpCandle
@@ -1365,15 +1366,19 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             );
                             Double maxPrice = candlesBetween.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).max().orElse(-1);
                             Double minPrice = candlesBetween.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).min().orElse(-1);
+                            Double maxPrice1 = candlesBetween.subList(0, candlesBetween.size()/2 + 1).stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).max().orElse(-1);
+                            Double maxPrice2 = candlesBetween.subList(candlesBetween.size()/2, candlesBetween.size() - 1).stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).max().orElse(-1);
                             var downFactor = (maxPrice - minPrice) / (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose);
-                            var candleDownFactor = (sellPoints.get(1).getCandle().getClosingPrice().doubleValue() - sellPoints.get(0).getCandle().getClosingPrice().doubleValue())
+                            var candleDownFactor = (maxPrice1 - maxPrice2)
                                     / (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose);
                             annotation += " downFactor = " + printPrice(downFactor) + "(" + printPrice(candleDownFactor) + ") > " + sellCriteria.getCandleUpSkipDownBetweenFactor();
                             if (downFactor > sellCriteria.getCandleUpSkipDownBetweenFactor()
-                                    && candleDownFactor < (downFactor / 3)
+                                    //&& candleDownFactor < (downFactor / 3)
+                                    && maxPrice1 > maxPrice2
                             ) {
                                 annotation += " SKIP MIN SKIP by down";
                                 skip = false;
+                                isSkipDown = true;
                             }
                         }
                     }
@@ -1392,6 +1397,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             if (
                     !isOrderUpCandle
                     && !isSkip
+                    && !isSkipDown
                     && null != sellCriteria.getCandleUpPointLength()
                     && null != sellCriteria.getCandleUpMiddleFactor()
             ) {
