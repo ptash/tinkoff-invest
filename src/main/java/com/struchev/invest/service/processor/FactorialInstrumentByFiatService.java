@@ -2706,7 +2706,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                     annotation += " new candlePriceMinFactor = " + candlePriceMinFactor;
                                 } else if (
                                         minPercent < -5f
-                                        && maxPercent < 0f
+                                        && maxPercent < -5f
                                         && minPercent < maxPercent
                                 ) {
                                     candlePriceMinFactor = 1f - minPercent / 100f;
