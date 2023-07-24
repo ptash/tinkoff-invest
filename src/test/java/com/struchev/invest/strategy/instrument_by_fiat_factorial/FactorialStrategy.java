@@ -18,18 +18,21 @@ public class FactorialStrategy extends AInstrumentByFiatFactorialStrategy {
         //FIGIES.put("FUTNG0323000", 1); // NGH3 NG-3.23 Природный газ
         //FIGIES.put("FUTNG0423001", 1); // NGJ3 NG-4.23 Природный газ
         //FIGIES.put("FUTNG0523002", 1); // NGK3 NG-5.23 Природный газ
+        FIGIES.put("FUTNG0723000", 1); // NGK3 NG-7.23 Природный газ
         //FIGIES.put("FUTSI1223000", 1); // SiZ3 Si-12.23 Курс доллар - рубль
         //FIGIES.put("FUTSI0323000", 1); // SiH3 Si-3.23 Курс доллар - рубль
         //FIGIES.put("FUTSI0623000", 1); // SiM3 Si-6.23 Курс доллар - рубль
-        //FIGIES.put("FUTSI0923000", 1); // SiM3 Si-9.23 Курс доллар - рубль
+        FIGIES.put("FUTSI0923000", 1); // SiM3 Si-9.23 Курс доллар - рубль
         //FIGIES.put("FUTRTS032300", 1); // RIH3 RTS-3.23 Индекс РТС
         //FIGIES.put("FUTRTS062300", 1); // RIM3 RTS-6.23 Индекс РТС
         //FIGIES.put("FUTSILV09230", 1); // SVU3 SILV-9.23 Серебро
         //FIGIES.put("FUTSILV06230", 1); // SVM3 SILV-6.23 Серебро
+        FIGIES.put("FUTSILV09230", 1); // SVM3 SILV-9.23 Серебро
         //FIGIES.put("FUTBR0423000", 1); // BRJ3 BR-4.23 Нефть Brent
         //FIGIES.put("FUTBR0523000", 1); // BRK3 BR-5.23 Нефть Brent
         //FIGIES.put("FUTMXI032300", 1); // MMH3 MXI-3.23 Индекс МосБиржи (мини)
         //FIGIES.put("FUTMXI062300", 1); // MMM3 MXI-6.23 Индекс МосБиржи (мини)
+        FIGIES.put("FUTMXI092300", 1); // MMM3 MXI-9.23 Индекс МосБиржи (мини)
         //FIGIES.put("FUTNASD03230", 1); // NAH3 NASD-3.23 Nasdaq 100
         //FIGIES.put("FUTNASD06230", 1); // NAM3 NASD-6.23 Nasdaq 100
         //FIGIES.put("FUTGOLD03230", 1); // GDH3 GOLD-3.23 Золото
