@@ -1286,7 +1286,6 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 }
             }
             var isSkip = false;
-            var isSkipDown = false;
             if (
                     true
                     && !isOrderUpCandle
@@ -1338,9 +1337,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         )
                 ) {
                     var skip = true;
-                    if (null != sellCriteria.getCandleUpSkipLength()
-                            || null != sellCriteria.getCandleUpSkipDownBetweenFactor()
-                    ) {
+                    if (null != sellCriteria.getCandleUpSkipLength()) {
                         List<CandleIntervalResultData> sellPoints = getIntervalSellPoints(
                                 newStrategy,
                                 candle,
@@ -1354,39 +1351,51 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             annotation += " SKIP MIN SKIP by size: " + sellPoints.size() + " > " + sellCriteria.getCandleUpSkipLength();
                             skip = false;
                         }
-                        if (null != sellCriteria.getCandleUpSkipDownBetweenFactor()
-                                && sellPoints.size() > 1
-                                && sellPoints.get(0).getCandle().getClosingPrice().compareTo(sellPoints.get(1).getCandle().getClosingPrice()) < 0
-                        ) {
-                            var candlesBetween = candleHistoryService.getCandlesByFigiBetweenDateTimes(
-                                    candle.getFigi(),
-                                    sellPoints.get(1).getCandle().getDateTime(),
-                                    sellPoints.get(0).getCandle().getDateTime(),
-                                    strategy.getInterval()
-                            );
-                            Double maxPrice = candlesBetween.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).max().orElse(-1);
-                            Double minPrice = candlesBetween.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).min().orElse(-1);
-                            Double maxPrice1 = candlesBetween.subList(0, candlesBetween.size()/2 + 1).stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).max().orElse(-1);
-                            Double maxPrice2 = candlesBetween.subList(candlesBetween.size()/2, candlesBetween.size() - 1).stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).max().orElse(-1);
-                            var downFactor = (maxPrice - minPrice) / (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose);
-                            var candleDownFactor = (maxPrice1 - maxPrice2)
-                                    / (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose);
-                            annotation += " downFactor = " + printPrice(downFactor) + "(" + printPrice(candleDownFactor) + ") > " + sellCriteria.getCandleUpSkipDownBetweenFactor();
-                            if (downFactor > sellCriteria.getCandleUpSkipDownBetweenFactor()
-                                    //&& candleDownFactor < (downFactor / 3)
-                                    && maxPrice1 > maxPrice2
-                            ) {
-                                annotation += " SKIP MIN SKIP by down";
-                                skip = false;
-                                isSkipDown = true;
-                            }
-                        }
                     }
                     if (skip) {
                         annotation += " SKIP MIN CANDLE INTERVAL";
                         annotation += candleIntervalUpDownData.annotation;
                         //res = false;
                         isSkip = true;
+                    }
+                }
+            }
+            var isSkipDown = false;
+            var isSkipUp = false;
+            if (null != sellCriteria.getCandleUpSkipDownBetweenFactor()) {
+                List<CandleIntervalResultData> sellPoints = getIntervalSellPoints(
+                        newStrategy,
+                        candle,
+                        candleIntervalRes,
+                        sellCriteria.getCandleUpPointLength(),
+                        sellCriteria.getCandleUpSkipLength()
+                );
+                if (null != sellCriteria.getCandleUpSkipDownBetweenFactor()
+                        && sellPoints.size() > 1
+                ) {
+                    var candlesBetween = candleHistoryService.getCandlesByFigiBetweenDateTimes(
+                            candle.getFigi(),
+                            sellPoints.get(1).getCandle().getDateTime(),
+                            sellPoints.get(0).getCandle().getDateTime(),
+                            strategy.getInterval()
+                    );
+                    Double maxPrice = candlesBetween.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).max().orElse(-1);
+                    Double minPrice = candlesBetween.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).min().orElse(-1);
+                    Double maxPrice1 = candlesBetween.subList(0, candlesBetween.size() / 3 + 1).stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).max().orElse(-1);
+                    Double maxPrice2 = candlesBetween.subList(candlesBetween.size() * 2 / 3, candlesBetween.size() - 1).stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).max().orElse(-1);
+                    maxPrice1 = Math.min(maxPrice1, sellPoints.get(1).getCandle().getClosingPrice().doubleValue());
+                    var downFactor = (maxPrice - minPrice) / (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose);
+                    var candleDownFactor = (maxPrice1 - maxPrice2)
+                            / (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose);
+                    annotation += " downFactor = " + printPrice(downFactor) + "(" + printPrice(maxPrice1) + ", " + printPrice(maxPrice2) + ") > " + sellCriteria.getCandleUpSkipDownBetweenFactor();
+                    if (downFactor > sellCriteria.getCandleUpSkipDownBetweenFactor()) {
+                        if (maxPrice1 > maxPrice2) {
+                            annotation += " SKIP MIN SKIP by down";
+                            isSkip = false;
+                            isSkipDown = true;
+                        } else {
+                            isSkipUp = true;
+                        }
                     }
                 }
             }
@@ -1452,7 +1461,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     var candlePrev = candlesPrevArray.get(0);
                     var candlePrevMaxPrice = candlePrev.getClosingPrice().doubleValue();
                     annotation += " middlePrice: " + printPrice(candlePrevMaxPrice) + " < " + printPrice(middlePrice) + "(" + printPrice(prevPoint) + " - " + printPrice(curPoint) + ")";
-                    if (!res) {
+                    if (!res && !isSkipUp) {
                         res = candlePrevMaxPrice < middlePrice;
                         if (res) {
                             annotation += " MIDDLE CANDLE OK";
