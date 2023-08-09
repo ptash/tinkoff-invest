@@ -925,12 +925,17 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             profitPercentFromBuyMinPrice = (float) -buyCriteria.getProfitPercentFromBuyMinPrice();
         }
 
-        List<Double> emaFast = null;
+        List<Double> ema = null;
+        List<Double> emaPrev = null;
         if (null != strategy.getBuyCriteria().getEmaLength()) {
-            emaFast = getEma(candle.getFigi(), candle.getDateTime(), strategy.getBuyCriteria().getEmaLength(), strategy.getInterval(), CandleDomainEntity::getClosingPrice, 1);
-            if (res && candle.getClosingPrice().compareTo(BigDecimal.valueOf(emaFast.get(emaFast.size() - 1))) < 0) {
+            ema = getEma(candle.getFigi(), candle.getDateTime(), strategy.getBuyCriteria().getEmaLength(), strategy.getInterval(), CandleDomainEntity::getClosingPrice, 1);
+            var candles = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(), candle.getDateTime(), strategy.getBuyCriteria().getEmaLength(), strategy.getInterval());
+            annotation += " prevEma=" + printDateTime(candles.get(0).getDateTime());
+            emaPrev = getEma(candle.getFigi(), candles.get(0).getDateTime(), strategy.getBuyCriteria().getEmaLength(), strategy.getInterval(), CandleDomainEntity::getClosingPrice, 1);
+            annotation += " v=" + emaPrev;
+            if (res && candle.getClosingPrice().compareTo(BigDecimal.valueOf(ema.get(ema.size() - 1))) < 0) {
                 annotation += " less EMA";
-                resBuy = false;
+                //resBuy = false;
             }
         }
 
@@ -939,7 +944,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 resBuy,
                 strategy,
                 candle,
-                "Date|open|high|low|close|ema2|profit|loss|limitPrice|lossAvg|deadLineTop|investBottom|investTop|smaTube|strategy|average|averageBottom|averageTop|candleBuySell|maxClose|minClose|priceBegin|priceEnd|ema",
+                "Date|open|high|low|close|ema2|profit|loss|limitPrice|lossAvg|deadLineTop|investBottom|investTop|smaTube|strategy|average|averageBottom|averageTop|candleBuySell|maxClose|minClose|priceBegin|priceEnd|ema|emaPrev",
                 "{} | {} | {} | {} | {} | | {} | {} | | {} | ||||by {}||||{}|{}|{}|{}|{}|{}",
                 notificationService.formatDateTime(candle.getDateTime()),
                 candle.getOpenPrice(),
@@ -956,7 +961,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 candleIntervalUpDownData.minClose,
                 candleIntervalUpDownData.priceBegin,
                 candleIntervalUpDownData.priceEnd,
-                emaFast == null ? "" : emaFast.get(emaFast.size() - 1)
+                ema == null ? "" : ema.get(ema.size() - 1),
+                emaPrev == null ? "" : emaPrev.get(emaPrev.size() - 1)
                 );
         return resBuy;
     }
