@@ -1490,7 +1490,10 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         annotation += " res BUY OK candleInterval: " + candleIntervalBuyRes.annotation;
                         var intervalCandles = getCandleIntervals(newStrategy, candle);
                         var upCount = intervalCandles.stream().filter(ic -> !ic.isDown && order.getPurchaseDateTime().isBefore(ic.getCandle().getDateTime())).collect(Collectors.toList());
-                        if (upCount.size() > 0) {
+                        if (
+                                upCount.size() > 0
+                                && null != sellCriteria.getCandleUpPointLength()
+                        ) {
                             List<CandleIntervalResultData> points = getIntervalPoints(
                                     newStrategy,
                                     candle,
@@ -2757,6 +2760,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                 }
                             }
                         }
+                        annotation += " isIntervalDown = " + isIntervalDown;
+                        annotation += " isIntervalUp = " + isIntervalUp;
                         res = false;
                         if (
                                 (factor > buyCriteria.getCandleMinFactor() || factor2 > buyCriteria.getCandleMinFactor())
