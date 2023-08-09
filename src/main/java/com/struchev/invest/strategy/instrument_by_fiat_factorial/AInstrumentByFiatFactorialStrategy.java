@@ -250,6 +250,8 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
 
         String candleInterval;
 
+        Integer emaLength;
+
         public Boolean isCandleIntervalTargetDirection(BigDecimal openPrice, BigDecimal closePrice) {
             return openPrice.compareTo(closePrice) <= 0;
         }

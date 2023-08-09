@@ -18,6 +18,7 @@ import java.math.RoundingMode;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -923,13 +924,23 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         if (null != buyCriteria.getProfitPercentFromBuyMinPrice()) {
             profitPercentFromBuyMinPrice = (float) -buyCriteria.getProfitPercentFromBuyMinPrice();
         }
+
+        List<Double> emaFast = null;
+        if (null != strategy.getBuyCriteria().getEmaLength()) {
+            emaFast = getEma(candle.getFigi(), candle.getDateTime(), strategy.getBuyCriteria().getEmaLength(), strategy.getInterval(), CandleDomainEntity::getClosingPrice, 1);
+            if (res && candle.getClosingPrice().compareTo(BigDecimal.valueOf(emaFast.get(emaFast.size() - 1))) < 0) {
+                annotation += " less EMA";
+                res = false;
+            }
+        }
+
         annotation = " " + res + " " + annotation;
         notificationService.reportStrategyExt(
                 res,
                 strategy,
                 candle,
-                "Date|open|high|low|close|ema2|profit|loss|limitPrice|lossAvg|deadLineTop|investBottom|investTop|smaTube|strategy|average|averageBottom|averageTop|candleBuySell|maxClose|minClose|priceBegin|priceEnd",
-                "{} | {} | {} | {} | {} | | {} | {} | | {} | ||||by {}||||{}|{}|{}|{}|{}",
+                "Date|open|high|low|close|ema2|profit|loss|limitPrice|lossAvg|deadLineTop|investBottom|investTop|smaTube|strategy|average|averageBottom|averageTop|candleBuySell|maxClose|minClose|priceBegin|priceEnd|ema",
+                "{} | {} | {} | {} | {} | | {} | {} | | {} | ||||by {}||||{}|{}|{}|{}|{}|{}",
                 notificationService.formatDateTime(candle.getDateTime()),
                 candle.getOpenPrice(),
                 candle.getHighestPrice(),
@@ -944,7 +955,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 candleIntervalUpDownData.maxClose,
                 candleIntervalUpDownData.minClose,
                 candleIntervalUpDownData.priceBegin,
-                candleIntervalUpDownData.priceEnd
+                candleIntervalUpDownData.priceEnd,
+                emaFast == null ? "" : emaFast.get(emaFast.size() - 1)
                 );
         return resBuy;
     }
@@ -2359,14 +2371,18 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             && null != strategy.getBuyCriteria().getCandleUpDownSkipDeviationPercent()
                     ) {
                         var maxLength = Math.max(maxPricePrev - minPricePrev, maxPrice - minPrice);
+                        var maxLengthAbs = Math.max(maxPricePrev, maxPrice) - Math.min(minPricePrev, minPrice);
                         var deviationPercentSize = 100f * Math.abs((maxPricePrev - minPricePrev) - (maxPrice - minPrice)) / maxLength;
                         var deviationPercentPosition = 100f * Math.abs(maxPricePrev - maxPrice) / maxLength;
+                        var deviationPercentAbs = 100f * maxLength / maxLengthAbs;
                         annotation += " deviationPercentSize = " + deviationPercentSize;
                         annotation += " deviationPercentPosition = " + deviationPercentPosition;
+                        annotation += " deviationPercentAbs = " + deviationPercentAbs;
                         if (
-                                (deviationPercentSize < strategy.getBuyCriteria().getCandleUpDownSkipDeviationPercent()
+                                deviationPercentAbs > (100 - strategy.getBuyCriteria().getCandleUpDownSkipDeviationPercent() * 2)
+                                && ((deviationPercentSize < strategy.getBuyCriteria().getCandleUpDownSkipDeviationPercent()
                                 && deviationPercentPosition < strategy.getBuyCriteria().getCandleUpDownSkipDeviationPercent())
-                                || (maxPricePrev - minPricePrev) > (maxPrice - minPrice)
+                                || (maxPricePrev - minPricePrev) > (maxPrice - minPrice))
                         ) {
                             isOk = false;
                         } else if (maxPrice < maxPricePrev) {
@@ -3303,5 +3319,89 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
     private String printDateTime(OffsetDateTime dt)
     {
         return notificationService.formatDateTime(dt);
+    }
+
+    private List<Double> getEma(
+            String figi,
+            OffsetDateTime currentDateTime,
+            Integer length,
+            String interval,
+            Function<? super CandleDomainEntity, ? extends BigDecimal> keyExtractor
+    ) {
+        return getEma(figi, currentDateTime, length, interval, keyExtractor, 2);
+    }
+
+    private List<Double> getEma(
+            String figi,
+            OffsetDateTime currentDateTime,
+            Integer length,
+            String interval,
+            Function<? super CandleDomainEntity, ? extends BigDecimal> keyExtractor,
+            Integer prevTicks
+    ) {
+        var candleList = getCandlesByFigiByLength(figi,
+                currentDateTime, 1 + 1, interval);
+        if (candleList == null) {
+            return null;
+        }
+        var indent = "ema" + figi + notificationService.formatDateTime(candleList.get(1).getDateTime()) + interval + length + getMethodKey(keyExtractor);
+        var ema = getCashedValueEma(indent);
+        var indentPrev = "ema" + figi + notificationService.formatDateTime(candleList.get(0).getDateTime()) + interval + length + getMethodKey(keyExtractor);
+        var emaPrev = getCashedValueEma(indentPrev);
+
+        List<Double> ret = new ArrayList<Double>();
+        if (ema == null || emaPrev == null) {
+            candleList = getCandlesByFigiByLength(figi,
+                    currentDateTime, length + prevTicks - 1, interval);
+            if (candleList == null) {
+                return null;
+            }
+            for (var j = 0; j < prevTicks; j++) {
+                ema = Optional.ofNullable(candleList.get(j)).map(keyExtractor).orElse(null).doubleValue();
+                for (int i = 1 + j; i < (length + j); i++) {
+                    var alpha = 2f / (3 + i - (1 + j));
+                    ema = alpha * Optional.ofNullable(candleList.get(i)).map(keyExtractor).orElse(null).doubleValue() + (1 - alpha) * ema;
+                }
+                ret.add(ema);
+            }
+            /*
+            if (ema == null) {
+                ema = Optional.ofNullable(candleList.get(1)).map(keyExtractor).orElse(null).doubleValue();
+                for (int i = 2; i < (length + 1); i++) {
+                    var alpha = 2f / (i + 1);
+                    ema = alpha * Optional.ofNullable(candleList.get(i)).map(keyExtractor).orElse(null).doubleValue() + (1 - alpha) * ema;
+                }
+                addCashedValue(indent, ema);
+            }
+
+            if (emaPrev == null) {
+                emaPrev = Optional.ofNullable(candleList.get(0)).map(keyExtractor).orElse(null).doubleValue();
+                for (int i = 1; i < length; i++) {
+                    var alpha = 2f / (i + 1 + 1);
+                    emaPrev = alpha * Optional.ofNullable(candleList.get(i)).map(keyExtractor).orElse(null).doubleValue() + (1 - alpha) * emaPrev;
+                }
+                addCashedValue(indentPrev, emaPrev);
+            }
+             */
+        }
+        //return List.of(emaPrev, ema);
+        //Collections.reverse(ret);
+        return ret;
+    }
+
+    private List<CandleDomainEntity> getCandlesByFigiByLength(String figi, OffsetDateTime currentDateTime, Integer length, String interval)
+    {
+        return candleHistoryService.getCandlesByFigiByLength(figi,
+                currentDateTime, length, interval);
+    }
+
+    private String getMethodKey(Function<? super CandleDomainEntity, ? extends BigDecimal> keyExtractor)
+    {
+        return Integer.toHexString(keyExtractor.hashCode());
+    }
+
+    private synchronized Double getCashedValueEma(String indent)
+    {
+        return null;
     }
 }
