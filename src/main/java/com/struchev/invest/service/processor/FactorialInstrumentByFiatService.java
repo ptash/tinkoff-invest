@@ -930,13 +930,13 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             emaFast = getEma(candle.getFigi(), candle.getDateTime(), strategy.getBuyCriteria().getEmaLength(), strategy.getInterval(), CandleDomainEntity::getClosingPrice, 1);
             if (res && candle.getClosingPrice().compareTo(BigDecimal.valueOf(emaFast.get(emaFast.size() - 1))) < 0) {
                 annotation += " less EMA";
-                res = false;
+                resBuy = false;
             }
         }
 
-        annotation = " " + res + " " + annotation;
+        annotation = " " + resBuy + " " + annotation;
         notificationService.reportStrategyExt(
-                res,
+                resBuy,
                 strategy,
                 candle,
                 "Date|open|high|low|close|ema2|profit|loss|limitPrice|lossAvg|deadLineTop|investBottom|investTop|smaTube|strategy|average|averageBottom|averageTop|candleBuySell|maxClose|minClose|priceBegin|priceEnd|ema",
