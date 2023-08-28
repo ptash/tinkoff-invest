@@ -2408,13 +2408,18 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         var deviationPercentSize = 100f * Math.abs((maxPricePrev - minPricePrev) - (maxPrice - minPrice)) / maxLength;
                         var deviationPercentPosition = 100f * Math.abs(maxPricePrev - maxPrice) / maxLength;
                         var deviationPercentAbs = 100f - 100f * maxLength / maxLengthAbs;
+                        var deviationPercentTogether = 100f * maxLengthAbs / ((maxPricePrev - minPricePrev) + (maxPrice - minPrice));
                         annotation += " deviationPercentSize = " + deviationPercentSize + " < " + strategy.getBuyCriteria().getCandleUpDownSkipDeviationPercent();
                         annotation += " deviationPercentPosition = " + deviationPercentPosition;
                         annotation += " deviationPercentAbs = " + deviationPercentAbs;
+                        annotation += " deviationPercentTogether = " + printPrice(deviationPercentTogether);
                         annotation += " " + printPrice(maxPricePrev - minPricePrev) + " > " + printPrice(maxPrice - minPrice);
                         if (
-                                deviationPercentAbs < (strategy.getBuyCriteria().getCandleUpDownSkipDeviationPercent() / 2)
-                                && ((deviationPercentSize < strategy.getBuyCriteria().getCandleUpDownSkipDeviationPercent()
+                                true
+                                && deviationPercentTogether > (100f + strategy.getBuyCriteria().getCandleUpDownSkipDeviationPercent())
+                                //deviationPercentAbs < (strategy.getBuyCriteria().getCandleUpDownSkipDeviationPercent() / 2)
+                                && (
+                                        (deviationPercentSize < strategy.getBuyCriteria().getCandleUpDownSkipDeviationPercent()
                                 && deviationPercentPosition < strategy.getBuyCriteria().getCandleUpDownSkipDeviationPercent())
                                 || (maxPricePrev - minPricePrev) > (maxPrice - minPrice))
                         ) {
@@ -2455,6 +2460,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             } else {
                                 minPricePrev = minPrice;
                             }
+                            upCount = 0;
+                            upDown = 0;
                         }
                     }
                     if (null != strategy.getBuyCriteria().getCandleUpDownSkipLength()
@@ -2462,10 +2469,6 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             && (null == strategy.getBuyCriteria().getCandleUpDownSkipCount() || upDown < strategy.getBuyCriteria().getCandleUpDownSkipCount())
                     ) {
                         annotation += " < " + strategy.getBuyCriteria().getCandleUpDownSkipLength();
-                        if (isNewSize) {
-                            upCount = 0;
-                            upDown = 0;
-                        }
                         upCount += intervalsBetweenLast.size();
                         upDown++;
                         if (maxPricePrev == null) {
@@ -2662,9 +2665,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             }
                             //candleIntervalResBuyLast = candleIntervalUpDownData.minCandle;
                             //candleIntervalResSellLast = candleIntervalUpDownData.maxCandle;
-                            candleIntervalUpDownDataPrevPrev = candleIntervalUpDownDataPrev = getCurCandleIntervalUpDownData(newStrategy, candleIntervalUpDownData.beginPre.candle);
+                            candleIntervalUpDownDataPrevPrev = candleIntervalUpDownDataPrev = getCurCandleIntervalUpDownData(newStrategy, candleIntervalUpDownData.beginDownFirst.candle);
                             if (candleIntervalUpDownDataPrev != null) {
-                                candleIntervalUpDownDataPrevPrev = getCurCandleIntervalUpDownData(newStrategy, candleIntervalUpDownDataPrev.beginPre.candle);
+                                candleIntervalUpDownDataPrevPrev = getCurCandleIntervalUpDownData(newStrategy, candleIntervalUpDownDataPrev.beginDownFirst.candle);
                                 if (null != candleIntervalUpDownDataPrevPrev
                                         && candleIntervalUpDownDataPrevPrev.minClose != null
                                 ) {
@@ -2782,7 +2785,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                 isIntervalDown = true;
                                 candlePriceMinFactor = candlePriceMaxFactor + 0.5f;
                                 candlePriceMaxFactor = candlePriceMinFactor + 0.5f;
-                                annotation += " new candlePriceMinFactor = " + candlePriceMinFactor;
+                                annotation += " new 2 candlePriceMinFactor = " + candlePriceMinFactor;
                                 annotation += " new candlePriceMaxFactor = " + candlePriceMaxFactor;
                             } else if (avgPercentPrev > 5f
                                     //&& minPercentPrev > 0f
@@ -2798,7 +2801,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                     candlePriceMinFactor = 1f + ((avgPercentPrev + avgPercent) / 2 - 15f) / 100f;
                                     //}
                                 }
-                                annotation += " new candlePriceMinFactor = " + candlePriceMinFactor;
+                                annotation += " new 3 candlePriceMinFactor = " + candlePriceMinFactor;
                                 if (
                                         maxPercent < 0f
                                 ) {
@@ -2812,7 +2815,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                 } else {
                                     candlePriceMinFactor = 1f + ((avgPercentPrev + avgPercent) / 2 - 15f) / 100f;
                                 }
-                                annotation += " new candlePriceMinFactor = " + candlePriceMinFactor;
+                                annotation += " new 4 candlePriceMinFactor = " + candlePriceMinFactor;
                                 if (
                                         maxPercentPrev < 0f
                                 ) {
@@ -2826,7 +2829,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                 ) {
                                     //isIntervalDown = true;
                                     candlePriceMinFactor = candlePriceMinFactor - (minPercentPrev + 5f) / 100f;
-                                    annotation += " new candlePriceMinFactor = " + candlePriceMinFactor;
+                                    annotation += " new 5 candlePriceMinFactor = " + candlePriceMinFactor;
                                 } else if (
                                         minPercent < -5f
                                         && maxPercent < -5f
@@ -2834,7 +2837,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                 ) {
                                     candlePriceMinFactor = 1f - minPercent / 100f;
                                     candleMinFactorCandle = 0.1f;
-                                    annotation += " new candlePriceMinFactor = " + candlePriceMinFactor;
+                                    annotation += " new 6 candlePriceMinFactor = " + candlePriceMinFactor;
                                 }
                             }
                         }
