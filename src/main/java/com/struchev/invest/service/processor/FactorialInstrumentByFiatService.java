@@ -1456,7 +1456,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         );
                     }
                 }
-                if (sellPoints.size() > 1 && null != curPoint) {
+                if (sellPoints.size() > 0 && null != curPoint) {
                     var prevPointInit = prevPoint;
                     annotation += " prevPoint: " + printPrice(prevPoint);
                     var num = 1;
@@ -1483,7 +1483,11 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     var candlePrev = candlesPrevArray.get(0);
                     var candlePrevMaxPrice = candlePrev.getClosingPrice().doubleValue();
                     annotation += " middlePrice: " + printPrice(candlePrevMaxPrice) + " < " + printPrice(middlePrice) + "(" + printPrice(prevPoint) + " - " + printPrice(curPoint) + ")";
-                    if (!res && !isSkipUp) {
+                    if (
+                            true
+                            && !res
+                            && !isSkipUp
+                    ) {
                         res = candlePrevMaxPrice < middlePrice;
                         if (res) {
                             annotation += " MIDDLE CANDLE OK";
@@ -2674,10 +2678,10 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             //candleIntervalResBuyLast = candleIntervalUpDownData.minCandle;
                             //candleIntervalResSellLast = candleIntervalUpDownData.maxCandle;
                             // maxCandle
-                            annotation += " beginDownFirst: " + printDateTime(candleIntervalUpDownData.beginDownFirst.candle.getDateTime());
-                            candleIntervalUpDownDataPrevPrev = candleIntervalUpDownDataPrev = getCurCandleIntervalUpDownData(newStrategy, candleIntervalUpDownData.beginDownFirst.candle);
-                            if (candleIntervalUpDownDataPrev != null && candleIntervalUpDownDataPrev.beginDownFirst != null) {
-                                candleIntervalUpDownDataPrevPrev = getCurCandleIntervalUpDownData(newStrategy, candleIntervalUpDownDataPrev.beginDownFirst.candle);
+                            annotation += " beginDownFirst: " + printDateTime(candleIntervalUpDownData.maxCandle.getDateTime());
+                            candleIntervalUpDownDataPrevPrev = candleIntervalUpDownDataPrev = getCurCandleIntervalUpDownData(newStrategy, candleIntervalUpDownData.maxCandle);
+                            if (candleIntervalUpDownDataPrev != null && candleIntervalUpDownDataPrev.maxCandle != null) {
+                                candleIntervalUpDownDataPrevPrev = getCurCandleIntervalUpDownData(newStrategy, candleIntervalUpDownDataPrev.maxCandle);
                                 if (null != candleIntervalUpDownDataPrevPrev
                                         && candleIntervalUpDownDataPrevPrev.minClose != null
                                 ) {
@@ -2914,15 +2918,16 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                         && (factor < buyCriteria.getCandleMaxFactor() || factor2 < buyCriteria.getCandleMaxFactor())
                                         && (buyCriteria.getCandleProfitMinPercent() == null || profitPercent > buyCriteria.getCandleProfitMinPercent())
                         ) {
+                            annotation += " candleFactor try";
                             if (factorCandle < buyCriteria.getCandleMaxFactor()
                                     && factorCandle > candleMinFactorCandle
                                     && factorPrice < buyCriteria.getCandleMaxFactor()
                                     && factorPrice > candlePriceMinFactor
                                     && factorPrice < candlePriceMaxFactor) {
-                                annotation += " candleFactor OK";
+                                annotation += " OK";
                                 res = true;
                             } else if (PointLengthOk) {
-                                    annotation += " candleFactor PointLength OK";
+                                    annotation += " PointLength OK";
                                     res = true;
                             }
                         } else if (
