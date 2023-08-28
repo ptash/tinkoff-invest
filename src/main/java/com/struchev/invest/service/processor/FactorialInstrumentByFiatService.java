@@ -2767,7 +2767,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                             > ((candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) / 2)
                             ) {
                                 isIntervalDown = true;
-                                candlePriceMinFactor = Math.min(
+                                candlePriceMinFactor = Math.max(
                                         0.5f,
                                         (candleIntervalUpDownDataPrev.maxClose - candleIntervalUpDownDataPrev.minClose)
                                                 / (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose)
