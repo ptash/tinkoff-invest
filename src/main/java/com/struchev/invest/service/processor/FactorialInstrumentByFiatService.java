@@ -1443,7 +1443,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 annotation += " sellPoints.size(): " + sellPoints.size();
                 var prevPoint = order.getPurchasePrice().doubleValue();
                 Double curPoint = null;
-                if (sellPoints.size() > 1 || (sellPoints.size() == 1 && res)) {
+                if (sellPoints.size() > 0 || (sellPoints.size() == 1 && res)) {
                     curPoint = Math.max(sellPoints.get(0).candle.getClosingPrice().doubleValue(), sellPoints.get(0).candle.getOpenPrice().doubleValue());
                     var candleResDown = getCandleIntervals(newStrategy, candle).stream().filter(
                             c -> c.isDown

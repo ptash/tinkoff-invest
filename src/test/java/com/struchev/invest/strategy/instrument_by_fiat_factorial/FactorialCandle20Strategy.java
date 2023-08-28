@@ -62,5 +62,5 @@ public class FactorialCandle20Strategy extends Factorial2Strategy {
     public Integer getPriceDiffAvgLength() { return 4; }
     public Float getPriceDiffAvg() { return 3f; }
 
-    public boolean isEnabled() { return true; }
+    public boolean isEnabled() { return false; }
 }

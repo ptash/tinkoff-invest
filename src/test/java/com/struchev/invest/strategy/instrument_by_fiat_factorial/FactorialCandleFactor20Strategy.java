@@ -35,4 +35,6 @@ public class FactorialCandleFactor20Strategy extends FactorialCandle20Strategy {
         sell.setCandleUpMaxLength(4);
         return sell;
     }
+
+    public boolean isEnabled() { return true; }
 }
