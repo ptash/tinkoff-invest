@@ -1508,6 +1508,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 if (
                         candleIntervalBuyRes.res
                         && !isMiddleOk
+                        && sellCriteria.getDownAfterUpSize() > 0
                 ) {
                     if (candleIntervalUpDownData.minClose != null
                             //&& order.getPurchasePrice().doubleValue() < candle.getClosingPrice().doubleValue()
@@ -1525,7 +1526,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                     candle,
                                     candleIntervalBuyRes,
                                     sellCriteria.getCandleUpPointLength(),
-                                    3
+                                    2 + sellCriteria.getDownAfterUpSize()
                             );
                             if (
                                     points.size() > 0
@@ -1545,8 +1546,20 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             ) {
                                 annotation += " DOWN AFTER UP SKIP UP-DOWN 1";
                             } else {
-                                annotation += " candleInterval OK DOWN AFTER UP: " + upCount.size() + ": " + notificationService.formatDateTime(upCount.get(0).candle.getDateTime());
-                                res = true;
+                                var countDown = 0;
+                                for(var i = (points.size() - 1); i >= 0; i--) {
+                                    if (points.get(i).isDown) {
+                                        countDown++;
+                                    } else {
+                                        break;
+                                    }
+                                }
+
+                                annotation += " candleInterval TRY DOWN AFTER UP: countDown=" + countDown + " size=" + upCount.size() + ": " + notificationService.formatDateTime(upCount.get(0).candle.getDateTime());
+                                if (countDown >= sellCriteria.getDownAfterUpSize()) {
+                                    annotation += " OK";
+                                    res = true;
+                                }
                             }
                         } else {
                             candleBuyRes = getCandleBuyRes(newStrategy, candle);
@@ -2969,6 +2982,15 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                     annotation += " SKIP by size PointLength";
                                     isOk = false;
                                 }
+                            }
+                            if (
+                                    !isOk
+                                    && null != candleIntervalUpDownDataPrev
+                                    && null != candleIntervalUpDownDataPrev.maxClose
+                                    && candleIntervalUpDownDataPrev.maxClose > candle.getClosingPrice().doubleValue()
+                            ) {
+                                annotation += " OK by maxClose";
+                                isOk = true;
                             }
                             if (isOk
                                 && (buyCriteria.getCandleProfitMinPercent() == null
