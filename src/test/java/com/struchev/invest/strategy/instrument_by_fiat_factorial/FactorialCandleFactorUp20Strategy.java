@@ -23,6 +23,11 @@ public class FactorialCandleFactorUp20Strategy extends FactorialCandleFactor20St
         buy.setCandleUpMinFactorAny(0.25f);
         buy.setCandleUpMaxFactorAny(1f);
          */
+
+        buy.setCandleDownPointLength(4);
+
+        //buy.setCandleDownMinMinPointLength(4);
+        //buy.setCandleDownMinMinMaxLength(2);
         return buy;
     }
 
