@@ -2237,13 +2237,14 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         CandleIntervalResultData candleResDownPrev = null;
         CandleIntervalResultData candleResUpFirst = null;
         CandleIntervalResultData candleResUp = null;
+        CandleIntervalResultData candleResDownPrevFirst = null;
         Float lastBottomPrice = null;
         Float lastTopPrice = null;
         Float lastBetweenPrice = null;
         CandleDomainEntity lastMaxCandle = null;
         CandleDomainEntity lastMinCandle = null;
 
-        CandleIntervalResultData candleResDownPrevFirst = null;
+        CandleIntervalResultData downPrevFirst = null;
         CandleIntervalResultData beginPre = null;
         CandleIntervalResultData begin = null;
         CandleIntervalResultData end = null;
@@ -2437,8 +2438,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             lastMaxCandle = maxCandle;
                             isNewSize = true;
                         }
-                        if (true
-                            || lastBottomPrice == null
+                        if (lastBottomPrice == null
                                 || lastBottomPrice > minPrice
                         ) {
                             lastBottomPrice = (float) minPrice;
@@ -2447,6 +2447,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         }
 
                         beginPre = candleResDownPrev;
+                        downPrevFirst = candleResDownPrevFirst;
                         begin = candleResUpFirst;
                         if (end == null || isNewSize) {
                             annotation += " isNewSize";
@@ -2499,7 +2500,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 .maxCandle(lastMaxCandle)
                 .priceBegin(end == null ? null : end.getCandle().getClosingPrice().floatValue())
                 .priceEnd(endPost == null ? null : endPost.getCandle().getClosingPrice().floatValue())
-                .beginDownFirst(candleResDownPrevFirst)
+                .beginDownFirst(downPrevFirst)
                 .beginPre(beginPre)
                 .begin(begin)
                 .end(end)
