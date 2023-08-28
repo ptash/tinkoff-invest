@@ -2399,6 +2399,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     annotation += " between = " + printPrice(lastBetweenPrice);
                     var isOk = true;
                     var isNewSize = false;
+                    var isAnother = false;
                     if (
                             null != maxPricePrev
                             && null != strategy.getBuyCriteria().getCandleUpDownSkipDeviationPercent()
@@ -2414,14 +2415,15 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         annotation += " deviationPercentAbs = " + deviationPercentAbs;
                         annotation += " deviationPercentTogether = " + printPrice(deviationPercentTogether);
                         annotation += " " + printPrice(maxPricePrev - minPricePrev) + " > " + printPrice(maxPrice - minPrice);
+                        isAnother = deviationPercentTogether > (100f + strategy.getBuyCriteria().getCandleUpDownSkipDeviationPercent());
                         if (
-                                true
-                                && deviationPercentTogether > (100f + strategy.getBuyCriteria().getCandleUpDownSkipDeviationPercent())
+                                isAnother
                                 //deviationPercentAbs < (strategy.getBuyCriteria().getCandleUpDownSkipDeviationPercent() / 2)
-                                && (
+                                || (
                                         (deviationPercentSize < strategy.getBuyCriteria().getCandleUpDownSkipDeviationPercent()
                                 && deviationPercentPosition < strategy.getBuyCriteria().getCandleUpDownSkipDeviationPercent())
-                                || (maxPricePrev - minPricePrev) > (maxPrice - minPrice))
+                                //|| (maxPricePrev - minPricePrev) > (maxPrice - minPrice)
+                                )
                         ) {
                             isOk = false;
                         } else if (maxPrice < maxPricePrev) {
@@ -2467,6 +2469,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     if (null != strategy.getBuyCriteria().getCandleUpDownSkipLength()
                             && (intervalsBetweenLast.size() + upCount) < strategy.getBuyCriteria().getCandleUpDownSkipLength()
                             && (null == strategy.getBuyCriteria().getCandleUpDownSkipCount() || upDown < strategy.getBuyCriteria().getCandleUpDownSkipCount())
+                            && !isAnother
                     ) {
                         annotation += " < " + strategy.getBuyCriteria().getCandleUpDownSkipLength();
                         upCount += intervalsBetweenLast.size();
