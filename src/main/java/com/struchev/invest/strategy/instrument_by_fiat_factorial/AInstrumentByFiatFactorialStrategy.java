@@ -247,6 +247,11 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
 
         Integer candleDownMinMinPointLength;
         Integer candleDownMinMinMaxLength;
+
+        Integer candleDownPointSize;
+
+        Integer candleDownPointPointLengthSize;
+        Integer candleDownPointPointLength;
         Integer candleDownPointLength;
 
         String candleInterval;
