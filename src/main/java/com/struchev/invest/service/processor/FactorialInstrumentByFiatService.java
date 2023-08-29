@@ -1388,7 +1388,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             annotation += " middlePrice " + printPrice(middleCandlePrice);
             if (
                     order.getPurchasePrice().doubleValue() > middleCandlePrice
+                    && order.getPurchaseDateTime().isAfter(candleIntervalUpDownData.endPost.candle.getDateTime())
                     && candle.getClosingPrice().doubleValue() > middleCandlePrice
+                    && profitPercent.doubleValue() < (sellCriteria.getCandleProfitMinPercent() == null ? 0.0f: sellCriteria.getCandleProfitMinPercent())
             ) {
                 annotation += " SKIP UP ";
                 isSkipUp = true;
