@@ -1558,7 +1558,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                 annotation += " DOWN AFTER UP SKIP UP-DOWN 1";
                             } else {
                                 var countDown = 0;
-                                for(var i = (points.size() - 1); i >= 0; i--) {
+                                for(var i = 0; i < points.size(); i++) {
                                     if (points.get(i).isDown) {
                                         countDown++;
                                     } else {
@@ -2705,7 +2705,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             annotation += " beginDownFirst: " + printDateTime(candleIntervalUpDownData.maxCandle.getDateTime());
                             candleIntervalUpDownDataPrevPrev = candleIntervalUpDownDataPrev = getCurCandleIntervalUpDownData(newStrategy, candleIntervalUpDownData.maxCandle);
                             if (candleIntervalUpDownDataPrev != null && candleIntervalUpDownDataPrev.maxCandle != null) {
-                                annotation += printPrice(candleIntervalUpDownData.maxClose) + "-" + printPrice(candleIntervalUpDownData.minClose);
+                                annotation += printPrice(candleIntervalUpDownDataPrev.maxClose) + "-" + printPrice(candleIntervalUpDownDataPrev.minClose);
                                 annotation += " beginDownFirstPrev: " + printDateTime(candleIntervalUpDownDataPrev.maxCandle.getDateTime());
                                 candleIntervalUpDownDataPrevPrev = getCurCandleIntervalUpDownData(newStrategy, candleIntervalUpDownDataPrev.maxCandle);
                                 if (null != candleIntervalUpDownDataPrevPrev
@@ -2800,6 +2800,19 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                 );
                                 minPercentPrev = 100f * (minClose - candleIntervalUpDownData.minClose) / sizePrev;
                                 maxPercentPrev = 100f * (candleIntervalUpDownData.maxClose - maxClose) / sizePrev;
+
+                                if (
+                                        minPercent > 0f
+                                        && maxPercent > 0f
+                                        && candleIntervalUpDownDataPrevPrev.minClose >= candleIntervalUpDownDataPrev.minClose
+                                        && candleIntervalUpDownDataPrevPrev.maxClose >= candleIntervalUpDownDataPrev.maxClose
+                                        && (
+                                                candleIntervalUpDownDataPrevPrev.minClose > candleIntervalUpDownDataPrev.minClose
+                                                || candleIntervalUpDownDataPrevPrev.maxClose > candleIntervalUpDownDataPrev.maxClose
+                                        )
+                                ) {
+                                    isIntervalUp = true;
+                                }
                             }
                             annotation += " minPercent = " + minPercent;
                             annotation += " maxPercent = " + maxPercent;
@@ -2923,15 +2936,15 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                     newStrategy,
                                     candle,
                                     candleIntervalRes,
-                                    buyCriteria.getCandleDownPointLength(),
+                                    buyCriteria.getCandleDownPointPointLength(),
                                     1
                             );
                             annotation += " PointLength " + points.size() + " - " + (points.size() > 0 ? points.get(0).size() : 0);
                             if (points.size() > 0 && points.get(0).size() >= buyCriteria.getCandleDownPointPointLengthSize()) {
                                 var pointCandles = candleHistoryService.getCandlesByFigiBetweenDateTimes(
                                         candle.getFigi(),
-                                        points.get(0).get(0).candle.getDateTime(),
                                         points.get(0).get(points.get(0).size() - 1).candle.getDateTime(),
+                                        points.get(0).get(0).candle.getDateTime(),
                                         strategy.getInterval()
                                     );
                                 annotation += " length " + pointCandles.size();
@@ -2965,7 +2978,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                         && factor2 > buyCriteria.getCandlePriceMinMinFactor())
                                         || (factor < buyCriteria.getCandlePriceMinMaxFactor()
                                         && factor > buyCriteria.getCandlePriceMinMinFactor()))
-                                        && !isIntervalDown
+                                        && (!isIntervalDown || isIntervalUp)
                         ) {
                             var isBoth = ((factor2 < buyCriteria.getCandlePriceMinMaxFactor()
                                     && factor2 > buyCriteria.getCandlePriceMinMinFactor())
@@ -3020,6 +3033,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             }
                         } else if (PointLengthOk) {
                             annotation += " PointLength OK";
+                            res = true;
+                        } else if (false && isIntervalUp) {
+                            annotation += " isIntervalUp OK";
                             res = true;
                         }
                     }
