@@ -715,11 +715,6 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             }
         }
 
-        Double NotLossBuyUnderPrice = null;
-        if (res && buyCriteria.getNotLossBuyUnderPercent() > 0) {
-
-        }
-
         String key = buildKeyHour(strategy.getName(), candle);
         var buyPrice = getCashedIsBuyValue(key);
         if (null == buyPrice
@@ -950,8 +945,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 resBuy,
                 strategy,
                 candle,
-                "Date|open|high|low|close|ema2|profit|loss|limitPrice|lossAvg|deadLineTop|investBottom|investTop|smaTube|strategy|average|averageBottom|averageTop|candleBuySell|maxClose|minClose|priceBegin|priceEnd|ema|emaPrev|MinFactor|MaxFactor",
-                "{} | {} | {} | {} | {} | | {} | {} | | {} | ||||by {}||||{}|{}|{}|{}|{}|{}|{}|{}|{}",
+                "Date|open|high|low|close|ema2|profit|loss|limitPrice|lossAvg|deadLineTop|investBottom|investTop|smaTube|strategy|average|averageBottom|averageTop|candleBuySell|maxClose|minClose|priceBegin|priceEnd|ema|emaPrev|MinFactor|MaxFactor|underPrice",
+                "{} | {} | {} | {} | {} | | {} | {} | | {} | ||||by {}||||{}|{}|{}|{}|{}|{}|{}|{}|{}|{}",
                 notificationService.formatDateTime(candle.getDateTime()),
                 candle.getOpenPrice(),
                 candle.getHighestPrice(),
@@ -970,7 +965,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 ema == null ? "" : ema.get(ema.size() - 1),
                 emaPrev == null ? "" : emaPrev.get(emaPrev.size() - 1),
                 candleBuyRes.candlePriceMinFactor == null ? "" : candleIntervalUpDownData.maxClose - (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) * candleBuyRes.candlePriceMinFactor,
-                candleBuyRes.candlePriceMaxFactor == null ? "" : candleIntervalUpDownData.maxClose - (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) * candleBuyRes.candlePriceMaxFactor
+                candleBuyRes.candlePriceMaxFactor == null ? "" : candleIntervalUpDownData.maxClose - (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) * candleBuyRes.candlePriceMaxFactor,
+                candleBuyRes.notLossBuyUnderPrice == null ? "": candleBuyRes.notLossBuyUnderPrice
                 );
         return resBuy;
     }
@@ -1464,6 +1460,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 annotation += " sellPoints.size(): " + sellPoints.size();
                 var prevPoint = order.getPurchasePrice().doubleValue();
                 Double curPoint = null;
+                if (sellPoints.size() == 0) {
+                    
+                }
                 if (sellPoints.size() > 0 || (sellPoints.size() == 1 && res)) {
                     curPoint = Math.max(sellPoints.get(0).candle.getClosingPrice().doubleValue(), sellPoints.get(0).candle.getOpenPrice().doubleValue());
                     var candleResDown = getCandleIntervals(newStrategy, candle).stream().filter(
@@ -2563,6 +2562,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         CandleIntervalUpDownData candleIntervalUpDownData;
         Float candlePriceMinFactor;
         Float candlePriceMaxFactor;
+        Float notLossBuyUnderPrice;
     }
 
     private CandleIntervalBuyResult getCandleBuyRes(
@@ -2582,6 +2582,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         annotation += candleIntervalRes.annotation;
         Float candlePriceMinFactor = null;
         Float candlePriceMaxFactor = null;
+        Float notLossBuyUnderPrice = null;
         if (buyCriteria.getCandleIntervalMinPercent() != null) {
             if (candleIntervalRes.res) {
                 var intervalCandles = getCandleIntervals(newStrategy, candle);
@@ -2814,7 +2815,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                 maxPercentPrev = 100f * (candleIntervalUpDownData.maxClose - maxClose) / sizePrev;
 
                                 if (
-                                        minPercent >= 0f
+                                        minPercent > 0f
                                         && maxPercent > 0f
                                         && candleIntervalUpDownDataPrevPrev.minClose >= candleIntervalUpDownDataPrev.minClose
                                         && candleIntervalUpDownDataPrevPrev.maxClose >= candleIntervalUpDownDataPrev.maxClose
@@ -2929,6 +2930,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         annotation += " isIntervalDown = " + isIntervalDown;
                         annotation += " isIntervalUp = " + isIntervalUp;
                         var PointLengthOk = false;
+                        var PointLengthOkRes = false;
                         if (buyCriteria.getCandleDownPointSize() != null) {
                             var points = getIntervalBuyPoints(
                                     newStrategy,
@@ -3046,9 +3048,37 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         } else if (PointLengthOk) {
                             annotation += " PointLength OK";
                             res = true;
+                            PointLengthOkRes = true;
                         } else if (isIntervalUp) {
                             annotation += " isIntervalUp OK";
                             res = true;
+                        }
+
+                        if (buyCriteria.getNotLossBuyUnderPercent() > 0) {
+                            /*List<CandleIntervalResultData> sellPoints = getIntervalSellPoints(
+                                    newStrategy,
+                                    candle,
+                                    candleIntervalRes,
+                                    1,
+                                    1
+                            );*/
+                            //if (sellPoints.size() > 0) {
+                                //var sellCandle = sellPoints.get(0).candle;
+                                //var buyCandle = candleIntervalUpDownData.minCandle;
+                                //var sellCandle = candleIntervalUpDownData.maxCandle;
+                                upCandles.size();
+                                notLossBuyUnderPrice = candleIntervalUpDownData.maxClose
+                                        - downCandles.size() * buyCriteria.getNotLossBuyUnderPercent() * (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) / upCandles.size();
+                                annotation += " notLossBuyUnderPrice=" + printPrice(notLossBuyUnderPrice);
+                                if (
+                                        res
+                                        && PointLengthOkRes
+                                        && notLossBuyUnderPrice < candle.getClosingPrice().floatValue()
+                                ) {
+                                    annotation += " SKIP by UnderPrice";
+                                    res = false;
+                                }
+                            //}
                         }
                     }
                 }
@@ -3230,6 +3260,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 .candleIntervalUpDownData(candleIntervalUpDownData)
                 .candlePriceMaxFactor(candlePriceMaxFactor)
                 .candlePriceMinFactor(candlePriceMinFactor)
+                .notLossBuyUnderPrice(notLossBuyUnderPrice)
                 .build();
     }
 
@@ -3254,6 +3285,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     candleRes.isDown
                             //&& sellPoints.size() != upLength
             ) {
+                //if (lastSellPoint == null) {
+                //    continue;
+                //}
                 break;
             }
             if (null == lastSellPoint) {

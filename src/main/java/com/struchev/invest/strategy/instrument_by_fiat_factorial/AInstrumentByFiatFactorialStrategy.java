@@ -307,7 +307,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
                 .notLossSellLength(1)
                 .notLossSellPercent(0.1f)
                 .notLossSellPercentDiff(0.5f)
-                .notLossBuyUnderPercent(0.5f)
+                .notLossBuyUnderPercent(1f)
                 .isCandleUpAny(false)
                 .candleInterval("1min")
                 .build();
