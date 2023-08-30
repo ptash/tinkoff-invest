@@ -1367,10 +1367,11 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                 sellCriteria.getCandleUpPointLength(),
                                 sellCriteria.getCandleUpSkipLength()
                         );
+                        annotation += " try SKIP MIN SKIP by size: " + sellPoints.size() + " > " + sellCriteria.getCandleUpSkipLength();
                         if (null != sellCriteria.getCandleUpSkipLength()
                                 && sellPoints.size() > sellCriteria.getCandleUpSkipLength()
                         ) {
-                            annotation += " SKIP MIN SKIP by size: " + sellPoints.size() + " > " + sellCriteria.getCandleUpSkipLength();
+                            annotation += " OK";
                             skip = false;
                         }
                     }
@@ -1421,8 +1422,12 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     var candleDownFactor = (maxPrice1 - maxPrice2)
                             / (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose);
                     annotation += " downFactor = " + printPrice(downFactor) + "(" + printPrice(maxPrice1) + ", " + printPrice(maxPrice2) + ") > " + sellCriteria.getCandleUpSkipDownBetweenFactor();
+                    annotation += " candleDownFactor = " + candleDownFactor;
                     if (downFactor > sellCriteria.getCandleUpSkipDownBetweenFactor()) {
-                        if (maxPrice1 > maxPrice2) {
+                        if (
+                                maxPrice1 > maxPrice2
+                                //&& candleDownFactor > (sellCriteria.getCandleUpSkipDownBetweenFactor() / 10f)
+                        ) {
                             annotation += " SKIP MIN SKIP by down";
                             isSkip = false;
                             isSkipDown = true;
@@ -2802,7 +2807,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                 maxPercentPrev = 100f * (candleIntervalUpDownData.maxClose - maxClose) / sizePrev;
 
                                 if (
-                                        minPercent > 0f
+                                        minPercent >= 0f
                                         && maxPercent > 0f
                                         && candleIntervalUpDownDataPrevPrev.minClose >= candleIntervalUpDownDataPrev.minClose
                                         && candleIntervalUpDownDataPrevPrev.maxClose >= candleIntervalUpDownDataPrev.maxClose
@@ -3034,7 +3039,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         } else if (PointLengthOk) {
                             annotation += " PointLength OK";
                             res = true;
-                        } else if (false && isIntervalUp) {
+                        } else if (isIntervalUp) {
                             annotation += " isIntervalUp OK";
                             res = true;
                         }
