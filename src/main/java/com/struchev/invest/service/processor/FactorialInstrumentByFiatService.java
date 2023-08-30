@@ -715,6 +715,11 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             }
         }
 
+        Double NotLossBuyUnderPrice = null;
+        if (res && buyCriteria.getNotLossBuyUnderPercent() > 0) {
+
+        }
+
         String key = buildKeyHour(strategy.getName(), candle);
         var buyPrice = getCashedIsBuyValue(key);
         if (null == buyPrice
@@ -2485,7 +2490,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         begin = candleResUpFirst;
                         if (end == null || isNewTop || isNewBottom) {
                             annotation += " isNewSize";
-                            if (end == null) {
+                            if (end == null || isNewTop) {
                                 end = candleResUp;
                                 endPost = candleResDownFirst;
                             }

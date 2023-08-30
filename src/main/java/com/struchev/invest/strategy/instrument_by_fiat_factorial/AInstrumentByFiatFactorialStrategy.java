@@ -217,6 +217,8 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
         Float notLossSellPercent;
         Float notLossSellPercentDiff;
 
+        Float notLossBuyUnderPercent;
+
         Integer candleMinLength;
         Integer candleMaxLength;
         Integer candleMaxInterval;
@@ -305,6 +307,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
                 .notLossSellLength(1)
                 .notLossSellPercent(0.1f)
                 .notLossSellPercentDiff(0.5f)
+                .notLossBuyUnderPercent(0.5f)
                 .isCandleUpAny(false)
                 .candleInterval("1min")
                 .build();
