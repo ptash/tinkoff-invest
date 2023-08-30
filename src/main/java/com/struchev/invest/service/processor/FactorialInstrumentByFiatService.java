@@ -1422,8 +1422,14 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     var downFactor = (maxPrice - minPrice) / (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose);
                     var candleDownFactor = (maxPrice1 - maxPrice2)
                             / (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose);
+                    var candleDownFactorUnder = (Math.min(maxPrice1, maxPrice2) - candleIntervalUpDownData.maxClose)
+                            / (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose);
                     annotation += " downFactor = " + printPrice(downFactor) + "(" + printPrice(maxPrice1) + ", " + printPrice(maxPrice2) + ") > " + sellCriteria.getCandleUpSkipDownBetweenFactor();
                     annotation += " candleDownFactor = " + candleDownFactor;
+                    annotation += " under = " + candleDownFactorUnder;
+                    //if (candleDownFactorUnder > 0) {
+                    //    candleDownFactor =
+                    //}
                     if (downFactor > sellCriteria.getCandleUpSkipDownBetweenFactor()) {
                         if (
                                 maxPrice1 > maxPrice2
@@ -1461,7 +1467,13 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 var prevPoint = order.getPurchasePrice().doubleValue();
                 Double curPoint = null;
                 if (sellPoints.size() == 0) {
-                    
+                    var candlesBetween = candleHistoryService.getCandlesByFigiBetweenDateTimes(candle.getFigi(), order.getPurchaseDateTime(), candle.getDateTime(), strategy.getFactorialInterval());
+                    var maxCandle = candlesBetween.stream().reduce((first, second) ->
+                            first.getClosingPrice().compareTo(second.getClosingPrice()) > 0 ? first : second).orElse(null);
+                    annotation += " maxCandle: " + printDateTime(maxCandle.getDateTime());
+                    sellPoints.add(CandleIntervalResultData.builder()
+                            .candle(maxCandle)
+                            .build());
                 }
                 if (sellPoints.size() > 0 || (sellPoints.size() == 1 && res)) {
                     curPoint = Math.max(sellPoints.get(0).candle.getClosingPrice().doubleValue(), sellPoints.get(0).candle.getOpenPrice().doubleValue());
