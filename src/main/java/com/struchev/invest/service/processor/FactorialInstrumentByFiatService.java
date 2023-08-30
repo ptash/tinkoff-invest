@@ -1426,7 +1426,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     if (downFactor > sellCriteria.getCandleUpSkipDownBetweenFactor()) {
                         if (
                                 maxPrice1 > maxPrice2
-                                //&& candleDownFactor > (sellCriteria.getCandleUpSkipDownBetweenFactor() / 10f)
+                                && candleDownFactor > (sellCriteria.getCandleUpSkipDownBetweenFactor() / 10f)
                         ) {
                             annotation += " SKIP MIN SKIP by down";
                             isSkip = false;
@@ -2485,8 +2485,10 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         begin = candleResUpFirst;
                         if (end == null || isNewTop || isNewBottom) {
                             annotation += " isNewSize";
-                            end = candleResUp;
-                            endPost = candleResDownFirst;
+                            if (end == null) {
+                                end = candleResUp;
+                                endPost = candleResDownFirst;
+                            }
                             if (maxPricePrev != null) {
                                 maxPricePrev = Math.max(maxPrice, maxPricePrev);
                             } else {
