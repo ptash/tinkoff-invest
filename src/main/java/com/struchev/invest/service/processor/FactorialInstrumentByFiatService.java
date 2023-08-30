@@ -1468,11 +1468,19 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 annotation += " sellPoints.size(): " + sellPoints.size();
                 var prevPoint = order.getPurchasePrice().doubleValue();
                 Double curPoint = null;
-                if (sellPoints.size() == 0) {
-                    var candlesBetween = candleHistoryService.getCandlesByFigiBetweenDateTimes(candle.getFigi(), order.getPurchaseDateTime(), candle.getDateTime(), strategy.getFactorialInterval());
-                    if (candlesBetween.size() > 0) {
-                        var maxCandle = candlesBetween.stream().reduce((first, second) ->
-                                first.getClosingPrice().compareTo(second.getClosingPrice()) > 0 ? first : second).orElse(null);
+                if (sellCriteria.getCandleUpMiddleFactorMinBegin() > 0) {
+                    var candlesBetween = candleHistoryService.getCandlesByFigiBetweenDateTimes(
+                            candle.getFigi(),
+                            order.getPurchaseDateTime(),
+                            candle.getDateTime(),
+                            strategy.getInterval()
+                    );
+                    if (candlesBetween.size() <= sellCriteria.getCandleUpMiddleFactorMinBegin()) {
+                        sellPoints.clear();
+                    } else if (sellPoints.size() == 0) {
+                        var maxCandle = candlesBetween
+                                .stream().reduce((first, second) ->
+                                        first.getClosingPrice().compareTo(second.getClosingPrice()) > 0 ? first : second).orElse(null);
                         annotation += " maxCandle: " + printDateTime(maxCandle.getDateTime());
                         sellPoints.add(CandleIntervalResultData.builder()
                                 .candle(maxCandle)

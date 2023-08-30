@@ -117,6 +117,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
         Integer candleUpSkipLength;
         Float candleUpSkipDownBetweenFactor;
         Float candleUpMiddleFactor;
+        Integer CandleUpMiddleFactorMinBegin;
 
         Integer downAfterUpSize;
 
@@ -150,6 +151,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
                 .exitProfitInPercentMaxForLoss(null)
                 .exitProfitInPercentMaxLoopIgnoreSize(0)
                 .downAfterUpSize(1)
+                .CandleUpMiddleFactorMinBegin(0)
                 .candleInterval("1min")
                 .build();
     }
@@ -307,7 +309,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
                 .notLossSellLength(1)
                 .notLossSellPercent(0.1f)
                 .notLossSellPercentDiff(0.5f)
-                .notLossBuyUnderPercent(1f)
+                .notLossBuyUnderPercent(0f)
                 .isCandleUpAny(false)
                 .candleInterval("1min")
                 .build();

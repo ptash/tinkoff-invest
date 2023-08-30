@@ -46,6 +46,7 @@ public class FactorialCandleFactorUp20Strategy extends FactorialCandleFactor20St
 
         sell.setCandleUpSkipLength(4);
         sell.setCandleUpMiddleFactor(0.3f);
+        sell.setCandleUpMiddleFactorMinBegin(30);
 
         sell.setDownAfterUpSize(2);
         return sell;
