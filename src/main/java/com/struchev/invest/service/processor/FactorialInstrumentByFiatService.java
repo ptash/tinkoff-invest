@@ -1262,6 +1262,22 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         Boolean isOrderUpCandle = false;
         CandleIntervalBuyResult candleBuyRes = null;
         var candleIntervalUpDownData = getCurCandleIntervalUpDownData(newStrategy, candle);
+
+        List<Double> ema = null;
+        List<Double> emaPrev = null;
+        if (null != buyCriteria.getEmaLength()) {
+            annotation += " ema " + candleIntervalUpDownData.beginDownFirst.candle.getDateTime() + " - " + candleIntervalUpDownData.endPost.candle.getDateTime();
+            var candles = candleHistoryService.getCandlesByFigiBetweenDateTimes(candle.getFigi(), candleIntervalUpDownData.beginDownFirst.candle.getDateTime(), candleIntervalUpDownData.endPost.candle.getDateTime(), strategy.getInterval());
+            var emaLength = candles.size();
+            annotation += " size=" + emaLength;
+            ema = getEma(candle.getFigi(), candle.getDateTime(), emaLength, strategy.getInterval(), CandleDomainEntity::getClosingPrice, 1);
+            candles = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(), candle.getDateTime(), emaLength, strategy.getInterval());
+            emaPrev = getEma(candle.getFigi(), candles.get(0).getDateTime(), emaLength, strategy.getInterval(), CandleDomainEntity::getClosingPrice, 1);
+            if (res && candle.getClosingPrice().compareTo(BigDecimal.valueOf(ema.get(ema.size() - 1))) < 0) {
+                annotation += " less EMA";
+            }
+        }
+
         String keyCandles = strategy.getName() + candle.getFigi();
         if (!res) {
             var upRes = isOrderCandleUp(newStrategy, candle, order, buyCriteria, sellCriteria);
@@ -1557,7 +1573,12 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             && !res
                             && !isSkipUp
                     ) {
-                        res = candlePrevMaxPrice < middlePrice && candle.getClosingPrice().doubleValue() < middlePrice;
+                        if (emaPrev != null && emaPrev.get(emaPrev.size() - 1) < candle.getClosingPrice().doubleValue()) {
+                            annotation += "emaPrev ";
+                            res = candlePrevMaxPrice < middlePrice;
+                        } else {
+                            res = candlePrevMaxPrice < middlePrice && candle.getClosingPrice().doubleValue() < middlePrice;
+                        }
                         if (res) {
                             annotation += " MIDDLE CANDLE OK";
                             isMiddleOk = true;
@@ -1758,20 +1779,6 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             profitPercentFromBuyMinPrice = (float) -buyCriteria.getProfitPercentFromBuyMinPrice();
         }
 
-        List<Double> ema = null;
-        List<Double> emaPrev = null;
-        if (null != buyCriteria.getEmaLength()) {
-            annotation += " ema " + candleIntervalUpDownData.beginDownFirst.candle.getDateTime() + " - " + candleIntervalUpDownData.endPost.candle.getDateTime();
-            var candles = candleHistoryService.getCandlesByFigiBetweenDateTimes(candle.getFigi(), candleIntervalUpDownData.beginDownFirst.candle.getDateTime(), candleIntervalUpDownData.endPost.candle.getDateTime(), strategy.getInterval());
-            var emaLength = candles.size();
-            annotation += " size=" + emaLength;
-            ema = getEma(candle.getFigi(), candle.getDateTime(), emaLength, strategy.getInterval(), CandleDomainEntity::getClosingPrice, 1);
-            candles = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(), candle.getDateTime(), emaLength, strategy.getInterval());
-            emaPrev = getEma(candle.getFigi(), candles.get(0).getDateTime(), emaLength, strategy.getInterval(), CandleDomainEntity::getClosingPrice, 1);
-            if (res && candle.getClosingPrice().compareTo(BigDecimal.valueOf(ema.get(ema.size() - 1))) < 0) {
-                annotation += " less EMA";
-            }
-        }
         notificationService.reportStrategyExt(
                 res,
                 strategy,
