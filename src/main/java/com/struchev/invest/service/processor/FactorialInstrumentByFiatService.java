@@ -1476,7 +1476,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             strategy.getInterval()
                     );
                     if (candlesBetween.size() <= sellCriteria.getCandleUpMiddleFactorMinBegin()) {
-                        sellPoints.clear();
+                        //sellPoints.clear();
                     } else if (sellPoints.size() == 0) {
                         var maxCandle = candlesBetween
                                 .stream().reduce((first, second) ->
@@ -1506,9 +1506,10 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     var num = 1;
                     for(var i = sellPoints.size() - 1; i > 0; i--) {
                         var pp = Math.min(sellPoints.get(i).candle.getClosingPrice().doubleValue(), sellPoints.get(i).candle.getOpenPrice().doubleValue());
+                        var numS = Math.sqrt(num);
                         if (
-                                (curPoint - pp) > num * (pp - prevPoint)
-                                && num * (pp - prevPointInit) <= (curPoint - prevPoint)
+                                (curPoint - pp) > numS * (pp - prevPoint)
+                                && numS * (pp - prevPointInit) <= (curPoint - prevPoint)
                         ) {
                             annotation += " new prevPoint: " + i + " " + printPrice(pp) + ": "
                                     + printPrice(curPoint - pp) + ">" + printPrice(pp - prevPoint)
