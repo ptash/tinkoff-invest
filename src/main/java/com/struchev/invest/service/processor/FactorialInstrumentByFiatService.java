@@ -1391,6 +1391,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             annotation += " middlePrice " + printPrice(middleCandlePrice) + " < " + printPrice(order.getPurchasePrice());
             if (
                     order.getPurchasePrice().doubleValue() > middleCandlePrice
+                    && profitPercent.doubleValue() < (sellCriteria.getCandleProfitMinPercent() == null ? 0.0f: sellCriteria.getCandleProfitMinPercent())
             ) {
                 if (
                         order.getPurchaseDateTime().isAfter(candleIntervalUpDownData.endPost.candle.getDateTime())
