@@ -1557,7 +1557,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             && !res
                             && !isSkipUp
                     ) {
-                        res = candlePrevMaxPrice < middlePrice;
+                        res = candlePrevMaxPrice < middlePrice && candle.getClosingPrice().doubleValue() < middlePrice;
                         if (res) {
                             annotation += " MIDDLE CANDLE OK";
                             isMiddleOk = true;
@@ -2873,6 +2873,13 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                                 candleIntervalUpDownDataPrevPrev.minClose > candleIntervalUpDownDataPrev.minClose
                                                 || candleIntervalUpDownDataPrevPrev.maxClose > candleIntervalUpDownDataPrev.maxClose
                                         )
+                                ) {
+                                    isIntervalUp = true;
+                                } else if (
+                                        minPercent < 0f
+                                        && maxPercent > 0f
+                                        && candleIntervalUpDownDataPrevPrev.minClose > candleIntervalUpDownDataPrev.maxClose
+                                        && candleIntervalUpDownDataPrevPrev.minClose > candleIntervalUpDownData.maxClose
                                 ) {
                                     isIntervalUp = true;
                                 }
