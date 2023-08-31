@@ -1404,7 +1404,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     var priceBottom = order.getPurchasePrice().floatValue() - (candleIntervalUpDownData.maxClose.floatValue() - candleIntervalUpDownData.minClose.floatValue()) / 2;
                     annotation += " priceBottom: " + printPrice(priceBottom);
                     if (
-                            order.getPurchasePrice().floatValue() < candleIntervalUpDownData.minClose.floatValue()
+                            order.getPurchasePrice().floatValue() < candleIntervalUpDownData.maxClose.floatValue()
                             && priceBottom < candle.getClosingPrice().floatValue()
                     ) {
                         annotation += " SKIP UP BOTTOM";
