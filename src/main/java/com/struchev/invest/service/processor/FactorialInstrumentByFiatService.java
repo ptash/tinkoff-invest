@@ -1387,7 +1387,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             var isSkipDown = false;
             var isSkipUp = false;
             var isSkipUpBottom = false;
-            var middleCandlePrice = (candleIntervalUpDownData.minClose + (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) / 2);
+            var middleCandlePrice = (candleIntervalUpDownData.minClose + (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) * 0.4);
             annotation += " middlePrice " + printPrice(middleCandlePrice);
             if (
                     order.getPurchasePrice().doubleValue() > middleCandlePrice
@@ -3018,7 +3018,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                 isIntervalDown
                                 && PointLengthOk
                                 && order != null
-                                && order.getPurchasePrice().compareTo(order.getSellPrice()) < 0
+                                && order.getPurchasePrice().compareTo(order.getSellPrice()) > 0
                         ) {
                             annotation += " SKIP PointLength";
                             PointLengthOk = false;
