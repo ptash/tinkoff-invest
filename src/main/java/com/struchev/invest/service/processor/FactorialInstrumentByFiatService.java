@@ -1388,13 +1388,13 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             var isSkipUp = false;
             var isSkipUpBottom = false;
             var middleCandlePrice = (candleIntervalUpDownData.minClose + (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) * 0.4);
-            annotation += " middlePrice " + printPrice(middleCandlePrice);
+            annotation += " middlePrice " + printPrice(middleCandlePrice) + " < " + printPrice(order.getPurchasePrice());
             if (
                     order.getPurchasePrice().doubleValue() > middleCandlePrice
-                    && order.getPurchaseDateTime().isAfter(candleIntervalUpDownData.endPost.candle.getDateTime())
             ) {
                 if (
-                        candle.getClosingPrice().doubleValue() > middleCandlePrice
+                        order.getPurchaseDateTime().isAfter(candleIntervalUpDownData.endPost.candle.getDateTime())
+                        && candle.getClosingPrice().doubleValue() > middleCandlePrice
                         && profitPercent.doubleValue() < (sellCriteria.getCandleProfitMinPercent() == null ? 0.0f: sellCriteria.getCandleProfitMinPercent())
                 ) {
                     annotation += " SKIP UP ";
@@ -1403,7 +1403,10 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 } else {
                     var priceBottom = order.getPurchasePrice().floatValue() - (candleIntervalUpDownData.maxClose.floatValue() - candleIntervalUpDownData.minClose.floatValue()) / 2;
                     annotation += " priceBottom: " + printPrice(priceBottom);
-                    if (priceBottom < candle.getClosingPrice().floatValue()) {
+                    if (
+                            order.getPurchasePrice().floatValue() < candleIntervalUpDownData.minClose.floatValue()
+                            && priceBottom < candle.getClosingPrice().floatValue()
+                    ) {
                         annotation += " SKIP UP BOTTOM";
                         isSkipUp = true;
                         isSkipUpBottom = true;
