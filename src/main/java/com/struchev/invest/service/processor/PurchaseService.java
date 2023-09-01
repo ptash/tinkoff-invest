@@ -1,6 +1,7 @@
 package com.struchev.invest.service.processor;
 
 import com.struchev.invest.entity.CandleDomainEntity;
+import com.struchev.invest.entity.OrderDetails;
 import com.struchev.invest.entity.OrderDomainEntity;
 import com.struchev.invest.service.candle.CandleHistoryService;
 import com.struchev.invest.service.notification.NotificationService;
@@ -13,6 +14,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Сервис обрабатывает поток свечей
@@ -28,6 +31,7 @@ public class PurchaseService {
     private final NotificationService notificationService;
     private final CalculatorFacade calculator;
     private final CalculatorInstrumentByInstrumentService calculatorInstrumentByInstrumentService;
+    private final FactorialInstrumentByFiatService factorialInstrumentByFiatService;
 
     private final CrossInstrumentByFiatService crossInstrumentByFiatService;
 
@@ -154,7 +158,21 @@ public class PurchaseService {
                     if (strategy.getType() == AStrategy.Type.instrumentCrossByFiat) {
                         currentPrices = crossInstrumentByFiatService.getCurrentPrices();
                     }
-                    order = orderService.openOrder(candleDomainEntity, strategy, currentPrices);
+                    if (currentPrices != null) {
+                        AStrategy finalStrategy = strategy;
+                        currentPrices = currentPrices.entrySet().stream()
+                                .filter(e -> finalStrategy.getFigies().containsKey(e.getKey()))
+                                .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
+                    }
+                    Map<String, Boolean> booleanDataMap = null;
+                    if (strategy.getType() == AStrategy.Type.instrumentFactorialByFiat) {
+                        booleanDataMap = factorialInstrumentByFiatService.getOrderBooleanDataMap(strategy, candleDomainEntity);
+                        currentPrices = factorialInstrumentByFiatService.getOrderBigDecimalDataMap(strategy, candleDomainEntity);
+                    }
+                    order = orderService.openOrder(candleDomainEntity, strategy, OrderDetails.builder()
+                            .currentPrices(currentPrices)
+                            .booleanDataMap(booleanDataMap)
+                            .build());
 
                     notificationService.sendBuyInfo(strategy, order, candleDomainEntity);
 

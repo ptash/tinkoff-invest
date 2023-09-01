@@ -56,12 +56,7 @@ public class OrderService {
     }
 
     @Transactional
-    public synchronized OrderDomainEntity openOrder(CandleDomainEntity candle, AStrategy strategy, Map<String, BigDecimal> currentPrices) {
-        if (currentPrices != null) {
-            currentPrices = currentPrices.entrySet().stream()
-                    .filter(e -> strategy.getFigies().containsKey(e.getKey()))
-                    .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
-        }
+    public synchronized OrderDomainEntity openOrder(CandleDomainEntity candle, AStrategy strategy, OrderDetails orderDetails) {
         var instrument = instrumentService.getInstrument(candle.getFigi());
         var order = OrderDomainEntity.builder()
                 .currency(instrument.getCurrency())
@@ -72,7 +67,7 @@ public class OrderService {
                 .purchaseDateTime(candle.getDateTime())
                 .lots(strategy.getCount(candle.getFigi()))
                 .purchaseCommissionInitial(BigDecimal.ZERO)
-                .details(OrderDetails.builder().currentPrices(currentPrices).build())
+                .details(orderDetails)
                 .build();
 
         if (strategy.isCheckBook()

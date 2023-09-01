@@ -9,6 +9,7 @@ import com.struchev.invest.strategy.AStrategy;
 import com.struchev.invest.strategy.instrument_by_fiat_factorial.AInstrumentByFiatFactorialStrategy;
 import lombok.Builder;
 import lombok.Data;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,7 @@ import java.math.RoundingMode;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -1404,9 +1406,14 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             var isSkipUp = false;
             var isSkipUpBottom = false;
             var middleCandlePrice = (candleIntervalUpDownData.minClose + (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) * 0.4);
+            var isIntervalUp = order.getDetails().getBooleanDataMap().getOrDefault("isIntervalUp", false);
+            var isMinMin = order.getDetails().getBooleanDataMap().getOrDefault("isMinMin", false);
             annotation += " middlePrice " + printPrice(middleCandlePrice) + " < " + printPrice(order.getPurchasePrice());
+            annotation += " isIntervalUp=" + isIntervalUp;
+            annotation += " isMinMin=" + isMinMin;
             if (
-                    order.getPurchasePrice().doubleValue() > middleCandlePrice
+                    (order.getDetails().getBooleanDataMap().getOrDefault("isIntervalUp", false)
+                            || order.getDetails().getBooleanDataMap().getOrDefault("isMinMin", false))
                     && profitPercent.doubleValue() < (sellCriteria.getCandleProfitMinPercent() == null ? 0.0f: sellCriteria.getCandleProfitMinPercent())
             ) {
                 if (
@@ -1427,6 +1434,30 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         annotation += " SKIP UP BOTTOM";
                         isSkipUp = true;
                         isSkipUpBottom = true;
+                    }
+                }
+            }
+            if (
+                    !isSkipUp
+                    && isIntervalUp
+            ) {
+                annotation += " isIntervalUp " + printDateTime(candleIntervalUpDownData.endPost.candle.getDateTime());
+                if (order.getPurchaseDateTime().isAfter(candleIntervalUpDownData.endPost.candle.getDateTime())) {
+                    annotation += " SKIP UP IN BUY INTERVAL";
+                    isSkipUp = true;
+                    isSkipUpBottom = true;
+                } else {
+                    var stopLossPrice = order.getDetails().getCurrentPrices().getOrDefault("stopLossPrice", BigDecimal.ZERO);
+                    if (!stopLossPrice.equals(BigDecimal.ZERO)) {
+                        annotation += " stopLossPrice " + printPrice(stopLossPrice);
+                        if (
+                                candle.getClosingPrice().compareTo(stopLossPrice) > 0
+                                && profitPercent.doubleValue() < (sellCriteria.getCandleProfitMinPercent() == null ? 0.0f: sellCriteria.getCandleProfitMinPercent())
+                        ) {
+                            annotation += " SKIP UP UNDER STOP LOSS";
+                            isSkipUp = true;
+                            isSkipUpBottom = true;
+                        }
                     }
                 }
             }
@@ -2852,6 +2883,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         annotation += " candleMinFactorCandle = " + candleMinFactorCandle;
                         var isIntervalDown = false;
                         var isIntervalUp = false;
+                        BigDecimal StopLossPrice = BigDecimal.ZERO;
                         if (null != candleIntervalUpDownDataPrev) {
                             var size = Math.max(
                                     candleIntervalUpDownDataPrev.maxClose - candleIntervalUpDownDataPrev.minClose,
@@ -2882,6 +2914,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                         )
                                 ) {
                                     isIntervalUp = true;
+                                    StopLossPrice = BigDecimal.valueOf(candleIntervalUpDownDataPrev.minClose);
                                 } else if (
                                         minPercent < 0f
                                         && maxPercent > 0f
@@ -2889,6 +2922,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                         && candleIntervalUpDownDataPrevPrev.minClose > candleIntervalUpDownData.maxClose
                                 ) {
                                     isIntervalUp = true;
+                                    StopLossPrice = BigDecimal.valueOf(candleIntervalUpDownDataPrev.minClose);
                                 }
                             }
                             annotation += " minPercent = " + minPercent;
@@ -2993,6 +3027,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         }
                         annotation += " isIntervalDown = " + isIntervalDown;
                         annotation += " isIntervalUp = " + isIntervalUp;
+                        setOrderBooleanData(strategy, candle, "isIntervalUp", isIntervalUp);
+                        setOrderBooleanData(strategy, candle, "isMinMin", false);
+                        setOrderBigDecimalData(strategy, candle, "stopLossPrice", StopLossPrice);
                         var PointLengthOk = false;
                         var PointLengthOkRes = false;
                         if (buyCriteria.getCandleDownPointSize() != null) {
@@ -3107,7 +3144,10 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                 double max = candleIntervalUpDownDataPrev.maxClose;
                                 max += (candleIntervalUpDownData.maxClose - candleIntervalUpDownDataPrev.maxClose) * 0.25;
                                 annotation += " " + printPrice(candle.getClosingPrice()) + " < " + printPrice(max);
-                                if (max > candle.getClosingPrice().doubleValue()) {
+                                if (
+                                        max > candle.getClosingPrice().doubleValue()
+                                        && (buyCriteria.getCandleMinFactorCandle() == null || factorCandle < buyCriteria.getCandleMinFactorCandle())
+                                ) {
                                     annotation += " OK by maxClose";
                                     isOk = true;
                                 }
@@ -3117,6 +3157,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                     || profitPercent > f2)) {
                                 annotation += " candleFactor minmin OK";
                                 res = true;
+                                setOrderBooleanData(strategy, candle, "isMinMin", true);
                             }
                         } else if (PointLengthOk) {
                             annotation += " PointLength OK";
@@ -3818,5 +3859,39 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             //addCashedValue(indent, smaPrev);
         }
         return ret;
+    }
+
+    private final Map<String, Map<String, Boolean>> booleanDataMap = new ConcurrentHashMap<>();
+
+    public synchronized Map<String, Boolean> getOrderBooleanDataMap(AStrategy strategy, CandleDomainEntity candle)
+    {
+        String key = strategy.getName() + candle.getFigi();
+        return booleanDataMap.getOrDefault(key, new ConcurrentHashMap<>());
+    }
+
+    private synchronized void setOrderBooleanData(FactorialDiffAvgAdapterStrategy strategy, CandleDomainEntity candle, String key, Boolean value)
+    {
+        String keyS = strategy.getName() + candle.getFigi();
+        if (!booleanDataMap.containsKey(keyS)) {
+            booleanDataMap.put(keyS, new ConcurrentHashMap<>());
+        }
+        booleanDataMap.get(keyS).put(key, value);
+    }
+
+    private final Map<String, Map<String, BigDecimal>> bigDecimalDataMap = new ConcurrentHashMap<>();
+
+    public synchronized Map<String, BigDecimal> getOrderBigDecimalDataMap(AStrategy strategy, CandleDomainEntity candle)
+    {
+        String key = strategy.getName() + candle.getFigi();
+        return bigDecimalDataMap.getOrDefault(key, new ConcurrentHashMap<>());
+    }
+
+    private synchronized void setOrderBigDecimalData(FactorialDiffAvgAdapterStrategy strategy, CandleDomainEntity candle, String key, BigDecimal value)
+    {
+        String keyS = strategy.getName() + candle.getFigi();
+        if (!bigDecimalDataMap.containsKey(keyS)) {
+            bigDecimalDataMap.put(keyS, new ConcurrentHashMap<>());
+        }
+        bigDecimalDataMap.get(keyS).put(key, value);
     }
 }
