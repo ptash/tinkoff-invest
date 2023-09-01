@@ -632,6 +632,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 if (null == order
                         || candleBuyRes.candleIntervalUpDownData.endPost.candle.getDateTime().isAfter(order.getPurchaseDateTime())
                         || (order.getPurchasePrice().floatValue() > middlePrice && candle.getClosingPrice().floatValue() < middlePrice)
+                        || (!order.getDetails().getBooleanDataMap().getOrDefault("isPointLength", false)
+                            && getOrderBooleanDataMap(strategy, candle).getOrDefault("isPointLength", false))
                 ) {
                     res = candleBuyRes.res;
                     annotation += " BYU OK";
@@ -1558,7 +1560,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                 .stream().reduce((first, second) ->
                                         first.getClosingPrice().compareTo(second.getClosingPrice()) > 0 ? first : second).orElse(null);
                         annotation += " maxCandle: " + printDateTime(maxCandle.getDateTime());
-                        var priceBottom = order.getPurchasePrice().floatValue() - (candleIntervalUpDownData.maxClose.floatValue() - candleIntervalUpDownData.minClose.floatValue()) / 2;
+                        var priceBottom = order.getPurchasePrice().floatValue() - (candleIntervalUpDownData.maxClose.floatValue() - candleIntervalUpDownData.minClose.floatValue()) * 0.66f;
                         annotation += " priceBottom: " + printPrice(priceBottom);
                         if (priceBottom > candle.getClosingPrice().floatValue()) {
                             sellPoints.add(CandleIntervalResultData.builder()
@@ -3048,6 +3050,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         annotation += " isIntervalUp = " + isIntervalUp;
                         setOrderBooleanData(strategy, candle, "isIntervalUp", isIntervalUp);
                         setOrderBooleanData(strategy, candle, "isMinMin", false);
+                        setOrderBooleanData(strategy, candle, "isPointLength", false);
                         setOrderBigDecimalData(strategy, candle, "stopLossPrice", StopLossPrice);
                         var PointLengthOk = false;
                         var PointLengthOkRes = false;
@@ -3064,8 +3067,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                     points.size() > 0
                                     && points.get(0).size() >= buyCriteria.getCandleDownPointSize()
                             ) {
-                                annotation += " " + printPrice(points.get(0).get(0).candle.getClosingPrice()) + " > " + printPrice(points.get(0).get(points.get(0).size() - 1).candle.getClosingPrice());
-                                if (points.get(0).get(0).candle.getClosingPrice().compareTo(points.get(0).get(points.get(0).size() - 1).candle.getClosingPrice()) > 0) {
+                                var prevDownCandle = points.get(0).get(Math.min(points.get(0).size() - 1, buyCriteria.getCandleDownPointSize() - 1)).candle;
+                                annotation += " " + printPrice(points.get(0).get(0).candle.getClosingPrice()) + " > " + printPrice(prevDownCandle.getClosingPrice());
+                                if (points.get(0).get(0).candle.getClosingPrice().compareTo(prevDownCandle.getClosingPrice()) > 0) {
                                     annotation += " OK";
                                     PointLengthOk = true;
                                 }
@@ -3089,8 +3093,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                     );
                                 annotation += " length " + pointCandles.size();
                                 if (pointCandles.size() < buyCriteria.getCandleDownPointLength()) {
-                                    annotation += " " + printPrice(points.get(0).get(0).candle.getClosingPrice()) + " > " + printPrice(points.get(points.size() - 1).get(points.get(0).size() - 1).candle.getClosingPrice());
-                                    if (points.get(0).get(0).candle.getClosingPrice().compareTo(points.get(points.size() - 1).get(points.get(0).size() - 1).candle.getClosingPrice()) > 0) {
+                                    var prevDownCandle = points.get(points.size() - 1).get(Math.min(points.get(0).size() - 1, buyCriteria.getCandleDownPointPointLengthSize() - 1)).candle;
+                                        annotation += " " + printPrice(points.get(0).get(0).candle.getClosingPrice()) + " > " + printPrice(prevDownCandle.getClosingPrice());
+                                    if (points.get(0).get(0).candle.getClosingPrice().compareTo(prevDownCandle.getClosingPrice()) > 0) {
                                         annotation += " OK";
                                         PointLengthOk = true;
                                     }
@@ -3191,6 +3196,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             annotation += " PointLength OK";
                             res = true;
                             PointLengthOkRes = true;
+                            setOrderBooleanData(strategy, candle, "isPointLength", true);
                         }
                         if (!res && isIntervalUp) {
                             annotation += " isIntervalUp OK";
