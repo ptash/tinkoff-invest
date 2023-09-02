@@ -121,6 +121,8 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
 
         Integer downAfterUpSize;
 
+        Boolean isOnlyStopLoss;
+
 
         String candleInterval;
 
@@ -152,6 +154,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
                 .exitProfitInPercentMaxLoopIgnoreSize(0)
                 .downAfterUpSize(1)
                 .CandleUpMiddleFactorMinBegin(0)
+                .isOnlyStopLoss(false)
                 .candleInterval("1min")
                 .build();
     }
@@ -265,6 +268,8 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
 
         Integer emaLength;
 
+        Boolean isOnlyUp;
+
         public Boolean isCandleIntervalTargetDirection(BigDecimal openPrice, BigDecimal closePrice) {
             return openPrice.compareTo(closePrice) <= 0;
         }
@@ -311,6 +316,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
                 .notLossSellPercentDiff(0.5f)
                 .notLossBuyUnderPercent(0f)
                 .isCandleUpAny(false)
+                .isOnlyUp(false)
                 .candleInterval("1min")
                 .build();
     }

@@ -174,6 +174,12 @@ public class OrderService {
         return order;
     }
 
+    @Transactional
+    public synchronized OrderDomainEntity updateDetailsCurrentPrice(OrderDomainEntity order, String key, BigDecimal price) {
+        order.getDetails().getCurrentPrices().put(key, price);
+        return saveOrder(order);
+    }
+
     private OrderDomainEntity setOrderInfo(OrderDomainEntity order, ITinkoffOrderAPI.OrderResult result) {
         order.setSellOrderId(result.getOrderId());
         order.setSellCommissionInitial(result.getCommissionInitial());
