@@ -629,6 +629,10 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 annotation += " endPost: " + printDateTime(candleBuyRes.candleIntervalUpDownData.endPost.candle.getDateTime());
                 var middlePrice = candleIntervalUpDownData.minClose + (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) / 2f;
                 annotation += " middlePrice: " + printPrice(middlePrice);
+                if (order != null) {
+                    annotation += " orderPointLength: " + order.getDetails().getBooleanDataMap().getOrDefault("isPointLength", false);
+                    annotation += " isPointLength: " + getOrderBooleanDataMap(strategy, candle).getOrDefault("isPointLength", false);
+                }
                 if (null == order
                         || candleBuyRes.candleIntervalUpDownData.endPost.candle.getDateTime().isAfter(order.getPurchaseDateTime())
                         || (order.getPurchasePrice().floatValue() > middlePrice && candle.getClosingPrice().floatValue() < middlePrice)
@@ -3899,7 +3903,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
     public synchronized Map<String, Boolean> getOrderBooleanDataMap(AStrategy strategy, CandleDomainEntity candle)
     {
         String key = strategy.getName() + candle.getFigi();
-        return booleanDataMap.getOrDefault(key, new ConcurrentHashMap<>());
+        return booleanDataMap.getOrDefault(key, new ConcurrentHashMap<>()).entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     private synchronized void setOrderBooleanData(FactorialDiffAvgAdapterStrategy strategy, CandleDomainEntity candle, String key, Boolean value)
@@ -3916,7 +3920,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
     public synchronized Map<String, BigDecimal> getOrderBigDecimalDataMap(AStrategy strategy, CandleDomainEntity candle)
     {
         String key = strategy.getName() + candle.getFigi();
-        return bigDecimalDataMap.getOrDefault(key, new ConcurrentHashMap<>());
+        return bigDecimalDataMap.getOrDefault(key, new ConcurrentHashMap<>()).entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     private synchronized void setOrderBigDecimalData(FactorialDiffAvgAdapterStrategy strategy, CandleDomainEntity candle, String key, BigDecimal value)
