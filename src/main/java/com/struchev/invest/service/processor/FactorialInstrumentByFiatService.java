@@ -1882,7 +1882,10 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 orderService.updateDetailsCurrentPrice(order, "stopLossPrice", stopLossPrice);
             }
 
-            if (!order.getPurchaseDateTime().isBefore(candleIntervalUpDownData.endPost.candle.getDateTime())) {
+            if (
+                    !order.getPurchaseDateTime().isBefore(candleIntervalUpDownData.endPost.candle.getDateTime())
+                    && stopLossPrice.doubleValue() > candleIntervalUpDownData.minClose
+            ) {
                 annotation += " new stopLossPrice first interval";
                 stopLossPrice = BigDecimal.valueOf(candleIntervalUpDownData.minClose);
             }
@@ -3025,7 +3028,6 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                         )
                                 ) {
                                     isIntervalUp = true;
-                                    StopLossPrice = BigDecimal.valueOf(candleIntervalUpDownData.minClose);
                                 } else if (
                                         minPercent < 0f
                                         && maxPercent > 0f
@@ -3033,6 +3035,13 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                         && candleIntervalUpDownDataPrevPrev.minClose > candleIntervalUpDownData.maxClose
                                 ) {
                                     isIntervalUp = true;
+                                } else if (false && maxPercent > 0f
+                                        && candleIntervalUpDownDataPrevPrev.minClose < candleIntervalUpDownDataPrev.minClose
+                                        && candleIntervalUpDownDataPrevPrev.maxClose > candleIntervalUpDownData.maxClose
+                                ) {
+                                    isIntervalUp = true;
+                                }
+                                if (isIntervalUp) {
                                     StopLossPrice = BigDecimal.valueOf(candleIntervalUpDownData.minClose);
                                 }
                             }
