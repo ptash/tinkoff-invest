@@ -1,16 +1,10 @@
 package com.struchev.invest.strategy;
 
-import com.struchev.invest.strategy.instrument_by_fiat_cross.AInstrumentByFiatCrossStrategy;
 import lombok.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.data.relational.core.sql.In;
-import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
 public abstract class AStrategy {
     @Autowired
@@ -82,6 +76,7 @@ public abstract class AStrategy {
     }
 
     public AStrategy.SellLimitCriteria getSellLimitCriteria() { return null; }
+    public AStrategy.SellLimitCriteria getSellLimitCriteria(String figi) { return null; }
 
     public abstract Type getType();
 

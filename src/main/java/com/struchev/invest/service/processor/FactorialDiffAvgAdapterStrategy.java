@@ -21,13 +21,13 @@ public class FactorialDiffAvgAdapterStrategy extends AInstrumentByFiatFactorialS
         return this.strategy;
     }
 
-    public void setPriceDiffAvgReal(Float priceDiffAvgReal) {
+    public void setPriceDiffAvgReal(String figi, Float priceDiffAvgReal) {
         this.priceDiffAvgReal = priceDiffAvgReal;
         if (null == this.sellLimitOrig) {
             this.sellLimitOrig = this.strategy.getSellLimitCriteriaOrig();
         }
         if (null != this.sellLimitOrig) {
-            this.strategy.setSellLimitCriteria(SellLimitCriteria.builder().exitProfitPercent(this.sellLimitOrig.getExitProfitPercent() * getPriceDiffAvg()).build());
+            this.strategy.setSellLimitCriteria(figi, SellLimitCriteria.builder().exitProfitPercent(this.sellLimitOrig.getExitProfitPercent() * getPriceDiffAvg()).build());
         }
     }
 

@@ -6,7 +6,9 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Стратегии торговли, зарабатывающие на изменении стоимости торговых инструментов, относительно фиатной валюты
@@ -32,6 +34,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
     }
 
     private SellLimitCriteria sellLimit;
+    private Map<String, SellLimitCriteria> sellLimitMap = new HashMap<>();
 
     public SellLimitCriteria getSellLimitCriteriaOrig() {
         return SellLimitCriteria.builder().exitProfitPercent(2.0f).build();
@@ -44,8 +47,15 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
         return this.sellLimit;
     }
 
-    public void setSellLimitCriteria(SellLimitCriteria sellLimit) {
-        this.sellLimit = sellLimit;
+    public SellLimitCriteria getSellLimitCriteria(String figi) {
+        if (!this.sellLimitMap.containsKey(figi)) {
+            this.sellLimitMap.put(figi, SellLimitCriteria.builder().exitProfitPercent(this.getSellLimitCriteria().getExitProfitPercent()).build());
+        }
+        return this.sellLimitMap.get(figi);
+    }
+
+    public void setSellLimitCriteria(String figi, SellLimitCriteria sellLimit) {
+        this.sellLimitMap.put(figi, sellLimit);
     }
 
     public interface CandleIntervalInterface {

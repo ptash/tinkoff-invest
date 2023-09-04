@@ -99,14 +99,14 @@ public class OrderService {
             return order;
         }
         order = orderFresh;
-        if (strategy.getSellLimitCriteria() == null) {
+        if (strategy.getSellLimitCriteria(candle.getFigi()) == null) {
             return order;
         }
-        if (strategy.getSellLimitCriteria().getExitProfitPercent() == null || strategy.getSellLimitCriteria().getExitProfitPercent() <= 0) {
+        if (strategy.getSellLimitCriteria(candle.getFigi()).getExitProfitPercent() == null || strategy.getSellLimitCriteria(candle.getFigi()).getExitProfitPercent() <= 0) {
             return order;
         }
         var instrument = instrumentService.getInstrument(order.getFigi());
-        var limitPrice = order.getPurchasePrice().multiply(BigDecimal.valueOf((strategy.getSellLimitCriteria().getExitProfitPercent() + 100.)/100.));
+        var limitPrice = order.getPurchasePrice().multiply(BigDecimal.valueOf((strategy.getSellLimitCriteria(candle.getFigi()).getExitProfitPercent() + 100.)/100.));
         limitPrice = limitPrice.divide(instrument.getMinPriceIncrement(), 0, RoundingMode.HALF_UP).multiply(instrument.getMinPriceIncrement());
         var lots = order.getLots();
         if (order.getCellLots() != null) {
