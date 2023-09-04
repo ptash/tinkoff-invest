@@ -302,7 +302,7 @@ public class CandleHistoryService {
                 .stream().findFirst().orElse(Duration.ZERO);
         var days = historyDurationByStrategies.toSeconds() > historyDuration.toSeconds()
                 ? historyDurationByStrategies.toDays() : historyDuration.toDays();
-        requestCandlesHistoryForDays(days);
+        //requestCandlesHistoryForDays(days);
 
         if (!isCandleListenerEnabled) {
             var figies = strategySelector.getFigiesForActiveStrategies();
