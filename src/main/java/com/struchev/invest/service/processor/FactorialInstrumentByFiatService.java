@@ -3055,6 +3055,16 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                         && candleIntervalUpDownDataPrevPrev.maxClose > candleIntervalUpDownData.maxClose
                                 ) {
                                     isIntervalUp = true;
+                                } else if (maxPercent > 0f
+                                        && minPercent <= 0f
+                                        && candleIntervalUpDownDataPrevPrev.minClose <= candleIntervalUpDownDataPrev.minClose
+                                        && candleIntervalUpDownDataPrevPrev.maxClose < candleIntervalUpDownData.maxClose
+                                        && (
+                                        minPercent < 0
+                                                || candleIntervalUpDownDataPrevPrev.minClose < candleIntervalUpDownDataPrev.minClose
+                                )
+                                ) {
+                                    isIntervalUp = true;
                                 }
                                 if (
                                         isIntervalUp
