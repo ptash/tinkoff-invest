@@ -935,16 +935,18 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
 
         List<Double> ema = null;
         List<Double> emaPrev = null;
-        if (null != buyCriteria.getEmaLength()) {
+        if (false && null != buyCriteria.getEmaLength()) {
             annotation += " ema " + candleIntervalUpDownData.beginDownFirst.candle.getDateTime() + " - " + candleIntervalUpDownData.endPost.candle.getDateTime();
             var candles = candleHistoryService.getCandlesByFigiBetweenDateTimes(candle.getFigi(), candleIntervalUpDownData.beginDownFirst.candle.getDateTime(), candleIntervalUpDownData.endPost.candle.getDateTime(), strategy.getInterval());
-            var emaLength = candles.size() * 20;
-            annotation += " size=" + emaLength;
-            ema = getEma(candle.getFigi(), candle.getDateTime(), emaLength, strategy.getInterval(), CandleDomainEntity::getClosingPrice, 1);
-            candles = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(), candle.getDateTime(), emaLength, strategy.getInterval());
-            emaPrev = getEma(candle.getFigi(), candles.get(0).getDateTime(), emaLength, strategy.getInterval(), CandleDomainEntity::getClosingPrice, 1);
-            if (res && candle.getClosingPrice().compareTo(BigDecimal.valueOf(ema.get(ema.size() - 1))) < 0) {
-                annotation += " less EMA";
+            if (candles != null && candles.size() > 0) {
+                var emaLength = candles.size() * 20;
+                annotation += " size=" + emaLength;
+                ema = getEma(candle.getFigi(), candle.getDateTime(), emaLength, strategy.getInterval(), CandleDomainEntity::getClosingPrice, 1);
+                candles = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(), candle.getDateTime(), emaLength, strategy.getInterval());
+                emaPrev = getEma(candle.getFigi(), candles.get(0).getDateTime(), emaLength, strategy.getInterval(), CandleDomainEntity::getClosingPrice, 1);
+                if (res && candle.getClosingPrice().compareTo(BigDecimal.valueOf(ema.get(ema.size() - 1))) < 0) {
+                    annotation += " less EMA";
+                }
             }
         }
 
@@ -1276,16 +1278,18 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         List<Double> emaPrev = null;
         Double takeProfitPrice = null;
         BigDecimal stopLossPrice = null;
-        if (null != buyCriteria.getEmaLength()) {
+        if (false && null != buyCriteria.getEmaLength()) {
             annotation += " ema " + candleIntervalUpDownData.beginDownFirst.candle.getDateTime() + " - " + candleIntervalUpDownData.endPost.candle.getDateTime();
             var candles = candleHistoryService.getCandlesByFigiBetweenDateTimes(candle.getFigi(), candleIntervalUpDownData.beginDownFirst.candle.getDateTime(), candleIntervalUpDownData.endPost.candle.getDateTime(), strategy.getInterval());
-            var emaLength = candles.size() * 20;
-            annotation += " size=" + emaLength;
-            ema = getEma(candle.getFigi(), candle.getDateTime(), emaLength, strategy.getInterval(), CandleDomainEntity::getClosingPrice, 1);
-            candles = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(), candle.getDateTime(), emaLength, strategy.getInterval());
-            emaPrev = getEma(candle.getFigi(), candles.get(0).getDateTime(), emaLength, strategy.getInterval(), CandleDomainEntity::getClosingPrice, 1);
-            if (res && candle.getClosingPrice().compareTo(BigDecimal.valueOf(ema.get(ema.size() - 1))) < 0) {
-                annotation += " less EMA";
+            if (candles != null && candles.size() > 0) {
+                var emaLength = candles.size() * 20;
+                annotation += " size=" + emaLength;
+                ema = getEma(candle.getFigi(), candle.getDateTime(), emaLength, strategy.getInterval(), CandleDomainEntity::getClosingPrice, 1);
+                candles = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(), candle.getDateTime(), emaLength, strategy.getInterval());
+                emaPrev = getEma(candle.getFigi(), candles.get(0).getDateTime(), emaLength, strategy.getInterval(), CandleDomainEntity::getClosingPrice, 1);
+                if (res && candle.getClosingPrice().compareTo(BigDecimal.valueOf(ema.get(ema.size() - 1))) < 0) {
+                    annotation += " less EMA";
+                }
             }
         }
 
@@ -1941,9 +1945,15 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             sellLimitCriteria.setExitProfitPercent((float) ((100.f * limitPrice.floatValue() / purchaseRate.floatValue()) - 100.));
             strategy.setSellLimitCriteria(candle.getFigi(), sellLimitCriteria);
             annotation += " sell limit=" + strategy.getSellLimitCriteria(candle.getFigi()).getExitProfitPercent();
-        } else if (strategy.getSellLimitCriteria() != null) {
-            limitPrice = purchaseRate.multiply(BigDecimal.valueOf((strategy.getSellLimitCriteria(candle.getFigi()).getExitProfitPercent() + 100.) / 100.));
+        }
+        if (strategy.getSellLimitCriteria() != null) {
+            var limitPriceByStrategy = purchaseRate.multiply(BigDecimal.valueOf((strategy.getSellLimitCriteria(candle.getFigi()).getExitProfitPercent() + 100.) / 100.));
             annotation += " limit=" + strategy.getSellLimitCriteria().getExitProfitPercent();
+            if (limitPrice == null) {
+                limitPrice = limitPriceByStrategy;
+            } else {
+                limitPrice = limitPriceByStrategy.min(limitPrice);
+            }
         }
         var candleIntervalMinPercent = buyCriteria.getCandleIntervalMinPercent();
         if (null != sellCriteria.getProfitPercentFromSellMinPrice()) {
