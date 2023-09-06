@@ -3134,7 +3134,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                 }
                                 if (
                                         candleIntervalUpDownDataPrev.maxClose < candleIntervalUpDownData.maxClose
-                                        && candleIntervalUpDownDataPrevPrev.maxClose < candleIntervalUpDownDataPrev.maxClose
+                                        && (candleIntervalUpDownDataPrevPrev.maxClose < candleIntervalUpDownDataPrev.maxClose
+                                                || candleIntervalUpDownDataPrevPrev.maxClose < candleIntervalUpDownData.maxClose)
                                         && candleIntervalUpDownDataPrevPrev.minClose < candleIntervalUpDownData.minClose
                                 ) {
                                     var minClosePrev = Math.min(candleIntervalUpDownDataPrev.minClose, candleIntervalUpDownData.minClose);
