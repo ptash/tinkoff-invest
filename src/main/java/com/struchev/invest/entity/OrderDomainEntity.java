@@ -109,6 +109,12 @@ public class OrderDomainEntity {
     @Type(type = "jsonb")
     @Column(name = "details", columnDefinition = "jsonb")
     private OrderDetails details;
+    public OrderDetails getDetails() {
+        if (details != null) {
+            return details;
+        }
+        return OrderDetails.builder().build();
+    }
 
     @Version
     private Integer version;

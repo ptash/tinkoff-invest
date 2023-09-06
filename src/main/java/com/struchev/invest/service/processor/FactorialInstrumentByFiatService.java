@@ -615,6 +615,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             }
         }
 
+        clearCandleInterval(newStrategy, candle);
         var candleBuyRes = getCandleBuyRes(newStrategy, candle);
         var candleIntervalBuy = candleBuyRes.candleIntervalBuy;
         var candleIntervalSell = candleBuyRes.candleIntervalSell;
@@ -1272,6 +1273,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         var candleIntervalSell = false;
         Boolean isOrderUpCandle = false;
         CandleIntervalBuyResult candleBuyRes = null;
+        clearCandleInterval(newStrategy, candle);
         var candleIntervalUpDownData = getCurCandleIntervalUpDownData(newStrategy, candle);
 
         List<Double> ema = null;
@@ -1908,14 +1910,16 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             var candleIntervalUpDownDataPrevMax = getCurCandleIntervalUpDownData(newStrategy, maxCandle);
                             if (candleIntervalUpDownDataPrevMax.minClose == null) {
                                 annotation += " something wrong: " + candleIntervalUpDownDataPrev.annotation;
-                            }
-                            if (
-                                    candleIntervalUpDownDataPrevMax != null
-                                            && candleIntervalUpDownDataPrevMax.minClose != null
-                                            && stopLossPrice.doubleValue() < candleIntervalUpDownDataPrevMax.minClose
-                            ) {
-                                annotation += "new stopLossPrice by MAX";
-                                stopLossPrice = BigDecimal.valueOf(candleIntervalUpDownDataPrevMax.minClose);
+                            } else {
+                                annotation += " PMaxMinClose=" + printPrice(candleIntervalUpDownDataPrevMax.minClose) + "-" + printPrice(candleIntervalUpDownDataPrevMax.maxClose);
+                                if (
+                                        candleIntervalUpDownDataPrevMax != null
+                                                && candleIntervalUpDownDataPrevMax.minClose != null
+                                                && stopLossPrice.doubleValue() < candleIntervalUpDownDataPrevMax.minClose
+                                ) {
+                                    annotation += "new stopLossPrice by MAX";
+                                    stopLossPrice = BigDecimal.valueOf(candleIntervalUpDownDataPrevMax.minClose);
+                                }
                             }
                         }
                     }
@@ -3921,6 +3925,21 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             return candleIntervalResult.get(keyCandles);
         }
         return null;
+    }
+
+    private synchronized void clearCandleInterval(FactorialDiffAvgAdapterStrategy strategy, CandleDomainEntity candle)
+    {
+        String indent = buildKeyCandleIntervals(strategy, candle);
+        if (!candleIntervalResult.containsKey(indent)) {
+            return;
+        }
+        var results = candleIntervalResult.get(indent);
+        if (results.size() > 0) {
+            var last = results.get(results.size() - 1);
+            if (notificationService.formatDateTime(last.candle.getDateTime()).equals(notificationService.formatDateTime(candle.getDateTime()))) {
+                results.remove(results.size() - 1);
+            }
+        }
     }
 
     private synchronized List<CandleIntervalResultData> addCandleInterval(String indent, CandleIntervalResultData v)
