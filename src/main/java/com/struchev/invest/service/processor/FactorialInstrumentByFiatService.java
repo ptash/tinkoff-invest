@@ -1881,8 +1881,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     stopLossPrice = stopLossPrice.min(BigDecimal.valueOf(
                             candleIntervalUpDownData.minClose - (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) * 0.33f
                     ));
-                }
-                if (
+                } else if (
                     candleIntervalUpDownDataPrev.minClose != null
                     && order.getPurchaseDateTime().isBefore(candleIntervalUpDownDataPrev.endPost.candle.getDateTime())
                 ) {
