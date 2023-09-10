@@ -936,7 +936,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
 
         List<Double> ema = null;
         List<Double> emaPrev = null;
-        if (null != buyCriteria.getEmaLength()) {
+        if (null != buyCriteria.getEmaLength() && candleIntervalUpDownData.beginDownFirst != null) {
             annotation += " ema " + candleIntervalUpDownData.beginDownFirst.candle.getDateTime() + " - " + candleIntervalUpDownData.endPost.candle.getDateTime();
             //var candles = candleHistoryService.getCandlesByFigiBetweenDateTimes(candle.getFigi(), candleIntervalUpDownData.beginDownFirst.candle.getDateTime(), candleIntervalUpDownData.endPost.candle.getDateTime(), strategy.getInterval());
             //if (candles != null && candles.size() > 0) {
@@ -1285,7 +1285,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         List<Double> emaPrev = null;
         Double takeProfitPrice = null;
         BigDecimal stopLossPrice = null;
-        if (null != buyCriteria.getEmaLength()) {
+        if (null != buyCriteria.getEmaLength() && candleIntervalUpDownData.beginDownFirst != null) {
             annotation += " ema " + candleIntervalUpDownData.beginDownFirst.candle.getDateTime() + " - " + candleIntervalUpDownData.endPost.candle.getDateTime();
             //var candles = candleHistoryService.getCandlesByFigiBetweenDateTimes(candle.getFigi(), candleIntervalUpDownData.beginDownFirst.candle.getDateTime(), candleIntervalUpDownData.endPost.candle.getDateTime(), strategy.getInterval());
             //if (candles != null && candles.size() > 0) {
@@ -1922,22 +1922,25 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                 annotation += " something wrong: " + candleIntervalUpDownDataPrev.annotation;
                             } else {
                                 annotation += " PMaxMinClose=" + printPrice(candleIntervalUpDownDataPrevMax.minClose) + "-" + printPrice(candleIntervalUpDownDataPrevMax.maxClose);
+                                var newValue = candleIntervalUpDownDataPrevMax.minClose
+                                        - (candleIntervalUpDownDataPrevMax.maxClose - candleIntervalUpDownDataPrevMax.minClose);
                                 if (
                                         candleIntervalUpDownDataPrevMax != null
-                                                && candleIntervalUpDownDataPrevMax.minClose != null
-                                                && stopLossPrice.doubleValue() < candleIntervalUpDownDataPrevMax.minClose
+                                        && stopLossPrice.doubleValue() < newValue
                                 ) {
                                     annotation += "new stopLossPrice by MAX";
-                                    stopLossPrice = BigDecimal.valueOf(candleIntervalUpDownDataPrevMax.minClose);
+                                    stopLossPrice = BigDecimal.valueOf(newValue);
                                 }
                             }
                         }
                     }
                 }
             } else {
-                if (stopLossPrice.doubleValue() > candleIntervalUpDownData.minClose) {
+                var newValue = candleIntervalUpDownData.minClose
+                        - (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose);
+                if (stopLossPrice.doubleValue() > newValue) {
                     annotation += " new stopLossPrice first interval";
-                    stopLossPrice = BigDecimal.valueOf(candleIntervalUpDownData.minClose);
+                    stopLossPrice = BigDecimal.valueOf(newValue);
                 }
             }
 
@@ -2563,10 +2566,13 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             CandleDomainEntity candle)
     {
         String key = strategy.getName() + candle.getFigi();
+        List<CandleIntervalUpDownData> listRes;
         if (!candleIntervalUpDownDataMap.containsKey(key)) {
-            candleIntervalUpDownDataMap.put(key, new ArrayList<>());
+            listRes =  new ArrayList<>();
+            candleIntervalUpDownDataMap.put(key, listRes);
+        } else {
+            listRes = candleIntervalUpDownDataMap.get(key);
         }
-        var listRes = candleIntervalUpDownDataMap.get(key);
         if (listRes.size() > 0) {
             for (var i = listRes.size() - 1; i >=0; i--) {
                 var curCandleIntervalUpDownData = listRes.get(i);
