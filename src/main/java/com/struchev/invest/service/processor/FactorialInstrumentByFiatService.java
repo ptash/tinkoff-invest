@@ -3562,6 +3562,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             PointLengthOkRes = true;
                         }
                         if (isIntervalUp) {
+                            res = false;
                             annotation += " isIntervalUp TRY";
                             if (candleIntervalRes.res) {
                                 if (buyCriteria.getCandleUpPointLength() != null) {
