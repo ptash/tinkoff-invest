@@ -3278,8 +3278,13 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                         && candleIntervalUpDownDataPrevPrev.minClose < candleIntervalUpDownData.minClose
                                 ) {
                                     var minClosePrev = Math.min(candleIntervalUpDownDataPrev.minClose, candleIntervalUpDownData.minClose);
+                                    var prevHeight = (Math.max(candleIntervalUpDownDataPrev.maxClose, candleIntervalUpDownDataPrevPrev.maxClose) - minClosePrev);
+                                    if (candleIntervalUpDownDataPrev.minClose.equals(candleIntervalUpDownData.minClose)) {
+                                        annotation += " ppEquals";
+                                        prevHeight = (candleIntervalUpDownDataPrevPrev.maxClose - minClosePrev);
+                                    }
                                     var sizePercentUp = 100f * (candleIntervalUpDownData.maxClose - minClosePrev)
-                                            / (Math.max(candleIntervalUpDownDataPrev.maxClose, candleIntervalUpDownDataPrevPrev.maxClose) - minClosePrev);
+                                            / prevHeight;
                                     annotation += " sizePercentUp=" + sizePercentUp;
                                     if (sizePercentUp > 200f) {
                                         annotation += " isIntervalUp = false by size up";
