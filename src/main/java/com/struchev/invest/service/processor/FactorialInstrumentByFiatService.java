@@ -3597,7 +3597,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                 annotation += " prevCandle=" + printDateTime(prevCandle.getDateTime());
                                 annotation += " maxUpPrice=" + printPrice(maxUpPrice);
                                 if (
-                                        points.size() >= buyCriteria.getCandleUpMinLength()
+                                        points.size() >= buyCriteria.getCandleUpSellMinLength()
                                         && candle.getClosingPrice().floatValue() > candleIntervalUpDownData.maxClose
                                         && candle.getClosingPrice().floatValue() < maxUpPrice
                                         && prevCandle.getClosingPrice().floatValue() > candleIntervalUpDownData.maxClose
