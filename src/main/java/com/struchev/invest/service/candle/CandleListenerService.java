@@ -2,6 +2,7 @@ package com.struchev.invest.service.candle;
 
 import com.struchev.invest.entity.CandleDomainEntity;
 import com.struchev.invest.expression.Date;
+import com.struchev.invest.repository.CandleRepository;
 import com.struchev.invest.service.notification.NotificationService;
 import com.struchev.invest.service.processor.FactorialInstrumentByFiatService;
 import com.struchev.invest.service.processor.PurchaseService;
@@ -9,8 +10,10 @@ import com.struchev.invest.service.tinkoff.ITinkoffCommonAPI;
 import com.struchev.invest.strategy.StrategySelector;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.DependsOn;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import ru.tinkoff.piapi.contract.v1.CandleInterval;
 import ru.tinkoff.piapi.contract.v1.HistoricCandle;
@@ -19,6 +22,7 @@ import ru.tinkoff.piapi.contract.v1.SubscriptionInterval;
 import javax.annotation.PostConstruct;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -36,10 +40,30 @@ public class CandleListenerService {
     private final StrategySelector strategySelector;
     private final ITinkoffCommonAPI tinkoffCommonAPI;
     private final NotificationService notificationService;
+    private final CandleRepository candleRepository;
 
     private void startToListen(int number) {
         var figies = strategySelector.getFigiesForActiveStrategies();
         var interval = "1min";
+        var strategies = strategySelector.getFigiesForActiveStrategies();
+        OffsetDateTime dateBefore = OffsetDateTime.now();
+
+        log.info("Init first candle for {} strategies", strategies.size());
+
+        strategies.stream()
+                .flatMap(figi -> {
+                    var candles = candleRepository.findByFigiAndIntervalAndBeforeDateTimeLimit(figi,
+                            interval, dateBefore, PageRequest.of(0, 1));
+                    if (candles == null || candles.size() == 0) {
+                        log.info("Init first candle cancel for {}: getCandlesByFigiByLength return {}", figi, candles);
+                        return new ArrayList<CandleDomainEntity>().stream();
+                    }
+                    log.info("Init first candle starting for {}: getCandlesByFigiByLength return {} ({})", figi, candles.get(0).getDateTime(), candles.size());
+                    return candles.stream();
+                })
+                .sorted(Comparator.comparing(CandleDomainEntity::getDateTime))
+                .forEach(c -> purchaseService.observeNewCandle(c));
+
         notificationService.sendMessageAndLog("Listening candle events... " + number);
         try {
             tinkoffCommonAPI.getApi().getMarketDataStreamService()
