@@ -11,5 +11,5 @@ public class FactorialCandleFactorOnlyUp20Buy3Strategy extends FactorialCandleFa
         return buy;
     }
 
-    public boolean isEnabled() { return true; }
+    public boolean isEnabled() { return false; }
 }

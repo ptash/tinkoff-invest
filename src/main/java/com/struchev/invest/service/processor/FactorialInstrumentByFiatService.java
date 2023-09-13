@@ -2981,6 +2981,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             if (candleIntervalRes.res
                     || (candleIntervalResSell.res
                         && buyCriteria.getCandleUpSellPointLength() != null
+                        && candleIntervalUpDownData.maxClose != null
                         && candle.getClosingPrice().floatValue() > candleIntervalUpDownData.maxClose
                 )
             ) {
