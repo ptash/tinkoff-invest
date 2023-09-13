@@ -72,6 +72,7 @@ class StrategiesByCandleHistoryTests {
     //private OffsetDateTime dateBefore = OffsetDateTime.parse("2023-08-09T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
     private OffsetDateTime dateBefore = OffsetDateTime.parse("2023-09-06T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
     //private OffsetDateTime dateBefore = OffsetDateTime.parse("2023-08-29T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+    //private OffsetDateTime dateBefore = OffsetDateTime.parse("2023-09-12T22:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
 
     @Value("${tinkoff.emulator}")
     private Boolean isTinkoffEmulator;
@@ -91,7 +92,7 @@ class StrategiesByCandleHistoryTests {
         // Эмулируем поток свечей за заданный интервал (test.candle.history.duration)
         var days = historyDuration.toDays();
         var strategies = strategySelector.getFigiesForActiveStrategies();
-        log.info("Эмулируем поток свечей за заданный интервал в днях {} до {} for {} strategies", days, dateBefore, strategies.size());
+        log.info("Эмулируем поток свечей за заданный интервал в днях {} часах {} до {} for {} strategies", days, historyDuration.toHours(), dateBefore, strategies.size());
 
         strategies.stream()
                 .flatMap(figi -> {
@@ -101,7 +102,7 @@ class StrategiesByCandleHistoryTests {
                         log.info("getFigiesForActiveStrategies cancel {}: getCandlesByFigiByLength return {}", figi, candles);
                         return new ArrayList<CandleDomainEntity>().stream();
                     }
-                    var startDateTime = candles.get(0).getDateTime().minusDays(days);
+                    var startDateTime = candles.get(0).getDateTime().minusDays(historyDuration.toDays()).minusHours(historyDuration.toHours());
                     return candleRepository.findByFigiAndIntervalAndDateTimeAfterAndDateTimeBeforeOrderByDateTime(figi, "1min", startDateTime, dateBefore).stream();
                 })
                 .sorted(Comparator.comparing(CandleDomainEntity::getDateTime))

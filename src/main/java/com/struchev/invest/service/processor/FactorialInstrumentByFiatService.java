@@ -620,6 +620,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         var candleIntervalBuy = candleBuyRes.candleIntervalBuy;
         var candleIntervalSell = candleBuyRes.candleIntervalSell;
         var candleIntervalUpDownData = candleBuyRes.candleIntervalUpDownData;
+        if (candleIntervalUpDownData.beginDownFirst == null) {
+            annotation += " something wrong " + candleIntervalUpDownData.annotation;
+        }
         if (!res
                 //&& candle.getClosingPrice().floatValue() < factorial.getProfit()
                 && buyCriteria.getCandleIntervalMinPercent() != null
@@ -1280,6 +1283,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         CandleIntervalBuyResult candleBuyRes = null;
         clearCandleInterval(newStrategy, candle);
         var candleIntervalUpDownData = getCurCandleIntervalUpDownData(newStrategy, candle);
+        if (candleIntervalUpDownData.beginDownFirst == null) {
+            annotation += " somwthing wrong: " + candleIntervalUpDownData.annotation;
+        }
 
         List<Double> ema = null;
         List<Double> emaPrev = null;
@@ -1356,6 +1362,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     true
                     && !isOrderUpCandle
                     && sellCriteria.getCandleProfitMinPercent() != null
+                    && candleIntervalUpDownData.beginDownFirst != null
                 //&& profitPercent.floatValue() > 0
             ) {
                 annotation += " CandleProfitMinPercent = " + sellCriteria.getCandleProfitMinPercent();
@@ -1439,7 +1446,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 var maxBuyIntervalPrice = order.getDetails().getCurrentPrices().getOrDefault("maxBuyIntervalPrice", BigDecimal.ZERO);
                 annotation += " maxBuyIntervalPrice=" + printPrice(maxBuyIntervalPrice);
                 var candleIntervalUpDownDataPrev = getPrevCandleIntervalUpDownData(newStrategy, candleIntervalUpDownData);
-                annotation += " maxCandle: " + printDateTime(candleIntervalUpDownData.endPost.candle.getDateTime());
+                annotation += " maxCandle: " + printDateTime(candleIntervalUpDownData.beginDownFirst.candle.getDateTime());
                 if (candleIntervalUpDownDataPrev.minClose == null) {
                     annotation += " something wrong: " + candleIntervalUpDownDataPrev.annotation;
                 } else {
@@ -1451,7 +1458,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             annotation += " takeProfitPrice=" + printPrice(takeProfitPrice);
                         }
                     } else if (candleIntervalUpDownDataPrev.maxClose < candleIntervalUpDownData.maxClose) {
-                        annotation += " PmaxCandle: " + printDateTime(candleIntervalUpDownDataPrev.endPost.candle.getDateTime());
+                        annotation += " PmaxCandle: " + printDateTime(candleIntervalUpDownDataPrev.beginDownFirst.candle.getDateTime());
                         var candleIntervalUpDownDataPrevPrev = getPrevCandleIntervalUpDownData(newStrategy, candleIntervalUpDownDataPrev);
                         if (candleIntervalUpDownDataPrevPrev.minClose == null) {
                             annotation += " something wrong: " + candleIntervalUpDownDataPrev.annotation;
@@ -1474,6 +1481,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     (order.getDetails().getBooleanDataMap().getOrDefault("isIntervalUp", false)
                             || order.getDetails().getBooleanDataMap().getOrDefault("isMinMin", false))
                     && profitPercent.doubleValue() < (sellCriteria.getCandleProfitMinPercent() == null ? 0.0f: sellCriteria.getCandleProfitMinPercent())
+                    && candleIntervalUpDownData.beginDownFirst != null
             ) {
                 if (
                         !order.getPurchaseDateTime().isBefore(candleIntervalUpDownData.endPost.candle.getDateTime())
@@ -1523,6 +1531,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             if (
                     null != sellCriteria.getCandleUpSkipDownBetweenFactor()
                     && !isSkipUpBottom
+                    && candleIntervalUpDownData.beginDownFirst != null
             ) {
                 List<CandleIntervalResultData> sellPoints = getIntervalSellPoints(
                         newStrategy,
@@ -1582,6 +1591,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     && !isSkipDown
                     && null != sellCriteria.getCandleUpPointLength()
                     && null != sellCriteria.getCandleUpMiddleFactor()
+                    && candleIntervalUpDownData.beginDownFirst != null
             ) {
                 List<CandleIntervalResultData> sellPoints = getIntervalSellPoints(
                         newStrategy,
@@ -1807,6 +1817,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     null != buyCriteria.getCandleOnlyUpLength()
                     && null != sellCriteria.getCandleOnlyUpStopLossPercent()
                     && isOrderUpCandle
+                    && candleIntervalUpDownData.beginDownFirst != null
             ) {
                 var intervalCandles = getCandleIntervals(newStrategy, candle);
                 if (null != intervalCandles) {
@@ -1870,7 +1881,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             var stopLossPriceOld = stopLossPrice;
             annotation += " OnlyStopLoss: " + printPrice(stopLossPrice);
             var candleIntervalUpDownDataPrev = getPrevCandleIntervalUpDownData(newStrategy, candleIntervalUpDownData);
-            annotation += " beginDownFirst: " + printDateTime(candleIntervalUpDownData.endPost.candle.getDateTime());
+            annotation += " beginDownFirst: " + printDateTime(candleIntervalUpDownData.beginDownFirst.candle.getDateTime());
             if (candleIntervalUpDownDataPrev.minClose == null) {
                 annotation += " something wrong: " + candleIntervalUpDownDataPrev.annotation;
             }
@@ -2565,8 +2576,16 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             FactorialDiffAvgAdapterStrategy strategy,
             CandleIntervalUpDownData candleIntervalUpDownData
     ) {
-        var candleResUpFirstPrevs = candleHistoryService.getCandlesByFigiByLength(candleIntervalUpDownData.endPost.candle.getFigi(), candleIntervalUpDownData.endPost.candle.getDateTime(), 2, strategy.getInterval());
+        /*
+        var candleResUpFirstPrevs = candleHistoryService.getCandlesByFigiByLength(
+                candleIntervalUpDownData.endPost.candle.getFigi(),
+                candleIntervalUpDownData.endPost.candle.getDateTime(),
+                2,
+                strategy.getInterval()
+        );
         return getCurCandleIntervalUpDownData(strategy, candleResUpFirstPrevs.get(0));
+         */
+        return getCurCandleIntervalUpDownData(strategy, candleIntervalUpDownData.beginDownFirst.candle);
     }
 
     private CandleIntervalUpDownData getCurCandleIntervalUpDownData(
@@ -3098,17 +3117,17 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             //candleIntervalResBuyLast = candleIntervalUpDownData.minCandle;
                             //candleIntervalResSellLast = candleIntervalUpDownData.maxCandle;
                             // maxCandle
-                            annotation += " maxCandle: " + printDateTime(candleIntervalUpDownData.endPost.candle.getDateTime());
+                            annotation += " endPost: " + printDateTime(candleIntervalUpDownData.beginDownFirst.candle.getDateTime());
                             candleIntervalUpDownDataPrevPrev = candleIntervalUpDownDataPrev = getPrevCandleIntervalUpDownData(newStrategy, candleIntervalUpDownData);
                             if (candleIntervalUpDownDataPrev != null && candleIntervalUpDownDataPrev.maxCandle != null) {
                                 annotation += " " + printPrice(candleIntervalUpDownDataPrev.maxClose) + "-" + printPrice(candleIntervalUpDownDataPrev.minClose);
-                                annotation += " PmaxCandle: " + printDateTime(candleIntervalUpDownDataPrevPrev.endPost.candle.getDateTime());
+                                annotation += " PendPost: " + printDateTime(candleIntervalUpDownDataPrev.beginDownFirst.candle.getDateTime());
                                 candleIntervalUpDownDataPrevPrev = getPrevCandleIntervalUpDownData(newStrategy, candleIntervalUpDownDataPrev);
                                 if (null != candleIntervalUpDownDataPrevPrev
                                         && candleIntervalUpDownDataPrevPrev.minClose != null
                                 ) {
                                     annotation += " " + printPrice(candleIntervalUpDownDataPrevPrev.maxClose) + "-" + printPrice(candleIntervalUpDownDataPrevPrev.minClose);
-                                    annotation += " PPmaxCandle: " + printDateTime(candleIntervalUpDownDataPrevPrev.maxCandle.getDateTime());
+                                    annotation += " PPendPost: " + printDateTime(candleIntervalUpDownDataPrevPrev.beginDownFirst.candle.getDateTime());
                                     //candleIntervalUpDownDataPrevPrev.minClose = Math.min(candleIntervalUpDownDataPrev.minClose, candleIntervalUpDownDataPrevPrev.minClose);
                                     //candleIntervalUpDownDataPrevPrev.maxClose = Math.max(candleIntervalUpDownDataPrev.maxClose, candleIntervalUpDownDataPrevPrev.maxClose);
                                 } else {
@@ -3238,7 +3257,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                         && maxPercent > 0f
                                         && candleIntervalUpDownDataPrevPrev.maxClose > candleIntervalUpDownDataPrev.maxClose
                                 ) {
-                                    annotation += " PPMaxCandle: " + printDateTime(candleIntervalUpDownDataPrevPrev.endPost.candle.getDateTime());
+                                    annotation += " PPMaxCandle: " + printDateTime(candleIntervalUpDownDataPrevPrev.beginDownFirst.candle.getDateTime());
                                     var candleIntervalUpDownDataPrevPrevPrev = getPrevCandleIntervalUpDownData(newStrategy, candleIntervalUpDownDataPrevPrev);
                                     annotation += " PPPrev.min-maxCandle=" + printPrice(candleIntervalUpDownDataPrevPrevPrev.minClose) + "-" +printPrice(candleIntervalUpDownDataPrevPrevPrev.maxClose) ;
                                     if (
