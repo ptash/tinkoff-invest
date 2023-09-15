@@ -11,9 +11,33 @@ public class FactorialStrategy extends AInstrumentByFiatFactorialStrategy {
     private static final Map FIGIES = new HashMap<String, Integer>();
     static {
         //FIGIES.put("BBG000LWVHN8", 1); // Дагестанская энергосбытовая компания
-        FIGIES.put("BBG004S681W1", 10); // МТС
+        //FIGIES.put("BBG004S681W1", 10); // МТС
         //FIGIES.put("BBG00475KKY8", 1); // НОВАТЭК
         //FIGIES.put("BBG006L8G4H1", 1); // Yandex
+
+        //FIGIES.put("FUTGLDRUBF00", 1); // GLDRUBF Золото (rub)
+        //FIGIES.put("FUTSBRF09230", 1); // SRZ3 SBRF-9.23 Сбер Банк (обыкновенные)
+        //FIGIES.put("FUTYNDF09230", 1); // YNZ3 YNDF-9.23 Яндекс
+        //FIGIES.put("FUTOZON09230", 1); // OZON-9.23
+        //FIGIES.put("FUTVTBR09230", 1); // VBU3 VTBR-9.23
+        //FIGIES.put("FUTHANG09230", 1); // HSU3 HANG-9.23
+        //FIGIES.put("FUTLKOH09230", 1); // LKU3 LKOH-9.23
+        //FIGIES.put("FUTGAZR09230", 1); // GZU3 GAZR-9.23
+        //FIGIES.put("FUTSMLT09230", 1); // SSU3 SMLT-9.23
+        //FIGIES.put("FUTAFLT09230", 1); // AFU3 AFLT-9.23
+        //FIGIES.put("FUTMGNT09230", 1); // MNU3 MGNT-9.23
+        //FIGIES.put("FUTGMKN09230", 1); // GKU3 GMKN-9.23
+        //FIGIES.put("FUTPOSI09230", 1); // PSU3 POSI-9.23 Positive Technologies
+        //FIGIES.put("FUTALRS09230", 1); // ALU3 ALRS-9.23
+        //FIGIES.put("FUTMOEX09230", 1); // MEU3 MOEX-9.23
+        //FIGIES.put("FUTSPYF09230", 1); // SFU3 SPYF-9.23 S&P 500
+        //FIGIES.put("FUTRTSM09230", 1); // RMU3 RTSM-9.23 Индекс РТС (мини)
+        FIGIES.put("FUTRTSM12230", 1); // RMU3 RTSM-12.23 Индекс РТС (мини)
+        //FIGIES.put("FUTRVI092300", 1); // VIU3 RVI-9.23 Волатильность российского рынка
+        //FIGIES.put("FUTDAX092300", 1); // DXU3 DAX-9.23 DAX 40
+        //FIGIES.put("FUTRGBI09230", 1); // RBU3 RGBI-9.23 RGBI-9.23 Индекс Государственных облигаций
+        //FIGIES.put("FUTSTOX12230", 1); // SXZ3 STOX-12.23 EURO STOXX 50
+        //FIGIES.put("FUTUSDRUBF00", 1); // USDRUBF USDRUBF Доллар - Рубль
 
         //FIGIES.put("FUTNG0323000", 1); // NGH3 NG-3.23 Природный газ
         //FIGIES.put("FUTNG0423001", 1); // NGJ3 NG-4.23 Природный газ

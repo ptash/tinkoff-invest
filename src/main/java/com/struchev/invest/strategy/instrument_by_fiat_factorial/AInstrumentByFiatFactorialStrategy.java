@@ -285,6 +285,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
         Integer emaLength;
 
         Boolean isOnlyUp;
+        Float isUpMaxPercentSeePrevSize;
 
         public Boolean isCandleIntervalTargetDirection(BigDecimal openPrice, BigDecimal closePrice) {
             return openPrice.compareTo(closePrice) <= 0;

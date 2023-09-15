@@ -11,6 +11,7 @@ import ru.tinkoff.piapi.contract.v1.Quotation;
 
 import javax.annotation.PostConstruct;
 import java.math.BigDecimal;
+import java.nio.charset.Charset;
 import java.time.OffsetDateTime;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -131,6 +132,9 @@ public class InstrumentService {
                 i.getBuyAvailableFlag(),
                 i.getApiTradeAvailableFlag()
         )));
+
+        //log.info("Charset: ", Charset.defaultCharset().toString());
+        //instrumentByFigi.forEach((k, i) -> log.info("instrument {} ({}): {}", i.getFigi(), i.getTiket(), i));
     }
 
     public void printInstrumentInfo(Instrument instrument) {
