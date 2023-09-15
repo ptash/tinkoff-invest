@@ -70,9 +70,9 @@ class StrategiesByCandleHistoryTests {
     //private OffsetDateTime dateBefore = OffsetDateTime.parse("2023-07-10T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
     //private OffsetDateTime dateBefore = OffsetDateTime.parse("2023-07-23T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
     //private OffsetDateTime dateBefore = OffsetDateTime.parse("2023-08-09T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
-    private OffsetDateTime dateBefore = OffsetDateTime.parse("2023-09-06T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+    //private OffsetDateTime dateBefore = OffsetDateTime.parse("2023-09-06T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
     //private OffsetDateTime dateBefore = OffsetDateTime.parse("2023-08-29T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
-    //private OffsetDateTime dateBefore = OffsetDateTime.parse("2023-09-14T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+    private OffsetDateTime dateBefore = OffsetDateTime.parse("2023-09-14T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
 
     //private OffsetDateTime dateBefore = OffsetDateTime.parse("2023-09-16T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
 

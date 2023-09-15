@@ -32,7 +32,7 @@ public class FactorialStrategy extends AInstrumentByFiatFactorialStrategy {
         //FIGIES.put("FUTMOEX09230", 1); // MEU3 MOEX-9.23
         //FIGIES.put("FUTSPYF09230", 1); // SFU3 SPYF-9.23 S&P 500
         FIGIES.put("FUTRTSM09230", 1); // RMU3 RTSM-9.23 Индекс РТС (мини)
-        //FIGIES.put("FUTRTSM12230", 1); // RMU3 RTSM-12.23 Индекс РТС (мини)
+        FIGIES.put("FUTRTSM12230", 1); // RMU3 RTSM-12.23 Индекс РТС (мини)
         //FIGIES.put("FUTRVI092300", 1); // VIU3 RVI-9.23 Волатильность российского рынка
         //FIGIES.put("FUTDAX092300", 1); // DXU3 DAX-9.23 DAX 40
         //FIGIES.put("FUTRGBI09230", 1); // RBU3 RGBI-9.23 RGBI-9.23 Индекс Государственных облигаций

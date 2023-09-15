@@ -3632,7 +3632,11 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                     annotation += " OK";
                                     res = true;
                                 }
-                            } else if (candleIntervalResSell.res && buyCriteria.getCandleUpSellPointLength() != null) {
+                            } else if (
+                                    candleIntervalResSell.res
+                                    && buyCriteria.getCandleUpSellPointLength() != null
+                                    && (order == null || order.getSellDateTime().isBefore(candleIntervalUpDownData.endPost.candle.getDateTime()))
+                            ) {
                                 var points = getIntervalSellPoints(
                                         newStrategy,
                                         candle,
