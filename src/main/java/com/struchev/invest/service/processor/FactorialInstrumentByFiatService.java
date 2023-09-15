@@ -3328,9 +3328,12 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                             buyCriteria.getIsUpMaxPercentSeePrevSize() != null
                                             && sizePercentUp < buyCriteria.getIsUpMaxPercentSeePrevSize()
                                     ) {
+                                        minClosePrev = Math.min(candleIntervalUpDownDataPrev.minClose, candleIntervalUpDownDataPrevPrev.minClose);
                                         var sizePercentUpPrev = 100f * (candleIntervalUpDownDataPrev.maxClose - minClosePrev)
                                                 / (candleIntervalUpDownDataPrevPrev.maxClose - minClosePrev);
                                         annotation += " sizePercentUpPrev=" + sizePercentUpPrev;
+                                        sizePercentUpPrev = sizePercentUpPrev * 100f / sizePercentUp;
+                                        annotation += " sizePUPrev=" + sizePercentUpPrev;
                                         if (sizePercentUpPrev > 200f || sizePercentUpPrev <= 100f) {
                                             annotation += " isIntervalUp = false by size up prev";
                                             isIntervalUp = false;
