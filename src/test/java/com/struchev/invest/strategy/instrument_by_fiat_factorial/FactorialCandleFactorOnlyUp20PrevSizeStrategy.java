@@ -10,6 +10,7 @@ public class FactorialCandleFactorOnlyUp20PrevSizeStrategy extends FactorialCand
         //buy.setCandleUpMinLength(3);
         buy.setIsUpMaxPercentSeePrevSize(150f);
         buy.setIsDownWithLimits(true);
+        buy.setDownStopLossFactor(2f);
         return buy;
     }
 

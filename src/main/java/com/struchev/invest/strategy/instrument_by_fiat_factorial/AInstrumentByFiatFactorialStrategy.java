@@ -286,6 +286,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
 
         Boolean isOnlyUp;
         Boolean isDownWithLimits;
+        Float downStopLossFactor;
         Float isUpMaxPercentSeePrevSize;
 
         public Boolean isCandleIntervalTargetDirection(BigDecimal openPrice, BigDecimal closePrice) {
