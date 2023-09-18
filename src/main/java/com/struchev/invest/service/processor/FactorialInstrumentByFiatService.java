@@ -1289,6 +1289,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         List<Double> ema = null;
         List<Double> emaPrev = null;
         Double takeProfitPrice = order.getDetails().getCurrentPrices().getOrDefault("takeProfitPrice", BigDecimal.ZERO).doubleValue();
+        Double takeProfitPriceOrig = takeProfitPrice;
         BigDecimal stopLossPrice = null;
         if (null != buyCriteria.getEmaLength() && candleIntervalUpDownData.beginDownFirst != null) {
             annotation += " ema " + candleIntervalUpDownData.beginDownFirst.candle.getDateTime() + " - " + candleIntervalUpDownData.endPost.candle.getDateTime();
@@ -1458,7 +1459,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         if ((maxBuyIntervalPrice.equals(BigDecimal.ZERO) || candleIntervalUpDownData.minClose < maxBuyIntervalPrice.floatValue())) {
                             var percent = 100f * (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) / candleIntervalUpDownData.minClose;
                             percent = Math.max(percent, buyCriteria.getCandlePriceMinFactor()) * 0.66f;
-                            takeProfitPrice = candleIntervalUpDownData.endPost.candle.getClosingPrice().doubleValue()
+                            takeProfitPriceOrig = takeProfitPrice = candleIntervalUpDownData.endPost.candle.getClosingPrice().doubleValue()
                                     * (100f + percent) / 100f;
                             annotation += " takeProfitPrice=" + printPrice(takeProfitPrice);
                         }
@@ -1972,7 +1973,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
 
             var candlesList = candleHistoryService.getCandlesByFigiBetweenDateTimes(
                     candle.getFigi(),
-                    candleIntervalUpDownData.endPost.candle.getDateTime(),
+                    candleIntervalUpDownData.endPost.candle.getDateTime().isAfter(order.getPurchaseDateTime()) ? candleIntervalUpDownData.endPost.candle.getDateTime() : order.getPurchaseDateTime(),
                     candle.getDateTime(),
                     strategy.getInterval()
             );
@@ -1992,8 +1993,11 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             ) {
                 takeProfitPriceStart = BigDecimal.valueOf(takeProfitPrice);
                 var minPriceStart = Math.min(order.getPurchasePrice().floatValue(), candleIntervalUpDownData.endPost.candle.getClosingPrice().floatValue());
+                if (candleIntervalUpDownData.endPost.candle.getDateTime().isBefore(order.getPurchaseDateTime())) {
+                    minPriceStart = order.getPurchasePrice().floatValue();
+                }
                 intervalPercentStep = BigDecimal.valueOf(100f * (takeProfitPriceStart.floatValue() - minPriceStart) / minPriceStart);
-                annotation += " takeProfitPriceStart=" + printPrice(takeProfitPriceStart);
+                annotation += " takeProfitPriceStart=" + printPrice(minPriceStart);
                 annotation += " intervalPercentStep=" + printPrice(intervalPercentStep);
                 takeProfitPrice = BigDecimal.ZERO.doubleValue();
             }
@@ -2012,7 +2016,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             if (maxPriceInInterval > maxPrice) {
                 var newStopLossPrice = BigDecimal.valueOf(maxPrice - (maxPrice - minPrice) * lossPresent);
                 if (newStopLossPrice.compareTo(stopLossPrice) > 0) {
-                    orderService.updateDetailsCurrentPrice(order, "stopLossMaxPrice", BigDecimal.valueOf(maxPrice));
+                    order.getDetails().getCurrentPrices().put("stopLossMaxPrice", BigDecimal.valueOf(maxPrice));
                     stopLossPrice = newStopLossPrice;
                 }
             }
@@ -2094,7 +2098,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 emaPrev == null ? "" : emaPrev.get(emaPrev.size() - 1),
                 candleBuyRes == null || candleBuyRes.candlePriceMinFactor == null ? "" : candleIntervalUpDownData.maxClose - (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) * candleBuyRes.candlePriceMinFactor,
                 candleBuyRes == null || candleBuyRes.candlePriceMaxFactor == null ? "" : candleIntervalUpDownData.maxClose - (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) * candleBuyRes.candlePriceMaxFactor,
-                takeProfitPrice == null || takeProfitPrice < 0.001 ? "" : takeProfitPrice,
+                takeProfitPriceOrig == null || takeProfitPriceOrig < 0.001 ? "" : takeProfitPriceOrig,
                 stopLossPrice == null || stopLossPrice.equals(BigDecimal.ZERO) ? "" : stopLossPrice,
                 candleIntervalUpDownData.endPost == null ? ""
                         : (candleIntervalUpDownData.endPost.candle.getDateTime().equals(candle.getDateTime()) ? candleIntervalUpDownData.minClose : candleIntervalUpDownData.maxClose)
@@ -3709,7 +3713,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                 annotation += " SKIP by < " + printPrice(buyCriteria.getCandlePriceMinFactor());
                             } else {
                                 if (intervalPercent > buyCriteria.getCandlePriceMinFactor()) {
-                                    intervalPercent = buyCriteria.getCandlePriceMinFactor();
+                                    intervalPercent = (float) Math.max(buyCriteria.getCandlePriceMinFactor(), Math.sqrt(intervalPercent));
                                     annotation += " new intervalPercent=" + printPrice(intervalPercent);
                                 }
                                 var takeProfitPriceStart = Math.min(
