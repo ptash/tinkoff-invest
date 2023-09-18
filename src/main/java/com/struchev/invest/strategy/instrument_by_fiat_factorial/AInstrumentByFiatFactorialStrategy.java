@@ -285,6 +285,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
         Integer emaLength;
 
         Boolean isOnlyUp;
+        Boolean isDownWithLimits;
         Float isUpMaxPercentSeePrevSize;
 
         public Boolean isCandleIntervalTargetDirection(BigDecimal openPrice, BigDecimal closePrice) {
@@ -334,6 +335,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
                 .notLossBuyUnderPercent(0f)
                 .isCandleUpAny(false)
                 .isOnlyUp(false)
+                .isDownWithLimits(false)
                 .candleInterval("1min")
                 .build();
     }

@@ -67,10 +67,10 @@ class StrategiesByCandleHistoryTests {
     //private OffsetDateTime dateBefore = OffsetDateTime.parse("2023-03-10T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
     //private OffsetDateTime dateBefore = OffsetDateTime.parse("2023-03-16T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
     //private OffsetDateTime dateBefore = OffsetDateTime.parse("2023-05-05T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
-    //private OffsetDateTime dateBefore = OffsetDateTime.parse("2023-07-10T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+    private OffsetDateTime dateBefore = OffsetDateTime.parse("2023-07-10T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
     //private OffsetDateTime dateBefore = OffsetDateTime.parse("2023-07-23T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
     //private OffsetDateTime dateBefore = OffsetDateTime.parse("2023-08-09T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
-    private OffsetDateTime dateBefore = OffsetDateTime.parse("2023-09-06T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+    //private OffsetDateTime dateBefore = OffsetDateTime.parse("2023-09-06T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
     //private OffsetDateTime dateBefore = OffsetDateTime.parse("2023-08-29T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
     //private OffsetDateTime dateBefore = OffsetDateTime.parse("2023-09-14T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
 
@@ -104,7 +104,7 @@ class StrategiesByCandleHistoryTests {
                         log.info("getFigiesForActiveStrategies cancel {}: getCandlesByFigiByLength return {}", figi, candles);
                         return new ArrayList<CandleDomainEntity>().stream();
                     }
-                    var startDateTime = candles.get(0).getDateTime().minusDays(historyDuration.toDays()).minusHours(historyDuration.toHours());
+                    var startDateTime = candles.get(0).getDateTime().minusHours(historyDuration.toHours());
                     return candleRepository.findByFigiAndIntervalAndDateTimeAfterAndDateTimeBeforeOrderByDateTime(figi, "1min", startDateTime, dateBefore).stream();
                 })
                 .sorted(Comparator.comparing(CandleDomainEntity::getDateTime))
