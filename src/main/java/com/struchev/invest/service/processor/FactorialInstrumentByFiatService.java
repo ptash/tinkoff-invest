@@ -2053,11 +2053,11 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 orderService.updateDetailsCurrentPrice(order, "stopLossPrice", stopLossPrice);
             }
 
-            if (candle.getLowestPrice().compareTo(stopLossPrice) < 0) {
+            if (candle.getHighestPrice().compareTo(stopLossPrice) < 0) {
                 annotation += " stopLossPrice TRY";
                 var candlesPrevArray = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(), candle.getDateTime(), 2, strategy.getInterval());
                 var candlePrev = candlesPrevArray.get(0);
-                if (candlePrev.getLowestPrice().compareTo(stopLossPrice) < 0) {
+                if (candlePrev.getHighestPrice().compareTo(stopLossPrice) < 0) {
                     res = true;
                     annotation += " OK";
                 }
@@ -3362,7 +3362,6 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                 }
                                 if (
                                         !isIntervalUp
-                                        && false
                                         && minPercent > 0
                                         && candle.getClosingPrice().floatValue() > candleIntervalUpDownData.maxClose
                                 ) {
