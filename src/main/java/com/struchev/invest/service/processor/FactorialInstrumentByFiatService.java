@@ -1444,6 +1444,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             var isIntervalUp = order.getDetails().getBooleanDataMap().getOrDefault("isIntervalUp", false);
             var isDownWithLimits = order.getDetails().getBooleanDataMap().getOrDefault("isDownWithLimits", false);
             var isMinMin = order.getDetails().getBooleanDataMap().getOrDefault("isMinMin", false);
+            annotation += " isDownWithLimits=" + isDownWithLimits;
             annotation += " isIntervalUp=" + isIntervalUp;
             annotation += " isMinMin=" + isMinMin;
             if ((isIntervalUp || isDownWithLimits)  && null != candleIntervalUpDownData.maxCandle) {
@@ -1458,7 +1459,14 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     if (candleIntervalUpDownDataPrev.maxClose > candleIntervalUpDownData.maxClose) {
                         if ((maxBuyIntervalPrice.equals(BigDecimal.ZERO) || candleIntervalUpDownData.minClose < maxBuyIntervalPrice.floatValue())) {
                             var percent = 100f * (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) / candleIntervalUpDownData.minClose;
-                            percent = Math.max(percent, buyCriteria.getCandlePriceMinFactor()) * 0.66f;
+                            if (
+                                    candleIntervalUpDownDataPrev.minClose < candleIntervalUpDownData.minClose
+                                    && percent < buyCriteria.getCandlePriceMinFactor()
+                            ) {
+                                percent = buyCriteria.getCandlePriceMinFactor();
+                            }
+                            annotation += " tPPercent=" + printPrice(percent);
+                            percent = percent * 0.66f;
                             takeProfitPriceOrig = takeProfitPrice = candleIntervalUpDownData.endPost.candle.getClosingPrice().doubleValue()
                                     * (100f + percent) / 100f;
                             annotation += " takeProfitPrice=" + printPrice(takeProfitPrice);
@@ -1990,6 +1998,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     !res
                     && takeProfitPrice != null
                     && takeProfitPrice > 0.001
+                    && stopLossMaxPrice.equals(BigDecimal.ZERO)
             ) {
                 takeProfitPriceStart = BigDecimal.valueOf(takeProfitPrice);
                 var minPriceStart = Math.min(order.getPurchasePrice().floatValue(), candleIntervalUpDownData.endPost.candle.getClosingPrice().floatValue());
@@ -2000,9 +2009,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 annotation += " takeProfitPriceStart=" + printPrice(minPriceStart);
                 annotation += " intervalPercentStep=" + printPrice(intervalPercentStep);
                 takeProfitPrice = BigDecimal.ZERO.doubleValue();
-            }
-
-            if (!takeProfitPriceStart.equals(BigDecimal.ZERO)) {
+                minPrice = minPriceStart;
+                maxPrice = takeProfitPriceStart.floatValue();
+            } else if (!takeProfitPriceStart.equals(BigDecimal.ZERO)) {
                 annotation += " maxPriceOld=" + printPrice(maxPrice);
                 minPrice = Math.max(order.getPurchasePrice().floatValue(), stopLossPrice.floatValue());
                 if (!stopLossMaxPrice.equals(BigDecimal.ZERO)) {
@@ -3497,8 +3506,11 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         annotation += " isIntervalUp = " + isIntervalUp;
                         setOrderBooleanData(strategy, candle, "isIntervalUp", isIntervalUp);
                         setOrderBooleanData(strategy, candle, "isMinMin", false);
+                        setOrderBooleanData(strategy, candle, "isDownWithLimits", false);
                         setOrderBigDecimalData(strategy, candle, "stopLossPrice", StopLossPrice);
                         setOrderBigDecimalData(strategy, candle, "maxBuyIntervalPrice", BigDecimal.valueOf(candleIntervalUpDownData.maxClose));
+                        setOrderBigDecimalData(strategy, candle, "takeProfitPriceStart", BigDecimal.ZERO);
+                        setOrderBigDecimalData(strategy, candle, "intervalPercentStep", BigDecimal.ZERO);
                         var PointLengthOk = false;
                         var PointLengthOkRes = false;
                         var isMinMin = false;
