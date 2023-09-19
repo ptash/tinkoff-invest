@@ -1985,8 +1985,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     candle.getDateTime(),
                     strategy.getInterval()
             );
-            var maxPriceInInterval = candlesList.stream().mapToDouble(value -> value.getLowestPrice().doubleValue()).max().orElse(-1);
-            var lossPresent = 0.30f;
+            var maxPriceInInterval = candlesList.stream().mapToDouble(value -> value.getHighestPrice().doubleValue()).max().orElse(-1);
+            var lossPresent = 0.33f;
             var stopLossMaxPrice = order.getDetails().getCurrentPrices().getOrDefault("stopLossMaxPrice", BigDecimal.ZERO);
             var minPrice = Math.max(candleIntervalUpDownData.maxClose, stopLossPrice.floatValue());
             if (!stopLossMaxPrice.equals(BigDecimal.ZERO)) {
@@ -2002,6 +2002,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     && (takeProfitPriceStart.equals(BigDecimal.ZERO) || takeProfitPriceStart.floatValue() > takeProfitPrice)
             ) {
                 var isTakeProfitPriceStopLoss = order.getDetails().getBooleanDataMap().getOrDefault("isTakeProfitPriceStopLoss", false);
+                annotation += " isTakeProfitPriceStopLoss=" + isTakeProfitPriceStopLoss;
                 takeProfitPriceStart = BigDecimal.valueOf(takeProfitPrice);
                 var minPriceStart = Math.min(order.getPurchasePrice().floatValue(), candleIntervalUpDownData.endPost.candle.getClosingPrice().floatValue());
                 if (candleIntervalUpDownData.endPost.candle.getDateTime().isBefore(order.getPurchaseDateTime())) {
@@ -2020,8 +2021,10 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 annotation += " intervalPercentStep=" + printPrice(intervalPercentStep);
                 takeProfitPrice = BigDecimal.ZERO.doubleValue();
                 order.getDetails().getBooleanDataMap().put("isTakeProfitPriceStopLoss", true);
-                minPrice = minPriceStart;
-                maxPrice = takeProfitPriceStart.floatValue();
+                if (!isTakeProfitPriceStopLoss) {
+                    minPrice = minPriceStart;
+                    maxPrice = takeProfitPriceStart.floatValue();
+                }
             } else {
                 order.getDetails().getBooleanDataMap().put("isTakeProfitPriceStopLoss", false);
                 if (!takeProfitPriceStart.equals(BigDecimal.ZERO)) {
