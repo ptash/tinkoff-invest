@@ -1985,7 +1985,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     candle.getDateTime(),
                     strategy.getInterval()
             );
-            var maxPriceInInterval = candlesList.stream().mapToDouble(value -> value.getHighestPrice().doubleValue()).max().orElse(-1);
+            var maxPriceInInterval = candlesList.stream().mapToDouble(value -> value.getLowestPrice().doubleValue()).max().orElse(-1);
             var lossPresent = 0.30f;
             var stopLossMaxPrice = order.getDetails().getCurrentPrices().getOrDefault("stopLossMaxPrice", BigDecimal.ZERO);
             var minPrice = Math.max(candleIntervalUpDownData.maxClose, stopLossPrice.floatValue());
@@ -1998,27 +1998,41 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     !res
                     && takeProfitPrice != null
                     && takeProfitPrice > 0.001
-                    && stopLossMaxPrice.equals(BigDecimal.ZERO)
+                    //&& stopLossMaxPrice.equals(BigDecimal.ZERO)
+                    && (takeProfitPriceStart.equals(BigDecimal.ZERO) || takeProfitPriceStart.floatValue() > takeProfitPrice)
             ) {
+                var isTakeProfitPriceStopLoss = order.getDetails().getBooleanDataMap().getOrDefault("isTakeProfitPriceStopLoss", false);
                 takeProfitPriceStart = BigDecimal.valueOf(takeProfitPrice);
                 var minPriceStart = Math.min(order.getPurchasePrice().floatValue(), candleIntervalUpDownData.endPost.candle.getClosingPrice().floatValue());
                 if (candleIntervalUpDownData.endPost.candle.getDateTime().isBefore(order.getPurchaseDateTime())) {
                     minPriceStart = order.getPurchasePrice().floatValue();
                 }
                 intervalPercentStep = BigDecimal.valueOf(100f * (takeProfitPriceStart.floatValue() - minPriceStart) / minPriceStart);
+                if (
+                        isTakeProfitPriceStopLoss
+                        && !stopLossMaxPrice.equals(BigDecimal.ZERO)
+                        && minPriceStart < stopLossMaxPrice.floatValue()
+                ) {
+                    minPriceStart = stopLossMaxPrice.floatValue();
+                    takeProfitPriceStart = BigDecimal.valueOf(minPriceStart * (100f + intervalPercentStep.floatValue()) / 100f);
+                }
                 annotation += " takeProfitPriceStart=" + printPrice(minPriceStart);
                 annotation += " intervalPercentStep=" + printPrice(intervalPercentStep);
                 takeProfitPrice = BigDecimal.ZERO.doubleValue();
+                order.getDetails().getBooleanDataMap().put("isTakeProfitPriceStopLoss", true);
                 minPrice = minPriceStart;
                 maxPrice = takeProfitPriceStart.floatValue();
-            } else if (!takeProfitPriceStart.equals(BigDecimal.ZERO)) {
-                annotation += " maxPriceOld=" + printPrice(maxPrice);
-                minPrice = Math.max(order.getPurchasePrice().floatValue(), stopLossPrice.floatValue());
-                if (!stopLossMaxPrice.equals(BigDecimal.ZERO)) {
-                    minPrice = Math.max(minPrice, stopLossMaxPrice.floatValue());
+            } else {
+                order.getDetails().getBooleanDataMap().put("isTakeProfitPriceStopLoss", false);
+                if (!takeProfitPriceStart.equals(BigDecimal.ZERO)) {
+                    annotation += " maxPriceOld=" + printPrice(maxPrice);
+                    minPrice = Math.max(order.getPurchasePrice().floatValue(), stopLossPrice.floatValue());
+                    if (!stopLossMaxPrice.equals(BigDecimal.ZERO)) {
+                        minPrice = Math.max(minPrice, stopLossMaxPrice.floatValue());
+                    }
+                    maxPrice = Math.max(takeProfitPriceStart.floatValue(), minPrice * (100f + intervalPercentStep.floatValue()) / 100f);
+                    lossPresent = intervalPercentStep.floatValue() *  lossPresent;
                 }
-                maxPrice = Math.max(takeProfitPriceStart.floatValue(), minPrice * (100f + intervalPercentStep.floatValue()) / 100f);
-                lossPresent = intervalPercentStep.floatValue() *  lossPresent;
             }
             annotation += " maxPrice=" + printPrice(maxPrice);
             annotation += " maxPriceInInterval=" + printPrice(maxPriceInInterval);
