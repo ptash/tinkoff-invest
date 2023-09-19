@@ -3362,7 +3362,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                 }
                                 if (
                                         !isIntervalUp
-                                        && minPercent > 0
+                                        && maxPercent > 0
                                         && candle.getClosingPrice().floatValue() > candleIntervalUpDownData.maxClose
                                 ) {
                                     var candlesList = candleHistoryService.getCandlesByFigiBetweenDateTimes(
@@ -3442,7 +3442,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                     }
                                 }
                                 if (isIntervalUp && StopLossPrice.equals(BigDecimal.ZERO)) {
-                                    StopLossPrice = BigDecimal.valueOf(candleIntervalUpDownData.minClose);
+                                    //StopLossPrice = BigDecimal.valueOf(candleIntervalUpDownData.minClose);
+                                    StopLossPrice = BigDecimal.valueOf(candleIntervalUpDownData.minClose
+                                            - (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) * 2f);
                                 }
                                 StopLossPrice = BigDecimal.valueOf(Math.min(
                                         StopLossPrice.doubleValue(),
