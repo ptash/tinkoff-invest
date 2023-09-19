@@ -4196,7 +4196,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 }
             }
             if (
-                    results.size() > 100 || (
+                    results.size() > 1000 || (
                     upCount > buyCriteria.getCandleUpDownSkipLength() * 3
                     && downCount > buyCriteria.getCandleUpDownSkipLength() * 3
                     && upDownCount > 7)
@@ -4258,16 +4258,25 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
 
     private String printPrice(BigDecimal s)
     {
+        if (s == null) {
+            return "null";
+        }
         return printPrice(s.toString());
     }
 
     private String printPrice(Float s)
     {
+        if (s == null) {
+            return "null";
+        }
         return printPrice(s.toString());
     }
 
     private String printPrice(Double s)
     {
+        if (s == null) {
+            return "null";
+        }
         return printPrice(s.toString());
     }
 
