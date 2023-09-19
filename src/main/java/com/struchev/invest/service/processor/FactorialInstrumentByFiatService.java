@@ -2016,15 +2016,14 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 ) {
                     minPriceStart = stopLossMaxPrice.floatValue();
                     takeProfitPriceStart = BigDecimal.valueOf(minPriceStart * (100f + intervalPercentStep.floatValue()) / 100f);
-                }
-                annotation += " takeProfitPriceStart=" + printPrice(minPriceStart);
-                annotation += " intervalPercentStep=" + printPrice(intervalPercentStep);
-                takeProfitPrice = BigDecimal.ZERO.doubleValue();
-                order.getDetails().getBooleanDataMap().put("isTakeProfitPriceStopLoss", true);
-                if (!isTakeProfitPriceStopLoss) {
+                } else {
+                    order.getDetails().getBooleanDataMap().put("isTakeProfitPriceStopLoss", true);
+                    annotation += " takeProfitPriceStart=" + printPrice(minPriceStart);
+                    annotation += " intervalPercentStep=" + printPrice(intervalPercentStep);
                     minPrice = minPriceStart;
                     maxPrice = takeProfitPriceStart.floatValue();
                 }
+                takeProfitPrice = BigDecimal.ZERO.doubleValue();
             } else {
                 order.getDetails().getBooleanDataMap().put("isTakeProfitPriceStopLoss", false);
                 if (!takeProfitPriceStart.equals(BigDecimal.ZERO)) {
