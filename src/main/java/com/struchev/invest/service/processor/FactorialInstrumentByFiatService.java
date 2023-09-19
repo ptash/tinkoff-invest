@@ -1973,7 +1973,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             } else if (!isDownWithLimits) {
                 var newValue = candleIntervalUpDownData.minClose
                         - (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) * 2f;
-                if (stopLossPrice.doubleValue() > newValue) {
+                if (stopLossPrice.doubleValue() < newValue) {
                     annotation += " new stopLossPrice first interval";
                     stopLossPrice = BigDecimal.valueOf(newValue);
                 }
@@ -3367,8 +3367,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                 ) {
                                     var candlesList = candleHistoryService.getCandlesByFigiBetweenDateTimes(
                                             candle.getFigi(),
-                                            candleIntervalUpDownDataPrev.beginDownFirst.candle.getDateTime(),
-                                            candleIntervalUpDownDataPrev.endPost.candle.getDateTime(),
+                                            candleIntervalUpDownData.beginDownFirst.candle.getDateTime(),
+                                            candleIntervalUpDownData.endPost.candle.getDateTime(),
                                             strategy.getInterval()
                                     );
                                     var maxCandle = candlesList
