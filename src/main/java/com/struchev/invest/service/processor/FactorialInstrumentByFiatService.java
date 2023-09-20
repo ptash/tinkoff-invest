@@ -1970,6 +1970,25 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         }
                     }
                 }
+
+                if (
+                        candleIntervalUpDownDataPrev.maxClose != null
+                        && candleIntervalUpDownDataPrev.maxClose < candleIntervalUpDownData.maxClose
+                        && candleIntervalUpDownData.maxCandle.getClosingPrice().floatValue() > candleIntervalUpDownDataPrev.maxClose
+                ) {
+                    var candleIntervalUpDownDataPrevPrev = getPrevCandleIntervalUpDownData(newStrategy, candleIntervalUpDownDataPrev);
+                    annotation += " beginDownFirst: " + printDateTime(candleIntervalUpDownDataPrev.beginDownFirst.candle.getDateTime());
+                    if (candleIntervalUpDownDataPrevPrev.minClose == null) {
+                        annotation += " something wrong: " + candleIntervalUpDownDataPrev.annotation;
+                    } else if (
+                            candleIntervalUpDownDataPrevPrev.maxClose < candleIntervalUpDownDataPrev.maxClose
+                            && candleIntervalUpDownDataPrev.maxCandle.getClosingPrice().floatValue() > candleIntervalUpDownDataPrevPrev.maxClose
+                            && stopLossPrice.doubleValue() < candleIntervalUpDownData.minClose
+                    ) {
+                        annotation += "new stopLossPrice by MAX MAX";
+                        stopLossPrice = BigDecimal.valueOf(candleIntervalUpDownData.minClose);
+                    }
+                }
             } else if (!isDownWithLimits) {
                 var newValue = candleIntervalUpDownData.minClose
                         - (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) * 2f;
@@ -3365,7 +3384,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                         && maxPercent > 0
                                         && candle.getClosingPrice().floatValue() > candleIntervalUpDownData.maxClose
                                 ) {
-                                    var candlesList = candleHistoryService.getCandlesByFigiBetweenDateTimes(
+                                    /*var candlesList = candleHistoryService.getCandlesByFigiBetweenDateTimes(
                                             candle.getFigi(),
                                             candleIntervalUpDownData.beginDownFirst.candle.getDateTime(),
                                             candleIntervalUpDownData.endPost.candle.getDateTime(),
@@ -3373,7 +3392,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                     );
                                     var maxCandle = candlesList
                                             .stream().reduce((first, second) ->
-                                                    first.getClosingPrice().compareTo(second.getClosingPrice()) > 0 ? first : second).orElse(null);
+                                                    first.getClosingPrice().compareTo(second.getClosingPrice()) > 0 ? first : second).orElse(null);*/
+                                    var maxCandle = candleIntervalUpDownData.maxCandle;
                                     annotation += " maxCandlePrev = " + printDateTime(maxCandle.getDateTime()) + "(" + printPrice(maxCandle.getLowestPrice()) + ")";
                                     if (maxCandle.getLowestPrice().floatValue() > candleIntervalUpDownDataPrev.maxClose) {
                                         annotation += " up by 2 max";
