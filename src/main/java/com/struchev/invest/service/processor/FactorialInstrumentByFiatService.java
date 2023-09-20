@@ -2942,10 +2942,10 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             isNewBottom = true;
                         }
 
-                        beginPre = candleResDownPrev;
-                        downPrevFirst = candleResDownPrevFirst;
-                        begin = candleResUpFirst;
                         if (end == null || isNewTop || isNewBottom) {
+                            beginPre = candleResDownPrev;
+                            downPrevFirst = candleResDownPrevFirst;
+                            begin = candleResUpFirst;
                             annotation += " isNewSize";
                             if (end == null || isNewTop) {
                                 end = candleResUp;
