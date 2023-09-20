@@ -1975,7 +1975,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         candleIntervalUpDownDataPrev.maxClose != null
                         && candleIntervalUpDownDataPrev.maxClose < candleIntervalUpDownData.maxClose
                         && candleIntervalUpDownData.maxCandle.getClosingPrice().floatValue() > candleIntervalUpDownDataPrev.maxClose
-                        && order.getPurchasePrice().floatValue() < candleIntervalUpDownData.minClose
+                        && order.getPurchasePrice().floatValue() < candleIntervalUpDownData.minClose - (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) * 0.5f
                 ) {
                     var candleIntervalUpDownDataPrevPrev = getPrevCandleIntervalUpDownData(newStrategy, candleIntervalUpDownDataPrev);
                     annotation += " beginDownFirst: " + printDateTime(candleIntervalUpDownDataPrev.beginDownFirst.candle.getDateTime());
