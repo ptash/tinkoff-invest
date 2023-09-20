@@ -8,11 +8,9 @@ public class FactorialCandleFactorOnlyUp20PrevSizeStrategy extends FactorialCand
     public BuyCriteria getBuyCriteria() {
         var buy = super.getBuyCriteria();
         //buy.setCandleUpMinLength(3);
-        //buy.setIsUpMaxPercentSeePrevSize(150f);
-        buy.setIsDownWithLimits(true);
-        buy.setDownStopLossFactor(2f);
+        buy.setIsUpMaxPercentSeePrevSize(150f);
         return buy;
     }
 
-    public boolean isEnabled() { return true; }
+    public boolean isEnabled() { return false; }
 }
