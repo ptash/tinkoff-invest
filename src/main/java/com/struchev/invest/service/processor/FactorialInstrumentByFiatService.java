@@ -4309,7 +4309,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         Collections.reverse(candleIPrev);
         List<CandleIntervalResultData> results = new ArrayList<>();
         CandleDomainEntity candleStrategyCurHour = null;
-        AInstrumentByFiatFactorialStrategy candleStrategy = null;
+        FactorialDiffAvgAdapterStrategy candleStrategy = null;
         var upCount = 0;
         var downCount = 0;
         var upDownCount = 0;
@@ -4326,6 +4326,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             }
             var sellCriteria = candleStrategy.getSellCriteria();
             var candleIntervalResSell = checkCandleInterval(candleIPrev.get(i), sellCriteria);
+            if (candleIntervalResSell.res) {
+                log.info("Sell OK: {} priceDiffAvgReal={} {}", candleIPrev.get(i).getDateTime(), candleStrategy.getPriceDiffAvgReal(), candleIntervalResSell.annotation);
+            }
             if (!candleIntervalResSell.res
                     && sellCriteria.getCandleUpLength() > 1
                     && null != sellCriteria.getCandleTrySimple()
@@ -4333,7 +4336,10 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 var sellCriteriaSimple = sellCriteria.clone();
                 sellCriteriaSimple.setCandleUpLength(sellCriteria.getCandleUpLength() / sellCriteria.getCandleTrySimple());
                 sellCriteriaSimple.setCandleIntervalMinPercent(sellCriteria.getCandleIntervalMinPercent() * sellCriteria.getCandleTrySimple());
-                candleIntervalResSell = checkCandleInterval(candle, sellCriteriaSimple);
+                candleIntervalResSell = checkCandleInterval(candleIPrev.get(i), sellCriteriaSimple);
+                if (candleIntervalResSell.res) {
+                    log.info("Sell OK simple: {} priceDiffAvgReal={} {}", candleIPrev.get(i).getDateTime(), candleStrategy.getPriceDiffAvgReal(), candleIntervalResSell.annotation);
+                }
             }
             if (candleIntervalResSell.res) {
                 results.add(candleIntervalResSell);
@@ -4346,6 +4352,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             } else {
                 var candleIntervalResBuy = checkCandleInterval(candleIPrev.get(i), candleStrategy.getBuyCriteria());
                 if (candleIntervalResBuy.res) {
+                    log.info("Buy OK: {} priceDiffAvgReal={} {}", candleIPrev.get(i).getDateTime(), candleStrategy.getPriceDiffAvgReal(), candleIntervalResBuy.annotation);
                     results.add(candleIntervalResBuy);
                     downCount++;
                     if (!prevIsDown) {
