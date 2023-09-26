@@ -4300,7 +4300,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         var candleIPrev = candleHistoryService.getCandlesByFigiByLength(
                 candle.getFigi(),
                 candle.getDateTime(),
-                buyCriteria.getCandleMaxIntervalLess(),
+                buyCriteria.getCandleMaxIntervalLess() * 2,
                 buyCriteria.getCandleInterval()
         );
         if (null == candleIPrev) {
@@ -4356,7 +4356,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 }
             }
             if (
-                    results.size() > 500 || (
+                    //results.size() > 1500 ||
+                    (
                     upCount > buyCriteria.getCandleUpDownSkipLength() * 3
                     && downCount > buyCriteria.getCandleUpDownSkipLength() * 3
                     && upDownCount > 7)
