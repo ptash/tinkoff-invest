@@ -55,6 +55,15 @@ public class CandleHistoryService {
 
     @Transactional
     public CandleDomainEntity addOrReplaceCandles(HistoricCandle newCandle, String figi, String interval) {
+        var candleDomainEntity = replaceCandles(newCandle, figi, interval);
+        if (candleDomainEntity != null) {
+            return candleDomainEntity;
+        }
+        return addCandles(newCandle, figi, interval);
+    }
+
+    @Transactional
+    public CandleDomainEntity replaceCandles(HistoricCandle newCandle, String figi, String interval) {
         try {
             var dateTime = ConvertorUtils.toOffsetDateTime(newCandle.getTime().getSeconds());
             var closingProse = ConvertorUtils.toBigDecimal(newCandle.getClose(), null);
@@ -80,7 +89,24 @@ public class CandleHistoryService {
                 }
                 return candleDomainEntity;
             }
-            candleDomainEntity = CandleDomainEntity.builder()
+            return null;
+        } catch (Exception e) {
+            log.error("Can't replace candle", e);
+            throw e;
+        }
+    }
+
+    @Transactional
+    public CandleDomainEntity addCandles(HistoricCandle newCandle, String figi, String interval) {
+        try {
+            var dateTime = ConvertorUtils.toOffsetDateTime(newCandle.getTime().getSeconds());
+            var closingProse = ConvertorUtils.toBigDecimal(newCandle.getClose(), null);
+            var openPrice = ConvertorUtils.toBigDecimal(newCandle.getOpen(), null);
+            var lowestPrice = ConvertorUtils.toBigDecimal(newCandle.getLow(), null);
+            var highestPrice = ConvertorUtils.toBigDecimal(newCandle.getHigh(), null);
+
+            log.trace("Candle for {} by {} with openPrice {}, closingProse {}", figi, dateTime, openPrice, closingProse);
+            var candleDomainEntity = CandleDomainEntity.builder()
                     .figi(figi)
                     .closingPrice(closingProse)
                     .highestPrice(highestPrice)

@@ -70,6 +70,7 @@ public class CandleListenerService {
                     .newStream("candles_stream", item -> {
                         log.trace("New data in streaming api: {}", item);
                         CandleDomainEntity candleDomainEntity = null;
+                        var isNewCandle = false;
                         if (item.hasCandle()) {
                             var candle = HistoricCandle.newBuilder();
                             candle.setClose(item.getCandle().getClose());
@@ -78,7 +79,11 @@ public class CandleListenerService {
                             candle.setLow(item.getCandle().getLow());
                             candle.setTime(item.getCandle().getTime());
                             candle.setVolume(item.getCandle().getVolume());
-                            candleDomainEntity = candleHistoryService.addOrReplaceCandles(candle.build(), item.getCandle().getFigi(), interval);
+                            candleDomainEntity = candleHistoryService.replaceCandles(candle.build(), item.getCandle().getFigi(), interval);
+                            if (candleDomainEntity == null) {
+                                candleDomainEntity = candleHistoryService.addCandles(candle.build(), item.getCandle().getFigi(), interval);
+                                isNewCandle = true;
+                            }
 
                             var now = OffsetDateTime.now();
                             var curCandleMinuteExpect = Date.formatDateTimeToMinute(now);
@@ -91,6 +96,10 @@ public class CandleListenerService {
                         }
 
                         if (null != candleDomainEntity) {
+                            if (isNewCandle) {
+                                log.info("Need refresh 1min candles {}", candleDomainEntity.getFigi());
+                                candleHistoryService.loadCandlesHistory(candleDomainEntity.getFigi(), 1L, CandleInterval.CANDLE_INTERVAL_1_MIN, OffsetDateTime.now());
+                            }
                             var candleHour = candleHistoryService.getAllCandlesByFigiByLength(
                                     candleDomainEntity.getFigi(),
                                     candleDomainEntity.getDateTime(),

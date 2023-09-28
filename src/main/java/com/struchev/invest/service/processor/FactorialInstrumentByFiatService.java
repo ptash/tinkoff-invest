@@ -2439,7 +2439,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         var isDown = true;
         for (; i < candleIPrev.size(); i++) {
             if (buyCriteria.isCandleIntervalReverseDirection(candleIPrev.get(i).getOpenPrice(), candleIPrev.get(i).getClosingPrice())) {
-                annotation += " i=" + i + " not target " + candleIPrev.get(i).getOpenPrice() + " - " + candleIPrev.get(i).getClosingPrice();
+                annotation += " i=" + i + " not target " + printPrice(candleIPrev.get(i).getOpenPrice()) + " - " + printPrice(candleIPrev.get(i).getClosingPrice())
+                        + "(" + printDateTime(candleIPrev.get(i).getDateTime()) +")";
                 if (candleUpLength < buyCriteria.getCandleUpLength()) {
                     annotation += " CandleUpLength false: " + candleUpLength + " < " + buyCriteria.getCandleUpLength();
                     isOk = false;
