@@ -1906,10 +1906,22 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             }
             annotation += " minClose=" + printPrice(candleIntervalUpDownData.minClose) + "-" + printPrice(candleIntervalUpDownData.maxClose);
             annotation += " PminClose=" + printPrice(candleIntervalUpDownDataPrev.minClose) + "-" + printPrice(candleIntervalUpDownDataPrev.maxClose);
-            if (order.getPurchaseDateTime().isBefore(candleIntervalUpDownData.endPost.candle.getDateTime())) {
+            if (
+                    order.getPurchaseDateTime().isBefore(candleIntervalUpDownData.endPost.candle.getDateTime())
+                    && candleIntervalUpDownDataPrev.minClose != null
+            ) {
                 var maxBuyIntervalPrice = order.getDetails().getCurrentPrices().getOrDefault("maxBuyIntervalPrice", BigDecimal.ZERO);
                 annotation += " maxBuyIntervalPrice=" + printPrice(maxBuyIntervalPrice);
-                var mPrice = candleIntervalUpDownData.minClose + (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) * 2.f;
+                var percentCur = (100f * (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) / candleIntervalUpDownData.minClose);
+                var percentPrev = (100f * (candleIntervalUpDownDataPrev.maxClose - candleIntervalUpDownDataPrev.minClose) / candleIntervalUpDownDataPrev.minClose);
+                var percent = Math.max((percentCur + percentPrev) / 2f, percentCur);
+                if (percent < buyCriteria.getCandlePriceMinFactor()) {
+                    annotation += " percent=" + printPrice(percent) + " < " + printPrice(buyCriteria.getCandlePriceMinFactor());
+                    percent = buyCriteria.getCandlePriceMinFactor();
+                }
+
+                var mPrice = candleIntervalUpDownData.minClose * (100f + percent) / 100f;
+                //var mPrice = candleIntervalUpDownData.minClose + (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) * 2.f;
                 var lossPresent = 0.33f;
                 annotation += " mPrice=" + printPrice(mPrice);
                 if (!takeProfitPriceStart.equals(BigDecimal.ZERO)) {
@@ -1919,7 +1931,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 if (
                         candleIntervalUpDownDataPrev.minClose != null
                         && (candleIntervalUpDownDataPrev.minClose > candleIntervalUpDownData.minClose
-                                || Objects.equals(candleIntervalUpDownDataPrev.minClose, candleIntervalUpDownData.minClose) && candleIntervalUpDownDataPrev.maxClose > candleIntervalUpDownData.maxClose)
+                                || Objects.equals(candleIntervalUpDownDataPrev.minClose, candleIntervalUpDownData.minClose)
+                                && candleIntervalUpDownDataPrev.maxClose > candleIntervalUpDownData.maxClose)
                         && stopLossPrice.doubleValue() < candleIntervalUpDownData.minClose
                         && (maxBuyIntervalPrice.equals(BigDecimal.ZERO)
                                 || mPrice > maxBuyIntervalPrice.floatValue())
@@ -2013,7 +2026,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 minPrice = Math.max(minPrice, stopLossMaxPrice.floatValue());
             }
 
-            var percent = 100f * (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) / minPrice;
+            var percentCur = (100f * (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) / candleIntervalUpDownData.minClose);
+            var percentPrev = (100f * (candleIntervalUpDownDataPrev.maxClose - candleIntervalUpDownDataPrev.minClose) / candleIntervalUpDownDataPrev.minClose);
+            var percent = Math.max((percentCur + percentPrev) / 2f, percentCur);
             if (
                     candleIntervalUpDownDataPrev.minClose < candleIntervalUpDownData.minClose
                             && percent < buyCriteria.getCandlePriceMinFactor()
@@ -2085,7 +2100,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
 
             if (candle.getHighestPrice().compareTo(stopLossPrice) < 0) {
                 annotation += " stopLossPrice TRY";
-                var candlesPrevArray = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(), candle.getDateTime(), 2, strategy.getInterval());
+                var candlesPrevArray = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(), candle.getDateTime(), 10, strategy.getInterval());
                 var candlePrev = candlesPrevArray.get(0);
                 if (candlePrev.getHighestPrice().compareTo(stopLossPrice) < 0) {
                     res = true;
