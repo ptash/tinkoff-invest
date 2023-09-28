@@ -55,11 +55,11 @@ public class FactorialStrategy extends AInstrumentByFiatFactorialStrategy {
         //FIGIES.put("FUTBR0423000", 1); // BRJ3 BR-4.23 Нефть Brent
         //FIGIES.put("FUTBR0523000", 1); // BRK3 BR-5.23 Нефть Brent
         //FIGIES.put("FUTBR0923000", 1); // BRK3 BR-9.23 Нефть Brent
-        //FIGIES.put("FUTBR1023000", 1); // BRK3 BR-10.23 Нефть Brent
+        FIGIES.put("FUTBR1023000", 1); // BRK3 BR-10.23 Нефть Brent
         //FIGIES.put("FUTMXI032300", 1); // MMH3 MXI-3.23 Индекс МосБиржи (мини)
         //FIGIES.put("FUTMXI062300", 1); // MMM3 MXI-6.23 Индекс МосБиржи (мини)
         //FIGIES.put("FUTMXI092300", 1); // MMM3 MXI-9.23 Индекс МосБиржи (мини)
-        FIGIES.put("FUTMXI122300", 1); // MMM3 MXI-9.23 Индекс МосБиржи (мини)
+        FIGIES.put("FUTMXI122300", 1); // MMM3 MXI-12.23 Индекс МосБиржи (мини)
         //FIGIES.put("FUTNASD03230", 1); // NAH3 NASD-3.23 Nasdaq 100
         //FIGIES.put("FUTNASD06230", 1); // NAM3 NASD-6.23 Nasdaq 100
         //FIGIES.put("FUTNASD09230", 1); // NAM3 NASD-9.23 Nasdaq 100

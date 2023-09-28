@@ -2012,7 +2012,17 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             if (!stopLossMaxPrice.equals(BigDecimal.ZERO)) {
                 minPrice = Math.max(minPrice, stopLossMaxPrice.floatValue());
             }
-            var maxPrice = minPrice + (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose);
+
+            var percent = 100f * (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) / minPrice;
+            if (
+                    candleIntervalUpDownDataPrev.minClose < candleIntervalUpDownData.minClose
+                            && percent < buyCriteria.getCandlePriceMinFactor()
+            ) {
+                annotation += " percent=" + printPrice(percent) + " < " + printPrice(buyCriteria.getCandlePriceMinFactor());
+                percent = buyCriteria.getCandlePriceMinFactor();
+            }
+
+            var maxPrice = minPrice * (100f + percent) / 100f;
 
             if (
                     !res
