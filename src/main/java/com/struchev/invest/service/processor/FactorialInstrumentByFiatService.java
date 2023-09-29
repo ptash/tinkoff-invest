@@ -1920,7 +1920,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     percent = buyCriteria.getCandlePriceMinFactor();
                 }
 
-                var mPrice = candleIntervalUpDownData.minClose * (100f + percent) / 100f;
+                var mPrice = candleIntervalUpDownData.minClose * candleIntervalUpDownData.minClose * percent / 100f;
                 //var mPrice = candleIntervalUpDownData.minClose + (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) * 2.f;
                 var lossPresent = 0.33f;
                 annotation += " mPrice=" + printPrice(mPrice);
@@ -2029,7 +2029,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             var percentCur = (100f * (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) / candleIntervalUpDownData.minClose);
             var percentPrev = percentCur;
             if (candleIntervalUpDownDataPrev.minClose != null) {
-                percentCur = (100f * (candleIntervalUpDownDataPrev.maxClose - candleIntervalUpDownDataPrev.minClose) / candleIntervalUpDownDataPrev.minClose);
+                percentPrev = (100f * (candleIntervalUpDownDataPrev.maxClose - candleIntervalUpDownDataPrev.minClose) / candleIntervalUpDownDataPrev.minClose);
             }
             var percent = Math.max((percentCur + percentPrev) / 2f, percentCur);
             if (
@@ -2040,7 +2040,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 percent = buyCriteria.getCandlePriceMinFactor();
             }
 
-            var maxPrice = minPrice * (100f + percent) / 100f;
+            var maxPrice = minPrice + candleIntervalUpDownData.minClose * percent / 100f;
 
             if (
                     !res
