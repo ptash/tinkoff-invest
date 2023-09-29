@@ -2027,7 +2027,10 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             }
 
             var percentCur = (100f * (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) / candleIntervalUpDownData.minClose);
-            var percentPrev = (100f * (candleIntervalUpDownDataPrev.maxClose - candleIntervalUpDownDataPrev.minClose) / candleIntervalUpDownDataPrev.minClose);
+            var percentPrev = percentCur;
+            if (candleIntervalUpDownDataPrev.minClose != null) {
+                percentCur = (100f * (candleIntervalUpDownDataPrev.maxClose - candleIntervalUpDownDataPrev.minClose) / candleIntervalUpDownDataPrev.minClose);
+            }
             var percent = Math.max((percentCur + percentPrev) / 2f, percentCur);
             if (
                     candleIntervalUpDownDataPrev.minClose < candleIntervalUpDownData.minClose
@@ -2095,14 +2098,20 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
 
             if (!stopLossPrice.equals(stopLossPriceOld)) {
                 annotation += " OnlyStopLoss: " + printPrice(stopLossPrice);
+                order.getDetails().getDateTimes().put("stopLossPriceBeginDate", candle.getDateTime());
                 orderService.updateDetailsCurrentPrice(order, "stopLossPrice", stopLossPrice);
             }
 
             if (candle.getHighestPrice().compareTo(stopLossPrice) < 0) {
                 annotation += " stopLossPrice TRY";
+                var stopLossPriceBeginDate = order.getDetails().getDateTimes().getOrDefault("stopLossPriceBeginDate", order.getPurchaseDateTime());
                 var candlesPrevArray = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(), candle.getDateTime(), 10, strategy.getInterval());
                 var candlePrev = candlesPrevArray.get(0);
-                if (candlePrev.getHighestPrice().compareTo(stopLossPrice) < 0) {
+                annotation += " stopLossPriceBeginDate=" + printDateTime(stopLossPriceBeginDate) + " < candlePrev=" + printDateTime(candlePrev.getDateTime());
+                if (
+                        candlePrev.getHighestPrice().compareTo(stopLossPrice) < 0
+                        && candlePrev.getDateTime().isAfter(stopLossPriceBeginDate)
+                ) {
                     res = true;
                     annotation += " OK";
                 }
@@ -3264,6 +3273,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                     //candleIntervalUpDownDataPrevPrev.maxClose = Math.max(candleIntervalUpDownDataPrev.maxClose, candleIntervalUpDownDataPrevPrev.maxClose);
                                 } else {
                                     candleIntervalUpDownDataPrevPrev = candleIntervalUpDownDataPrev;
+                                    annotation += " something wrong" + candleIntervalUpDownDataPrevPrev.annotation;
                                 }
                             } else if (candleIntervalUpDownDataPrev != null) {
                                 annotation += " candleIntervalUpDownDataPrev: " + candleIntervalUpDownDataPrev.annotation;
@@ -4391,9 +4401,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             if (
                     //results.size() > 1500 ||
                     (
-                    upCount > buyCriteria.getCandleUpDownSkipLength() * 3
-                    && downCount > buyCriteria.getCandleUpDownSkipLength() * 3
-                    && upDownCount > 7)
+                    upCount > buyCriteria.getCandleUpDownSkipLength() * 4
+                    && downCount > buyCriteria.getCandleUpDownSkipLength() * 4
+                    && upDownCount > 17)
             ) {
                 log.info("{}: Break upCount = {}, downCount = {}, upDownCount = {}, results.size = {}", keyCandles, upCount, downCount, upDownCount, results.size());
                 break;

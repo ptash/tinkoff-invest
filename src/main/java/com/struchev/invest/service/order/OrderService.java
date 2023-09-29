@@ -8,6 +8,7 @@ import com.struchev.invest.service.dictionary.InstrumentService;
 import com.struchev.invest.service.tinkoff.ITinkoffOrderAPI;
 import com.struchev.invest.strategy.AStrategy;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
@@ -24,6 +25,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class OrderService {
     private final OrderRepository orderRepository;
     private final InstrumentService instrumentService;
@@ -107,7 +109,13 @@ public class OrderService {
         }
         var instrument = instrumentService.getInstrument(order.getFigi());
         var limitPrice = order.getPurchasePrice().multiply(BigDecimal.valueOf((strategy.getSellLimitCriteria(candle.getFigi()).getExitProfitPercent() + 100.)/100.));
-        limitPrice = limitPrice.divide(instrument.getMinPriceIncrement(), 0, RoundingMode.HALF_UP).multiply(instrument.getMinPriceIncrement());
+        if (!instrument.getMinPriceIncrement().equals(BigDecimal.ZERO) && instrument.getMinPriceIncrement().compareTo(BigDecimal.valueOf(0.00000001f)) > 0) {
+            try {
+                limitPrice = limitPrice.divide(instrument.getMinPriceIncrement(), 0, RoundingMode.HALF_UP).multiply(instrument.getMinPriceIncrement());
+            } catch (ArithmeticException $e) {
+                log.error("An error in limitPrice " + limitPrice + " to MinPriceIncrement " + instrument.getMinPriceIncrement(), $e);
+            }
+        }
         var lots = order.getLots();
         if (order.getCellLots() != null) {
             lots -= order.getCellLots().intValue();

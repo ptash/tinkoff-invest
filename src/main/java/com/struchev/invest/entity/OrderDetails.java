@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -17,6 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class OrderDetails {
     Map<String, BigDecimal> currentPrices;
     Map<String, Boolean> booleanDataMap;
+    Map<String, OffsetDateTime> dateTimes;
 
     public Map<String, BigDecimal> getCurrentPrices() {
         if (currentPrices != null) {
@@ -28,6 +30,13 @@ public class OrderDetails {
     public Map<String, Boolean> getBooleanDataMap() {
         if (booleanDataMap != null) {
             return booleanDataMap;
+        }
+        return new HashMap<>();
+    }
+
+    public Map<String, OffsetDateTime> getDateTimes() {
+        if (dateTimes != null) {
+            return dateTimes;
         }
         return new HashMap<>();
     }
