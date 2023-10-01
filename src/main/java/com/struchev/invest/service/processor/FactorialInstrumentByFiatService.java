@@ -2073,8 +2073,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     }
                     intervalPercentStep = BigDecimal.valueOf(100f * (takeProfitPriceStart.floatValue() - minPriceStart) / minPriceStart);
                     if (
-                            !stopLossMaxPriceDown.equals(BigDecimal.ZERO)
-                            && takeProfitPrice < stopLossMaxPriceDown.floatValue()
+                            (!stopLossMaxPriceDown.equals(BigDecimal.ZERO)
+                            && takeProfitPrice <= stopLossMaxPriceDown.floatValue() + 0.00001)
+                            || takeProfitPrice <= stopLossPrice.floatValue() + 0.00001
                     ) {
                         //minPriceStart = stopLossMaxPrice.floatValue();
                         //takeProfitPriceStart = BigDecimal.valueOf(minPriceStart * (100f + intervalPercentStep.floatValue()) / 100f);
@@ -2328,7 +2329,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 emaPrev == null ? "" : emaPrev.get(emaPrev.size() - 1),
                 candleBuyRes == null || candleBuyRes.candlePriceMinFactor == null ? "" : candleIntervalUpDownData.maxClose - (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) * candleBuyRes.candlePriceMinFactor,
                 candleBuyRes == null || candleBuyRes.candlePriceMaxFactor == null ? "" : candleIntervalUpDownData.maxClose - (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) * candleBuyRes.candlePriceMaxFactor,
-                takeProfitPriceOrig == null || takeProfitPriceOrig < 0.001 ? "" : takeProfitPriceOrig,
+                takeProfitPriceOrig == null || takeProfitPriceOrig < 0.00001 ? "" : takeProfitPriceOrig,
                 stopLossPrice == null || stopLossPrice.equals(BigDecimal.ZERO) ? "" : stopLossPrice,
                 candleIntervalUpDownData.endPost == null ? ""
                         : (candleIntervalUpDownData.endPost.candle.getDateTime().equals(candle.getDateTime()) ? candleIntervalUpDownData.minClose : candleIntervalUpDownData.maxClose),
