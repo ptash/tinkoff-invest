@@ -110,10 +110,10 @@ public class OrderDomainEntity {
     @Column(name = "details", columnDefinition = "jsonb")
     private OrderDetails details;
     public OrderDetails getDetails() {
-        if (details != null) {
-            return details;
+        if (details == null) {
+            details = OrderDetails.builder().build();
         }
-        return OrderDetails.builder().build();
+        return details;
     }
 
     @Version

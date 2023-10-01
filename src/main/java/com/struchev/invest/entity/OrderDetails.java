@@ -21,23 +21,23 @@ public class OrderDetails {
     Map<String, OffsetDateTime> dateTimes;
 
     public Map<String, BigDecimal> getCurrentPrices() {
-        if (currentPrices != null) {
-            return currentPrices;
+        if (currentPrices == null) {
+            currentPrices = new HashMap<>();
         }
-        return new HashMap<>();
+        return currentPrices;
     }
 
     public Map<String, Boolean> getBooleanDataMap() {
-        if (booleanDataMap != null) {
-            return booleanDataMap;
+        if (booleanDataMap == null) {
+            booleanDataMap = new HashMap<>();
         }
-        return new HashMap<>();
+        return booleanDataMap;
     }
 
     public Map<String, OffsetDateTime> getDateTimes() {
-        if (dateTimes != null) {
-            return dateTimes;
+        if (dateTimes == null) {
+            dateTimes = new HashMap<>();
         }
-        return new HashMap<>();
+        return dateTimes;
     }
 }
