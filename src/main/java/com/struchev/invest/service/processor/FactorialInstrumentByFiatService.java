@@ -1942,11 +1942,11 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         && (maxBuyIntervalPrice.equals(BigDecimal.ZERO)
                                 || mPrice > maxBuyIntervalPrice.floatValue())
                 ) {
-                    annotation += "new stopLossPrice by DOWN DOWN";
                     stopLossPrice = stopLossPrice.min(BigDecimal.valueOf(
                             candleIntervalUpDownData.minClose - (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) * lossPresent
                     ));
-                    stopLossPriceBottomA = BigDecimal.ZERO;
+                    stopLossPriceBottomA = stopLossPrice.subtract(BigDecimal.valueOf((candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) * 2f * lossPresent));
+                    annotation += "new stopLossPrice by DOWN DOWN=" + printPrice(stopLossPrice) + "-" + printPrice(stopLossPriceBottomA);
                 } else if (
                     candleIntervalUpDownDataPrev.minClose != null
                     && order.getPurchaseDateTime().isBefore(candleIntervalUpDownDataPrev.endPost.candle.getDateTime())
@@ -1957,9 +1957,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             && stopLossPrice.doubleValue() < candleIntervalUpDownData.minClose
                             && (maxBuyIntervalPrice.equals(BigDecimal.ZERO) || candleIntervalUpDownData.minClose > maxBuyIntervalPrice.floatValue())
                     ) {
-                        annotation += "new stopLossPrice by DOWN";
                         stopLossPrice = BigDecimal.valueOf(candleIntervalUpDownData.minClose);
-                        stopLossPriceBottomA = BigDecimal.ZERO;
+                        stopLossPriceBottomA = BigDecimal.valueOf(candleIntervalUpDownData.minClose - (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose));
+                        annotation += "new stopLossPrice by DOWN=" + printPrice(stopLossPrice) + "-" + printPrice(stopLossPriceBottomA);
                     } else {
                         var candlesList = candleHistoryService.getCandlesByFigiBetweenDateTimes(
                                 candle.getFigi(),
@@ -1983,9 +1983,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                         candleIntervalUpDownDataPrevMax != null
                                         && stopLossPrice.doubleValue() < newValue
                                 ) {
-                                    annotation += "new stopLossPrice by MAX";
                                     stopLossPrice = BigDecimal.valueOf(newValue);
-                                    stopLossPriceBottomA = BigDecimal.ZERO;
+                                    stopLossPriceBottomA = BigDecimal.valueOf(newValue - (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose));
+                                    annotation += "new stopLossPrice by MAX=" + printPrice(stopLossPrice) + "-" + printPrice(stopLossPriceBottomA);
                                 }
                             }
                         }
@@ -2007,18 +2007,19 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                             && candleIntervalUpDownDataPrev.maxCandle.getClosingPrice().floatValue() > candleIntervalUpDownDataPrevPrev.maxClose
                             && stopLossPrice.doubleValue() < candleIntervalUpDownData.minClose
                     ) {
-                        annotation += "new stopLossPrice by MAX MAX";
                         stopLossPrice = BigDecimal.valueOf(candleIntervalUpDownData.minClose);
-                        stopLossPriceBottomA = BigDecimal.ZERO;
+                        stopLossPriceBottomA = BigDecimal.valueOf(candleIntervalUpDownData.minClose - (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose));
+                        annotation += "new stopLossPrice by MAX MAX=" + printPrice(stopLossPrice) + "-" + printPrice(stopLossPriceBottomA);
                     }
                 }
             } else if (!isDownWithLimits) {
                 var newValue = candleIntervalUpDownData.minClose
                         - (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) * 2f;
                 if (stopLossPrice.doubleValue() < newValue) {
-                    annotation += " new stopLossPrice first interval";
+                    annotation += candleIntervalUpDownData.annotation;
                     stopLossPrice = BigDecimal.valueOf(newValue);
-                    stopLossPriceBottomA = BigDecimal.ZERO;
+                    stopLossPriceBottomA = BigDecimal.valueOf(newValue - (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose));
+                    annotation += " new stopLossPrice first interval=" + printPrice(stopLossPrice) + "-" + printPrice(stopLossPriceBottomA);
                 }
             }
 
@@ -2119,6 +2120,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     }
                     stopLossPrice = newStopLossPrice;
                     stopLossPriceBottomA = stopLossPriceBottom;
+                    annotation += " new stopLossPrice BY MAX=" + printPrice(stopLossPrice) + "-" + printPrice(stopLossPriceBottomA);
                 }
             }
 
@@ -2129,9 +2131,11 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 stopLossPriceBottomPrev = order.getDetails().getCurrentPrices().getOrDefault("stopLossPriceBottom", BigDecimal.ZERO);
             }
             annotation += " stopLossPricePrev=" + printPrice(stopLossPricePrev);
+            stopLossMaxPriceDown = order.getDetails().getCurrentPrices().getOrDefault("stopLossMaxPriceDown", BigDecimal.ZERO);
             if (
                     !stopLossPricePrev.equals(BigDecimal.ZERO) && !stopLossPricePrev.equals(stopLossPrice)
                     && candleIntervalUpDownDataPrev.minClose != null
+                    && !stopLossMaxPriceDown.equals(BigDecimal.ZERO)
             ) {
                 var candleIntervalUpDownDataPrevPrev = getPrevCandleIntervalUpDownData(newStrategy, candleIntervalUpDownDataPrev);
                 if (candleIntervalUpDownDataPrevPrev.minClose != null) {
@@ -2149,6 +2153,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     if (isIntervalUpRes.isIntervalUp) {
                         stopLossPrice = stopLossPricePrev;
                         stopLossPriceBottomA = stopLossPriceBottomPrev;
+                        annotation += " new stopLossPrice BY PREV=" + printPrice(stopLossPrice) + "-" + printPrice(stopLossPriceBottomA);
                     } else {
                         var candleResDownMaybe = CandleIntervalResultData.builder()
                                 .res(true)
@@ -2177,6 +2182,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                     if (isIntervalUpResNew.isIntervalUp) {
                                         stopLossPrice = stopLossPricePrev;
                                         stopLossPriceBottomA = stopLossPriceBottomPrev;
+                                        annotation += " new stopLossPrice BY PREV MAYBE=" + printPrice(stopLossPrice) + "-" + printPrice(stopLossPriceBottomA);
                                     }
                                 } else {
                                     annotation += candleIntervalUpDownDataNew.annotation;
@@ -2206,6 +2212,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             annotation += " stopLossPriceBottomA=" + printPrice(stopLossPriceBottomA);
             if (
                     stopLossPriceBottomA != null
+                    && !stopLossPriceBottomA.equals(BigDecimal.ZERO)
                     && stopLossPriceBeginDate.isAfter(order.getPurchaseDateTime())
                     //candle.getHighestPrice().compareTo(stopLossPrice) < 0
             ) {
