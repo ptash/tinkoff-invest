@@ -53,7 +53,7 @@ public class FactorialStrategy extends AInstrumentByFiatFactorialStrategy {
         //FIGIES.put("FUTSILV09230", 1); // SVU3 SILV-9.23 Серебро
         //FIGIES.put("FUTSILV06230", 1); // SVM3 SILV-6.23 Серебро
         //FIGIES.put("FUTSILV09230", 1); // SVM3 SILV-9.23 Серебро
-        //FIGIES.put("FUTSILV12230", 1); // SVM3 SILV-12.23 Серебро
+        FIGIES.put("FUTSILV12230", 1); // SVM3 SILV-12.23 Серебро
         //FIGIES.put("FUTBR0423000", 1); // BRJ3 BR-4.23 Нефть Brent
         //FIGIES.put("FUTBR0523000", 1); // BRK3 BR-5.23 Нефть Brent
         //FIGIES.put("FUTBR0923000", 1); // BRK3 BR-9.23 Нефть Brent
