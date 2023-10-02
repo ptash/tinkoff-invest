@@ -1933,6 +1933,9 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     mPrice = takeProfitPriceStart.floatValue() * (100f + intervalPercentStep.floatValue()) / 100f;
                     lossPresent = intervalPercentStep.floatValue() *  0.33f;
                 }
+                var newValue1 = BigDecimal.valueOf(
+                        candleIntervalUpDownData.minClose - (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) * lossPresent
+                );
                 if (
                         candleIntervalUpDownDataPrev.minClose != null
                         && (candleIntervalUpDownDataPrev.minClose > candleIntervalUpDownData.minClose
@@ -1942,11 +1945,11 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         && (maxBuyIntervalPrice.equals(BigDecimal.ZERO)
                                 || mPrice > maxBuyIntervalPrice.floatValue())
                 ) {
-                    stopLossPrice = stopLossPrice.min(BigDecimal.valueOf(
-                            candleIntervalUpDownData.minClose - (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) * lossPresent
-                    ));
-                    stopLossPriceBottomA = stopLossPrice.subtract(BigDecimal.valueOf((candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) * 2f * lossPresent));
-                    annotation += "new stopLossPrice by DOWN DOWN=" + printPrice(stopLossPrice) + "-" + printPrice(stopLossPriceBottomA);
+                    if (newValue1.compareTo(stopLossPrice) < 0) {
+                        stopLossPrice = newValue1;
+                        stopLossPriceBottomA = stopLossPrice.subtract(BigDecimal.valueOf((candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) * 2f * lossPresent));
+                        annotation += "new stopLossPrice by DOWN DOWN=" + printPrice(stopLossPrice) + "-" + printPrice(stopLossPriceBottomA);
+                    }
                 } else if (
                     candleIntervalUpDownDataPrev.minClose != null
                     && order.getPurchaseDateTime().isBefore(candleIntervalUpDownDataPrev.endPost.candle.getDateTime())
@@ -3514,6 +3517,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         var candleMinFactorCandle = factorPrice * buyCriteria.getCandleMinFactorCandle();
                         annotation += " candleMinFactorCandle = " + candleMinFactorCandle;
                         BigDecimal StopLossPrice = BigDecimal.ZERO;
+                        BigDecimal StopLossPriceBottom = BigDecimal.ZERO;
                         if (null != candleIntervalUpDownDataPrev) {
                             var size = Math.max(
                                     candleIntervalUpDownDataPrev.maxClose - candleIntervalUpDownDataPrev.minClose,
@@ -3547,6 +3551,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                                     annotation += isIntervalUpRes.annotation;
                                     if (!isIntervalUpRes.stopLossPrice.equals(BigDecimal.ZERO)) {
                                         StopLossPrice = isIntervalUpRes.stopLossPrice;
+                                        StopLossPriceBottom = isIntervalUpRes.stopLossPriceBottom;
                                     }
                                 }
                             }
@@ -3656,6 +3661,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         setOrderBooleanData(strategy, candle, "isMinMin", false);
                         setOrderBooleanData(strategy, candle, "isDownWithLimits", false);
                         setOrderBigDecimalData(strategy, candle, "stopLossPrice", StopLossPrice);
+                        setOrderBigDecimalData(strategy, candle, "stopLossPriceBottom", StopLossPriceBottom);
                         setOrderBigDecimalData(strategy, candle, "maxBuyIntervalPrice", BigDecimal.valueOf(candleIntervalUpDownData.maxClose));
                         setOrderBigDecimalData(strategy, candle, "takeProfitPriceStart", BigDecimal.ZERO);
                         setOrderBigDecimalData(strategy, candle, "intervalPercentStep", BigDecimal.ZERO);
@@ -4110,6 +4116,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
         String annotation;
         Boolean isIntervalUp;
         BigDecimal stopLossPrice;
+        BigDecimal stopLossPriceBottom;
     }
 
     private CandleIntervalUpResult calcIsIntervalUp(
@@ -4271,10 +4278,12 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 StopLossPrice.doubleValue(),
                 candle.getClosingPrice().doubleValue() - (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) * 0.5f
         ));
+        var stopLossPriceBottom = StopLossPrice.subtract(BigDecimal.valueOf(candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose));
         return CandleIntervalUpResult.builder()
                 .annotation(annotation)
                 .isIntervalUp(isIntervalUp)
                 .stopLossPrice(StopLossPrice)
+                .stopLossPriceBottom(stopLossPriceBottom)
                 .build();
     }
 
