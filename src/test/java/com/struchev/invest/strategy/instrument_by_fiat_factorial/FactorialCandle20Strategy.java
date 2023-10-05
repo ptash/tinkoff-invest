@@ -24,8 +24,8 @@ public class FactorialCandle20Strategy extends Factorial2Strategy {
         buy.setCandleUpMiddleLength(1);
         buy.setCandleUpLength(2);
 
-        buy.setCandleUpDownSkipCount(1);
-        buy.setCandleUpDownSkipLength(15);
+        buy.setCandleUpDownSkipCount(15);
+        buy.setCandleUpDownSkipLength(25);
         buy.setCandleUpDownSkipDeviationPercent(40f);
 
         //buy.setProfitPercentFromBuyMinPrice(-0.01);

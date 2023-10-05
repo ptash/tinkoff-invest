@@ -2123,10 +2123,12 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             }
             annotation += " maxPrice=" + printPrice(maxPrice);
             maxPriceProfitStep = BigDecimal.valueOf(maxPrice);
+            var stopLossMaxPriceNew = BigDecimal.ZERO;
             annotation += " maxPriceInInterval=" + printPrice(maxPriceInInterval);
             if (maxPriceInInterval > maxPrice) {
                 var newStopLossPrice = BigDecimal.valueOf(maxPrice - (maxPrice - minPrice) * lossPresent);
                 if (newStopLossPrice.compareTo(stopLossPrice) > 0) {
+                    stopLossMaxPriceNew = BigDecimal.valueOf(maxPrice);
                     stopLossPrice = newStopLossPrice;
                     stopLossPriceBottomA = stopLossPriceBottom;
                     annotation += " new stopLossPrice BY MAX=" + printPrice(stopLossPrice) + "-" + printPrice(stopLossPriceBottomA);
@@ -2139,7 +2141,6 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                 stopLossPricePrev = stopLossPriceOld;
                 stopLossPriceBottomPrev = order.getDetails().getCurrentPrices().getOrDefault("stopLossPriceBottom", BigDecimal.ZERO);
             }
-            var stopLossMaxPriceNew = BigDecimal.valueOf(maxPrice);
             annotation += " stopLossPricePrev=" + printPrice(stopLossPricePrev);
             if (
                     !stopLossPricePrev.equals(BigDecimal.ZERO) && !stopLossPricePrev.equals(stopLossPrice)
@@ -3023,7 +3024,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     ).collect(Collectors.toList());
                     candleResDownPrevFirst = candleResDownPrevList.get(0);
                     annotation += " prevFirst = " + printDateTime(candleResDownPrevFirst.getCandle().getDateTime())
-                        + "(" + candleResDownPrevList.size() + ")";
+                        + "(" + candleResDownPrevList.size() + "+" + upDown + ")";
 
                     annotation += " intervalsBetweenLast.size=" + intervalsBetweenLast.size() + "+" + upCount;
                     var candlesBetweenLast = candleHistoryService.getCandlesByFigiBetweenDateTimes(
@@ -3097,6 +3098,14 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                         annotation += " " + printPrice(maxPricePrev - minPricePrev) + " > " + printPrice(maxPrice - minPrice);
                         isAnother = deviationPercentTogether > 100f;
                         if (
+                                lastTopPrice != null && lastTopPrice < maxPrice
+                                && deviationPercentTogether > 50f
+                                && (strategy.getBuyCriteria().getCandleUpDownSkipCount() == null || (upCount + upDown) > strategy.getBuyCriteria().getCandleUpDownSkipCount())
+                        ) {
+                            isAnother = true;
+                        }
+                        annotation += " isAnother = " + isAnother;
+                        if (
                                 isAnother
                                 //deviationPercentAbs < (strategy.getBuyCriteria().getCandleUpDownSkipDeviationPercent() / 2)
                                 || (
@@ -3156,13 +3165,13 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     }
                     if (null != strategy.getBuyCriteria().getCandleUpDownSkipLength()
                             && (intervalsBetweenLast.size() + upCount) < strategy.getBuyCriteria().getCandleUpDownSkipLength()
-                            && (null == strategy.getBuyCriteria().getCandleUpDownSkipCount() || upDown < strategy.getBuyCriteria().getCandleUpDownSkipCount())
+                            && (null == strategy.getBuyCriteria().getCandleUpDownSkipCount() || (upDown + candleResDownPrevList.size())  < strategy.getBuyCriteria().getCandleUpDownSkipCount())
                             && !isAnother
                             && (isNewTop || isNewBottom)
                     ) {
                         annotation += " < " + strategy.getBuyCriteria().getCandleUpDownSkipLength();
                         upCount += intervalsBetweenLast.size();
-                        upDown++;
+                        upDown += candleResDownPrevList.size();
                         if (maxPricePrev == null) {
                             maxPricePrev = maxPrice;
                         }

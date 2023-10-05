@@ -48,6 +48,7 @@ public class FactorialCandleFactorUp20Strategy extends FactorialCandleFactor20St
         //sell.setCandleOnlyUpStopLossPercent(0.6f);
         //sell.setCandleExitProfitInPercentMax(null);
 
+        sell.setIsSellUnderProfit(false);
         sell.setSellUnderLossLength(0);
 
         sell.setCandleUpSkipLength(4);
