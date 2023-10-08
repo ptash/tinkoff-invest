@@ -73,7 +73,8 @@ public class PurchaseService {
             // Нет активного ордера, возможно можем купить, если нет ограничений по задержке после stop loss
             if (order == null) {
                 var isShouldBuy = calculator.isShouldBuy(strategy, candleDomainEntity);
-                if (isShouldBuy) {
+                var isShouldBuyShort = calculator.isShouldBuyShort(strategy, candleDomainEntity);
+                if (isShouldBuy && !isShouldBuyShort) {
                     OrderDomainEntity lastOrder = null;
                     var finishedOrders = orderService.findClosedByFigiAndStrategy(candleDomainEntity.getFigi(), strategy);
                     if (finishedOrders.size() > 0) {
@@ -179,6 +180,10 @@ public class PurchaseService {
                     //order = orderService.openLimitOrder(order, strategy);
                     notificationService.sendSellLimitInfo(strategy, order, candleDomainEntity);
                 }
+
+                if (isShouldBuyShort && !isShouldBuy) {
+
+                }
                 return;
             }
 
@@ -190,7 +195,8 @@ public class PurchaseService {
 
             // Ордер есть, возможно можем продать
             var isShouldSell = calculator.isShouldSell(strategy, candleDomainEntity, order.getPurchasePrice());
-            if (isShouldSell) {
+            var isShouldSellShort = calculator.isShouldSellShort(strategy, candleDomainEntity, order.getPurchasePrice());
+            if (isShouldSell && !isShouldSellShort) {
                 order = orderService.closeOrder(candleDomainEntity, strategy);
                 notificationService.sendSellInfo(strategy, order, candleDomainEntity);
                 return;

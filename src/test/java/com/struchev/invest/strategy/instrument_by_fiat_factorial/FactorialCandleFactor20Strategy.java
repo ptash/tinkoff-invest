@@ -36,5 +36,5 @@ public class FactorialCandleFactor20Strategy extends FactorialCandle20Strategy {
         return sell;
     }
 
-    public boolean isEnabled() { return true; }
+    public boolean isEnabled() { return false; }
 }

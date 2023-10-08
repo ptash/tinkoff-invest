@@ -37,19 +37,19 @@ import java.util.stream.LongStream;
 @Slf4j
 @DependsOn({"instrumentService"})
 @RequiredArgsConstructor
-public class CandleHistoryService {
-    private final ITinkoffCommonAPI tinkoffCommonAPI;
-    private final StrategySelector strategySelector;
-    private final CandleRepository candleRepository;
-    private final EntityManager entityManager;
+public class CandleHistoryService implements ICandleHistoryService {
+    protected final ITinkoffCommonAPI tinkoffCommonAPI;
+    protected final StrategySelector strategySelector;
+    protected final CandleRepository candleRepository;
+    protected final EntityManager entityManager;
 
-    private Map<String, OffsetDateTime> firstCandleDateTimeByFigi;
-    private Map<String, List<CandleDomainEntity>> candlesLocalCacheMinute;
-    private Map<String, List<CandleDomainEntity>> candlesLocalCacheDay;
-    private Map<String, List<CandleDomainEntity>> candlesLocalCacheHour;
+    protected Map<String, OffsetDateTime> firstCandleDateTimeByFigi;
+    protected Map<String, List<CandleDomainEntity>> candlesLocalCacheMinute;
+    protected Map<String, List<CandleDomainEntity>> candlesLocalCacheDay;
+    protected Map<String, List<CandleDomainEntity>> candlesLocalCacheHour;
 
     @Value("${candle.history.duration}")
-    private Duration historyDuration;
+    protected Duration historyDuration;
     @Value("${candle.listener.enabled}")
     Boolean isCandleListenerEnabled;
 
@@ -217,7 +217,7 @@ public class CandleHistoryService {
      * @return
      */
     @SneakyThrows
-    private List<HistoricCandle> requestCandles(String figi, OffsetDateTime start, OffsetDateTime end, CandleInterval resolution, int tries) {
+    protected List<HistoricCandle> requestCandles(String figi, OffsetDateTime start, OffsetDateTime end, CandleInterval resolution, int tries) {
         try {
             var candles = tinkoffCommonAPI.getApi().getMarketDataService().getCandles(figi,
                     start.toInstant(), end.toInstant(), resolution).get();

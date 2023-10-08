@@ -52,7 +52,7 @@ import java.util.*;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class NotificationService {
+public class NotificationService implements INotificationService{
 
     @Value("${telegram.bot.token:}")
     private String telegramBotToken;

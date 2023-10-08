@@ -1,6 +1,10 @@
 package com.struchev.invest.service.processor;
 
 import com.struchev.invest.entity.CandleDomainEntity;
+import com.struchev.invest.service.candle.CandleHistoryReverseForShortService;
+import com.struchev.invest.service.candle.CandleHistoryService;
+import com.struchev.invest.service.notification.NotificationForShortService;
+import com.struchev.invest.service.notification.NotificationService;
 import com.struchev.invest.strategy.AStrategy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +25,13 @@ import java.util.stream.Collectors;
 public class CalculatorFacade {
     private final List<ICalculatorService> calculateServices;
     private Map<AStrategy.Type, ICalculatorService> calculateServiceByType;
+    private Map<AStrategy.Type, ICalculatorService> calculateServiceByTypeShort;
+
+    private final CandleHistoryService candleHistoryService;
+    private final NotificationService notificationService;
+
+    private final CandleHistoryReverseForShortService candleHistoryReverseForShortService;
+    private final NotificationForShortService notificationForShortService;
 
     public <T extends AStrategy> boolean isShouldBuy(T strategy, CandleDomainEntity candle) {
         try {
@@ -40,8 +51,55 @@ public class CalculatorFacade {
         }
     }
 
+    public <T extends AStrategy> boolean isShouldBuyShort(T strategy, CandleDomainEntity candle) {
+        try {
+            var s = calculateServiceByTypeShort.get(strategy.getType());
+            var c = candleHistoryReverseForShortService.prepareCandleForShort(candle.clone());
+            if (s instanceof Cloneable) {
+                return s.isShouldBuy(strategy, c);
+            }
+            return false;
+        } catch (RuntimeException e) {
+            log.info("error in strategy " + strategy.getName(), e);
+            throw e;
+        }
+    }
+
+    public <T extends AStrategy> boolean isShouldSellShort(T strategy, CandleDomainEntity candle, BigDecimal purchaseRate) {
+        try {
+            var s = calculateServiceByTypeShort.get(strategy.getType());
+            var c = candleHistoryReverseForShortService.prepareCandleForShort(candle.clone());
+            if (s instanceof Cloneable) {
+                return s.isShouldSell(strategy, c, purchaseRate);
+            }
+            return false;
+        } catch (RuntimeException e) {
+            log.info("error in strategy " + strategy.getName(), e);
+            throw e;
+        }
+    }
+
     @PostConstruct
     private void init() {
         calculateServiceByType = calculateServices.stream().collect(Collectors.toMap(c -> c.getStrategyType(), c -> c));
+
+        calculateServiceByTypeShort = calculateServices.stream().collect(Collectors.toMap(c -> c.getStrategyType(), c -> {
+            if (c instanceof ICalculatorShortService) {
+                try {
+                    var cShort = ((ICalculatorShortService) c).cloneService();
+                    if (cShort instanceof ICalculatorShortService) {
+                        cShort.setCandleHistoryService(candleHistoryReverseForShortService);
+                        cShort.setNotificationService(notificationForShortService);
+
+                        ((ICalculatorShortService) c).setCandleHistoryService(candleHistoryService);
+                        ((ICalculatorShortService) c).setNotificationService(notificationService);
+                    }
+                    return (ICalculatorService) cShort;
+                } catch (CloneNotSupportedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            return c;
+        }));
     }
 }

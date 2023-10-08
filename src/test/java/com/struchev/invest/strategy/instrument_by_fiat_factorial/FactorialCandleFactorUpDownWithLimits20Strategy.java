@@ -14,5 +14,5 @@ public class FactorialCandleFactorUpDownWithLimits20Strategy extends FactorialCa
         return buy;
     }
 
-    public boolean isEnabled() { return true; }
+    public boolean isEnabled() { return false; }
 }
