@@ -26,12 +26,49 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class FactorialInstrumentByFiatService implements ICalculatorService<AInstrumentByFiatFactorialStrategy>, ICalculatorShortService, Cloneable {
+public class FactorialInstrumentByFiatService implements
+        ICalculatorService<AInstrumentByFiatFactorialStrategy>,
+        ICalculatorTrendService<AInstrumentByFiatFactorialStrategy>,
+        ICalculatorShortService,
+        Cloneable
+{
 
     private ICandleHistoryService candleHistoryService;
     private INotificationService notificationService;
 
     private IOrderService orderService;
+
+    @Override
+    public boolean isTrendBuy(AInstrumentByFiatFactorialStrategy strategy, CandleDomainEntity candle) {
+        var newStrategy = buildAvgStrategy(strategy, candle);
+        if (null == newStrategy) {
+            return false;
+        }
+        var buyCriteria = newStrategy.getBuyCriteria();
+        clearCandleInterval(newStrategy, candle);
+        var candleBuyRes = getCandleBuyRes(newStrategy, candle);
+        if (candleBuyRes.isIntervalUp || candleBuyRes.candleIntervalBuy) {
+            return candleBuyRes.isIntervalUp;
+        }
+        var candleIntervalUpDownData = candleBuyRes.candleIntervalUpDownData;
+        if (candleIntervalUpDownData.maxCandle == null) {
+            return false;
+        }
+        var candleIntervalUpDownDataPrev = getPrevCandleIntervalUpDownData(newStrategy, candleIntervalUpDownData);
+        if (candleIntervalUpDownData.maxCandle == null) {
+            return false;
+        }
+
+        var isIntervalUpResMaybe = calcIsIntervalUpMaybe(
+                candle,
+                null,
+                buyCriteria,
+                newStrategy,
+                candleIntervalUpDownData,
+                candleIntervalUpDownDataPrev
+        );
+        return (isIntervalUpResMaybe != null && isIntervalUpResMaybe.isIntervalUp);
+    }
 
     @Builder
     @Data

@@ -59,8 +59,22 @@ public class CalculatorFacade {
         try {
             var s = calculateServiceByTypeShort.get(strategy.getType());
             var c = candleHistoryReverseForShortService.prepareCandleForShort(candle.clone());
-            if (s instanceof Cloneable) {
+            if (s instanceof ICalculatorShortService) {
                 return s.isShouldBuy(strategy, c);
+            }
+            return false;
+        } catch (RuntimeException e) {
+            log.info("error in strategy " + strategy.getName(), e);
+            throw e;
+        }
+    }
+
+    public <T extends AStrategy> boolean isTrendBuyShort(T strategy, CandleDomainEntity candle) {
+        try {
+            var s = calculateServiceByTypeShort.get(strategy.getType());
+            var c = candleHistoryReverseForShortService.prepareCandleForShort(candle.clone());
+            if (s instanceof ICalculatorTrendService) {
+                return ((ICalculatorTrendService<T>) s).isTrendBuy(strategy, c);
             }
             return false;
         } catch (RuntimeException e) {
@@ -73,7 +87,7 @@ public class CalculatorFacade {
         try {
             var s = calculateServiceByTypeShort.get(strategy.getType());
             var c = candleHistoryReverseForShortService.prepareCandleForShort(candle.clone());
-            if (s instanceof Cloneable) {
+            if (s instanceof ICalculatorShortService) {
                 return s.isShouldSell(strategy, c, purchaseRate);
             }
             return false;

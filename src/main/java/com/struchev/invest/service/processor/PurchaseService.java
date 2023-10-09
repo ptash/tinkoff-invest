@@ -74,7 +74,8 @@ public class PurchaseService {
             if (order == null) {
                 var isShouldBuy = calculator.isShouldBuy(strategy, candleDomainEntity);
                 var isShouldBuyShort = calculator.isShouldBuyShort(strategy, candleDomainEntity);
-                if (isShouldBuy && !isShouldBuyShort) {
+                var isTrendBuyShort = calculator.isTrendBuyShort(strategy, candleDomainEntity);
+                if (isShouldBuy && !isShouldBuyShort && !isTrendBuyShort) {
                     OrderDomainEntity lastOrder = null;
                     var finishedOrders = orderService.findClosedByFigiAndStrategy(candleDomainEntity.getFigi(), strategy);
                     if (finishedOrders.size() > 0) {
@@ -197,7 +198,11 @@ public class PurchaseService {
             var isShouldSell = calculator.isShouldSell(strategy, candleDomainEntity, order.getPurchasePrice());
             //var isShouldSellShort = calculator.isShouldSellShort(strategy, candleDomainEntity, order.getPurchasePrice());
             var isShouldBuyShort = calculator.isShouldBuyShort(strategy, candleDomainEntity);
-            if (isShouldSell || isShouldBuyShort) {
+            var isTrendBuyShort = calculator.isTrendBuyShort(strategy, candleDomainEntity);
+            if (
+                    isShouldSell
+                    || (isTrendBuyShort && order.getPurchasePrice().compareTo(candleDomainEntity.getClosingPrice()) < 0)
+            ) {
                 order = orderService.closeOrder(candleDomainEntity, strategy);
                 notificationService.sendSellInfo(strategy, order, candleDomainEntity);
                 return;
