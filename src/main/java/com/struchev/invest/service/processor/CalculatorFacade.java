@@ -1,6 +1,7 @@
 package com.struchev.invest.service.processor;
 
 import com.struchev.invest.entity.CandleDomainEntity;
+import com.struchev.invest.entity.OrderDomainEntity;
 import com.struchev.invest.service.candle.CandleHistoryReverseForShortService;
 import com.struchev.invest.service.candle.CandleHistoryService;
 import com.struchev.invest.service.notification.NotificationForShortService;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -108,6 +110,32 @@ public class CalculatorFacade {
             log.info("error in strategy " + strategy.getName(), e);
             throw e;
         }
+    }
+
+    public Boolean isOrderNeedSell(OrderDomainEntity order, CandleDomainEntity candleDomainEntity)
+    {
+        var stopLossPrice = order.getDetails().getCurrentPrices().getOrDefault("stopLossPrice", BigDecimal.ZERO);
+        if (stopLossPrice.equals(BigDecimal.ZERO)) {
+            return true;
+        }
+        var orderPrice = order.getPurchasePrice();
+        if (order.isShort()) {
+            orderPrice = candleHistoryReverseForShortService.preparePrice(order.getSellPrice());
+            stopLossPrice = candleHistoryReverseForShortService.preparePrice(stopLossPrice);
+            candleDomainEntity = candleHistoryReverseForShortService.prepareCandleForShort(candleDomainEntity.clone());
+        }
+        if (orderPrice.compareTo(candleDomainEntity.getClosingPrice()) < 0) {
+            // в минусе и мижняя граница либо высоко, либо очень низко
+            if (stopLossPrice.compareTo(orderPrice) > 0) {
+                return true;
+            }
+            var middle = stopLossPrice.add(orderPrice.subtract(stopLossPrice).divide(BigDecimal.valueOf(2), 8, RoundingMode.HALF_UP));
+            return candleDomainEntity.getClosingPrice().compareTo(middle) > 0;
+        } else {
+            // в плюсе, но не большом
+            return orderPrice.compareTo(stopLossPrice) > 0;
+        }
+
     }
 
     @PostConstruct

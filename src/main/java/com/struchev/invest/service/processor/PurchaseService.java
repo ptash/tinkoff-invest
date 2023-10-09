@@ -164,7 +164,7 @@ public class PurchaseService {
                         notificationService.sendBuyInfo(strategy, order, candleDomainEntity);
                     }
 
-                    if (isShouldBuyShort) {
+                    if (isShouldBuyShort && !isShouldBuy) {
                         var isTrendBuy = calculator.isTrendBuy(strategy, candleDomainEntity);
                         if (!isTrendBuy && !isShouldBuy) {
                             order = orderService.openOrderShort(candleDomainEntity, strategy, buildOrderDetails(strategy, candleDomainEntity));
@@ -196,7 +196,9 @@ public class PurchaseService {
                     var isShouldBuyShort = calculator.isShouldBuyShort(strategy, candleDomainEntity);
                     if (
                             isShouldSell
-                                    || ((isShouldBuyShort || isTrendBuyShort) && order.getPurchasePrice().compareTo(candleDomainEntity.getClosingPrice()) < 0)
+                            || ((isShouldBuyShort || isTrendBuyShort)
+                                    && isOrderNeedSell(order, candleDomainEntity)
+                            )
                     ) {
                         order = orderService.closeOrder(candleDomainEntity, strategy);
                         notificationService.sendSellInfo(strategy, order, candleDomainEntity);
@@ -207,7 +209,9 @@ public class PurchaseService {
                     var isShouldBuy = calculator.isShouldBuy(strategy, candleDomainEntity);
                     if (
                             isShouldSellShort
-                            || ((isTrendBuy || isShouldBuy) && order.getSellPrice().compareTo(candleDomainEntity.getClosingPrice()) > 0)
+                            || ((isTrendBuy || isShouldBuy)
+                                    && isOrderNeedSell(order, candleDomainEntity)
+                            )
                     ) {
                         order = orderService.closeOrderShort(candleDomainEntity, strategy);
                         notificationForShortService.sendBuyInfo(strategy, order, candleDomainEntity);
@@ -226,6 +230,11 @@ public class PurchaseService {
                 throw e;
             }
         });
+    }
+
+    private Boolean isOrderNeedSell(OrderDomainEntity order, CandleDomainEntity candleDomainEntity)
+    {
+        return calculator.isOrderNeedSell(order, candleDomainEntity);
     }
 
     private OrderDetails buildOrderDetails(AStrategy strategy, CandleDomainEntity candleDomainEntity)
