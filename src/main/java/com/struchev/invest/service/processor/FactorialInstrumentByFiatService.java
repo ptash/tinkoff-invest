@@ -150,6 +150,7 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
                     + "(from " + factorial.candleList.get(0).getDateTime() + " to " + factorial.candleList.get(factorial.candleList.size() - 1).getDateTime() + ")"
                     + "(from " + factorial.candleListFeature.get(0).getDateTime() + " to " + factorial.candleListFeature.get(factorial.candleListFeature.size() - 1).getDateTime() + ")";
             annotation += " expectProfit/expectLoss=" + (expectProfit / expectLoss);
+            annotation += factorial.info;
             if (closeMax < buyCriteria.getTakeProfitPercentBetweenCloseMax()
                     && ((buyCriteria.getTakeProfitPercentBetween() != null
                     && expectProfit > buyCriteria.getTakeProfitPercentBetween()
@@ -2540,6 +2541,8 @@ public class FactorialInstrumentByFiatService implements ICalculatorService<AIns
             expectLossList.add(expectLoss);
             bestInfo += " expectLoss = " + candleListFactorial.get(candleListFactorial.size() - 1).getDateTime() + ":" + candleListFactorial.get(candleListFactorial.size() - 1).getClosingPrice().doubleValue() + "-"
                     +  minPrice + "=" + expectLoss;
+            bestInfo += " expectProfit = " + printPrice(maxPrice) + "-" + printPrice(candleListFactorial.get(candleListFactorial.size() - 1).getClosingPrice())
+                    + "=" + expectProfit;
         }
 
         var expectProfit = expectProfitList.stream().mapToDouble(i -> i).average().orElse(-1);

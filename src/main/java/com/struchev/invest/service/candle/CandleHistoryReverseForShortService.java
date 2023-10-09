@@ -68,10 +68,13 @@ public class CandleHistoryReverseForShortService implements ICandleHistoryServic
     }
     public CandleDomainEntity prepareCandleForShort(CandleDomainEntity c)
     {
-        c.setClosingPrice(c.getClosingPrice().multiply(BigDecimal.valueOf(-1)));
-        c.setOpenPrice(c.getOpenPrice().multiply(BigDecimal.valueOf(-1)));
-        c.setHighestPrice(c.getHighestPrice().multiply(BigDecimal.valueOf(-1)));
-        c.setLowestPrice(c.getLowestPrice().multiply(BigDecimal.valueOf(-1)));
+        var plusV = BigDecimal.valueOf(200);
+        c.setClosingPrice(c.getClosingPrice().multiply(BigDecimal.valueOf(-1)).add(plusV));
+        c.setOpenPrice(c.getOpenPrice().multiply(BigDecimal.valueOf(-1)).add(plusV));
+        var l = c.getLowestPrice();
+        var h = c.getHighestPrice();
+        c.setHighestPrice(l.multiply(BigDecimal.valueOf(-1)).add(plusV));
+        c.setLowestPrice(h.multiply(BigDecimal.valueOf(-1)).add(plusV));
         return c;
     }
 }
