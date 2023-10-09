@@ -5,6 +5,7 @@ import com.struchev.invest.entity.OrderDomainEntity;
 import com.struchev.invest.service.candle.ICandleHistoryService;
 import com.struchev.invest.service.notification.INotificationService;
 import com.struchev.invest.service.order.IOrderService;
+import com.struchev.invest.service.order.Order;
 import com.struchev.invest.service.order.OrderService;
 import com.struchev.invest.strategy.AStrategy;
 import com.struchev.invest.strategy.instrument_by_fiat_factorial.AInstrumentByFiatFactorialStrategy;
@@ -2252,7 +2253,7 @@ public class FactorialInstrumentByFiatService implements
             if (
                     stopLossPriceBottomA != null
                     && !stopLossPriceBottomA.equals(BigDecimal.ZERO)
-                    && stopLossPriceBeginDate.isAfter(order.getPurchaseDateTime())
+                    //&& stopLossPriceBeginDate.isAfter(order.getPurchaseDateTime())
                     //candle.getHighestPrice().compareTo(stopLossPrice) < 0
             ) {
                 annotation += " stopLossPrice TRY";
@@ -2866,7 +2867,7 @@ public class FactorialInstrumentByFiatService implements
     private CandleIntervalResultData isOrderCandleUp(
             FactorialDiffAvgAdapterStrategy strategy,
             CandleDomainEntity candle,
-            OrderDomainEntity order,
+            Order order,
             AInstrumentByFiatFactorialStrategy.BuyCriteria buyCriteria,
             AInstrumentByFiatFactorialStrategy.SellCriteria sellCriteria
     ) {
@@ -4168,7 +4169,7 @@ public class FactorialInstrumentByFiatService implements
 
     private CandleIntervalUpResult calcIsIntervalUpMaybe(
             CandleDomainEntity candle,
-            OrderDomainEntity order,
+            Order order,
             AInstrumentByFiatFactorialStrategy.BuyCriteria buyCriteria,
             FactorialDiffAvgAdapterStrategy newStrategy,
             CandleIntervalUpDownData candleIntervalUpDownData,
@@ -4231,7 +4232,7 @@ public class FactorialInstrumentByFiatService implements
 
     private CandleIntervalUpResult calcIsIntervalUp(
             CandleDomainEntity candle,
-            OrderDomainEntity order,
+            Order order,
             AInstrumentByFiatFactorialStrategy.BuyCriteria buyCriteria,
             CandleIntervalUpDownData candleIntervalUpDownData,
             CandleIntervalUpDownData candleIntervalUpDownDataPrev,

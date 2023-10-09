@@ -45,14 +45,12 @@ public class CandleHistoryReverseForShortService implements ICandleHistoryServic
         return prepareForShort(res);
     }
 
-    public List<CandleDomainEntity> getCandlesByFigiByLength(String figi, OffsetDateTime currentDateTime, Integer length, String interval)
-    {
+    public List<CandleDomainEntity> getCandlesByFigiByLength(String figi, OffsetDateTime currentDateTime, Integer length, String interval) {
         var res = candleHistoryService.getCandlesByFigiByLength(figi, currentDateTime, length, interval);
         return prepareForShort(res);
     }
 
-    private List<CandleDomainEntity> prepareForShort(List<CandleDomainEntity> list)
-    {
+    private List<CandleDomainEntity> prepareForShort(List<CandleDomainEntity> list) {
         if (!isCandleListenerEnabled) {
             return list.stream().map(cOrig -> {
                 var c = cOrig.clone();
@@ -60,21 +58,26 @@ public class CandleHistoryReverseForShortService implements ICandleHistoryServic
                 return c;
             }).collect(Collectors.toList());
         }
-        for (var i = list.listIterator(); i.hasNext();) {
+        for (var i = list.listIterator(); i.hasNext(); ) {
             var c = i.next();
             prepareCandleForShort(c);
-        };
+        }
+        ;
         return list;
     }
-    public CandleDomainEntity prepareCandleForShort(CandleDomainEntity c)
-    {
-        var plusV = BigDecimal.valueOf(200);
-        c.setClosingPrice(c.getClosingPrice().multiply(BigDecimal.valueOf(-1)).add(plusV));
-        c.setOpenPrice(c.getOpenPrice().multiply(BigDecimal.valueOf(-1)).add(plusV));
+
+    public CandleDomainEntity prepareCandleForShort(CandleDomainEntity c) {
+        c.setClosingPrice(preparePrice(c.getClosingPrice()));
+        c.setOpenPrice(preparePrice(c.getOpenPrice()));
         var l = c.getLowestPrice();
         var h = c.getHighestPrice();
-        c.setHighestPrice(l.multiply(BigDecimal.valueOf(-1)).add(plusV));
-        c.setLowestPrice(h.multiply(BigDecimal.valueOf(-1)).add(plusV));
+        c.setHighestPrice(preparePrice(l));
+        c.setLowestPrice(preparePrice(h));
         return c;
+    }
+
+    public BigDecimal preparePrice(BigDecimal price)
+    {
+        return price.multiply(BigDecimal.valueOf(-1)).add(BigDecimal.valueOf(200));
     }
 }

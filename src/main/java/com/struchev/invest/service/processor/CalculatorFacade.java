@@ -46,6 +46,19 @@ public class CalculatorFacade {
         }
     }
 
+    public <T extends AStrategy> boolean isTrendBuy(T strategy, CandleDomainEntity candle) {
+        try {
+            var s = calculateServiceByType.get(strategy.getType());
+            if (s instanceof ICalculatorTrendService) {
+                return ((ICalculatorTrendService<T>) s).isTrendBuy(strategy, candle);
+            }
+            return false;
+        } catch (RuntimeException e) {
+            log.info("error in strategy " + strategy.getName(), e);
+            throw e;
+        }
+    }
+
     public <T extends AStrategy> boolean isShouldSell(T strategy, CandleDomainEntity candle, BigDecimal purchaseRate) {
         try {
             return calculateServiceByType.get(strategy.getType()).isShouldSell(strategy, candle, purchaseRate);
@@ -88,7 +101,7 @@ public class CalculatorFacade {
             var s = calculateServiceByTypeShort.get(strategy.getType());
             var c = candleHistoryReverseForShortService.prepareCandleForShort(candle.clone());
             if (s instanceof ICalculatorShortService) {
-                return s.isShouldSell(strategy, c, purchaseRate);
+                return s.isShouldSell(strategy, c, candleHistoryReverseForShortService.preparePrice(purchaseRate));
             }
             return false;
         } catch (RuntimeException e) {

@@ -6,7 +6,7 @@ import com.struchev.invest.strategy.AStrategy;
 import java.math.BigDecimal;
 
 public interface IOrderService {
-    OrderDomainEntity findLastByFigiAndStrategy(String figi, AStrategy strategy);
-    OrderDomainEntity findActiveByFigiAndStrategy(String figi, AStrategy strategy);
-    OrderDomainEntity updateDetailsCurrentPrice(OrderDomainEntity order, String key, BigDecimal price);
+    Order findLastByFigiAndStrategy(String figi, AStrategy strategy);
+    Order findActiveByFigiAndStrategy(String figi, AStrategy strategy);
+    OrderDomainEntity updateDetailsCurrentPrice(Order order, String key, BigDecimal price);
 }

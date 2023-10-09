@@ -4,7 +4,9 @@ import com.struchev.invest.entity.CandleDomainEntity;
 import com.struchev.invest.entity.OrderDetails;
 import com.struchev.invest.entity.OrderDomainEntity;
 import com.struchev.invest.service.candle.CandleHistoryService;
+import com.struchev.invest.service.notification.NotificationForShortService;
 import com.struchev.invest.service.notification.NotificationService;
+import com.struchev.invest.service.order.OrderForShortService;
 import com.struchev.invest.service.order.OrderService;
 import com.struchev.invest.strategy.AStrategy;
 import com.struchev.invest.strategy.StrategySelector;
@@ -29,6 +31,7 @@ public class PurchaseService {
     private final OrderService orderService;
     private final StrategySelector strategySelector;
     private final NotificationService notificationService;
+    private final NotificationForShortService notificationForShortService;
     private final CalculatorFacade calculator;
     private final CalculatorInstrumentByInstrumentService calculatorInstrumentByInstrumentService;
     private final FactorialInstrumentByFiatService factorialInstrumentByFiatService;
@@ -56,68 +59,70 @@ public class PurchaseService {
         log.debug("Observe candle event: {}", candleDomainEntity);
         var strategies = strategySelector.suitableByFigi(candleDomainEntity.getFigi(), null, candleDomainEntity.getInterval());
         strategies.parallelStream().forEach(strategy -> {
-            // Ищем открытый ордер
-            // Для стратегии instrumentByInstrument нужен ордер по инструменту свечки (торгуется стратегия в разрезе инструмента)
-            // Для стратегии instrumentByInstrument нужен ордер по любому инструменту (торгуется вся стратегия целиком)
-            var figiSuitableForOrder = strategy.getType() == AStrategy.Type.instrumentByInstrument ? null : candleDomainEntity.getFigi();
-            var order = orderService.findActiveByFigiAndStrategy(figiSuitableForOrder, strategy);
+            try {
+                // Ищем открытый ордер
+                // Для стратегии instrumentByInstrument нужен ордер по инструменту свечки (торгуется стратегия в разрезе инструмента)
+                // Для стратегии instrumentByInstrument нужен ордер по любому инструменту (торгуется вся стратегия целиком)
+                var figiSuitableForOrder = strategy.getType() == AStrategy.Type.instrumentByInstrument ? null : candleDomainEntity.getFigi();
+                var order = orderService.findAnyActiveOrderDomainByFigiAndStrategy(figiSuitableForOrder, strategy);
 
-            if (order == null && strategy.isArchive()) {
-                return;
-            }
+                if (order == null && strategy.isArchive()) {
+                    return;
+                }
 
-            if (strategy instanceof AInstrumentByFiatCrossStrategy) {
-                strategy = ((AInstrumentByFiatCrossStrategy)strategy).getFigiStrategy(candleDomainEntity.getFigi());
-            }
+                if (strategy instanceof AInstrumentByFiatCrossStrategy) {
+                    strategy = ((AInstrumentByFiatCrossStrategy) strategy).getFigiStrategy(candleDomainEntity.getFigi());
+                }
 
-            // Нет активного ордера, возможно можем купить, если нет ограничений по задержке после stop loss
-            if (order == null) {
-                var isShouldBuy = calculator.isShouldBuy(strategy, candleDomainEntity);
-                var isShouldBuyShort = calculator.isShouldBuyShort(strategy, candleDomainEntity);
-                var isTrendBuyShort = calculator.isTrendBuyShort(strategy, candleDomainEntity);
-                if (isShouldBuy && !isShouldBuyShort && !isTrendBuyShort) {
-                    OrderDomainEntity lastOrder = null;
-                    var finishedOrders = orderService.findClosedByFigiAndStrategy(candleDomainEntity.getFigi(), strategy);
-                    if (finishedOrders.size() > 0) {
-                        lastOrder = finishedOrders.get(finishedOrders.size() - 1);
-                    }
-                    if (strategy.getDelayBySL() != null
-                            && lastOrder != null
-                            && lastOrder.getSellProfit() != null
-                            && lastOrder.getSellProfit().compareTo(BigDecimal.ZERO) < 0) {
-                        var length = strategy.getDelayBySL().getSeconds() / 60;
-                        var candles = candleHistoryService.getCandlesByFigiAndIntervalAndBeforeDateTimeLimit(
-                                candleDomainEntity.getFigi(),
-                                candleDomainEntity.getDateTime(),
-                                Long.valueOf(length).intValue(),
-                                strategy.getInterval()
-                        );
-                        if (candles.size() < length) {
-                            log.warn("Buy cancel by DelayBySL {} {}: getCandlesByFigiByLength return null for length {}", strategy.getName(), candleDomainEntity.getFigi(), length);
+                // Нет активного ордера, возможно можем купить, если нет ограничений по задержке после stop loss
+                if (order == null) {
+
+                    var isShouldBuy = calculator.isShouldBuy(strategy, candleDomainEntity);
+                    var isShouldBuyShort = calculator.isShouldBuyShort(strategy, candleDomainEntity);
+                    var isTrendBuyShort = calculator.isTrendBuyShort(strategy, candleDomainEntity);
+                    if (isShouldBuy && !isShouldBuyShort && !isTrendBuyShort) {
+                        OrderDomainEntity lastOrder = null;
+                        var finishedOrders = orderService.findClosedByFigiAndStrategy(candleDomainEntity.getFigi(), strategy);
+                        if (finishedOrders.size() > 0) {
+                            lastOrder = finishedOrders.get(finishedOrders.size() - 1);
                         }
-                        if (lastOrder.getSellDateTime().isAfter(candles.get(0).getDateTime())) {
-                            log.info("Buy cancel by DelayBySL {} {}: {} isAfter {}",
+                        if (strategy.getDelayBySL() != null
+                                && lastOrder != null
+                                && lastOrder.getSellProfit() != null
+                                && lastOrder.getSellProfit().compareTo(BigDecimal.ZERO) < 0) {
+                            var length = strategy.getDelayBySL().getSeconds() / 60;
+                            var candles = candleHistoryService.getCandlesByFigiAndIntervalAndBeforeDateTimeLimit(
+                                    candleDomainEntity.getFigi(),
+                                    candleDomainEntity.getDateTime(),
+                                    Long.valueOf(length).intValue(),
+                                    strategy.getInterval()
+                            );
+                            if (candles.size() < length) {
+                                log.warn("Buy cancel by DelayBySL {} {}: getCandlesByFigiByLength return null for length {}", strategy.getName(), candleDomainEntity.getFigi(), length);
+                            }
+                            if (lastOrder.getSellDateTime().isAfter(candles.get(0).getDateTime())) {
+                                log.info("Buy cancel by DelayBySL {} {}: {} isAfter {}",
+                                        strategy.getName(),
+                                        candleDomainEntity.getFigi(),
+                                        lastOrder.getSellDateTime(),
+                                        candles.get(0).getDateTime()
+                                );
+                                return;
+                            }
+                        }
+
+                        if (strategy.getDelayPlusBySL() != null
+                                && lastOrder != null
+                                && lastOrder.getSellProfit() != null
+                                && lastOrder.getSellPrice() != null
+                                && lastOrder.getSellProfit().compareTo(BigDecimal.ZERO) < 0
+                        ) {
+                            log.info("Buy by DelayPlusBySL {} {} {} - {}",
                                     strategy.getName(),
                                     candleDomainEntity.getFigi(),
-                                    lastOrder.getSellDateTime(),
-                                    candles.get(0).getDateTime()
+                                    candleDomainEntity.getDateTime(),
+                                    strategy.getDelayPlusBySL()
                             );
-                            return;
-                        }
-                    }
-
-                    if (strategy.getDelayPlusBySL() != null
-                            && lastOrder != null
-                            && lastOrder.getSellProfit() != null
-                            && lastOrder.getSellPrice() != null
-                            && lastOrder.getSellProfit().compareTo(BigDecimal.ZERO) < 0
-                    ) {
-                        log.info("Buy by DelayPlusBySL {} {} {} - {}",
-                                strategy.getName(),
-                                candleDomainEntity.getFigi(),
-                                candleDomainEntity.getDateTime(),
-                                strategy.getDelayPlusBySL()
-                        );
                             var candles = candleHistoryService.getCandlesByFigiByLength(
                                     candleDomainEntity.getFigi(),
                                     candleDomainEntity.getDateTime(),
@@ -153,66 +158,97 @@ public class PurchaseService {
                                 );
                                 return;
                             }
+                        }
+
+                        order = orderService.openOrder(candleDomainEntity, strategy, buildOrderDetails(strategy, candleDomainEntity));
+                        notificationService.sendBuyInfo(strategy, order, candleDomainEntity);
                     }
 
-                    var currentPrices = (strategy.getType() == AStrategy.Type.instrumentByInstrument)
-                            ? calculatorInstrumentByInstrumentService.getCurrentPrices() : null;
-                    if (strategy.getType() == AStrategy.Type.instrumentCrossByFiat) {
-                        currentPrices = crossInstrumentByFiatService.getCurrentPrices();
+                    if (isShouldBuyShort) {
+                        var isTrendBuy = calculator.isTrendBuy(strategy, candleDomainEntity);
+                        if (!isTrendBuy && !isShouldBuy) {
+                            order = orderService.openOrderShort(candleDomainEntity, strategy, buildOrderDetails(strategy, candleDomainEntity));
+                            notificationForShortService.sendSellInfo(strategy, order, candleDomainEntity);
+                        }
                     }
-                    if (currentPrices != null) {
-                        AStrategy finalStrategy = strategy;
-                        currentPrices = currentPrices.entrySet().stream()
-                                .filter(e -> finalStrategy.getFigies().containsKey(e.getKey()))
-                                .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
+                    if (null != order) {
+                        //order = orderService.openLimitOrder(order, strategy);
+                        notificationService.sendSellLimitInfo(strategy, order, candleDomainEntity);
                     }
-                    Map<String, Boolean> booleanDataMap = null;
-                    if (strategy.getType() == AStrategy.Type.instrumentFactorialByFiat) {
-                        booleanDataMap = factorialInstrumentByFiatService.getOrderBooleanDataMap(strategy, candleDomainEntity);
-                        currentPrices = factorialInstrumentByFiatService.getOrderBigDecimalDataMap(strategy, candleDomainEntity);
-                    }
-                    order = orderService.openOrder(candleDomainEntity, strategy, OrderDetails.builder()
-                            .currentPrices(currentPrices)
-                            .booleanDataMap(booleanDataMap)
-                            .build());
-
-                    notificationService.sendBuyInfo(strategy, order, candleDomainEntity);
-
-                    //order = orderService.openLimitOrder(order, strategy);
-                    notificationService.sendSellLimitInfo(strategy, order, candleDomainEntity);
+                    return;
                 }
 
-                if (isShouldBuyShort && !isShouldBuy) {
-
+                // Ордер есть, но пришла свечка с датой до покупки текущего ордера, так не должно быть
+                if (
+                        (!order.isShort() && order.getPurchaseDateTime().isAfter(candleDomainEntity.getDateTime()))
+                        || ((order.isShort() && order.getSellDateTime().isAfter(candleDomainEntity.getDateTime())))
+                ) {
+                    log.error("Was founded order before current candle date time: {}, {}", order, candleDomainEntity);
+                    return;
                 }
-                return;
-            }
 
-            // Ордер есть, но пришла свечка с датой до покупки текущего ордера, так не должно быть
-            if (order.getPurchaseDateTime().isAfter(candleDomainEntity.getDateTime())) {
-                log.error("Was founded order before current candle date time: {}, {}", order, candleDomainEntity);
-                return;
-            }
-
-            // Ордер есть, возможно можем продать
-            var isShouldSell = calculator.isShouldSell(strategy, candleDomainEntity, order.getPurchasePrice());
-            //var isShouldSellShort = calculator.isShouldSellShort(strategy, candleDomainEntity, order.getPurchasePrice());
-            var isShouldBuyShort = calculator.isShouldBuyShort(strategy, candleDomainEntity);
-            var isTrendBuyShort = calculator.isTrendBuyShort(strategy, candleDomainEntity);
-            if (
-                    isShouldSell
-                    || (isTrendBuyShort && order.getPurchasePrice().compareTo(candleDomainEntity.getClosingPrice()) < 0)
-            ) {
-                order = orderService.closeOrder(candleDomainEntity, strategy);
-                notificationService.sendSellInfo(strategy, order, candleDomainEntity);
-                return;
-            } else {
-                var orderId = order.getSellOrderId();
-                order = orderService.openLimitOrder(order, strategy, candleDomainEntity);
-                if (orderId != order.getSellOrderId() || order.getSellDateTime() != null) {
-                    notificationService.sendSellLimitInfo(strategy, order, candleDomainEntity);
+                // Ордер есть, возможно можем продать
+                var isTrendBuy = calculator.isTrendBuy(strategy, candleDomainEntity);
+                var isTrendBuyShort = calculator.isTrendBuyShort(strategy, candleDomainEntity);
+                var isSell = false;
+                if (!order.isShort()) {
+                    var isShouldSell = calculator.isShouldSell(strategy, candleDomainEntity, order.getPurchasePrice());
+                    var isShouldBuyShort = calculator.isShouldBuyShort(strategy, candleDomainEntity);
+                    if (
+                            isShouldSell
+                                    || ((isShouldBuyShort || isTrendBuyShort) && order.getPurchasePrice().compareTo(candleDomainEntity.getClosingPrice()) < 0)
+                    ) {
+                        order = orderService.closeOrder(candleDomainEntity, strategy);
+                        notificationService.sendSellInfo(strategy, order, candleDomainEntity);
+                        isSell = true;
+                    }
+                } else if (order.isShort()) {
+                    var isShouldSellShort = calculator.isShouldSellShort(strategy, candleDomainEntity, order.getSellPrice());
+                    var isShouldBuy = calculator.isShouldBuy(strategy, candleDomainEntity);
+                    if (
+                            isShouldSellShort
+                            || ((isTrendBuy || isShouldBuy) && order.getSellPrice().compareTo(candleDomainEntity.getClosingPrice()) > 0)
+                    ) {
+                        order = orderService.closeOrderShort(candleDomainEntity, strategy);
+                        notificationForShortService.sendBuyInfo(strategy, order, candleDomainEntity);
+                        isSell = true;
+                    }
                 }
+                if (!isSell) {
+                    var orderId = order.getSellOrderId();
+                    order = orderService.openLimitOrder(order, strategy, candleDomainEntity);
+                    if (orderId != order.getSellOrderId() || order.getSellDateTime() != null) {
+                        notificationService.sendSellLimitInfo(strategy, order, candleDomainEntity);
+                    }
+                }
+            } catch (RuntimeException e) {
+                log.info("error in observeNewCandle " + strategy.getName(), e);
+                throw e;
             }
         });
+    }
+
+    private OrderDetails buildOrderDetails(AStrategy strategy, CandleDomainEntity candleDomainEntity)
+    {
+        var currentPrices = (strategy.getType() == AStrategy.Type.instrumentByInstrument)
+                ? calculatorInstrumentByInstrumentService.getCurrentPrices() : null;
+        if (strategy.getType() == AStrategy.Type.instrumentCrossByFiat) {
+            currentPrices = crossInstrumentByFiatService.getCurrentPrices();
+        }
+        if (currentPrices != null) {
+            AStrategy finalStrategy = strategy;
+            currentPrices = currentPrices.entrySet().stream()
+                    .filter(e -> finalStrategy.getFigies().containsKey(e.getKey()))
+                    .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
+        }
+        Map<String, Boolean> booleanDataMap = null;
+        if (strategy.getType() == AStrategy.Type.instrumentFactorialByFiat) {
+            booleanDataMap = factorialInstrumentByFiatService.getOrderBooleanDataMap(strategy, candleDomainEntity);
+            currentPrices = factorialInstrumentByFiatService.getOrderBigDecimalDataMap(strategy, candleDomainEntity);
+        }
+        return OrderDetails.builder()
+                .currentPrices(currentPrices)
+                .booleanDataMap(booleanDataMap)
+                .build();
     }
 }

@@ -91,7 +91,7 @@ public class NotificationService implements INotificationService{
                 formatDateTime(order.getPurchaseDateTime()),
                 order.getPurchasePrice()
         );
-        var msg = String.format("Buy %s (%s), %s, %s, %s. Wanted %s", order.getFigi(), order.getFigiTitle(),
+        var msg = String.format("Buy %s %s (%s), %s, %s, %s. Wanted %s", order.getFigi(), order.isShort() ? "short" : "long", order.getFigiTitle(),
                 order.getPurchasePrice(), order.getPurchaseDateTime(), order.getStrategy(), candle.getClosingPrice());
         this.sendMessageAndLog(msg);
     }
@@ -104,7 +104,7 @@ public class NotificationService implements INotificationService{
                 order.getSellPrice(),
                 order.getSellPrice()
         );
-        var msg = String.format("Sell %s (%s), %s (%s), %s, %s. Wanted: %s", candle.getFigi(), order.getFigiTitle(),
+        var msg = String.format("Sell %s %s (%s), %s (%s), %s, %s. Wanted: %s", candle.getFigi(), order.isShort() ? "short" : "long", order.getFigiTitle(),
                 order.getSellPrice(), order.getSellProfit(), order.getSellDateTime(), order.getStrategy(), candle.getClosingPrice());
         this.sendMessageAndLog(msg);
     }

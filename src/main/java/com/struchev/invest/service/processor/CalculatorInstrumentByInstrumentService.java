@@ -79,7 +79,7 @@ public class CalculatorInstrumentByInstrumentService implements ICalculatorServi
             return false;
         }
 
-        var lastOpenOrder = orderService.findActiveByFigiAndStrategy(null, strategy);
+        var lastOpenOrder = orderService.findActiveOrderDomainByFigiAndStrategy(null, strategy);
         if (!lastOpenOrder.getFigi().equals(candle.getFigi())) {
             // Нет купленного инструмента в рамках стратегии, нечего продавать
             return false;

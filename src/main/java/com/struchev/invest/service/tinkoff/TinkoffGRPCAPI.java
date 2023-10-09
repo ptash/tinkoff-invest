@@ -67,6 +67,47 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
         }
     }
 
+    @Override
+    public OrderResult buyShort(InstrumentService.Instrument instrument, BigDecimal price, Integer count) {
+        long quantity = count / instrument.getLot();
+        var quotation = Quotation.newBuilder()
+                .setUnits(price.longValue())
+                .setNano(price.remainder(BigDecimal.ONE).movePointRight(9).intValue())
+                .build();
+        var uuid = UUID.randomUUID().toString();
+        log.info("Send postOrderSync short with: figi {}, quantity {}, quotation {}, direction {}, acc {}, type {}, id {}",
+                instrument.getFigi(), quantity, quotation, OrderDirection.ORDER_DIRECTION_SELL, getAccountIdByFigi(instrument), OrderType.ORDER_TYPE_MARKET, uuid);
+
+        if (getIsSandboxMode()) {
+            var result = getApi().getSandboxService().postOrderSync(instrument.getFigi(), quantity, quotation,
+                    OrderDirection.ORDER_DIRECTION_SELL, getAccountIdByFigi(instrument), OrderType.ORDER_TYPE_MARKET, uuid);
+            var priceExecuted = toBigDecimal(result.getExecutedOrderPrice(), 8, price);
+            return OrderResult.builder()
+                    .orderId(result.getOrderId())
+                    .commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
+                    .commission(toBigDecimal(result.getInitialCommission(), 8))
+                    .price(priceExecuted)
+                    .pricePt(getPricePt(instrument, priceExecuted))
+                    .lots(result.getLotsRequested() * instrument.getLot())
+                    .isExecuted(true)
+                    .build();
+        } else {
+            checkInstrumentAvailableToBuyShort(instrument, price, count);
+            var result = getApi().getOrdersService().postOrderSync(instrument.getFigi(), quantity, quotation,
+                    OrderDirection.ORDER_DIRECTION_SELL, getAccountIdByFigi(instrument), OrderType.ORDER_TYPE_MARKET, uuid);
+            var priceExecuted = toBigDecimal(result.getExecutedOrderPrice(), 8, price);
+            return OrderResult.builder()
+                    .orderId(result.getOrderId())
+                    .commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
+                    .commission(getExecutedCommission(result, instrument))
+                    .price(priceExecuted)
+                    .pricePt(getPricePt(instrument, priceExecuted))
+                    .lots(result.getLotsRequested() * instrument.getLot())
+                    .isExecuted(true)
+                    .build();
+        }
+    }
+
     public BigDecimal
 
     getPricePt(InstrumentService.Instrument instrument, BigDecimal price) {
@@ -371,6 +412,47 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
         }
     }
 
+    @Override
+    public OrderResult sellShort(InstrumentService.Instrument instrument, BigDecimal price, Integer count) {
+        long quantity = count / instrument.getLot();
+        var quotation = Quotation.newBuilder()
+                .setUnits(price.longValue())
+                .setNano(price.remainder(BigDecimal.ONE).movePointRight(9).intValue())
+                .build();
+        var uuid = UUID.randomUUID().toString();
+        log.info("Send postOrderSync short with: figi {}, quantity {}, quotation {}, direction {}, acc {}, type {}, id {}",
+                instrument.getFigi(), quantity, quotation, OrderDirection.ORDER_DIRECTION_BUY, getAccountIdByFigi(instrument), OrderType.ORDER_TYPE_MARKET, uuid);
+
+        if (getIsSandboxMode()) {
+            var result = getApi().getSandboxService().postOrderSync(instrument.getFigi(), quantity, quotation,
+                    OrderDirection.ORDER_DIRECTION_BUY, getAccountIdByFigi(instrument), OrderType.ORDER_TYPE_MARKET, uuid);
+            var priceExecuted = toBigDecimal(result.getExecutedOrderPrice(), 8, price);
+            return OrderResult.builder()
+                    .orderId(result.getOrderId())
+                    .commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
+                    .commission(toBigDecimal(result.getInitialCommission(), 8))
+                    .price(priceExecuted)
+                    .pricePt(getPricePt(instrument, priceExecuted))
+                    .lots(result.getLotsRequested() * instrument.getLot())
+                    .isExecuted(true)
+                    .build();
+        } else {
+            checkInstrumentAvailableToSellShort(instrument, count);
+            var result = getApi().getOrdersService().postOrderSync(instrument.getFigi(), quantity, quotation,
+                    OrderDirection.ORDER_DIRECTION_BUY, getAccountIdByFigi(instrument), OrderType.ORDER_TYPE_MARKET, uuid);
+            var priceExecuted = toBigDecimal(result.getExecutedOrderPrice(), 8, price);
+            return OrderResult.builder()
+                    .orderId(result.getOrderId())
+                    .commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
+                    .commission(getExecutedCommission(result, instrument))
+                    .price(priceExecuted)
+                    .pricePt(getPricePt(instrument, priceExecuted))
+                    .lots(result.getLotsRequested() * instrument.getLot())
+                    .isExecuted(true)
+                    .build();
+        }
+    }
+
     private void checkInstrumentAvailableToSell(InstrumentService.Instrument instrument, Integer count) {
         var positionsResult = getApi().getOperationsService().getPositionsSync(getAccountIdByFigi(instrument));
         long balanceCount = 0;
@@ -389,12 +471,19 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                 annotate += " futures: " + balanceCount;
             }
         }
-        if (balanceCount >= count) {
+        if (count >= 0 && balanceCount >= count) {
+            return;
+        }
+        if (count < 0 && balanceCount <= count) {
             return;
         }
         log.warn("Sell is not available for {} in count of {}. ", instrument.getFigi(), count, annotate);
         throw new RuntimeException("Sell is not available for " + instrument.getFigi() + " in count of " + count + ". "
                 + annotate);
+    }
+
+    private void checkInstrumentAvailableToSellShort(InstrumentService.Instrument instrument, Integer count) {
+        checkInstrumentAvailableToSell(instrument, -count);
     }
 
     private void checkInstrumentAvailableToBuy(InstrumentService.Instrument instrument, BigDecimal price, Integer count) {
@@ -420,6 +509,11 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
         throw new RuntimeException("Buy is not available for " + instrument.getFigi() + " in count of " + count
                 + " price " + price + " = " + total + ". "
                 + annotate);
+    }
+
+    private void checkInstrumentAvailableToBuyShort(InstrumentService.Instrument instrument, BigDecimal price, Integer count) {
+        checkInstrumentAvailableToBuy(instrument, price, count);
+        //checkInstrumentAvailableToSell(instrument, -count);
     }
 
     @Builder

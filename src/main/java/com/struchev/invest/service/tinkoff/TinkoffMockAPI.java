@@ -32,7 +32,29 @@ public class TinkoffMockAPI extends ATinkoffAPI {
     }
 
     @Override
+    public OrderResult buyShort(InstrumentService.Instrument instrument, BigDecimal price, Integer count) {
+        return OrderResult.builder()
+                .commissionInitial(calculateCommission(price, count, instrument))
+                .commission(calculateCommission(price, count, instrument))
+                .price(price)
+                .pricePt(price)
+                .isExecuted(true)
+                .build();
+    }
+
+    @Override
     public OrderResult sell(InstrumentService.Instrument instrument, BigDecimal price, Integer count) {
+        return OrderResult.builder()
+                .commissionInitial(calculateCommission(price, count, instrument))
+                .commission(calculateCommission(price, count, instrument))
+                .price(price)
+                .pricePt(price)
+                .isExecuted(true)
+                .build();
+    }
+
+    @Override
+    public OrderResult sellShort(InstrumentService.Instrument instrument, BigDecimal price, Integer count) {
         return OrderResult.builder()
                 .commissionInitial(calculateCommission(price, count, instrument))
                 .commission(calculateCommission(price, count, instrument))

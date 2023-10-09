@@ -15,11 +15,9 @@ import org.springframework.stereotype.Service;
 import javax.annotation.PostConstruct;
 import javax.transaction.Transactional;
 import java.math.BigDecimal;
-import java.math.MathContext;
 import java.math.RoundingMode;
 import java.time.OffsetDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
@@ -33,10 +31,39 @@ public class OrderService implements IOrderService {
 
     private volatile List<OrderDomainEntity> orders;
 
-    public OrderDomainEntity findActiveByFigiAndStrategy(String figi, AStrategy strategy) {
+    public Order findActiveByFigiAndStrategy(String figi, AStrategy strategy) {
+        var order = findActiveOrderDomainByFigiAndStrategy(figi, strategy);
+        if (order == null) {
+            return null;
+        }
+        return Order.builder()
+                .orderDomainEntity(order)
+                .purchasePrice(order.getPurchasePrice())
+                .purchaseDateTime(order.getPurchaseDateTime())
+                .details(order.getDetails())
+                .build();
+    }
+
+    public OrderDomainEntity findActiveOrderDomainByFigiAndStrategy(String figi, AStrategy strategy) {
         return orders.stream()
                 .filter(o -> figi == null || o.getFigi().equals(figi))
                 .filter(o -> o.getSellDateTime() == null)
+                .filter(o -> o.getStrategy().equals(strategy.getName()))
+                .findFirst().orElse(null);
+    }
+
+    public OrderDomainEntity findAnyActiveOrderDomainByFigiAndStrategy(String figi, AStrategy strategy) {
+        return orders.stream()
+                .filter(o -> figi == null || o.getFigi().equals(figi))
+                .filter(o -> o.getSellDateTime() == null || o.getPurchaseDateTime() == null)
+                .filter(o -> o.getStrategy().equals(strategy.getName()))
+                .findFirst().orElse(null);
+    }
+
+    public OrderDomainEntity findActiveOrderDomainShortByFigiAndStrategy(String figi, AStrategy strategy) {
+        return orders.stream()
+                .filter(o -> figi == null || o.getFigi().equals(figi))
+                .filter(o -> o.getPurchaseDateTime() == null)
                 .filter(o -> o.getStrategy().equals(strategy.getName()))
                 .findFirst().orElse(null);
     }
@@ -49,12 +76,77 @@ public class OrderService implements IOrderService {
                 .collect(Collectors.toList());
     }
 
-    public OrderDomainEntity findLastByFigiAndStrategy(String figi, AStrategy strategy) {
+    public Order findLastByFigiAndStrategy(String figi, AStrategy strategy) {
+        var order = findLastOrderDomainByFigiAndStrategy(figi, strategy);
+        if (order == null) {
+            return null;
+        }
+        return Order.builder()
+                .orderDomainEntity(order)
+                .purchasePrice(order.getPurchasePrice())
+                .purchaseDateTime(order.getPurchaseDateTime())
+                .sellPrice(order.getSellPrice())
+                .sellDateTime(order.getSellDateTime())
+                .details(order.getDetails())
+                .sellProfit(order.getSellProfit())
+                .build();
+    }
+
+    public OrderDomainEntity findLastOrderDomainByFigiAndStrategy(String figi, AStrategy strategy) {
         return orders.stream()
                 .filter(o -> figi == null || o.getFigi().equals(figi))
                 .filter(o -> o.getSellDateTime() != null)
+                .filter(o -> o.getPurchaseDateTime() != null)
+                .filter(o -> !o.getPurchaseDateTime().isAfter(o.getSellDateTime()))
                 .filter(o -> o.getStrategy().equals(strategy.getName()))
                 .reduce((first, second) -> second).orElse(null);
+    }
+
+    public OrderDomainEntity findLastShortOrderDomainByFigiAndStrategy(String figi, AStrategy strategy) {
+        return orders.stream()
+                .filter(o -> figi == null || o.getFigi().equals(figi))
+                .filter(o -> o.getSellDateTime() != null)
+                .filter(o -> o.getPurchaseDateTime() != null)
+                .filter(o -> o.getPurchaseDateTime().isAfter(o.getSellDateTime()))
+                .filter(o -> o.getStrategy().equals(strategy.getName()))
+                .reduce((first, second) -> second).orElse(null);
+    }
+
+    @Transactional
+    public synchronized OrderDomainEntity openOrderShort(CandleDomainEntity candle, AStrategy strategy, OrderDetails orderDetails) {
+        var instrument = instrumentService.getInstrument(candle.getFigi());
+        var order = OrderDomainEntity.builder()
+                .currency(instrument.getCurrency())
+                .figi(instrument.getFigi())
+                .figiTitle(instrument.getName())
+                .sellPriceWanted(candle.getClosingPrice())
+                .strategy(strategy.getName())
+                .sellDateTime(candle.getDateTime())
+                .lots(strategy.getCount(candle.getFigi()))
+                .sellCommissionInitial(BigDecimal.ZERO)
+                .purchaseCommission(BigDecimal.ZERO)
+                .details(orderDetails)
+                .build();
+
+        if (strategy.isCheckBook()
+                && !tinkoffOrderAPI.checkGoodSell(instrument, candle.getClosingPrice(), order.getLots(), strategy.getPriceError())) {
+            throw new RuntimeException("checkGoodSell return false for figi " + instrument.getFigi());
+        }
+        var result = tinkoffOrderAPI.buyShort(instrument, candle.getClosingPrice(), order.getLots());
+        order.setSellCommissionInitial(result.getCommissionInitial());
+        order.setSellCommission(result.getCommission());
+        order.setSellPriceMoney(result.getPrice());
+        if (instrument.getType() == InstrumentService.Type.future) {
+            order.setSellPrice(result.getPricePt());
+        } else {
+            order.setSellPrice(result.getPrice());
+        }
+        order.setSellOrderId(result.getOrderId());
+        order = orderRepository.save(order);
+        orders.add(order);
+
+        order = openLimitOrder(order, strategy, candle);
+        return order;
     }
 
     @Transactional
@@ -96,7 +188,10 @@ public class OrderService implements IOrderService {
 
     @Transactional
     public synchronized OrderDomainEntity openLimitOrder(OrderDomainEntity order, AStrategy strategy, CandleDomainEntity candle) {
-        var orderFresh = findActiveByFigiAndStrategy(order.getFigi(), strategy);
+        if (order.isShort()) {
+            return order;
+        }
+        var orderFresh = findActiveOrderDomainByFigiAndStrategy(order.getFigi(), strategy);
         if (orderFresh.getId() != order.getId()) {
             return order;
         }
@@ -139,15 +234,53 @@ public class OrderService implements IOrderService {
         }
         if (null != result.getLots() && result.getLots() > 0 && result.getIsExecuted()) {
             order.setSellDateTime(candle.getDateTime());
-            order = setOrderInfo(order, result);
+            order = setOrderInfoSell(order, result);
         }
+        return order;
+    }
+
+    @Transactional
+    public synchronized OrderDomainEntity closeOrderShort(CandleDomainEntity candle, AStrategy strategy) {
+        var instrument = instrumentService.getInstrument(candle.getFigi());
+        var order = findActiveOrderDomainShortByFigiAndStrategy(candle.getFigi(), strategy);
+
+        order.setPurchasePriceWanted(candle.getClosingPrice());
+        order.setSellProfitWanted(order.getSellPrice().subtract(order.getPurchasePriceWanted()));
+
+        if (strategy.isCheckBook() && order.getSellProfitWanted().compareTo(BigDecimal.ZERO) > 0
+                && !tinkoffOrderAPI.checkGoodBuy(instrument, candle.getClosingPrice(), order.getLots(), strategy.getPriceError())) {
+            throw new RuntimeException("checkGoodBuy return false for figi " + instrument.getFigi());
+        }
+
+        var lots = order.getLots();
+        if (order.getCellLots() != null) {
+            lots -= order.getCellLots().intValue();
+        }
+        if (order.getSellLimitOrderId() != null) {
+            var closeResult = tinkoffOrderAPI.closeSellLimit(instrument, order.getSellLimitOrderId());
+            if (null != closeResult.getLots() && closeResult.getLots() > 0 && closeResult.getIsExecuted()) {
+                order.setPurchaseDateTime(OffsetDateTime.now());
+                order = setOrderInfoBuy(order, closeResult);
+                lots -= closeResult.getLots().intValue();
+            }
+            if (closeResult.getOrderId() != null && closeResult.getOrderId().equals(order.getSellLimitOrderId())) {
+                order.setSellLimitOrderId(closeResult.getOrderId());
+            }
+        }
+        if (lots > 0) {
+            var result = tinkoffOrderAPI.sellShort(instrument, candle.getClosingPrice(), lots);
+
+            order.setPurchaseDateTime(candle.getDateTime());
+            order = setOrderInfoBuy(order, result);
+        }
+
         return order;
     }
 
     @Transactional
     public synchronized OrderDomainEntity closeOrder(CandleDomainEntity candle, AStrategy strategy) {
         var instrument = instrumentService.getInstrument(candle.getFigi());
-        var order = findActiveByFigiAndStrategy(candle.getFigi(), strategy);
+        var order = findActiveOrderDomainByFigiAndStrategy(candle.getFigi(), strategy);
 
         order.setSellPriceWanted(candle.getClosingPrice());
         order.setSellProfitWanted(order.getSellPriceWanted().subtract(order.getPurchasePrice()));
@@ -165,7 +298,7 @@ public class OrderService implements IOrderService {
             var closeResult = tinkoffOrderAPI.closeSellLimit(instrument, order.getSellLimitOrderId());
             if (null != closeResult.getLots() && closeResult.getLots() > 0 && closeResult.getIsExecuted()) {
                 order.setSellDateTime(OffsetDateTime.now());
-                order = setOrderInfo(order, closeResult);
+                order = setOrderInfoSell(order, closeResult);
                 lots -= closeResult.getLots().intValue();
             }
             if (closeResult.getOrderId() != null && closeResult.getOrderId().equals(order.getSellLimitOrderId())) {
@@ -176,19 +309,42 @@ public class OrderService implements IOrderService {
             var result = tinkoffOrderAPI.sell(instrument, candle.getClosingPrice(), lots);
 
             order.setSellDateTime(candle.getDateTime());
-            order = setOrderInfo(order, result);
+            order = setOrderInfoSell(order, result);
         }
 
         return order;
     }
 
     @Transactional
-    public synchronized OrderDomainEntity updateDetailsCurrentPrice(OrderDomainEntity order, String key, BigDecimal price) {
-        order.getDetails().getCurrentPrices().put(key, price);
+    public synchronized OrderDomainEntity updateDetailsCurrentPrice(Order order, String key, BigDecimal price) {
+        order.getOrderDomainEntity().setDetails(order.getDetails());
+        order.getOrderDomainEntity().getDetails().getCurrentPrices().put(key, price);
+        return saveOrder(order.getOrderDomainEntity());
+    }
+
+    private OrderDomainEntity setOrderInfoBuy(OrderDomainEntity order, ITinkoffOrderAPI.OrderResult result) {
+        order.setPurchaseOrderId(result.getOrderId());
+        order.setPurchaseCommissionInitial(result.getCommissionInitial());
+        order.setPurchaseCommission(result.getCommission());
+        var instrument = instrumentService.getInstrument(order.getFigi());
+
+        order.setPurchasePriceMoney(result.getPrice());
+        if (instrument.getType() == InstrumentService.Type.future) {
+            order.setPurchasePrice(result.getPricePt());
+        } else {
+            order.setPurchasePrice(result.getPrice());
+        }
+
+        if (result.getLots() != null) {
+            var lots = order.getCellLots() == null ? 0 : order.getCellLots();
+            lots += result.getLots().intValue();
+            order.setCellLots(lots);
+        }
+        order.setSellProfit(order.getSellPrice().subtract(order.getPurchasePrice()));
         return saveOrder(order);
     }
 
-    private OrderDomainEntity setOrderInfo(OrderDomainEntity order, ITinkoffOrderAPI.OrderResult result) {
+    private OrderDomainEntity setOrderInfoSell(OrderDomainEntity order, ITinkoffOrderAPI.OrderResult result) {
         order.setSellOrderId(result.getOrderId());
         order.setSellCommissionInitial(result.getCommissionInitial());
         order.setSellCommission(result.getCommission());

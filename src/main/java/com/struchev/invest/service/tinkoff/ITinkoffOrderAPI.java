@@ -28,8 +28,10 @@ public interface ITinkoffOrderAPI {
     }
 
     OrderResult buy(InstrumentService.Instrument instrument, BigDecimal price, Integer count);
+    OrderResult buyShort(InstrumentService.Instrument instrument, BigDecimal price, Integer count);
 
     OrderResult sell(InstrumentService.Instrument instrument, BigDecimal price, Integer count);
+    OrderResult sellShort(InstrumentService.Instrument instrument, BigDecimal price, Integer count);
 
     public OrderResult sellLimit(InstrumentService.Instrument instrument, BigDecimal price, Integer count, String uuid, String orderId, CandleDomainEntity candle);
 

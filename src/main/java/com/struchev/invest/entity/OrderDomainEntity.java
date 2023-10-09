@@ -48,7 +48,7 @@ public class OrderDomainEntity {
     @Column(name = "purchase_price_wanted", nullable = true, scale = 8, precision = 19)
     private BigDecimal purchasePriceWanted;
 
-    @Column(name = "purchase_price", nullable = false, scale = 8, precision = 19)
+    @Column(name = "purchase_price", nullable = true, scale = 8, precision = 19)
     private BigDecimal purchasePrice;
     @Column(name = "purchase_price_money", nullable = true, scale = 8, precision = 19)
     private BigDecimal purchasePriceMoney;
@@ -56,10 +56,10 @@ public class OrderDomainEntity {
     @Column(name = "purchase_commission_initial", nullable = true, scale = 8, precision = 19)
     private BigDecimal purchaseCommissionInitial;
 
-    @Column(name = "purchase_commission", nullable = false, scale = 8, precision = 19)
+    @Column(name = "purchase_commission", nullable = true, scale = 8, precision = 19)
     private BigDecimal purchaseCommission;
 
-    @Column(name = "purchase_date_time", nullable = false)
+    @Column(name = "purchase_date_time", nullable = true)
     private OffsetDateTime purchaseDateTime;
 
     @Column(name = "sell_order_id", nullable = true)
@@ -122,4 +122,10 @@ public class OrderDomainEntity {
     @CreationTimestamp
     @Column(name = "created", nullable = false)
     private LocalDateTime created;
+
+    public Boolean isShort()
+    {
+        return (getPurchaseDateTime() == null && getSellDateTime() != null)
+                || (getPurchaseDateTime() != null && getSellDateTime() != null && getSellDateTime().isBefore(getPurchaseDateTime()));
+    }
 }
