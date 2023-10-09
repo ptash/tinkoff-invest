@@ -210,7 +210,7 @@ public class PurchaseService {
                     if (
                             isShouldSellShort
                             || ((isTrendBuy || isShouldBuy)
-                                    && isOrderNeedSell(order, candleDomainEntity)
+                                    && calculator.isOrderNeedSell(order, candleDomainEntity)
                             )
                     ) {
                         order = orderService.closeOrderShort(candleDomainEntity, strategy);

@@ -19,6 +19,7 @@ public class OrderDetails {
     Map<String, BigDecimal> currentPrices;
     Map<String, Boolean> booleanDataMap;
     Map<String, OffsetDateTime> dateTimes;
+    Map<String, String> annotations;
 
     public Map<String, BigDecimal> getCurrentPrices() {
         if (currentPrices == null) {
@@ -39,5 +40,12 @@ public class OrderDetails {
             dateTimes = new HashMap<>();
         }
         return dateTimes;
+    }
+
+    public Map<String, String> getAnnotations() {
+        if (annotations == null) {
+            annotations = new HashMap<>();
+        }
+        return annotations;
     }
 }

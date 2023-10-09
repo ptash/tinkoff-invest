@@ -2,7 +2,6 @@ package com.struchev.invest.service.tinkoff;
 
 import com.struchev.invest.entity.CandleDomainEntity;
 import com.struchev.invest.service.dictionary.InstrumentService;
-import com.struchev.invest.service.processor.FactorialInstrumentByFiatService;
 import lombok.Builder;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -10,7 +9,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import ru.tinkoff.piapi.contract.v1.*;
-import ru.tinkoff.piapi.core.exception.ApiRuntimeException;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -454,6 +452,10 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
     }
 
     private void checkInstrumentAvailableToSell(InstrumentService.Instrument instrument, Integer count) {
+        checkInstrumentCountAvailable(instrument, count);
+    }
+
+    private void checkInstrumentCountAvailable(InstrumentService.Instrument instrument, Integer count) {
         var positionsResult = getApi().getOperationsService().getPositionsSync(getAccountIdByFigi(instrument));
         long balanceCount = 0;
         var annotate = "";
@@ -471,19 +473,22 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                 annotate += " futures: " + balanceCount;
             }
         }
-        if (count >= 0 && balanceCount >= count) {
+        if (count > 0 && balanceCount >= count) {
             return;
         }
         if (count < 0 && balanceCount <= count) {
             return;
         }
-        log.warn("Sell is not available for {} in count of {}. ", instrument.getFigi(), count, annotate);
-        throw new RuntimeException("Sell is not available for " + instrument.getFigi() + " in count of " + count + ". "
+        if (count == 0 && balanceCount == 0) {
+            return;
+        }
+        log.warn("Instrument {} is not available in count of {}: {}", instrument.getFigi(), count, annotate);
+        throw new RuntimeException("Instrument " + instrument.getFigi() + " is not available in count of " + count + ". "
                 + annotate);
     }
 
     private void checkInstrumentAvailableToSellShort(InstrumentService.Instrument instrument, Integer count) {
-        checkInstrumentAvailableToSell(instrument, -count);
+        checkInstrumentCountAvailable(instrument, -count);
     }
 
     private void checkInstrumentAvailableToBuy(InstrumentService.Instrument instrument, BigDecimal price, Integer count) {
@@ -506,6 +511,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
         if (money.getValue().compareTo(total) > 0) {
             return;
         }
+        checkInstrumentCountAvailable(instrument, 0);
         throw new RuntimeException("Buy is not available for " + instrument.getFigi() + " in count of " + count
                 + " price " + price + " = " + total + ". "
                 + annotate);
@@ -513,7 +519,6 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
 
     private void checkInstrumentAvailableToBuyShort(InstrumentService.Instrument instrument, BigDecimal price, Integer count) {
         checkInstrumentAvailableToBuy(instrument, price, count);
-        //checkInstrumentAvailableToSell(instrument, -count);
     }
 
     @Builder

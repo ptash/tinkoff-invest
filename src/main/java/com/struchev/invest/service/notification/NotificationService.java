@@ -87,8 +87,9 @@ public class NotificationService implements INotificationService{
     public void sendBuyInfo(AStrategy strategy, OrderDomainEntity order, CandleDomainEntity candle) {
         log.info(
                 getOfferReportLogMarker(strategy, candle.getFigi()),
-                "{} | B | {}",
+                "{} | {} | {}",
                 formatDateTime(order.getPurchaseDateTime()),
+                order.isShort() ? "S" : "B",
                 order.getPurchasePrice()
         );
         var msg = String.format("Buy %s %s (%s), %s, %s, %s. Wanted %s", order.getFigi(), order.isShort() ? "short" : "long", order.getFigiTitle(),
@@ -99,9 +100,9 @@ public class NotificationService implements INotificationService{
     public void sendSellInfo(AStrategy strategy, OrderDomainEntity order, CandleDomainEntity candle) {
         log.info(
                 getOfferReportLogMarker(strategy, candle.getFigi()),
-                "{} | S | {}",
+                "{} | {} | {}",
                 formatDateTime(order.getSellDateTime()),
-                order.getSellPrice(),
+                order.isShort() ? "B" : "S",
                 order.getSellPrice()
         );
         var msg = String.format("Sell %s %s (%s), %s (%s), %s, %s. Wanted: %s", candle.getFigi(), order.isShort() ? "short" : "long", order.getFigiTitle(),

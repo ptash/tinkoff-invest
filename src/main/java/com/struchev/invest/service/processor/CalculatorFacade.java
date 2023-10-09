@@ -127,15 +127,22 @@ public class CalculatorFacade {
         if (orderPrice.compareTo(candleDomainEntity.getClosingPrice()) < 0) {
             // в минусе и мижняя граница либо высоко, либо очень низко
             if (stopLossPrice.compareTo(orderPrice) > 0) {
+                order.getDetails().getAnnotations().put("needSell", "stopLossPrice > orderPrice: " + stopLossPrice + " > " + orderPrice);
                 return true;
             }
             var middle = stopLossPrice.add(orderPrice.subtract(stopLossPrice).divide(BigDecimal.valueOf(2), 8, RoundingMode.HALF_UP));
-            return candleDomainEntity.getClosingPrice().compareTo(middle) > 0;
+            if (candleDomainEntity.getClosingPrice().compareTo(middle) > 0) {
+                order.getDetails().getAnnotations().put("needSell", "closingPrice > middle: " + candleDomainEntity.getClosingPrice() + " > " + middle);
+                return true;
+            }
         } else {
             // в плюсе, но не большом
-            return orderPrice.compareTo(stopLossPrice) > 0;
+            if (orderPrice.compareTo(stopLossPrice) > 0) {
+                order.getDetails().getAnnotations().put("needSell", "orderPrice > stopLossPrice: " + orderPrice + " > " + stopLossPrice);
+                return true;
+            }
         }
-
+        return false;
     }
 
     @PostConstruct
