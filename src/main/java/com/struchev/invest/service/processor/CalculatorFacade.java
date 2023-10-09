@@ -124,21 +124,23 @@ public class CalculatorFacade {
             stopLossPrice = candleHistoryReverseForShortService.preparePrice(stopLossPrice);
             candleDomainEntity = candleHistoryReverseForShortService.prepareCandleForShort(candleDomainEntity.clone());
         }
-        if (orderPrice.compareTo(candleDomainEntity.getClosingPrice()) < 0) {
+        if (orderPrice.compareTo(candleDomainEntity.getClosingPrice()) > 0) {
+            var annotation = "orderPrice > closingPrice: " + orderPrice + " > " + candleDomainEntity.getClosingPrice() + " ";
             // в минусе и мижняя граница либо высоко, либо очень низко
             if (stopLossPrice.compareTo(orderPrice) > 0) {
-                order.getDetails().getAnnotations().put("needSell", "stopLossPrice > orderPrice: " + stopLossPrice + " > " + orderPrice);
+                order.getDetails().getAnnotations().put("needSell", annotation + "stopLossPrice > orderPrice: " + stopLossPrice + " > " + orderPrice);
                 return true;
             }
             var middle = stopLossPrice.add(orderPrice.subtract(stopLossPrice).divide(BigDecimal.valueOf(2), 8, RoundingMode.HALF_UP));
             if (candleDomainEntity.getClosingPrice().compareTo(middle) > 0) {
-                order.getDetails().getAnnotations().put("needSell", "closingPrice > middle: " + candleDomainEntity.getClosingPrice() + " > " + middle);
+                order.getDetails().getAnnotations().put("needSell", annotation + "closingPrice > middle: " + candleDomainEntity.getClosingPrice() + " > " + middle);
                 return true;
             }
         } else {
+            var annotation = "orderPrice <= closingPrice: " + orderPrice + " <= " + candleDomainEntity.getClosingPrice() + " ";
             // в плюсе, но не большом
             if (orderPrice.compareTo(stopLossPrice) > 0) {
-                order.getDetails().getAnnotations().put("needSell", "orderPrice > stopLossPrice: " + orderPrice + " > " + stopLossPrice);
+                order.getDetails().getAnnotations().put("needSell", annotation + "orderPrice > stopLossPrice: " + orderPrice + " > " + stopLossPrice);
                 return true;
             }
         }
