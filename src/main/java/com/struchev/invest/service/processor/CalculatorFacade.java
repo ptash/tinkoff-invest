@@ -5,6 +5,8 @@ import com.struchev.invest.service.candle.CandleHistoryReverseForShortService;
 import com.struchev.invest.service.candle.CandleHistoryService;
 import com.struchev.invest.service.notification.NotificationForShortService;
 import com.struchev.invest.service.notification.NotificationService;
+import com.struchev.invest.service.order.OrderForShortService;
+import com.struchev.invest.service.order.OrderService;
 import com.struchev.invest.strategy.AStrategy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,9 +31,11 @@ public class CalculatorFacade {
 
     private final CandleHistoryService candleHistoryService;
     private final NotificationService notificationService;
+    private final OrderService orderService;
 
     private final CandleHistoryReverseForShortService candleHistoryReverseForShortService;
     private final NotificationForShortService notificationForShortService;
+    private final OrderForShortService orderForShortService;
 
     public <T extends AStrategy> boolean isShouldBuy(T strategy, CandleDomainEntity candle) {
         try {
@@ -86,13 +90,14 @@ public class CalculatorFacade {
         calculateServiceByTypeShort = calculateServices.stream().collect(Collectors.toMap(c -> c.getStrategyType(), c -> {
             if (c instanceof ICalculatorShortService) {
                 try {
-                    var cShort = ((ICalculatorShortService) c).cloneService();
+                    var cShort = ((ICalculatorShortService) c).cloneService(orderForShortService);
                     if (cShort instanceof ICalculatorShortService) {
                         cShort.setCandleHistoryService(candleHistoryReverseForShortService);
                         cShort.setNotificationService(notificationForShortService);
 
                         ((ICalculatorShortService) c).setCandleHistoryService(candleHistoryService);
                         ((ICalculatorShortService) c).setNotificationService(notificationService);
+                        ((ICalculatorShortService) c).setOrderService(orderService);
                     }
                     return (ICalculatorService) cShort;
                 } catch (CloneNotSupportedException e) {

@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class OrderService {
+public class OrderService implements IOrderService {
     private final OrderRepository orderRepository;
     private final InstrumentService instrumentService;
     private final ITinkoffOrderAPI tinkoffOrderAPI;

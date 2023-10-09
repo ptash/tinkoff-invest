@@ -195,8 +195,9 @@ public class PurchaseService {
 
             // Ордер есть, возможно можем продать
             var isShouldSell = calculator.isShouldSell(strategy, candleDomainEntity, order.getPurchasePrice());
-            var isShouldSellShort = calculator.isShouldSellShort(strategy, candleDomainEntity, order.getPurchasePrice());
-            if (isShouldSell && !isShouldSellShort) {
+            //var isShouldSellShort = calculator.isShouldSellShort(strategy, candleDomainEntity, order.getPurchasePrice());
+            var isShouldBuyShort = calculator.isShouldBuyShort(strategy, candleDomainEntity);
+            if (isShouldSell || isShouldBuyShort) {
                 order = orderService.closeOrder(candleDomainEntity, strategy);
                 notificationService.sendSellInfo(strategy, order, candleDomainEntity);
                 return;
