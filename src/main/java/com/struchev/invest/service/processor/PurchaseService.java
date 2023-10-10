@@ -167,7 +167,7 @@ public class PurchaseService {
                     if (isShouldBuyShort && !isShouldBuy) {
                         var isTrendBuy = calculator.isTrendBuy(strategy, candleDomainEntity);
                         if (!isTrendBuy && !isShouldBuy) {
-                            order = orderService.openOrderShort(candleDomainEntity, strategy, buildOrderDetails(strategy, candleDomainEntity));
+                            order = orderService.openOrderShort(candleDomainEntity, strategy, buildOrderShortDetails(strategy, candleDomainEntity));
                             notificationForShortService.sendSellInfo(strategy, order, candleDomainEntity);
                         }
                     }
@@ -254,6 +254,31 @@ public class PurchaseService {
         if (strategy.getType() == AStrategy.Type.instrumentFactorialByFiat) {
             booleanDataMap = factorialInstrumentByFiatService.getOrderBooleanDataMap(strategy, candleDomainEntity);
             currentPrices = factorialInstrumentByFiatService.getOrderBigDecimalDataMap(strategy, candleDomainEntity);
+        }
+        return OrderDetails.builder()
+                .currentPrices(currentPrices)
+                .booleanDataMap(booleanDataMap)
+                .build();
+    }
+
+    private OrderDetails buildOrderShortDetails(AStrategy strategy, CandleDomainEntity candleDomainEntity)
+    {
+        Map<String, BigDecimal> currentPrices = null;
+        var c = calculator.getCalculatorServiceShort(strategy);
+        if (c instanceof ICalculatorPriceDetailsService) {
+            currentPrices = ((ICalculatorPriceDetailsService) c).getCurrentPrices();
+        }
+
+        if (currentPrices != null) {
+            AStrategy finalStrategy = strategy;
+            currentPrices = currentPrices.entrySet().stream()
+                    .filter(e -> finalStrategy.getFigies().containsKey(e.getKey()))
+                    .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
+        }
+        Map<String, Boolean> booleanDataMap = null;
+        if (c instanceof ICalculatorDetailsService) {
+            booleanDataMap = ((ICalculatorDetailsService) c).getOrderBooleanDataMap(strategy, candleDomainEntity);
+            currentPrices = ((ICalculatorDetailsService) c).getOrderBigDecimalDataMap(strategy, candleDomainEntity);
         }
         return OrderDetails.builder()
                 .currentPrices(currentPrices)

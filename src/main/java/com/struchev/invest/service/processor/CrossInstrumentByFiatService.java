@@ -25,7 +25,7 @@ import java.util.function.Function;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class CrossInstrumentByFiatService implements ICalculatorService<AInstrumentByFiatCrossStrategy> {
+public class CrossInstrumentByFiatService implements ICalculatorService<AInstrumentByFiatCrossStrategy>, ICalculatorPriceDetailsService {
     private final CandleHistoryService candleHistoryService;
 
     private final NotificationService notificationService;

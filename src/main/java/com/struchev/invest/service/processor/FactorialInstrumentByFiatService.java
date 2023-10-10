@@ -31,6 +31,7 @@ public class FactorialInstrumentByFiatService implements
         ICalculatorService<AInstrumentByFiatFactorialStrategy>,
         ICalculatorTrendService<AInstrumentByFiatFactorialStrategy>,
         ICalculatorShortService,
+        ICalculatorDetailsService,
         Cloneable
 {
 

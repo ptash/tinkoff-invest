@@ -112,6 +112,11 @@ public class CalculatorFacade {
         }
     }
 
+    public <T extends AStrategy> ICalculatorService<T> getCalculatorServiceShort(T strategy)
+    {
+        return calculateServiceByTypeShort.get(strategy.getType());
+    }
+
     public Boolean isOrderNeedSell(OrderDomainEntity order, CandleDomainEntity candleDomainEntity)
     {
         var stopLossPrice = order.getDetails().getCurrentPrices().getOrDefault("stopLossPrice", BigDecimal.ZERO);
@@ -152,7 +157,6 @@ public class CalculatorFacade {
                     order.getDetails().getAnnotations().put("needSell", annotation + " closingPrice > middleNear: " + candleDomainEntity.getClosingPrice() + " > " + middleNear);
                     return true;
                 }
-                return true;
             }
         }
         return false;

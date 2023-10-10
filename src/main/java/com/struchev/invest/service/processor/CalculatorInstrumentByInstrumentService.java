@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class CalculatorInstrumentByInstrumentService implements ICalculatorService<AInstrumentByInstrumentStrategy> {
+public class CalculatorInstrumentByInstrumentService implements ICalculatorService<AInstrumentByInstrumentStrategy>, ICalculatorPriceDetailsService {
     private final OrderService orderService;
 
     @Getter
