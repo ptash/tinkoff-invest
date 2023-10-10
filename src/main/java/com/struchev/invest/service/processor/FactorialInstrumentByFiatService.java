@@ -1532,7 +1532,7 @@ public class FactorialInstrumentByFiatService implements
                             annotation += " tPPercent=" + printPrice(percent);
                             percent = percent * 0.66f;
                             takeProfitPriceOrig = takeProfitPrice = candleIntervalUpDownData.endPost.candle.getClosingPrice().doubleValue()
-                                    * (100f + percent) / 100f;
+                                    + candleIntervalUpDownData.endPost.candle.getClosingPrice().abs().doubleValue() * percent / 100f;
                             annotation += " takeProfitPrice=" + printPrice(takeProfitPrice);
                         }
                     } else if (candleIntervalUpDownDataPrev.maxClose < candleIntervalUpDownData.maxClose) {
@@ -1961,6 +1961,9 @@ public class FactorialInstrumentByFiatService implements
         ) {
             res = false;
             stopLossPrice = order.getDetails().getCurrentPrices().getOrDefault("stopLossPrice", BigDecimal.ZERO);
+            if (stopLossPrice.abs().compareTo(BigDecimal.valueOf(0.000001f)) < 0) {
+                stopLossPrice = BigDecimal.ZERO;
+            }
             stopLossPriceBottomA = order.getDetails().getCurrentPrices().getOrDefault("stopLossPriceBottom", BigDecimal.ZERO);
             var stopLossPriceBeginDate = order.getDetails().getDateTimes().getOrDefault("stopLossPriceBeginDate", order.getPurchaseDateTime());
             var stopLossPriceOld = stopLossPrice;
@@ -1986,12 +1989,12 @@ public class FactorialInstrumentByFiatService implements
                     percent = buyCriteria.getCandlePriceMinFactor();
                 }
 
-                var mPrice = candleIntervalUpDownData.minClose * candleIntervalUpDownData.minClose * percent / 100f;
+                var mPrice = candleIntervalUpDownData.minClose + Math.abs(candleIntervalUpDownData.minClose) * percent / 100f;
                 //var mPrice = candleIntervalUpDownData.minClose + (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) * 2.f;
                 var lossPresent = 0.33f;
                 annotation += " mPrice=" + printPrice(mPrice);
                 if (!takeProfitPriceStart.equals(BigDecimal.ZERO)) {
-                    mPrice = takeProfitPriceStart.floatValue() * (100f + intervalPercentStep.floatValue()) / 100f;
+                    mPrice = takeProfitPriceStart.floatValue() + takeProfitPriceStart.abs().floatValue() * intervalPercentStep.floatValue() / 100f;
                     lossPresent = intervalPercentStep.floatValue() *  0.33f;
                 }
                 var newValue1 = BigDecimal.valueOf(
@@ -2079,7 +2082,8 @@ public class FactorialInstrumentByFiatService implements
             } else if (!isDownWithLimits) {
                 var newValue = candleIntervalUpDownData.minClose
                         - (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) * 2f;
-                if (stopLossPrice.doubleValue() < newValue) {
+                annotation += " newValue=" + printPrice(newValue);
+                if (stopLossPrice.equals(BigDecimal.ZERO) || stopLossPrice.doubleValue() < newValue) {
                     annotation += candleIntervalUpDownData.annotation;
                     stopLossPrice = BigDecimal.valueOf(newValue);
                     stopLossPriceBottomA = BigDecimal.valueOf(newValue - (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose));
@@ -2097,10 +2101,17 @@ public class FactorialInstrumentByFiatService implements
             var lossPresent = 0.33f;
             var stopLossMaxPrice = order.getDetails().getCurrentPrices().getOrDefault("stopLossMaxPrice", BigDecimal.ZERO);
             annotation += " stopLossMaxPrice=" + printPrice(stopLossMaxPrice);
-            var minPrice = Math.max(candleIntervalUpDownData.maxClose, stopLossPrice.floatValue());
+            var minPrice = candleIntervalUpDownData.maxClose;
+            annotation += " minPrice=" + printPrice(minPrice);
+            //if (stopLossPrice.abs().compareTo(BigDecimal.valueOf(0.000001f)) > 0) {
+            if (!stopLossPrice.equals(BigDecimal.ZERO)) {
+                minPrice = Math.max(minPrice, stopLossPrice.floatValue());
+                annotation += " minPrice2=" + printPrice(minPrice);
+            }
             var stopLossMaxPriceDown = order.getDetails().getCurrentPrices().getOrDefault("stopLossMaxPriceDown", BigDecimal.ZERO);
             if (!stopLossMaxPrice.equals(BigDecimal.ZERO)) {
                 minPrice = Math.max(minPrice, stopLossMaxPrice.floatValue());
+                annotation += " minPrice3=" + printPrice(minPrice);
             }
 
             var percentCur = (100f * (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) / Math.abs(candleIntervalUpDownData.minClose));
@@ -2118,7 +2129,7 @@ public class FactorialInstrumentByFiatService implements
                 percent = buyCriteria.getCandlePriceMinFactor();
             }
 
-            var maxPrice = minPrice + candleIntervalUpDownData.minClose * percent / 100f;
+            var maxPrice = minPrice + Math.abs(candleIntervalUpDownData.minClose) * percent / 100f;
 
             var isDownStopLoss = false;
             BigDecimal stopLossPriceBottom = BigDecimal.valueOf(minPrice);
@@ -2177,7 +2188,7 @@ public class FactorialInstrumentByFiatService implements
                     if (!stopLossMaxPrice.equals(BigDecimal.ZERO)) {
                         minPrice = Math.max(minPrice, stopLossMaxPrice.floatValue());
                     }
-                    maxPrice = Math.max(takeProfitPriceStart.floatValue(), minPrice * (100f + intervalPercentStep.floatValue()) / 100f);
+                    maxPrice = Math.max(takeProfitPriceStart.floatValue(), minPrice + Math.abs(minPrice) * intervalPercentStep.floatValue() / 100f);
                     lossPresent = intervalPercentStep.floatValue() *  lossPresent;
                     stopLossPriceBottom = BigDecimal.valueOf(minPrice);
                 }
@@ -3118,16 +3129,16 @@ public class FactorialInstrumentByFiatService implements
                     }
                      */
 
-                    var minPrice = candlesBetweenLast.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).min().orElse(-1);
+                    var minPrice = candlesBetweenLast.stream().mapToDouble(value -> value.getClosingPrice().min(value.getOpenPrice()).doubleValue()).min().orElse(-1);
                     var minCandle = candlesBetweenLast.stream().reduce((first, second) ->
-                            first.getClosingPrice().compareTo(second.getClosingPrice()) < 0 ? first : second
+                            first.getClosingPrice().min(first.getOpenPrice()).compareTo(second.getClosingPrice().min(second.getOpenPrice())) < 0 ? first : second
                     ).orElse(null);
-                    minPrice = minCandle.getClosingPrice().doubleValue();
+                    minPrice = minCandle.getClosingPrice().min(minCandle.getOpenPrice()).doubleValue();
 
-                    var maxPrice = candlesBetweenFirst.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).max().orElse(-1);
+                    var maxPrice = candlesBetweenFirst.stream().mapToDouble(value -> value.getClosingPrice().max(value.getOpenPrice()).doubleValue()).max().orElse(-1);
                     //var averagePrice = candlesBetweenFirst.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).average().orElse(-1);
                     var maxCandle = candlesBetweenFirst.stream().reduce((first, second) ->
-                            first.getClosingPrice().compareTo(second.getClosingPrice()) > 0 && first.getDateTime().isAfter(minCandle.getDateTime()) ? first : second).orElse(null);
+                            first.getClosingPrice().max(first.getOpenPrice()).compareTo(second.getClosingPrice().max(second.getOpenPrice())) > 0 && first.getDateTime().isAfter(minCandle.getDateTime()) ? first : second).orElse(null);
 
                     //var minPrice = candlesBetweenLast.stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).min().orElse(-1);
                     //var minCandle = candlesBetweenLast.stream().reduce((first, second) ->
@@ -3135,7 +3146,7 @@ public class FactorialInstrumentByFiatService implements
                     //).orElse(null);
                     //minPrice = minCandle.getClosingPrice().doubleValue();
 
-                    maxPrice = maxCandle.getClosingPrice().doubleValue();
+                    maxPrice = maxCandle.getClosingPrice().max(maxCandle.getOpenPrice()).doubleValue();
                     annotation += " maxPrice = " + printPrice(maxPrice);
                     annotation += " minPrice = " + printPrice(minPrice);
                     lastBetweenPrice = (float) (maxPrice - minPrice);
@@ -3931,7 +3942,7 @@ public class FactorialInstrumentByFiatService implements
                                 }
                                 var takeProfitPriceStart = Math.min(
                                         candleIntervalUpDownData.maxClose,
-                                        candle.getClosingPrice().doubleValue() * (100f + intervalPercent) / 100f
+                                        candle.getClosingPrice().doubleValue() + candle.getClosingPrice().abs().doubleValue() * intervalPercent / 100f
                                 );
                                 if (isMinMin) {
                                     StopLossPrice = BigDecimal.valueOf(candleIntervalUpDownData.minClose);
@@ -3939,8 +3950,8 @@ public class FactorialInstrumentByFiatService implements
                                     annotation += " minmin intervalPercent=" + printPrice(intervalPercent);
                                 } else {
                                     StopLossPrice = BigDecimal.valueOf(Math.min(
-                                            candleIntervalUpDownData.minClose * (100f - buyCriteria.getDownStopLossFactor() * intervalPercent) / 100f,
-                                            candle.getClosingPrice().doubleValue() * (100f - buyCriteria.getDownStopLossFactor() * intervalPercent) / 100f
+                                            candleIntervalUpDownData.minClose - Math.abs(candleIntervalUpDownData.minClose) * buyCriteria.getDownStopLossFactor() * intervalPercent / 100f,
+                                            candle.getClosingPrice().doubleValue() - Math.abs(buyCriteria.getDownStopLossFactor()) * intervalPercent / 100f
                                     ));
                                 }
                                 annotation += " takeProfitPriceStart=" + printPrice(takeProfitPriceStart);

@@ -132,8 +132,13 @@ public class CalculatorFacade {
                 return true;
             }
             var middle = stopLossPrice.add(orderPrice.subtract(stopLossPrice).divide(BigDecimal.valueOf(2), 8, RoundingMode.HALF_UP));
-            if (candleDomainEntity.getClosingPrice().compareTo(middle) > 0) {
-                order.getDetails().getAnnotations().put("needSell", annotation + "closingPrice > middle: " + candleDomainEntity.getClosingPrice() + " > " + middle);
+            var middleNear = middle.add(orderPrice.subtract(middle).divide(BigDecimal.valueOf(2), 8, RoundingMode.HALF_UP));
+            if (
+                    candleDomainEntity.getClosingPrice().compareTo(middle) > 0
+                    && candleDomainEntity.getClosingPrice().compareTo(middleNear) < 0
+            ) {
+                order.getDetails().getAnnotations().put("needSell", annotation + "closingPrice > middle: " + candleDomainEntity.getClosingPrice() + " > " + middle
+                        + " closingPrice < middleNear: " + candleDomainEntity.getClosingPrice() + " > " + middleNear);
                 return true;
             }
         } else {

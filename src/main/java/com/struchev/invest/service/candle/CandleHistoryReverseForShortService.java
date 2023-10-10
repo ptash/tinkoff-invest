@@ -78,6 +78,7 @@ public class CandleHistoryReverseForShortService implements ICandleHistoryServic
 
     public BigDecimal preparePrice(BigDecimal price)
     {
-        return price.multiply(BigDecimal.valueOf(-1)).add(BigDecimal.valueOf(200));
+        return price.multiply(BigDecimal.valueOf(-1));
+        //return price.multiply(BigDecimal.valueOf(-1)).add(BigDecimal.valueOf(200));
     }
 }
