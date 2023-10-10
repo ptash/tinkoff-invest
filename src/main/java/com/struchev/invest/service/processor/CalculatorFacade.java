@@ -144,8 +144,14 @@ public class CalculatorFacade {
         } else {
             var annotation = "orderPrice <= closingPrice: " + orderPrice + " <= " + candleDomainEntity.getClosingPrice() + " ";
             // в плюсе, но не большом
-            if (orderPrice.compareTo(stopLossPrice) > 0) {
-                order.getDetails().getAnnotations().put("needSell", annotation + "orderPrice > stopLossPrice: " + orderPrice + " > " + stopLossPrice);
+            if (stopLossPrice.compareTo(orderPrice) < 0) {
+                annotation += "stopLossPrice < orderPrice: " + stopLossPrice + " > " + orderPrice;
+                var middle = stopLossPrice.add(orderPrice.subtract(stopLossPrice).divide(BigDecimal.valueOf(2), 8, RoundingMode.HALF_UP));
+                var middleNear = orderPrice.add(orderPrice.subtract(middle).divide(BigDecimal.valueOf(2), 8, RoundingMode.HALF_UP));
+                if (candleDomainEntity.getClosingPrice().compareTo(middleNear) > 0) {
+                    order.getDetails().getAnnotations().put("needSell", annotation + " closingPrice > middleNear: " + candleDomainEntity.getClosingPrice() + " > " + middleNear);
+                    return true;
+                }
                 return true;
             }
         }
