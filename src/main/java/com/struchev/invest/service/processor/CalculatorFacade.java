@@ -139,8 +139,8 @@ public class CalculatorFacade {
         } else {
             var annotation = "orderPrice <= closingPrice: " + orderPrice + " <= " + candleDomainEntity.getClosingPrice() + " ";
             // в плюсе, но не большом
-            if (orderPrice.compareTo(stopLossPrice) > 0) {
-                order.getDetails().getAnnotations().put("needSell", annotation + "orderPrice > stopLossPrice: " + orderPrice + " > " + stopLossPrice);
+            if (orderPrice.compareTo(stopLossPrice) < 0) {
+                order.getDetails().getAnnotations().put("needSell", annotation + "orderPrice < stopLossPrice: " + orderPrice + " < " + stopLossPrice);
                 return true;
             }
         }
