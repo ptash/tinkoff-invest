@@ -129,34 +129,45 @@ public class CalculatorFacade {
             stopLossPrice = candleHistoryReverseForShortService.preparePrice(stopLossPrice);
             candleDomainEntity = candleHistoryReverseForShortService.prepareCandleForShort(candleDomainEntity.clone());
         }
+        var intervalPercentNear = order.getDetails().getCurrentPrices().getOrDefault("intervalPercentNear", BigDecimal.ZERO);
+        if (intervalPercentNear.equals(BigDecimal.ZERO)) {
+            intervalPercentNear = orderPrice
+                    .subtract(stopLossPrice).abs()
+                    .divide(orderPrice.abs(), 8, RoundingMode.HALF_UP)
+                    .divide(BigDecimal.valueOf(4), 8, RoundingMode.HALF_UP)
+                    .multiply(BigDecimal.valueOf(100));
+        }
+        var annotation = "intervalPercentNear = " + intervalPercentNear;
+        var closePercent = orderPrice
+                .subtract(candleDomainEntity.getClosingPrice()).abs()
+                .divide(orderPrice.abs(), 8, RoundingMode.HALF_UP)
+                .multiply(BigDecimal.valueOf(100));
+        if (closePercent.compareTo(intervalPercentNear) < 0) {
+            // незначительные колебания игнорим
+            return false;
+        } else {
+            annotation += " closePercent >= intervalPercentNear" + closePercent + " >= " + intervalPercentNear;
+        }
         if (orderPrice.compareTo(candleDomainEntity.getClosingPrice()) > 0) {
-            var annotation = "orderPrice > closingPrice: " + orderPrice + " > " + candleDomainEntity.getClosingPrice() + " ";
-            // в минусе и мижняя граница либо высоко, либо очень низко
+            annotation += " orderPrice > closingPrice: " + orderPrice + " > " + candleDomainEntity.getClosingPrice();
+            // в минусе и мижняя граница либо высоко
             if (stopLossPrice.compareTo(orderPrice) > 0) {
                 order.getDetails().getAnnotations().put("needSell", annotation + "stopLossPrice > orderPrice: " + stopLossPrice + " > " + orderPrice);
                 return true;
             }
+            // либо очень низко
             var middle = stopLossPrice.add(orderPrice.subtract(stopLossPrice).divide(BigDecimal.valueOf(2), 8, RoundingMode.HALF_UP));
-            var middleNear = middle.add(orderPrice.subtract(middle).divide(BigDecimal.valueOf(2), 8, RoundingMode.HALF_UP));
-            if (
-                    candleDomainEntity.getClosingPrice().compareTo(middle) > 0
-                    && candleDomainEntity.getClosingPrice().compareTo(middleNear) < 0
-            ) {
-                order.getDetails().getAnnotations().put("needSell", annotation + "closingPrice > middle: " + candleDomainEntity.getClosingPrice() + " > " + middle
-                        + " closingPrice < middleNear: " + candleDomainEntity.getClosingPrice() + " > " + middleNear);
+            if (candleDomainEntity.getClosingPrice().compareTo(middle) > 0) {
+                order.getDetails().getAnnotations().put("needSell", annotation + "closingPrice > middle: " + candleDomainEntity.getClosingPrice() + " > " + middle);
                 return true;
             }
         } else {
-            var annotation = "orderPrice <= closingPrice: " + orderPrice + " <= " + candleDomainEntity.getClosingPrice() + " ";
+            annotation += " orderPrice <= closingPrice: " + orderPrice + " <= " + candleDomainEntity.getClosingPrice();
             // в плюсе, но не большом
             if (stopLossPrice.compareTo(orderPrice) < 0) {
                 annotation += "stopLossPrice < orderPrice: " + stopLossPrice + " > " + orderPrice;
-                var middle = stopLossPrice.add(orderPrice.subtract(stopLossPrice).divide(BigDecimal.valueOf(2), 8, RoundingMode.HALF_UP));
-                var middleNear = orderPrice.add(orderPrice.subtract(middle).divide(BigDecimal.valueOf(2), 8, RoundingMode.HALF_UP));
-                if (candleDomainEntity.getClosingPrice().compareTo(middleNear) > 0) {
-                    order.getDetails().getAnnotations().put("needSell", annotation + " closingPrice > middleNear: " + candleDomainEntity.getClosingPrice() + " > " + middleNear);
-                    return true;
-                }
+                order.getDetails().getAnnotations().put("needSell", annotation);
+                return true;
             }
         }
         return false;
