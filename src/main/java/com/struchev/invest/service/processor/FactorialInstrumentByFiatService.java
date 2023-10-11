@@ -2175,7 +2175,7 @@ public class FactorialInstrumentByFiatService implements
                             minPrice = minPriceStart;
                             maxPrice = takeProfitPriceStart.floatValue();
                             var intervalPercentStepBottom = Math.max(intervalPercentStep.floatValue(), buyCriteria.getCandlePriceMinFactor());
-                            stopLossPriceBottom = BigDecimal.valueOf(maxPrice - minPrice * intervalPercentStepBottom / 100);
+                            stopLossPriceBottom = BigDecimal.valueOf(maxPrice - Math.abs(minPrice) * intervalPercentStepBottom / 100);
                             annotation += " stopLossPriceBottom=" + printPrice(stopLossPriceBottom);
                             isDownStopLoss = true;
                         }
