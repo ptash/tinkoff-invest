@@ -195,10 +195,12 @@ public class PurchaseService {
                     var isShouldSell = calculator.isShouldSell(strategy, candleDomainEntity, order.getPurchasePrice());
                     var isShouldBuyShort = calculator.isShouldBuyShort(strategy, candleDomainEntity);
                     if (
+                            !isTrendBuy
+                            && (
                             isShouldSell
                             || ((isShouldBuyShort || isTrendBuyShort)
                                     && isOrderNeedSell(order, candleDomainEntity)
-                            )
+                            ))
                     ) {
                         order = orderService.closeOrder(candleDomainEntity, strategy);
                         notificationService.sendSellInfo(strategy, order, candleDomainEntity);
@@ -208,10 +210,12 @@ public class PurchaseService {
                     var isShouldSellShort = calculator.isShouldSellShort(strategy, candleDomainEntity, order.getSellPrice());
                     var isShouldBuy = calculator.isShouldBuy(strategy, candleDomainEntity);
                     if (
+                            !isTrendBuyShort
+                            && (
                             isShouldSellShort
                             || ((isTrendBuy || isShouldBuy)
                                     && calculator.isOrderNeedSell(order, candleDomainEntity)
-                            )
+                            ))
                     ) {
                         order = orderService.closeOrderShort(candleDomainEntity, strategy);
                         notificationForShortService.sendBuyInfo(strategy, order, candleDomainEntity);

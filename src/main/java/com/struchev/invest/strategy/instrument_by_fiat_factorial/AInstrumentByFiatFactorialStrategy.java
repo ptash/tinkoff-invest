@@ -48,6 +48,9 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
     }
 
     public SellLimitCriteria getSellLimitCriteria(String figi) {
+        if (null == this.getSellLimitCriteria()) {
+            return null;
+        }
         if (!this.sellLimitMap.containsKey(figi)) {
             this.sellLimitMap.put(figi, SellLimitCriteria.builder().exitProfitPercent(this.getSellLimitCriteria().getExitProfitPercent()).build());
         }

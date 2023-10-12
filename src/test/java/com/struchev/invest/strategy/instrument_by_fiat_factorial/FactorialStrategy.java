@@ -32,7 +32,7 @@ public class FactorialStrategy extends AInstrumentByFiatFactorialStrategy {
         //FIGIES.put("FUTMOEX09230", 1); // MEU3 MOEX-9.23
         //FIGIES.put("FUTSPYF09230", 1); // SFU3 SPYF-9.23 S&P 500
         //FIGIES.put("FUTRTSM09230", 1); // RMU3 RTSM-9.23 Индекс РТС (мини)
-        FIGIES.put("FUTRTSM12230", 1); // RMU3 RTSM-12.23 Индекс РТС (мини)
+        //FIGIES.put("FUTRTSM12230", 1); // RMU3 RTSM-12.23 Индекс РТС (мини)
         //FIGIES.put("FUTRVI092300", 1); // VIU3 RVI-9.23 Волатильность российского рынка
         //FIGIES.put("FUTDAX092300", 1); // DXU3 DAX-9.23 DAX 40
         //FIGIES.put("FUTRGBI09230", 1); // RBU3 RGBI-9.23 RGBI-9.23 Индекс Государственных облигаций
@@ -53,12 +53,12 @@ public class FactorialStrategy extends AInstrumentByFiatFactorialStrategy {
         //FIGIES.put("FUTSILV09230", 1); // SVU3 SILV-9.23 Серебро
         //FIGIES.put("FUTSILV06230", 1); // SVM3 SILV-6.23 Серебро
         //FIGIES.put("FUTSILV09230", 1); // SVM3 SILV-9.23 Серебро
-        //FIGIES.put("FUTSILV12230", 1); // SVM3 SILV-12.23 Серебро
+        FIGIES.put("FUTSILV12230", 1); // SVM3 SILV-12.23 Серебро
         //FIGIES.put("FUTBR0423000", 1); // BRJ3 BR-4.23 Нефть Brent
         //FIGIES.put("FUTBR0523000", 1); // BRK3 BR-5.23 Нефть Brent
         //FIGIES.put("FUTBR0923000", 1); // BRK3 BR-9.23 Нефть Brent
         //FIGIES.put("FUTBR1023000", 1); // BRK3 BR-10.23 Нефть Brent
-        FIGIES.put("FUTBR1123000", 1); // BRK3 BR-11.23 Нефть Brent
+        //FIGIES.put("FUTBR1123000", 1); // BRK3 BR-11.23 Нефть Brent
         //FIGIES.put("FUTMXI032300", 1); // MMH3 MXI-3.23 Индекс МосБиржи (мини)
         //FIGIES.put("FUTMXI062300", 1); // MMM3 MXI-6.23 Индекс МосБиржи (мини)
         //FIGIES.put("FUTMXI092300", 1); // MMM3 MXI-9.23 Индекс МосБиржи (мини)

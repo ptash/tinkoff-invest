@@ -18,7 +18,8 @@ public class FactorialCandleFactorOnlyUp20Strategy extends FactorialCandleFactor
     }
 
     public SellLimitCriteria getSellLimitCriteriaOrig() {
-        return SellLimitCriteria.builder().exitProfitPercent(15.0f).build();
+        return null;
+        //return SellLimitCriteria.builder().exitProfitPercent(15.0f).build();
     }
 
     public boolean isEnabled() { return true; }
