@@ -37,7 +37,7 @@ public class FactorialStrategy extends AInstrumentByFiatFactorialStrategy {
         //FIGIES.put("FUTDAX092300", 1); // DXU3 DAX-9.23 DAX 40
         //FIGIES.put("FUTRGBI09230", 1); // RBU3 RGBI-9.23 RGBI-9.23 Индекс Государственных облигаций
         //FIGIES.put("FUTSTOX12230", 1); // SXZ3 STOX-12.23 EURO STOXX 50
-        FIGIES.put("FUTUSDRUBF00", 1); // USDRUBF USDRUBF Доллар - Рубль
+        //FIGIES.put("FUTUSDRUBF00", 1); // USDRUBF USDRUBF Доллар - Рубль
 
         //FIGIES.put("FUTNG0323000", 1); // NGH3 NG-3.23 Природный газ
         //FIGIES.put("FUTNG0423001", 1); // NGJ3 NG-4.23 Природный газ

@@ -3130,7 +3130,8 @@ public class FactorialInstrumentByFiatService implements
                     var candleResUpFirstPrevs = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(), candleResUpFirst.getCandle().getDateTime(), 2, strategy.getInterval());
                     var candlesBetweenFirst = candleHistoryService.getCandlesByFigiBetweenDateTimes(
                             candle.getFigi(),
-                            candleResUpFirstPrevs.get(0).getDateTime(),
+                            //candleResUpFirstPrevs.get(0).getDateTime(),
+                            candleResUpPrev == null ? candleResDownPrevFirst.getCandle().getDateTime() : candleResUpPrev.getCandle().getDateTime(),
                             candleResDownFirst.getCandle().getDateTime(),
                             strategy.getInterval()
                     );
