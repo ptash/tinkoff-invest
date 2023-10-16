@@ -90,7 +90,7 @@ public class CandleListenerService {
                             var curCandleMinuteExpect2 = Date.formatDateTimeToMinute(now.minusMinutes(1));
                             var curCandleMinute = Date.formatDateTimeToMinute(candleDomainEntity.getDateTime());
                             if (!(curCandleMinute.equals(curCandleMinuteExpect) || curCandleMinuteExpect.equals(curCandleMinuteExpect2))) {
-                                log.trace("Skip candle {}. Now {}", curCandleMinute, curCandleMinuteExpect);
+                                log.warn("Skip candle {} {}. Now {}", item.getCandle().getFigi(), curCandleMinute, curCandleMinuteExpect);
                                 candleDomainEntity = null;
                             }
                         }

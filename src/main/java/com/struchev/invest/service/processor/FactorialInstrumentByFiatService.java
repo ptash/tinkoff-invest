@@ -1,7 +1,10 @@
 package com.struchev.invest.service.processor;
 
 import com.struchev.invest.entity.CandleDomainEntity;
+import com.struchev.invest.entity.CandleStrategyResultEntity;
+import com.struchev.invest.entity.OrderDetails;
 import com.struchev.invest.entity.OrderDomainEntity;
+import com.struchev.invest.repository.CandleStrategyResultRepository;
 import com.struchev.invest.service.candle.ICandleHistoryService;
 import com.struchev.invest.service.notification.INotificationService;
 import com.struchev.invest.service.order.IOrderService;
@@ -34,6 +37,8 @@ public class FactorialInstrumentByFiatService implements
         ICalculatorDetailsService,
         Cloneable
 {
+
+    private final CandleStrategyResultRepository candleStrategyResultRepository;
 
     private ICandleHistoryService candleHistoryService;
     private INotificationService notificationService;
@@ -108,7 +113,7 @@ public class FactorialInstrumentByFiatService implements
     }
 
     public ICalculatorShortService cloneService(IOrderService orderService) {
-        var obj = new FactorialInstrumentByFiatService();
+        var obj = new FactorialInstrumentByFiatService(this.candleStrategyResultRepository);
         obj.orderService = orderService;
         return obj;
     }
@@ -2352,7 +2357,7 @@ public class FactorialInstrumentByFiatService implements
             annotation += " sell limit=" + strategy.getSellLimitCriteria(candle.getFigi()).getExitProfitPercent();
         }
         if (strategy.getSellLimitCriteria() != null) {
-            var limitPriceByStrategy = purchaseRate.add(purchaseRate.multiply(
+            var limitPriceByStrategy = purchaseRate.add(purchaseRate.abs().multiply(
                     BigDecimal.valueOf(strategy.getSellLimitCriteria(candle.getFigi()).getExitProfitPercent() / 100.)
             ));
             annotation += " limit=" + strategy.getSellLimitCriteria(candle.getFigi()).getExitProfitPercent();
@@ -4337,7 +4342,7 @@ public class FactorialInstrumentByFiatService implements
                 isIntervalUp = true;
                 StopLossPrice = BigDecimal.valueOf(Math.min(
                         candleIntervalUpDownData.minClose,
-                        candleIntervalUpDownDataPrevPrev.minClose - (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) * 0.5f
+                        candleIntervalUpDownDataPrevPrev.minClose - (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) * 1.f
                 ));
             }
         }
@@ -4419,15 +4424,19 @@ public class FactorialInstrumentByFiatService implements
                 }
             }
         }
-        if (isIntervalUp && StopLossPrice.equals(BigDecimal.ZERO)) {
-            //StopLossPrice = BigDecimal.valueOf(candleIntervalUpDownData.minClose);
-            StopLossPrice = BigDecimal.valueOf(candleIntervalUpDownData.minClose
-                    - (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) * 2f);
+        var percent = (100f * (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) / Math.abs(candleIntervalUpDownData.minClose));
+        if (percent < buyCriteria.getCandlePriceMinFactor()) {
+            annotation += " percent=" + printPrice(percent) + " < " + printPrice(buyCriteria.getCandlePriceMinFactor());
+            percent = buyCriteria.getCandlePriceMinFactor();
         }
-        StopLossPrice = BigDecimal.valueOf(Math.min(
-                StopLossPrice.doubleValue(),
-                candle.getClosingPrice().doubleValue() - (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) * 0.5f
-        ));
+        if (StopLossPrice.equals(BigDecimal.ZERO)) {
+            StopLossPrice = BigDecimal.valueOf(candleIntervalUpDownData.minClose - Math.abs(candleIntervalUpDownData.minClose) * percent * 2 / 100f);
+        }
+        annotation += " StopLossPrice=" + printPrice(StopLossPrice);
+        StopLossPrice = StopLossPrice.min(
+                BigDecimal.valueOf(candle.getClosingPrice().doubleValue() - Math.abs(candleIntervalUpDownData.minClose) * percent * 0.5f / 100f)
+        );
+        annotation += " StopLossPrice=" + printPrice(StopLossPrice);
         var stopLossPriceBottom = StopLossPrice.subtract(BigDecimal.valueOf(candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose));
         return CandleIntervalUpResult.builder()
                 .annotation(annotation)
@@ -4728,52 +4737,81 @@ public class FactorialInstrumentByFiatService implements
         var prevIsDown = true;
         log.info("{}: Candle Intervals size = {} from {}", keyCandles, candleIPrev.size(), candleIPrev.get(0).getDateTime());
         for (var i = 1; i < candleIPrev.size(); i++) {
-            var candleStrategyCurHourI = getCandleHour(strategy, candleIPrev.get(i));
+            var candleCur = candleIPrev.get(i);
+            var cashed = candleStrategyResultRepository.findByStrategyAndFigiAndDateTimeAndInterval(strategy.getName(), candleCur.getFigi(), candleCur.getDateTime(), candleCur.getInterval());
+            if (cashed != null) {
+                if (cashed.getDetails().getBooleanDataMap().getOrDefault("res", false)) {
+                    CandleIntervalResultData candleIntervalRes = CandleIntervalResultData.builder()
+                            .res(true)
+                            .candle(candleCur)
+                            .isDown(cashed.getDetails().getBooleanDataMap().getOrDefault("isDown", false))
+                            .annotation(cashed.getDetails().getAnnotations().getOrDefault("annotation", "empty"))
+                            .build();
+                    log.info("Cashed {} {} OK: {} {}", candle.getFigi(), candleIntervalRes.isDown ? "Buy" : "Sell", candleCur.getDateTime(), candleIntervalRes.annotation);
+                    results.add(candleIntervalRes);
+                }
+                continue;
+            }
+            var candleStrategyCurHourI = getCandleHour(strategy, candleCur);
             if (candleStrategyCurHour == null || candleStrategyCurHourI.getDateTime().compareTo(candleStrategyCurHour.getDateTime()) != 0) {
                 candleStrategyCurHour = candleStrategyCurHourI;
-                candleStrategy = buildAvgStrategy(strategy.getStrategy(), candleIPrev.get(i));
+                candleStrategy = buildAvgStrategy(strategy.getStrategy(), candleCur);
             }
             if (null == candleStrategy) {
                 break;
             }
             var sellCriteria = candleStrategy.getSellCriteria();
-            var candleIntervalResSell = checkCandleInterval(candleIPrev.get(i), sellCriteria);
-            if (candleIntervalResSell.res) {
-                log.info("Sell OK: {} priceDiffAvgReal={} {}", candleIPrev.get(i).getDateTime(), candleStrategy.getPriceDiffAvgReal(), candleIntervalResSell.annotation);
+            var candleIntervalRes = checkCandleInterval(candleCur, sellCriteria);
+            if (candleIntervalRes.res) {
+                log.info("Sell OK: {} priceDiffAvgReal={} {}", candleCur.getDateTime(), candleStrategy.getPriceDiffAvgReal(), candleIntervalRes.annotation);
             }
-            if (!candleIntervalResSell.res
+            if (!candleIntervalRes.res
                     && sellCriteria.getCandleUpLength() > 1
                     && null != sellCriteria.getCandleTrySimple()
             ) {
                 var sellCriteriaSimple = sellCriteria.clone();
                 sellCriteriaSimple.setCandleUpLength(sellCriteria.getCandleUpLength() / sellCriteria.getCandleTrySimple());
                 sellCriteriaSimple.setCandleIntervalMinPercent(sellCriteria.getCandleIntervalMinPercent() * sellCriteria.getCandleTrySimple());
-                candleIntervalResSell = checkCandleInterval(candleIPrev.get(i), sellCriteriaSimple);
-                if (candleIntervalResSell.res) {
-                    log.info("Sell OK simple: {} priceDiffAvgReal={} {}", candleIPrev.get(i).getDateTime(), candleStrategy.getPriceDiffAvgReal(), candleIntervalResSell.annotation);
+                candleIntervalRes = checkCandleInterval(candleCur, sellCriteriaSimple);
+                if (candleIntervalRes.res) {
+                    log.info("Sell OK simple: {} priceDiffAvgReal={} {}", candleCur.getDateTime(), candleStrategy.getPriceDiffAvgReal(), candleIntervalRes.annotation);
                 }
             }
-            if (candleIntervalResSell.res) {
-                results.add(candleIntervalResSell);
+            if (candleIntervalRes.res) {
                 upCount++;
                 if (prevIsDown) {
                     upDownCount++;
-                    log.info("{}: Switch to UP in {}", keyCandles, candleIPrev.get(i).getDateTime());
+                    log.info("{}: Switch to UP in {}", keyCandles, candleCur.getDateTime());
                 }
                 prevIsDown = false;
             } else {
-                var candleIntervalResBuy = checkCandleInterval(candleIPrev.get(i), candleStrategy.getBuyCriteria());
-                if (candleIntervalResBuy.res) {
-                    log.info("Buy OK: {} priceDiffAvgReal={} {}", candleIPrev.get(i).getDateTime(), candleStrategy.getPriceDiffAvgReal(), candleIntervalResBuy.annotation);
-                    results.add(candleIntervalResBuy);
+                candleIntervalRes = checkCandleInterval(candleCur, candleStrategy.getBuyCriteria());
+                if (candleIntervalRes.res) {
+                    log.info("Buy OK: {} priceDiffAvgReal={} {}", candleCur.getDateTime(), candleStrategy.getPriceDiffAvgReal(), candleIntervalRes.annotation);
                     downCount++;
                     if (!prevIsDown) {
                         upDownCount++;
-                        log.info("{}: Switch to DOWN in {}", keyCandles, candleIPrev.get(i).getDateTime());
+                        log.info("{}: Switch to DOWN in {}", keyCandles, candleCur.getDateTime());
                     }
                     prevIsDown = true;
                 }
             }
+            OrderDetails details = OrderDetails.builder()
+                    .build();
+            details.getBooleanDataMap().put("res", candleIntervalRes.res);
+            if (candleIntervalRes.res) {
+                results.add(candleIntervalRes);
+                details.getAnnotations().put("annotation", candleIntervalRes.annotation);
+                details.getBooleanDataMap().put("isDown", candleIntervalRes.isDown);
+            }
+            CandleStrategyResultEntity candleStrategyResultEntity = CandleStrategyResultEntity.builder()
+                    .strategy(strategy.getName())
+                    .figi(candleCur.getFigi())
+                    .dateTime(candleCur.getDateTime())
+                    .interval(candleCur.getInterval())
+                    .details(details)
+                    .build();
+            candleStrategyResultRepository.save(candleStrategyResultEntity);
             if (
                     //results.size() > 1500 ||
                     (

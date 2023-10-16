@@ -211,6 +211,11 @@ public class OrderService implements IOrderService {
                 log.error("An error in limitPrice " + limitPrice + " to MinPriceIncrement " + instrument.getMinPriceIncrement(), $e);
             }
         }
+        var limitProfitPercent = limitPrice.divide(candle.getClosingPrice(), 8, RoundingMode.HALF_DOWN).subtract(BigDecimal.ONE).multiply(BigDecimal.valueOf(100));
+        if (limitProfitPercent.compareTo(BigDecimal.valueOf(10)) > 0) {
+            log.info("Skip limit figi {} price {}: {}% > 10%", candle.getFigi(), limitPrice, limitProfitPercent);
+            return order;
+        }
         var lots = order.getLots();
         if (order.getCellLots() != null) {
             lots -= order.getCellLots().intValue();
