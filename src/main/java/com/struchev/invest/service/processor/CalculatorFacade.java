@@ -137,16 +137,21 @@ public class CalculatorFacade {
                     .divide(BigDecimal.valueOf(4), 8, RoundingMode.HALF_UP)
                     .multiply(BigDecimal.valueOf(100));
         }
+        var intervalPercentNearDown = order.getDetails().getCurrentPrices().getOrDefault("intervalPercentNearDown", intervalPercentNear)
+                .multiply(BigDecimal.valueOf(-1));
         var annotation = "intervalPercentNear = " + intervalPercentNear;
-        var closePercent = orderPrice
-                .subtract(candleDomainEntity.getClosingPrice()).abs()
+        var closePercent = candleDomainEntity.getClosingPrice()
+                .subtract(orderPrice)
                 .divide(orderPrice.abs(), 8, RoundingMode.HALF_UP)
                 .multiply(BigDecimal.valueOf(100));
-        if (closePercent.compareTo(intervalPercentNear) < 0) {
+        if (
+                closePercent.compareTo(intervalPercentNear) < 0
+                && closePercent.compareTo(intervalPercentNearDown) > 0
+        ) {
             // незначительные колебания игнорим
             return false;
         } else {
-            annotation += " closePercent >= intervalPercentNear" + closePercent + " >= " + intervalPercentNear;
+            annotation += " intervalPercentNearDown >= closePercent >= intervalPercentNear" + intervalPercentNearDown + " >= " + closePercent + " >= " + intervalPercentNear;
         }
         if (orderPrice.compareTo(candleDomainEntity.getClosingPrice()) > 0) {
             annotation += " orderPrice > closingPrice: " + orderPrice + " > " + candleDomainEntity.getClosingPrice();

@@ -2212,6 +2212,7 @@ public class FactorialInstrumentByFiatService implements
                     candleIntervalUpDownData,
                     candleIntervalUpDownDataPrev
             );
+            annotation += " resMaybe=" + isIntervalUpResMaybe.isIntervalUp + ": " + isIntervalUpResMaybe.annotation;
             setTrendUp(strategy, candle, isIntervalUpResMaybe.isIntervalUp);
             if (
                     true//!res
@@ -3809,6 +3810,13 @@ public class FactorialInstrumentByFiatService implements
                             intervalPercentNear = buyCriteria.getCandlePriceMinFactor();
                         }
                         setOrderBigDecimalData(strategy, candle, "intervalPercentNear", BigDecimal.valueOf(intervalPercentNear));
+                        if (candle.getClosingPrice().doubleValue() > candleIntervalUpDownData.maxClose) {
+                            var intervalPercentNearDown = 100f * (candle.getClosingPrice().doubleValue() - candleIntervalUpDownData.minClose) / Math.abs(candleIntervalUpDownData.minClose);
+                            if (intervalPercentNearDown < buyCriteria.getCandlePriceMinFactor()) {
+                                intervalPercentNearDown = buyCriteria.getCandlePriceMinFactor();
+                            }
+                            setOrderBigDecimalData(strategy, candle, "intervalPercentNearDown", BigDecimal.valueOf(intervalPercentNearDown));
+                        }
 
                         var PointLengthOk = false;
                         var PointLengthOkRes = false;
@@ -4320,7 +4328,7 @@ public class FactorialInstrumentByFiatService implements
                                     candleIntervalUpDownDataPrev,
                                     candleIntervalUpDownDataPrevPrev
                             );
-                            annotation += " isIntervalUpResNew=" + isIntervalUpResNew.isIntervalUp;
+                            annotation += " isIntervalUpResNew=" + isIntervalUpResNew.isIntervalUp + "isIntervalUpResNew";
                             if (isIntervalUpResNew.isIntervalUp) {
                                 isIntervalUpRes.annotation += annotation + " new stopLossPrice BY PREV MAYBE";
                                 isIntervalUpRes.isIntervalUp = true;
