@@ -746,6 +746,20 @@ public class FactorialInstrumentByFiatService implements
                     annotation += " BYU OK";
                 }
             }
+            if (candleBuyRes.res) {
+                setTrendUp(strategy, candle, candleBuyRes.res);
+            } else if (getTrendUp(strategy, candle) == null) {
+                var isIntervalUpResMaybe = calcIsIntervalUpMaybe(
+                        candle,
+                        null,
+                        buyCriteria,
+                        newStrategy,
+                        candleIntervalUpDownData,
+                        getPrevCandleIntervalUpDownData(newStrategy, candleIntervalUpDownData)
+                );
+                setTrendUp(strategy, candle, isIntervalUpResMaybe.isIntervalUp);
+                annotation += " resMaybe=" + isIntervalUpResMaybe.isIntervalUp + ": " + isIntervalUpResMaybe.annotation;
+            }
         }
 
         if (res && buyCriteria.getSkipIfOutPrevLength() != null) {
@@ -2190,6 +2204,15 @@ public class FactorialInstrumentByFiatService implements
             BigDecimal stopLossPriceBottom = BigDecimal.valueOf(minPrice);
             annotation += " takeProfitPrice=" + printPrice(takeProfitPrice);
             annotation += " takeProfitPriceStart=" + printPrice(takeProfitPriceStart);
+            var isIntervalUpResMaybe = calcIsIntervalUpMaybe(
+                    candle,
+                    null,
+                    buyCriteria,
+                    newStrategy,
+                    candleIntervalUpDownData,
+                    candleIntervalUpDownDataPrev
+            );
+            setTrendUp(strategy, candle, isIntervalUpResMaybe.isIntervalUp);
             if (
                     true//!res
                     && takeProfitPrice != null
@@ -2213,14 +2236,6 @@ public class FactorialInstrumentByFiatService implements
                         //minPriceStart = stopLossMaxPrice.floatValue();
                         //takeProfitPriceStart = BigDecimal.valueOf(minPriceStart * (100f + intervalPercentStep.floatValue()) / 100f);
                     } else {
-                        var isIntervalUpResMaybe = calcIsIntervalUpMaybe(
-                                candle,
-                                null,
-                                buyCriteria,
-                                newStrategy,
-                                candleIntervalUpDownData,
-                                candleIntervalUpDownDataPrev
-                        );
                         if (isIntervalUpResMaybe != null && isIntervalUpResMaybe.isIntervalUp) {
                             annotation += " isIntervalUpMaybe=true";
                         } else {
@@ -2276,14 +2291,6 @@ public class FactorialInstrumentByFiatService implements
                     !stopLossPricePrev.equals(BigDecimal.ZERO) && !stopLossPricePrev.equals(stopLossPrice)
                     && candleIntervalUpDownDataPrev.minClose != null
             ) {
-                var isIntervalUpResMaybe = calcIsIntervalUpMaybe(
-                        candle,
-                        null,
-                        buyCriteria,
-                        newStrategy,
-                        candleIntervalUpDownData,
-                        candleIntervalUpDownDataPrev
-                );
                 if (isIntervalUpResMaybe != null && isIntervalUpResMaybe.isIntervalUp) {
                     stopLossPrice = stopLossPricePrev;
                     stopLossPriceBottomA = stopLossPriceBottomPrev;
@@ -4266,6 +4273,12 @@ public class FactorialInstrumentByFiatService implements
             CandleIntervalUpDownData candleIntervalUpDownData,
             CandleIntervalUpDownData candleIntervalUpDownDataPrev
     ) {
+        if (candleIntervalUpDownDataPrev.minClose == null) {
+            return CandleIntervalUpResult.builder()
+                    .isIntervalUp(false)
+                    .annotation("DataPrev=null")
+                    .build();
+        }
         var annotation = "";
         var candleIntervalUpDownDataPrevPrev = getPrevCandleIntervalUpDownData(newStrategy, candleIntervalUpDownDataPrev);
         if (candleIntervalUpDownDataPrevPrev.minClose != null) {
