@@ -47,6 +47,17 @@ public class FactorialInstrumentByFiatService implements
 
     @Override
     public boolean isTrendBuy(AInstrumentByFiatFactorialStrategy strategy, CandleDomainEntity candle) {
+        var isTrendUp = getTrendUp(strategy, candle);
+        if (null != isTrendUp) {
+            return isTrendUp;
+        }
+        isTrendUp = isTrendBuyCalc(strategy, candle);
+        setTrendUp(strategy, candle, isTrendUp);
+        return isTrendUp;
+    }
+
+
+    public boolean isTrendBuyCalc(AInstrumentByFiatFactorialStrategy strategy, CandleDomainEntity candle) {
         var newStrategy = buildAvgStrategy(strategy, candle);
         if (null == newStrategy) {
             return false;
@@ -75,6 +86,28 @@ public class FactorialInstrumentByFiatService implements
                 candleIntervalUpDownDataPrev
         );
         return (isIntervalUpResMaybe != null && isIntervalUpResMaybe.isIntervalUp);
+    }
+
+    private LinkedHashMap<String, Boolean> trendUpMap = new LinkedHashMap<>() {
+        @Override
+        protected boolean removeEldestEntry(final Map.Entry eldest) {
+            return size() > 100;
+        }
+    };
+
+    public synchronized Boolean getTrendUp(AStrategy strategy, CandleDomainEntity candle)
+    {
+        String key = strategy.getName() + candle.getFigi() + printDateTime(candle.getDateTime());
+        if (trendUpMap.containsKey(key)) {
+            return trendUpMap.get(key);
+        }
+        return null;
+    }
+
+    private synchronized void setTrendUp(AStrategy strategy, CandleDomainEntity candle, Boolean value)
+    {
+        String key = strategy.getName() + candle.getFigi() + printDateTime(candle.getDateTime());
+        trendUpMap.put(key, value);
     }
 
     @Builder
@@ -4277,6 +4310,8 @@ public class FactorialInstrumentByFiatService implements
                             annotation += " isIntervalUpResNew=" + isIntervalUpResNew.isIntervalUp;
                             if (isIntervalUpResNew.isIntervalUp) {
                                 isIntervalUpRes.annotation += annotation + " new stopLossPrice BY PREV MAYBE";
+                                isIntervalUpRes.isIntervalUp = true;
+                                return isIntervalUpRes;
                             }
                         } else {
                             annotation += candleIntervalUpDownDataNew.annotation;
@@ -4285,7 +4320,10 @@ public class FactorialInstrumentByFiatService implements
                 }
             }
         }
-        return null;
+        return CandleIntervalUpResult.builder()
+                .isIntervalUp(false)
+                .annotation(annotation)
+                .build();
     }
 
     private CandleIntervalUpResult calcIsIntervalUp(
