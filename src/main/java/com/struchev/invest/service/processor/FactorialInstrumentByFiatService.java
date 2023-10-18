@@ -848,16 +848,29 @@ public class FactorialInstrumentByFiatService implements
             } else if (getTrendUp(strategy, candle) != null) {
                 annotation += " resMaybe=TrendUp=" + getTrendUp(strategy, candle);
             } else {
+                var candleIntervalUpDownDataPrev = getPrevCandleIntervalUpDownData(newStrategy, candleIntervalUpDownData);
                 var isIntervalUpResMaybe = calcIsIntervalUpMaybe(
                         candle,
                         null,
                         buyCriteria,
                         newStrategy,
                         candleIntervalUpDownData,
-                        getPrevCandleIntervalUpDownData(newStrategy, candleIntervalUpDownData)
+                        candleIntervalUpDownDataPrev
                 );
                 setTrendUp(strategy, candle, isIntervalUpResMaybe.isIntervalUp);
                 annotation += " resMaybe=" + isIntervalUpResMaybe.isIntervalUp + ": " + isIntervalUpResMaybe.annotation;
+                if (isIntervalUpResMaybe.isIntervalUp) {
+                    annotation += " minPercent=" + printPrice(isIntervalUpResMaybe.minPercent);
+                    annotation += " maxPercent=" + printPrice(isIntervalUpResMaybe.maxPercent);
+                    if (
+                            isIntervalUpResMaybe.minPercent.floatValue() < 25
+                            && isIntervalUpResMaybe.maxPercent.floatValue() < 50
+                            //&& isIntervalUpResMaybe.minPercent.floatValue() > 0
+                    ) {
+                        res = true;
+                        annotation += " BYU MAY BE OK";
+                    }
+                }
             }
         }
 
@@ -4375,6 +4388,8 @@ public class FactorialInstrumentByFiatService implements
         Boolean isIntervalUp;
         BigDecimal stopLossPrice;
         BigDecimal stopLossPriceBottom;
+        BigDecimal minPercent;
+        BigDecimal maxPercent;
     }
 
     private CandleIntervalUpResult calcIsIntervalUpMaybe(
@@ -4422,24 +4437,35 @@ public class FactorialInstrumentByFiatService implements
                         var candleIntervalUpDownDataNew = getCurCandleIntervalUpDownData(newStrategy, candle, candleResDownMaybe);
                         annotation += " endPostNew=" + printDateTime(candleIntervalUpDownDataNew.endPost.candle.getDateTime());
                         annotation += " mmCloseNew=" + printPrice(candleIntervalUpDownDataNew.minClose) + "-" + printPrice(candleIntervalUpDownDataNew.maxClose);
-                        if (!candleIntervalUpDownDataNew.endPost.candle.getDateTime().equals(candleIntervalUpDownData.endPost.candle.getDateTime())) {
-                            var isIntervalUpResNew = calcIsIntervalUp(
-                                    candle,
-                                    order,
-                                    buyCriteria,
-                                    candleIntervalUpDownDataNew,
-                                    candleIntervalUpDownData,
-                                    candleIntervalUpDownDataPrev,
-                                    candleIntervalUpDownDataPrevPrev
-                            );
-                            annotation += " isIntervalUpResNew=" + isIntervalUpResNew.isIntervalUp + "isIntervalUpResNew";
-                            if (isIntervalUpResNew.isIntervalUp) {
-                                isIntervalUpRes.annotation += annotation + " new stopLossPrice BY PREV MAYBE";
-                                isIntervalUpRes.isIntervalUp = true;
-                                return isIntervalUpRes;
-                            }
-                        } else {
+                        if (candleIntervalUpDownDataNew.endPost.candle.getDateTime().equals(candleIntervalUpDownData.endPost.candle.getDateTime())) {
                             annotation += candleIntervalUpDownDataNew.annotation;
+                            var cList = candleHistoryService.getCandlesByFigiBetweenDateTimes(candle.getFigi(), candleIntervalUpDownData.endPost.candle.getDateTime(), candle.getDateTime(), newStrategy.getInterval());
+                            var maxClose = cList.stream().mapToDouble(v -> v.getClosingPrice().max(v.getOpenPrice()).doubleValue()).max().orElse(-1);
+                            var minClose = cList.stream().mapToDouble(v -> v.getClosingPrice().min(v.getOpenPrice()).doubleValue()).min().orElse(-1);
+                            annotation += " new maxClose=" + printPrice(maxClose);
+                            if (maxClose > candleIntervalUpDownData.maxClose) {
+                                candleIntervalUpDownDataNew.minClose = (float) minClose;
+                                candleIntervalUpDownDataNew.maxClose = (float) maxClose;
+                            } else {
+                                CandleIntervalUpResult.builder()
+                                        .isIntervalUp(false)
+                                        .annotation(annotation)
+                                        .build();
+                            }
+                        }
+                        var isIntervalUpResNew = calcIsIntervalUp(
+                                candle,
+                                order,
+                                buyCriteria,
+                                candleIntervalUpDownDataNew,
+                                candleIntervalUpDownData,
+                                candleIntervalUpDownDataPrev,
+                                candleIntervalUpDownDataPrevPrev
+                        );
+                        annotation += " isIntervalUpResNew=" + isIntervalUpResNew.isIntervalUp + "isIntervalUpResNew";
+                        if (isIntervalUpResNew.isIntervalUp) {
+                            isIntervalUpResNew.annotation += annotation + " new stopLossPrice BY PREV MAYBE";
+                            return isIntervalUpResNew;
                         }
                     }
                 }
@@ -4507,8 +4533,8 @@ public class FactorialInstrumentByFiatService implements
             isIntervalUp = true;
         } else if (
                 minPercent > 0f
-                        && maxPercent > 0f
-                        && candleIntervalUpDownDataPrevPrev.maxClose > candleIntervalUpDownDataPrev.maxClose
+                && maxPercent > 0f
+                && candleIntervalUpDownDataPrevPrev.maxClose > candleIntervalUpDownDataPrev.maxClose
         ) {
             annotation += " PPMaxCandle: " + printDateTime(candleIntervalUpDownDataPrevPrev.beginDownFirst.candle.getDateTime());
             annotation += " PPPrev.min-maxCandle=" + printPrice(candleIntervalUpDownDataPrevPrevPrev.minClose) + "-" +printPrice(candleIntervalUpDownDataPrevPrevPrev.maxClose) ;
@@ -4522,6 +4548,15 @@ public class FactorialInstrumentByFiatService implements
                         candleIntervalUpDownData.minClose,
                         candleIntervalUpDownDataPrevPrev.minClose - (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) * 1.f
                 ));
+            }
+            if (
+                    candleIntervalUpDownDataPrevPrevPrev.maxClose != null
+                    && candleIntervalUpDownDataPrevPrev.minClose < candleIntervalUpDownDataPrev.minClose
+                    && candleIntervalUpDownDataPrevPrevPrev.maxClose > candleIntervalUpDownDataPrevPrev.maxClose
+                    && candleIntervalUpDownDataPrevPrevPrev.minClose < candleIntervalUpDownDataPrevPrev.minClose
+            ) {
+                isIntervalUp = true;
+                annotation += " up by down size2";
             }
         }
         if (
@@ -4539,7 +4574,7 @@ public class FactorialInstrumentByFiatService implements
                                             .stream().reduce((first, second) ->
                                                     first.getClosingPrice().compareTo(second.getClosingPrice()) > 0 ? first : second).orElse(null);*/
             var maxCandle = candleIntervalUpDownData.maxCandle;
-            var maxCandlePrice = maxCandle.getClosingPrice().max(maxCandle.getOpenPrice());
+            var maxCandlePrice = candleIntervalUpDownData.maxClose;
             annotation += " maxCandlePrev = " + printDateTime(maxCandle.getDateTime()) + "(" + printPrice(maxCandlePrice) + ")";
             if (maxCandlePrice.floatValue() > candleIntervalUpDownDataPrev.maxClose) {
                 annotation += " up by 2 max";
@@ -4622,6 +4657,8 @@ public class FactorialInstrumentByFiatService implements
                 .isIntervalUp(isIntervalUp)
                 .stopLossPrice(StopLossPrice)
                 .stopLossPriceBottom(stopLossPriceBottom)
+                .minPercent(BigDecimal.valueOf(minPercent))
+                .maxPercent(BigDecimal.valueOf(maxPercent))
                 .build();
     }
 
