@@ -7,4 +7,5 @@ import java.math.BigDecimal;
 
 interface ICalculatorTrendService<T extends AStrategy> {
     boolean isTrendBuy(T strategy, CandleDomainEntity candle);
+    boolean isTrendSell(T strategy, CandleDomainEntity candle);
 }

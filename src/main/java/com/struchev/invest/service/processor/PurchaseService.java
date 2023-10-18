@@ -199,12 +199,19 @@ public class PurchaseService {
                             isShouldSell
                             || ((isShouldBuyShort || calculator.isTrendBuyShort(strategy, candleDomainEntity))
                                     && isOrderNeedSell(order, candleDomainEntity)
-                            ))
+                            )
+                                    || (isShouldBuyShort && calculator.isTrendSell(strategy, candleDomainEntity))
+                            )
                             && !calculator.isTrendBuy(strategy, candleDomainEntity)
                     ) {
                         order = orderService.closeOrder(candleDomainEntity, strategy);
                         notificationService.sendSellInfo(strategy, order, candleDomainEntity);
                         isSell = true;
+                        if (isShouldBuyShort) {
+                            order = orderService.openOrderShort(candleDomainEntity, strategy, buildOrderShortDetails(strategy, candleDomainEntity));
+                            notificationForShortService.sendSellInfo(strategy, order, candleDomainEntity);
+                            isSell = false;
+                        }
                     }
                 } else if (order.isShort()) {
                     var isShouldSellShort = calculator.isShouldSellShort(strategy, candleDomainEntity, order.getSellPrice());
@@ -214,12 +221,19 @@ public class PurchaseService {
                             isShouldSellShort
                             || ((isShouldBuy || calculator.isTrendBuy(strategy, candleDomainEntity))
                                     && calculator.isOrderNeedSell(order, candleDomainEntity)
-                            ))
+                            )
+                                    || (isShouldBuy && calculator.isTrendSellShort(strategy, candleDomainEntity))
+                            )
                             && !calculator.isTrendBuyShort(strategy, candleDomainEntity)
                     ) {
                         order = orderService.closeOrderShort(candleDomainEntity, strategy);
                         notificationForShortService.sendBuyInfo(strategy, order, candleDomainEntity);
                         isSell = true;
+                        if (isShouldBuy) {
+                            order = orderService.openOrder(candleDomainEntity, strategy, buildOrderDetails(strategy, candleDomainEntity));
+                            notificationService.sendBuyInfo(strategy, order, candleDomainEntity);
+                            isSell = false;
+                        }
                     }
                 }
                 if (!isSell) {

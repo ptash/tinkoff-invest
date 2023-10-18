@@ -110,6 +110,103 @@ public class FactorialInstrumentByFiatService implements
         trendUpMap.put(key, value);
     }
 
+    @Override
+    public boolean isTrendSell(AInstrumentByFiatFactorialStrategy strategy, CandleDomainEntity candle) {
+        var isTrendDown = getTrendDown(strategy, candle);
+        if (null != isTrendDown) {
+            return isTrendDown;
+        }
+        isTrendDown = isTrendSellCalc(strategy, candle).isIntervalDown;
+        setTrendUp(strategy, candle, isTrendDown);
+        return isTrendDown;
+    }
+
+    private LinkedHashMap<String, Boolean> trendDownMap = new LinkedHashMap<>() {
+        @Override
+        protected boolean removeEldestEntry(final Map.Entry eldest) {
+            return size() > 100;
+        }
+    };
+
+    @Builder
+    @Data
+    public static class CandleIntervalDownResult {
+        String annotation;
+        Boolean isIntervalDown;
+    }
+
+    public CandleIntervalDownResult isTrendSellCalc(AInstrumentByFiatFactorialStrategy strategy, CandleDomainEntity candle) {
+        var newStrategy = buildAvgStrategy(strategy, candle);
+        var res = CandleIntervalDownResult.builder()
+                .isIntervalDown(false)
+                .annotation("")
+                .build();
+        if (null == newStrategy) {
+            return res;
+        }
+        var candleIntervalUpDownData = getCurCandleIntervalUpDownData(newStrategy, candle);
+        if (candleIntervalUpDownData.maxCandle == null) {
+            return res;
+        }
+        var candleIntervalUpDownDataPrev = getPrevCandleIntervalUpDownData(newStrategy, candleIntervalUpDownData);
+        if (candleIntervalUpDownData.maxCandle == null) {
+            return res;
+        }
+
+        var maxDiff = candleIntervalUpDownData.maxClose - candleIntervalUpDownDataPrev.maxClose;
+        var minDiff = candleIntervalUpDownDataPrev.minClose - candleIntervalUpDownData.minClose;
+        res.annotation += " maxDiff=" + printPrice(maxDiff);
+        res.annotation += " maxDiff=" + printPrice(minDiff);
+
+        if (
+                maxDiff > 0
+                && minDiff > 0
+                && minDiff/maxDiff > 0.8
+                && candle.getClosingPrice().floatValue() > candleIntervalUpDownData.maxClose
+        ) {
+            res.isIntervalDown = true;
+            return res;
+        }
+
+        if (candle.getClosingPrice().floatValue() <= candleIntervalUpDownData.maxClose) {
+            return res;
+        }
+        var cList = candleHistoryService.getCandlesByFigiBetweenDateTimes(candle.getFigi(), candleIntervalUpDownData.endPost.candle.getDateTime(), candle.getDateTime(), strategy.getInterval());
+        var maxClose = cList.stream().mapToDouble(v -> v.getClosingPrice().max(v.getOpenPrice()).doubleValue()).max().orElse(-1);
+        var minClose = cList.stream().mapToDouble(v -> v.getClosingPrice().min(v.getOpenPrice()).doubleValue()).min().orElse(-1);
+
+        maxDiff = (float) (maxClose - candleIntervalUpDownData.maxClose);
+        minDiff = (float) (candleIntervalUpDownData.minClose - minClose);
+
+        res.annotation += " maxDiff=" + printPrice(maxDiff);
+        res.annotation += " maxDiff=" + printPrice(minDiff);
+
+        if (
+                maxDiff > 0
+                && minDiff > 0
+                && minDiff/maxDiff > 0.8
+        ) {
+            res.isIntervalDown = true;
+            return res;
+        }
+        return res;
+    }
+
+    public synchronized Boolean getTrendDown(AStrategy strategy, CandleDomainEntity candle)
+    {
+        String key = strategy.getName() + candle.getFigi() + printDateTime(candle.getDateTime());
+        if (trendDownMap.containsKey(key)) {
+            return trendDownMap.get(key);
+        }
+        return null;
+    }
+
+    private synchronized void setTrendDown(AStrategy strategy, CandleDomainEntity candle, Boolean value)
+    {
+        String key = strategy.getName() + candle.getFigi() + printDateTime(candle.getDateTime());
+        trendDownMap.put(key, value);
+    }
+
     @Builder
     @Data
     public static class FactorialData {
@@ -2216,6 +2313,11 @@ public class FactorialInstrumentByFiatService implements
             );
             annotation += " resMaybe=" + isIntervalUpResMaybe.isIntervalUp + ": " + isIntervalUpResMaybe.annotation;
             setTrendUp(strategy, candle, isIntervalUpResMaybe.isIntervalUp);
+
+            var isTrendSell = isTrendSellCalc(strategy, candle);
+            annotation += " isTrendSell=" + isTrendSell.isIntervalDown + ": " + isTrendSell.annotation;
+            setTrendDown(strategy, candle, isTrendSell.isIntervalDown);
+
             if (
                     true//!res
                     && takeProfitPrice != null

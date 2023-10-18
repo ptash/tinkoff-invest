@@ -63,5 +63,5 @@ public class FactorialCandleFactorUp20Strategy extends FactorialCandleFactor20St
         return SellLimitCriteria.builder().exitProfitPercent(5.0f).build();
     }
 
-    public boolean isEnabled() { return false; }
+    public boolean isEnabled() { return true; }
 }
