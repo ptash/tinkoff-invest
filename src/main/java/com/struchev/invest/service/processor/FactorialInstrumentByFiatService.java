@@ -748,7 +748,9 @@ public class FactorialInstrumentByFiatService implements
             }
             if (candleBuyRes.res) {
                 setTrendUp(strategy, candle, candleBuyRes.res);
-            } else if (getTrendUp(strategy, candle) == null) {
+            } else if (getTrendUp(strategy, candle) != null) {
+                annotation += " resMaybe=TrendUp=" + getTrendUp(strategy, candle);
+            } else {
                 var isIntervalUpResMaybe = calcIsIntervalUpMaybe(
                         candle,
                         null,
