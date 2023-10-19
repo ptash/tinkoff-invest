@@ -32,18 +32,18 @@ public class FactorialStrategy extends AInstrumentByFiatFactorialStrategy {
         //FIGIES.put("FUTMOEX09230", 1); // MEU3 MOEX-9.23
         //FIGIES.put("FUTSPYF09230", 1); // SFU3 SPYF-9.23 S&P 500
         //FIGIES.put("FUTRTSM09230", 1); // RMU3 RTSM-9.23 Индекс РТС (мини)
-        //FIGIES.put("FUTRTSM12230", 1); // RMU3 RTSM-12.23 Индекс РТС (мини)
+        FIGIES.put("FUTRTSM12230", 1); // RMU3 RTSM-12.23 Индекс РТС (мини)
         //FIGIES.put("FUTRVI092300", 1); // VIU3 RVI-9.23 Волатильность российского рынка
         //FIGIES.put("FUTDAX092300", 1); // DXU3 DAX-9.23 DAX 40
         //FIGIES.put("FUTRGBI09230", 1); // RBU3 RGBI-9.23 RGBI-9.23 Индекс Государственных облигаций
         //FIGIES.put("FUTSTOX12230", 1); // SXZ3 STOX-12.23 EURO STOXX 50
-        FIGIES.put("FUTUSDRUBF00", 1); // USDRUBF USDRUBF Доллар - Рубль
+        //FIGIES.put("FUTUSDRUBF00", 1); // USDRUBF USDRUBF Доллар - Рубль
 
         //FIGIES.put("FUTNG0323000", 1); // NGH3 NG-3.23 Природный газ
         //FIGIES.put("FUTNG0423001", 1); // NGJ3 NG-4.23 Природный газ
         //FIGIES.put("FUTNG0523002", 1); // NGK3 NG-5.23 Природный газ
         //FIGIES.put("FUTNG0923000", 1); // NGK3 NG-9.23 Природный газ
-        //FIGIES.put("FUTNG1023000", 1); // NGK3 NG-10.23 Природный газ
+        FIGIES.put("FUTNG1023000", 1); // NGK3 NG-10.23 Природный газ
         //FIGIES.put("FUTSI1223000", 1); // SiZ3 Si-12.23 Курс доллар - рубль
         //FIGIES.put("FUTSI0323000", 1); // SiH3 Si-3.23 Курс доллар - рубль
         //FIGIES.put("FUTSI0623000", 1); // SiM3 Si-6.23 Курс доллар - рубль
