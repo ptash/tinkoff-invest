@@ -843,7 +843,7 @@ public class FactorialInstrumentByFiatService implements
                     annotation += " BYU OK";
                 }
             }
-            if (candleBuyRes.res) {
+            if (candleBuyRes.isIntervalUp) {
                 setTrendUp(strategy, candle, candleBuyRes.res);
             } else if (getTrendUp(strategy, candle) != null) {
                 annotation += " resMaybe=TrendUp=" + getTrendUp(strategy, candle);
