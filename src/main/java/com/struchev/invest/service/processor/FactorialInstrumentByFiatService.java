@@ -3928,6 +3928,7 @@ public class FactorialInstrumentByFiatService implements
                             intervalPercentNear = buyCriteria.getCandlePriceMinFactor();
                         }
                         setOrderBigDecimalData(strategy, candle, "intervalPercentNear", BigDecimal.valueOf(intervalPercentNear));
+                        setOrderBigDecimalData(strategy, candle, "intervalPercentNearDown", BigDecimal.valueOf(intervalPercentNear));
                         if (candle.getClosingPrice().doubleValue() > candleIntervalUpDownData.maxClose) {
                             var intervalPercentNearDown = 100f * (candle.getClosingPrice().doubleValue() - candleIntervalUpDownData.minClose) / Math.abs(candleIntervalUpDownData.minClose);
                             if (intervalPercentNearDown < buyCriteria.getCandlePriceMinFactor()) {
