@@ -2563,7 +2563,6 @@ public class FactorialInstrumentByFiatService implements
             annotation += " takeProfitPrice OK";
         }
 
-        annotation += " res=" + res;
         if (limitPrice != null) {
             var sellLimitCriteria = strategy.getSellLimitCriteria(candle.getFigi());
             sellLimitCriteria.setExitProfitPercent((float) ((100.f * limitPrice.floatValue() / purchaseRate.floatValue()) - 100.));
@@ -2582,7 +2581,7 @@ public class FactorialInstrumentByFiatService implements
             }
         }
         if (
-                limitPrice != null
+            limitPrice != null
             && candle.getClosingPrice().compareTo(limitPrice) > 0
         ) {
             annotation += " limit OK";
@@ -2597,7 +2596,7 @@ public class FactorialInstrumentByFiatService implements
             profitPercentFromBuyMinPrice = (float) -buyCriteria.getProfitPercentFromBuyMinPrice();
         }
 
-        annotation = " open = " + printPrice(candle.getOpenPrice()) + " close=" + printPrice(candle.getClosingPrice()) + " " + annotation;
+        annotation = " res=" + res + " open = " + printPrice(candle.getOpenPrice()) + " close=" + printPrice(candle.getClosingPrice()) + " " + annotation;
 
         notificationService.reportStrategyExt(
                 res,
