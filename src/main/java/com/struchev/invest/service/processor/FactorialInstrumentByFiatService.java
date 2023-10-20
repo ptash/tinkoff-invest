@@ -2267,6 +2267,31 @@ public class FactorialInstrumentByFiatService implements
                         annotation += "new stopLossPrice by MAX MAX=" + printPrice(stopLossPrice) + "-" + printPrice(stopLossPriceBottomA);
                     }
                 }
+
+                //limitPrice
+                if (
+                        candleIntervalUpDownData.maxClose > candleIntervalUpDownDataPrev.maxClose
+                        && candleIntervalUpDownData.minClose < candleIntervalUpDownDataPrev.minClose
+                ) {
+                    var size = candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose;
+                    var sizePercent = size / Math.abs(candleIntervalUpDownData.minClose) * 100f;
+                    annotation += " limitPrice sizePercent" + printPrice(sizePercent);
+                    if (sizePercent < strategy.getBuyCriteria().getCandlePriceMinFactor()) {
+                        annotation += " sizePercent=" + printPrice(sizePercent);
+                        size = Math.abs(candleIntervalUpDownData.minClose) * strategy.getBuyCriteria().getCandlePriceMinFactor() / 100f;
+                    }
+                    var cList = candleHistoryService.getCandlesByFigiBetweenDateTimes(candle.getFigi(), candleIntervalUpDownData.endPost.candle.getDateTime(), candle.getDateTime(), strategy.getInterval());
+                    var minClose = cList.stream().mapToDouble(v -> v.getClosingPrice().min(v.getOpenPrice()).doubleValue()).min().orElse(-1);
+
+                    var minDiff = candleIntervalUpDownData.minClose - minClose;
+                    var minDiffPercent = minDiff / size * 100f;
+
+                    annotation += " minDiff=" + printPrice(minDiff);
+                    annotation += " minDiffPercent=" + printPrice(minDiffPercent);
+                    if (minDiffPercent > 25) {
+                        limitPrice = BigDecimal.valueOf(candleIntervalUpDownData.maxClose);
+                    }
+                }
             } else if (!isDownWithLimits) {
                 var newValue = candleIntervalUpDownData.minClose
                         - (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) * 2f;
