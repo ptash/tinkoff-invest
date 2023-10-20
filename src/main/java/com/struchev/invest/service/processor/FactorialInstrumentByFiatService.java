@@ -155,13 +155,23 @@ public class FactorialInstrumentByFiatService implements
 
         var maxDiff = candleIntervalUpDownData.maxClose - candleIntervalUpDownDataPrev.maxClose;
         var minDiff = candleIntervalUpDownDataPrev.minClose - candleIntervalUpDownData.minClose;
+
+        var size = candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose;
+        var sizePercent = size / Math.abs(candleIntervalUpDownData.minClose) * 100f;
+        if (sizePercent < strategy.getBuyCriteria().getCandlePriceMinFactor()) {
+            res.annotation += " sizePercent=" + printPrice(sizePercent);
+            size = Math.abs(candleIntervalUpDownData.minClose) * strategy.getBuyCriteria().getCandlePriceMinFactor() / 100f;
+        }
+        var minDiffPercent = minDiff / size * 100f;
         res.annotation += " maxDiff=" + printPrice(maxDiff);
-        res.annotation += " maxDiff=" + printPrice(minDiff);
+        res.annotation += " minDiff=" + printPrice(minDiff);
+        res.annotation += " minDiffPercent=" + printPrice(minDiffPercent);
 
         if (
                 maxDiff > 0
                 && minDiff > 0
                 && minDiff/maxDiff > 0.8
+                && minDiffPercent > 25
                 && candle.getClosingPrice().floatValue() > candleIntervalUpDownData.maxClose
         ) {
             res.isIntervalDown = true;
@@ -177,14 +187,17 @@ public class FactorialInstrumentByFiatService implements
 
         maxDiff = (float) (maxClose - candleIntervalUpDownData.maxClose);
         minDiff = (float) (candleIntervalUpDownData.minClose - minClose);
+        minDiffPercent = minDiff / size * 100f;
 
         res.annotation += " maxDiff=" + printPrice(maxDiff);
-        res.annotation += " maxDiff=" + printPrice(minDiff);
+        res.annotation += " minDiff=" + printPrice(minDiff);
+        res.annotation += " minDiffPercent=" + printPrice(minDiffPercent);
 
         if (
                 maxDiff > 0
                 && minDiff > 0
                 && minDiff/maxDiff > 0.8
+                && minDiffPercent > 25
         ) {
             res.isIntervalDown = true;
             return res;
@@ -865,6 +878,7 @@ public class FactorialInstrumentByFiatService implements
                     if (
                             isIntervalUpResMaybe.minPercent.floatValue() < 25
                             && isIntervalUpResMaybe.maxPercent.floatValue() < 50
+                            && isIntervalUpResMaybe.maxPercent.compareTo(isIntervalUpResMaybe.minPercent) > 0
                             //&& isIntervalUpResMaybe.minPercent.floatValue() > 0
                     ) {
                         res = true;
@@ -4502,6 +4516,7 @@ public class FactorialInstrumentByFiatService implements
         if (
                 minPercent > 0f
                         && maxPercent > 0f
+                        && maxPercent > minPercent
                         && candleIntervalUpDownDataPrevPrev.minClose >= candleIntervalUpDownDataPrev.minClose
                         && candleIntervalUpDownDataPrevPrev.maxClose >= candleIntervalUpDownDataPrev.maxClose
                         && (
