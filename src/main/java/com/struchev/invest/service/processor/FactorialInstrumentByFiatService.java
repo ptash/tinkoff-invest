@@ -877,6 +877,7 @@ public class FactorialInstrumentByFiatService implements
                     annotation += " maxPercent=" + printPrice(isIntervalUpResMaybe.maxPercent);
                     if (
                             isIntervalUpResMaybe.minPercent.floatValue() < 25
+                            && isIntervalUpResMaybe.minPercent.compareTo(BigDecimal.ZERO) > 0
                             && isIntervalUpResMaybe.maxPercent.floatValue() < 50
                             && isIntervalUpResMaybe.maxPercent.compareTo(isIntervalUpResMaybe.minPercent) > 0
                             //&& isIntervalUpResMaybe.minPercent.floatValue() > 0
