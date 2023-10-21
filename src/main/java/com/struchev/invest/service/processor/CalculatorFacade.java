@@ -43,7 +43,7 @@ public class CalculatorFacade {
         try {
             return calculateServiceByType.get(strategy.getType()).isShouldBuy(strategy, candle);
         } catch (RuntimeException e) {
-            log.info("error in strategy " + strategy.getName(), e);
+            log.error("error in figi " + candle.getFigi() + " " + candle.getDateTime() + " in strategy " + strategy.getName(), e);
             throw e;
         }
     }
@@ -56,7 +56,7 @@ public class CalculatorFacade {
             }
             return false;
         } catch (RuntimeException e) {
-            log.info("error in strategy " + strategy.getName(), e);
+            log.error("error in figi " + candle.getFigi() + " " + candle.getDateTime() + " in strategy " + strategy.getName(), e);
             throw e;
         }
     }
@@ -69,7 +69,7 @@ public class CalculatorFacade {
             }
             return false;
         } catch (RuntimeException e) {
-            log.info("error in strategy " + strategy.getName(), e);
+            log.error("error in figi " + candle.getFigi() + " " + candle.getDateTime() + " in strategy " + strategy.getName(), e);
             throw e;
         }
     }
@@ -78,7 +78,7 @@ public class CalculatorFacade {
         try {
             return calculateServiceByType.get(strategy.getType()).isShouldSell(strategy, candle, purchaseRate);
         } catch (RuntimeException e) {
-            log.info("error in strategy " + strategy.getName(), e);
+            log.error("error in figi " + candle.getFigi() + " " + candle.getDateTime() + " in strategy " + strategy.getName(), e);
             throw e;
         }
     }
@@ -92,7 +92,7 @@ public class CalculatorFacade {
             }
             return false;
         } catch (RuntimeException e) {
-            log.info("error in strategy " + strategy.getName(), e);
+            log.error("error in figi " + candle.getFigi() + " " + candle.getDateTime() + " in strategy " + strategy.getName(), e);
             throw e;
         }
     }
@@ -106,7 +106,7 @@ public class CalculatorFacade {
             }
             return false;
         } catch (RuntimeException e) {
-            log.info("error in strategy " + strategy.getName(), e);
+            log.error("error in figi " + candle.getFigi() + " " + candle.getDateTime() + " in strategy " + strategy.getName(), e);
             throw e;
         }
     }
@@ -120,7 +120,7 @@ public class CalculatorFacade {
             }
             return false;
         } catch (RuntimeException e) {
-            log.info("error in strategy " + strategy.getName(), e);
+            log.error("error in figi " + candle.getFigi() + " " + candle.getDateTime() + " in strategy " + strategy.getName(), e);
             throw e;
         }
     }
@@ -134,7 +134,7 @@ public class CalculatorFacade {
             }
             return false;
         } catch (RuntimeException e) {
-            log.info("error in strategy " + strategy.getName(), e);
+            log.error("error in figi " + candle.getFigi() + " " + candle.getDateTime() + " in strategy " + strategy.getName(), e);
             throw e;
         }
     }

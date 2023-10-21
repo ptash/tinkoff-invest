@@ -856,11 +856,11 @@ public class FactorialInstrumentByFiatService implements
                     annotation += " BYU OK";
                 }
             }
-            if (candleBuyRes.isIntervalUp) {
-                setTrendUp(strategy, candle, candleBuyRes.res);
-            } else if (getTrendUp(strategy, candle) != null) {
-                annotation += " resMaybe=TrendUp=" + getTrendUp(strategy, candle);
-            } else {
+            //if (candleBuyRes.isIntervalUp) {
+            //    setTrendUp(strategy, candle, candleBuyRes.res);
+            //} else if (getTrendUp(strategy, candle) != null) {
+            //    annotation += " resMaybe=TrendUp=" + getTrendUp(strategy, candle);
+            //} else {
                 var candleIntervalUpDownDataPrev = getPrevCandleIntervalUpDownData(newStrategy, candleIntervalUpDownData);
                 var isIntervalUpResMaybe = calcIsIntervalUpMaybe(
                         candle,
@@ -870,15 +870,15 @@ public class FactorialInstrumentByFiatService implements
                         candleIntervalUpDownData,
                         candleIntervalUpDownDataPrev
                 );
-                setTrendUp(strategy, candle, isIntervalUpResMaybe.isIntervalUp);
+                setTrendUp(strategy, candle, isIntervalUpResMaybe.isIntervalUp || candleBuyRes.res);
                 annotation += " resMaybe=" + isIntervalUpResMaybe.isIntervalUp + ": " + isIntervalUpResMaybe.annotation;
                 if (null != isIntervalUpResMaybe.isIntervalUpMayBe && isIntervalUpResMaybe.isIntervalUpMayBe) {
                     annotation += " minPercent=" + printPrice(isIntervalUpResMaybe.minPercent);
                     annotation += " maxPercent=" + printPrice(isIntervalUpResMaybe.maxPercent);
                     if (
-                            isIntervalUpResMaybe.minPercent.floatValue() < 25
-                            && isIntervalUpResMaybe.minPercent.compareTo(BigDecimal.ZERO) > 0
-                            && isIntervalUpResMaybe.maxPercent.floatValue() < 50
+                            isIntervalUpResMaybe.minPercent.compareTo(BigDecimal.ZERO) > 0
+                            // && isIntervalUpResMaybe.minPercent.floatValue() < 25
+                            && isIntervalUpResMaybe.maxPercent.floatValue() < 100
                             && isIntervalUpResMaybe.maxPercent.compareTo(isIntervalUpResMaybe.minPercent) > 0
                             //&& isIntervalUpResMaybe.minPercent.floatValue() > 0
                     ) {
@@ -886,7 +886,7 @@ public class FactorialInstrumentByFiatService implements
                         annotation += " BYU MAY BE OK";
                     }
                 }
-            }
+            //}
         }
 
         if (res && buyCriteria.getSkipIfOutPrevLength() != null) {
@@ -4696,14 +4696,23 @@ public class FactorialInstrumentByFiatService implements
         );
         annotation += " StopLossPrice=" + printPrice(StopLossPrice);
         var stopLossPriceBottom = StopLossPrice.subtract(BigDecimal.valueOf(candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose));
-        return CandleIntervalUpResult.builder()
+        var res = CandleIntervalUpResult.builder()
                 .annotation(annotation)
                 .isIntervalUp(isIntervalUp)
                 .stopLossPrice(StopLossPrice)
                 .stopLossPriceBottom(stopLossPriceBottom)
-                .minPercent(BigDecimal.valueOf(minPercent))
-                .maxPercent(BigDecimal.valueOf(maxPercent))
+                .minPercent(BigDecimal.ZERO)
+                .maxPercent(BigDecimal.ZERO)
                 .build();
+        try {
+            res.minPercent = BigDecimal.valueOf(minPercent);
+            res.maxPercent = BigDecimal.valueOf(maxPercent);
+        } catch (NumberFormatException e) {
+            log.error("Error in " + candle.getFigi() + " " + candle.getDateTime() + ": "
+                    + candleIntervalUpDownDataPrev.minClose + " - " + candleIntervalUpDownData.minClose + " / " +
+                    size, e);
+        }
+        return res;
     }
 
     private List<CandleIntervalResultData> getIntervalSellPoints(
