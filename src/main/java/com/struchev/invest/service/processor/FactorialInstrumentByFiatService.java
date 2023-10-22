@@ -884,6 +884,13 @@ public class FactorialInstrumentByFiatService implements
                     ) {
                         res = true;
                         annotation += " BYU MAY BE OK";
+                        var StopLossPrice = BigDecimal.ZERO;
+                        var StopLossPriceBottom = BigDecimal.ZERO;
+                        if (!isIntervalUpResMaybe.stopLossPrice.equals(BigDecimal.ZERO)) {
+                            StopLossPrice = isIntervalUpResMaybe.stopLossPrice;
+                            StopLossPriceBottom = isIntervalUpResMaybe.stopLossPriceBottom;
+                        }
+                        setOrderInfo(newStrategy, candle, true, candleIntervalUpDownData, StopLossPrice, StopLossPriceBottom);
                     }
                 }
             //}
@@ -2269,9 +2276,14 @@ public class FactorialInstrumentByFiatService implements
                 }
 
                 //limitPrice
+                var maxDiffP = 100f * Math.abs((candleIntervalUpDownDataPrev.maxClose - candleIntervalUpDownData.maxClose) / (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose));
+                var minDiffP = 100f * Math.abs((candleIntervalUpDownDataPrev.minClose - candleIntervalUpDownData.minClose) / (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose));
+                annotation += " maxDiffP=" + printPrice(maxDiffP);
+                annotation += " minDiffP=" + printPrice(minDiffP);
                 if (
-                        candleIntervalUpDownData.maxClose > candleIntervalUpDownDataPrev.maxClose
-                        && candleIntervalUpDownData.minClose < candleIntervalUpDownDataPrev.minClose
+                        (candleIntervalUpDownData.maxClose > candleIntervalUpDownDataPrev.maxClose
+                        && candleIntervalUpDownData.minClose < candleIntervalUpDownDataPrev.minClose)
+                        || (maxDiffP < 5f && minDiffP < 5f)
                 ) {
                     var size = candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose;
                     var sizePercent = size / Math.abs(candleIntervalUpDownData.minClose) * 100f;
@@ -3954,27 +3966,7 @@ public class FactorialInstrumentByFiatService implements
                         }
                         annotation += " isIntervalDown = " + isIntervalDown;
                         annotation += " isIntervalUp = " + isIntervalUp;
-                        setOrderBooleanData(strategy, candle, "isIntervalUp", isIntervalUp);
-                        setOrderBooleanData(strategy, candle, "isMinMin", false);
-                        setOrderBooleanData(strategy, candle, "isDownWithLimits", false);
-                        setOrderBigDecimalData(strategy, candle, "stopLossPrice", StopLossPrice);
-                        setOrderBigDecimalData(strategy, candle, "stopLossPriceBottom", StopLossPriceBottom);
-                        setOrderBigDecimalData(strategy, candle, "maxBuyIntervalPrice", BigDecimal.valueOf(candleIntervalUpDownData.maxClose));
-                        setOrderBigDecimalData(strategy, candle, "takeProfitPriceStart", BigDecimal.ZERO);
-                        setOrderBigDecimalData(strategy, candle, "intervalPercentStep", BigDecimal.ZERO);
-                        var intervalPercentNear = 100f * (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) / Math.abs(candleIntervalUpDownData.minClose);
-                        if (intervalPercentNear < buyCriteria.getCandlePriceMinFactor()) {
-                            intervalPercentNear = buyCriteria.getCandlePriceMinFactor();
-                        }
-                        setOrderBigDecimalData(strategy, candle, "intervalPercentNear", BigDecimal.valueOf(intervalPercentNear));
-                        setOrderBigDecimalData(strategy, candle, "intervalPercentNearDown", BigDecimal.valueOf(intervalPercentNear));
-                        if (candle.getClosingPrice().doubleValue() > candleIntervalUpDownData.maxClose) {
-                            var intervalPercentNearDown = 100f * (candle.getClosingPrice().doubleValue() - candleIntervalUpDownData.minClose) / Math.abs(candleIntervalUpDownData.minClose);
-                            if (intervalPercentNearDown < buyCriteria.getCandlePriceMinFactor()) {
-                                intervalPercentNearDown = buyCriteria.getCandlePriceMinFactor();
-                            }
-                            setOrderBigDecimalData(strategy, candle, "intervalPercentNearDown", BigDecimal.valueOf(intervalPercentNearDown));
-                        }
+                        setOrderInfo(strategy, candle, isIntervalUp, candleIntervalUpDownData, StopLossPrice, StopLossPriceBottom);
 
                         var PointLengthOk = false;
                         var PointLengthOkRes = false;
@@ -4420,6 +4412,38 @@ public class FactorialInstrumentByFiatService implements
                 .notLossBuyUnderPrice(notLossBuyUnderPrice)
                 .isIntervalUp(isIntervalUp)
                 .build();
+    }
+
+    private void setOrderInfo(
+            FactorialDiffAvgAdapterStrategy strategy,
+            CandleDomainEntity candle,
+            Boolean isIntervalUp,
+            CandleIntervalUpDownData candleIntervalUpDownData,
+            BigDecimal StopLossPrice,
+            BigDecimal StopLossPriceBottom
+    ) {
+        var buyCriteria = strategy.getBuyCriteria();
+        setOrderBooleanData(strategy, candle, "isIntervalUp", isIntervalUp);
+        setOrderBooleanData(strategy, candle, "isMinMin", false);
+        setOrderBooleanData(strategy, candle, "isDownWithLimits", false);
+        setOrderBigDecimalData(strategy, candle, "stopLossPrice", StopLossPrice);
+        setOrderBigDecimalData(strategy, candle, "stopLossPriceBottom", StopLossPriceBottom);
+        setOrderBigDecimalData(strategy, candle, "maxBuyIntervalPrice", BigDecimal.valueOf(candleIntervalUpDownData.maxClose));
+        setOrderBigDecimalData(strategy, candle, "takeProfitPriceStart", BigDecimal.ZERO);
+        setOrderBigDecimalData(strategy, candle, "intervalPercentStep", BigDecimal.ZERO);
+        var intervalPercentNear = 100f * (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) / Math.abs(candleIntervalUpDownData.minClose);
+        if (intervalPercentNear < buyCriteria.getCandlePriceMinFactor()) {
+            intervalPercentNear = buyCriteria.getCandlePriceMinFactor();
+        }
+        setOrderBigDecimalData(strategy, candle, "intervalPercentNear", BigDecimal.valueOf(intervalPercentNear));
+        setOrderBigDecimalData(strategy, candle, "intervalPercentNearDown", BigDecimal.valueOf(intervalPercentNear));
+        if (candle.getClosingPrice().doubleValue() > candleIntervalUpDownData.maxClose) {
+            var intervalPercentNearDown = 100f * (candle.getClosingPrice().doubleValue() - candleIntervalUpDownData.minClose) / Math.abs(candleIntervalUpDownData.minClose);
+            if (intervalPercentNearDown < buyCriteria.getCandlePriceMinFactor()) {
+                intervalPercentNearDown = buyCriteria.getCandlePriceMinFactor();
+            }
+            setOrderBigDecimalData(strategy, candle, "intervalPercentNearDown", BigDecimal.valueOf(intervalPercentNearDown));
+        }
     }
 
     @Builder
