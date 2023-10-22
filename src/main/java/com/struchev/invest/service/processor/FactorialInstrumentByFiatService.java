@@ -2313,7 +2313,7 @@ public class FactorialInstrumentByFiatService implements
                 var newValue = candleIntervalUpDownData.minClose
                         - (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) * 2f;
                 annotation += " newValue=" + printPrice(newValue);
-                if (stopLossPrice.equals(BigDecimal.ZERO) || stopLossPrice.doubleValue() < newValue) {
+                if (stopLossPrice.equals(BigDecimal.ZERO)) {
                     annotation += candleIntervalUpDownData.annotation;
                     stopLossPrice = BigDecimal.valueOf(newValue);
                     stopLossPriceBottomA = BigDecimal.valueOf(newValue - (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose));
@@ -2524,11 +2524,11 @@ public class FactorialInstrumentByFiatService implements
                         if (candlesPrevAllArray.get(i).getHighestPrice().compareTo(stopLossPrice) < 0) {
                             curLength++;
                         } else {
-                            if (curLength > 10) {
+                            if (curLength > 20) {
                                 isUnder = true;
                                 break;
                             }
-                            curLength = 0;
+                            //curLength = 0;
                         }
                     }
                     annotation += " curLength=" + curLength;
@@ -4724,7 +4724,7 @@ public class FactorialInstrumentByFiatService implements
                 BigDecimal.valueOf(candle.getClosingPrice().doubleValue() - Math.abs(candleIntervalUpDownData.minClose) * percent * 0.5f / 100f)
         );
         annotation += " StopLossPrice=" + printPrice(StopLossPrice);
-        var stopLossPriceBottom = StopLossPrice.subtract(BigDecimal.valueOf(candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose));
+        var stopLossPriceBottom = StopLossPrice.subtract(BigDecimal.valueOf(Math.abs(candleIntervalUpDownData.minClose) * percent * 1 / 100f));
         var res = CandleIntervalUpResult.builder()
                 .annotation(annotation)
                 .isIntervalUp(isIntervalUp)
