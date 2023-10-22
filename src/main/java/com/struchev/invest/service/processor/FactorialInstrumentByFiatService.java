@@ -1707,7 +1707,12 @@ public class FactorialInstrumentByFiatService implements
                     annotation += " something wrong: " + candleIntervalUpDownDataPrev.annotation;
                 } else {
                     annotation += " Prev.min-maxCandle=" + printPrice(candleIntervalUpDownDataPrev.minClose) + "-" +printPrice(candleIntervalUpDownDataPrev.maxClose);
-                    if (candleIntervalUpDownDataPrev.maxClose > candleIntervalUpDownData.maxClose) {
+                    var maxDiffP = 100f * Math.abs((candleIntervalUpDownDataPrev.maxClose - candleIntervalUpDownData.maxClose) / (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose));
+                    annotation += " maxDiffP=" + printPrice(maxDiffP);
+                    if (
+                            candleIntervalUpDownDataPrev.maxClose > candleIntervalUpDownData.maxClose
+                            && maxDiffP > 5f
+                    ) {
                         if ((maxBuyIntervalPrice.equals(BigDecimal.ZERO) || candleIntervalUpDownData.minClose < maxBuyIntervalPrice.floatValue())) {
                             var percent = 100f * (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) / Math.abs(candleIntervalUpDownData.minClose);
                             if (
