@@ -37,7 +37,7 @@ public class FactorialStrategy extends AInstrumentByFiatFactorialStrategy {
         //FIGIES.put("FUTDAX092300", 1); // DXU3 DAX-9.23 DAX 40
         //FIGIES.put("FUTRGBI09230", 1); // RBU3 RGBI-9.23 RGBI-9.23 Индекс Государственных облигаций
         //FIGIES.put("FUTSTOX12230", 1); // SXZ3 STOX-12.23 EURO STOXX 50
-        //FIGIES.put("FUTUSDRUBF00", 1); // USDRUBF USDRUBF Доллар - Рубль
+        FIGIES.put("FUTUSDRUBF00", 1); // USDRUBF USDRUBF Доллар - Рубль
 
         //FIGIES.put("FUTNG0323000", 1); // NGH3 NG-3.23 Природный газ
         //FIGIES.put("FUTNG0423001", 1); // NGJ3 NG-4.23 Природный газ
@@ -53,28 +53,28 @@ public class FactorialStrategy extends AInstrumentByFiatFactorialStrategy {
         //FIGIES.put("FUTSILV09230", 1); // SVU3 SILV-9.23 Серебро
         //FIGIES.put("FUTSILV06230", 1); // SVM3 SILV-6.23 Серебро
         //FIGIES.put("FUTSILV09230", 1); // SVM3 SILV-9.23 Серебро
-        //FIGIES.put("FUTSILV12230", 1); // SVM3 SILV-12.23 Серебро
+        FIGIES.put("FUTSILV12230", 1); // SVM3 SILV-12.23 Серебро
         //FIGIES.put("FUTBR0423000", 1); // BRJ3 BR-4.23 Нефть Brent
         //FIGIES.put("FUTBR0523000", 1); // BRK3 BR-5.23 Нефть Brent
         //FIGIES.put("FUTBR0923000", 1); // BRK3 BR-9.23 Нефть Brent
         //FIGIES.put("FUTBR1023000", 1); // BRK3 BR-10.23 Нефть Brent
-        //FIGIES.put("FUTBR1123000", 1); // BRK3 BR-11.23 Нефть Brent
+        FIGIES.put("FUTBR1123000", 1); // BRK3 BR-11.23 Нефть Brent
         //FIGIES.put("FUTMXI032300", 1); // MMH3 MXI-3.23 Индекс МосБиржи (мини)
         //FIGIES.put("FUTMXI062300", 1); // MMM3 MXI-6.23 Индекс МосБиржи (мини)
         //FIGIES.put("FUTMXI092300", 1); // MMM3 MXI-9.23 Индекс МосБиржи (мини)
-        //FIGIES.put("FUTMXI122300", 1); // MMM3 MXI-12.23 Индекс МосБиржи (мини)
+        FIGIES.put("FUTMXI122300", 1); // MMM3 MXI-12.23 Индекс МосБиржи (мини)
         //FIGIES.put("FUTNASD03230", 1); // NAH3 NASD-3.23 Nasdaq 100
         //FIGIES.put("FUTNASD06230", 1); // NAM3 NASD-6.23 Nasdaq 100
         //FIGIES.put("FUTNASD09230", 1); // NAM3 NASD-9.23 Nasdaq 100
-        //FIGIES.put("FUTNASD12230", 1); // NAM3 NASD-12.23 Nasdaq 100
+        FIGIES.put("FUTNASD12230", 1); // NAM3 NASD-12.23 Nasdaq 100
         //FIGIES.put("FUTGOLD03230", 1); // GDH3 GOLD-3.23 Золото
         //FIGIES.put("FUTGOLD06230", 1); // GDM3 GOLD-6.23 Золото
         //FIGIES.put("FUTGOLD09230", 1); // GDM3 GOLD-9.23 Золото
-        //FIGIES.put("FUTGOLD12230", 1); // GDM3 GOLD-12.23 Золото
+        FIGIES.put("FUTGOLD12230", 1); // GDM3 GOLD-12.23 Золото
         //FIGIES.put("FUTCNY032300", 1); // CRH3 GCNY-3.23 Курс Юань - Рубль
         //FIGIES.put("FUTCNY062300", 1); // CRM3 CNY-6.23 Курс Юань - Рубль
         //FIGIES.put("FUTCNY092300", 1); // CRM3 CNY-9.23 Курс Юань - Рубль
-        //FIGIES.put("FUTCNY122300", 1); // CRM3 CNY-12.23 Курс Юань - Рубль
+        FIGIES.put("FUTCNY122300", 1); // CRM3 CNY-12.23 Курс Юань - Рубль
 
         //FIGIES.put("BBG00178PGX3", 1); // VK
         //FIGIES.put("BBG00QPYJ5H0", 1); // TCS Group
