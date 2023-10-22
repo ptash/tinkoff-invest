@@ -2239,14 +2239,18 @@ public class FactorialInstrumentByFiatService implements
                                 annotation += " something wrong: " + candleIntervalUpDownDataPrev.annotation;
                             } else {
                                 annotation += " PMaxMinClose=" + printPrice(candleIntervalUpDownDataPrevMax.minClose) + "-" + printPrice(candleIntervalUpDownDataPrevMax.maxClose);
-                                var newValue = candleIntervalUpDownDataPrevMax.minClose
-                                        - (candleIntervalUpDownDataPrevMax.maxClose - candleIntervalUpDownDataPrevMax.minClose) * 2f;
+                                var percentMax = (100f * (candleIntervalUpDownDataPrevMax.maxClose - candleIntervalUpDownDataPrevMax.minClose) / Math.abs(candleIntervalUpDownDataPrevMax.minClose));
+                                if (percentMax < buyCriteria.getCandlePriceMinFactor()) {
+                                    annotation += " percentMax=" + printPrice(percentMax) + " < " + printPrice(buyCriteria.getCandlePriceMinFactor());
+                                    percent = buyCriteria.getCandlePriceMinFactor();
+                                }
+                                var newValue = candleIntervalUpDownDataPrevMax.minClose - Math.abs(candleIntervalUpDownDataPrevMax.minClose) * percent * 2f / 100f;
                                 if (
                                         candleIntervalUpDownDataPrevMax != null
                                         && stopLossPrice.doubleValue() < newValue
                                 ) {
                                     stopLossPrice = BigDecimal.valueOf(newValue);
-                                    stopLossPriceBottomA = BigDecimal.valueOf(newValue - (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose));
+                                    stopLossPriceBottomA = BigDecimal.valueOf(newValue - Math.abs(candleIntervalUpDownDataPrevMax.minClose) * percent * 1f / 100f);
                                     annotation += "new stopLossPrice by MAX=" + printPrice(stopLossPrice) + "-" + printPrice(stopLossPriceBottomA);
                                 }
                             }
@@ -4717,7 +4721,7 @@ public class FactorialInstrumentByFiatService implements
             percent = buyCriteria.getCandlePriceMinFactor();
         }
         if (StopLossPrice.equals(BigDecimal.ZERO)) {
-            StopLossPrice = BigDecimal.valueOf(candleIntervalUpDownData.minClose - Math.abs(candleIntervalUpDownData.minClose) * percent * 2 / 100f);
+            StopLossPrice = BigDecimal.valueOf(candleIntervalUpDownData.minClose - Math.abs(candleIntervalUpDownData.minClose) * percent * 2f / 100f);
         }
         annotation += " StopLossPrice=" + printPrice(StopLossPrice);
         StopLossPrice = StopLossPrice.min(
