@@ -133,6 +133,7 @@ public class FactorialInstrumentByFiatService implements
     public static class CandleIntervalDownResult {
         String annotation;
         Boolean isIntervalDown;
+        BigDecimal minDiffPercent;
     }
 
     public CandleIntervalDownResult isTrendSellCalc(AInstrumentByFiatFactorialStrategy strategy, CandleDomainEntity candle) {
@@ -166,6 +167,7 @@ public class FactorialInstrumentByFiatService implements
         res.annotation += " maxDiff=" + printPrice(maxDiff);
         res.annotation += " minDiff=" + printPrice(minDiff);
         res.annotation += " minDiffPercent=" + printPrice(minDiffPercent);
+        res.minDiffPercent = BigDecimal.valueOf(minDiffPercent);
 
         if (
                 maxDiff > 0
@@ -187,17 +189,26 @@ public class FactorialInstrumentByFiatService implements
 
         maxDiff = (float) (maxClose - candleIntervalUpDownData.maxClose);
         minDiff = (float) (candleIntervalUpDownData.minClose - minClose);
+        var minDiffPercentPrev = minDiffPercent;
         minDiffPercent = minDiff / size * 100f;
 
         res.annotation += " maxDiff=" + printPrice(maxDiff);
         res.annotation += " minDiff=" + printPrice(minDiff);
         res.annotation += " minDiffPercent=" + printPrice(minDiffPercent);
+        res.minDiffPercent = BigDecimal.valueOf(minDiffPercent);
 
         if (
                 maxDiff > 0
                 && minDiff > 0
                 && minDiff/maxDiff > 0.8
                 && minDiffPercent > 25
+        ) {
+            res.isIntervalDown = true;
+            return res;
+        }
+        if (
+                minDiffPercentPrev > 50
+                && minDiffPercent > 50
         ) {
             res.isIntervalDown = true;
             return res;
@@ -2242,15 +2253,15 @@ public class FactorialInstrumentByFiatService implements
                                 var percentMax = (100f * (candleIntervalUpDownDataPrevMax.maxClose - candleIntervalUpDownDataPrevMax.minClose) / Math.abs(candleIntervalUpDownDataPrevMax.minClose));
                                 if (percentMax < buyCriteria.getCandlePriceMinFactor()) {
                                     annotation += " percentMax=" + printPrice(percentMax) + " < " + printPrice(buyCriteria.getCandlePriceMinFactor());
-                                    percent = buyCriteria.getCandlePriceMinFactor();
+                                    percentMax = buyCriteria.getCandlePriceMinFactor();
                                 }
-                                var newValue = candleIntervalUpDownDataPrevMax.minClose - Math.abs(candleIntervalUpDownDataPrevMax.minClose) * percent * 2f / 100f;
+                                var newValue = candleIntervalUpDownDataPrevMax.minClose - Math.abs(candleIntervalUpDownDataPrevMax.minClose) * percentMax * 2f / 100f;
                                 if (
                                         candleIntervalUpDownDataPrevMax != null
                                         && stopLossPrice.doubleValue() < newValue
                                 ) {
                                     stopLossPrice = BigDecimal.valueOf(newValue);
-                                    stopLossPriceBottomA = BigDecimal.valueOf(newValue - Math.abs(candleIntervalUpDownDataPrevMax.minClose) * percent * 1f / 100f);
+                                    stopLossPriceBottomA = BigDecimal.valueOf(newValue - Math.abs(candleIntervalUpDownDataPrevMax.minClose) * percentMax * 1f / 100f);
                                     annotation += "new stopLossPrice by MAX=" + printPrice(stopLossPrice) + "-" + printPrice(stopLossPriceBottomA);
                                 }
                             }
@@ -2393,6 +2404,12 @@ public class FactorialInstrumentByFiatService implements
             var isTrendSell = isTrendSellCalc(strategy, candle);
             annotation += " isTrendSell=" + isTrendSell.isIntervalDown + ": " + isTrendSell.annotation;
             setTrendDown(strategy, candle, isTrendSell.isIntervalDown);
+            if (
+                    isTrendSell.isIntervalDown
+                    && isTrendSell.minDiffPercent.compareTo(BigDecimal.valueOf(50)) > 0
+            ) {
+                limitPrice = BigDecimal.valueOf(candleIntervalUpDownData.maxClose);
+            }
 
             if (
                     true//!res
