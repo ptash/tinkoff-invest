@@ -904,6 +904,17 @@ public class FactorialInstrumentByFiatService implements
                         setOrderInfo(newStrategy, candle, true, candleIntervalUpDownData, StopLossPrice, StopLossPriceBottom);
                     }
                 }
+
+            var isTrendSell = isTrendSellCalc(strategy, candle);
+            annotation += " isTrendSell=" + isTrendSell.isIntervalDown + ": " + isTrendSell.annotation;
+            setTrendDown(strategy, candle, isTrendSell.isIntervalDown);
+            if (isTrendSell.isIntervalDown && res) {
+                res = false;
+                annotation += " SKIP BY TREND SELL";
+            }
+            if (isTrendSell.isIntervalDown) {
+                setTrendUp(strategy, candle, false);
+            }
             //}
         }
 
@@ -2409,6 +2420,9 @@ public class FactorialInstrumentByFiatService implements
                     && isTrendSell.minDiffPercent.compareTo(BigDecimal.valueOf(50)) > 0
             ) {
                 limitPrice = BigDecimal.valueOf(candleIntervalUpDownData.maxClose);
+            }
+            if (isTrendSell.isIntervalDown) {
+                setTrendUp(strategy, candle, false);
             }
 
             if (
