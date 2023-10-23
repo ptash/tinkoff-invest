@@ -4630,6 +4630,7 @@ public class FactorialInstrumentByFiatService implements
         } else if (
                 minPercent > 0f
                 && maxPercent > 0f
+                && maxPercent > minPercent
                 && candleIntervalUpDownDataPrevPrev.maxClose > candleIntervalUpDownDataPrev.maxClose
         ) {
             annotation += " PPMaxCandle: " + printDateTime(candleIntervalUpDownDataPrevPrev.beginDownFirst.candle.getDateTime());
