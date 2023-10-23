@@ -180,9 +180,9 @@ public class FactorialInstrumentByFiatService implements
             return res;
         }
 
-        if (candle.getClosingPrice().floatValue() <= candleIntervalUpDownData.maxClose) {
-            return res;
-        }
+        //if (candle.getClosingPrice().floatValue() <= candleIntervalUpDownData.maxClose) {
+        //    return res;
+        //}
         var cList = candleHistoryService.getCandlesByFigiBetweenDateTimes(candle.getFigi(), candleIntervalUpDownData.endPost.candle.getDateTime(), candle.getDateTime(), strategy.getInterval());
         var maxClose = cList.stream().mapToDouble(v -> v.getClosingPrice().max(v.getOpenPrice()).doubleValue()).max().orElse(-1);
         var minClose = cList.stream().mapToDouble(v -> v.getClosingPrice().min(v.getOpenPrice()).doubleValue()).min().orElse(-1);
