@@ -134,6 +134,7 @@ public class FactorialInstrumentByFiatService implements
         String annotation;
         Boolean isIntervalDown;
         BigDecimal minDiffPercent;
+        BigDecimal maxDiffPercent;
     }
 
     public CandleIntervalDownResult isTrendSellCalc(AInstrumentByFiatFactorialStrategy strategy, CandleDomainEntity candle) {
@@ -191,11 +192,14 @@ public class FactorialInstrumentByFiatService implements
         minDiff = (float) (candleIntervalUpDownData.minClose - minClose);
         var minDiffPercentPrev = minDiffPercent;
         minDiffPercent = minDiff / size * 100f;
+        var maxDiffPercent = maxDiff / size * 100f;
 
         res.annotation += " maxDiff=" + printPrice(maxDiff);
         res.annotation += " minDiff=" + printPrice(minDiff);
         res.annotation += " minDiffPercent=" + printPrice(minDiffPercent);
+        res.annotation += " maxDiffPercent=" + printPrice(maxDiffPercent);
         res.minDiffPercent = BigDecimal.valueOf(minDiffPercent);
+        res.maxDiffPercent = BigDecimal.valueOf(maxDiffPercent);
 
         if (
                 maxDiff > 0
@@ -912,6 +916,10 @@ public class FactorialInstrumentByFiatService implements
             if (isTrendSell.isIntervalDown && res) {
                 res = false;
                 annotation += " SKIP BY TREND SELL";
+            }
+            if (isTrendSell.maxDiffPercent != null && isTrendSell.maxDiffPercent.floatValue() > 100) {
+                res = false;
+                annotation += " SKIP BY maxDiffPercent > 100";
             }
             if (isTrendSell.isIntervalDown) {
                 setTrendUp(strategy, candle, false);
