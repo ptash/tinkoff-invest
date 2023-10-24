@@ -209,6 +209,7 @@ public class FactorialInstrumentByFiatService implements
         if (
                 minDiffPercentPrev > 50
                 && minDiffPercent > 50
+                && maxDiff < minDiff
         ) {
             res.isIntervalDown = true;
             return res;
@@ -1215,14 +1216,8 @@ public class FactorialInstrumentByFiatService implements
                 //var emaLength = candles.size() * 20;
                 var emaLength = buyCriteria.getEmaLength();
                 annotation += " size=" + emaLength;
-                ema = getEma(candle.getFigi(), candle.getDateTime(), emaLength, strategy.getInterval(), CandleDomainEntity::getClosingPrice, 1);
-                //candles = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(), candle.getDateTime(), emaLength, strategy.getInterval());
-                //emaPrev = getEma(candle.getFigi(), candles.get(0).getDateTime(), emaLength, strategy.getInterval(), CandleDomainEntity::getClosingPrice, 1);
-                emaPrev = getSma(candle.getFigi(), candle.getDateTime(), emaLength, strategy.getInterval(), CandleDomainEntity::getClosingPrice, 1);
-                //if (res && candle.getClosingPrice().compareTo(BigDecimal.valueOf(ema.get(ema.size() - 1))) < 0) {
-                //    annotation += " less EMA";
-                //}
-            //}
+                //ema = getEma(candle.getFigi(), candle.getDateTime(), emaLength, strategy.getInterval(), CandleDomainEntity::getClosingPrice, 1);
+                //emaPrev = getSma(candle.getFigi(), candle.getDateTime(), emaLength, strategy.getInterval(), CandleDomainEntity::getClosingPrice, 1);
         }
 
         annotation = " " + resBuy + " open = " + printPrice(candle.getOpenPrice()) + " close=" + printPrice(candle.getClosingPrice()) + " " + annotation;
@@ -1571,14 +1566,8 @@ public class FactorialInstrumentByFiatService implements
             //var emaLength = candles.size() * 20;
             var emaLength = buyCriteria.getEmaLength();
             annotation += " size=" + emaLength;
-            ema = getEma(candle.getFigi(), candle.getDateTime(), emaLength, strategy.getInterval(), CandleDomainEntity::getClosingPrice, 1);
-            //candles = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(), candle.getDateTime(), emaLength, strategy.getInterval());
-            //emaPrev = getEma(candle.getFigi(), candles.get(0).getDateTime(), emaLength, strategy.getInterval(), CandleDomainEntity::getClosingPrice, 1);
-            emaPrev = getSma(candle.getFigi(), candle.getDateTime(), emaLength, strategy.getInterval(), CandleDomainEntity::getClosingPrice, 1);
-            //if (res && candle.getClosingPrice().compareTo(BigDecimal.valueOf(ema.get(ema.size() - 1))) < 0) {
-            //    annotation += " less EMA";
-            //}
-            //}
+            //ema = getEma(candle.getFigi(), candle.getDateTime(), emaLength, strategy.getInterval(), CandleDomainEntity::getClosingPrice, 1);
+            //emaPrev = getSma(candle.getFigi(), candle.getDateTime(), emaLength, strategy.getInterval(), CandleDomainEntity::getClosingPrice, 1);
         }
 
         String keyCandles = buildKeyCandleIntervals(strategy, candle);
@@ -1734,6 +1723,7 @@ public class FactorialInstrumentByFiatService implements
                     if (
                             candleIntervalUpDownDataPrev.maxClose > candleIntervalUpDownData.maxClose
                             && maxDiffP > 5f
+                            && candleIntervalUpDownDataPrev.minClose < candleIntervalUpDownData.minClose
                     ) {
                         if ((maxBuyIntervalPrice.equals(BigDecimal.ZERO) || candleIntervalUpDownData.minClose < maxBuyIntervalPrice.floatValue())) {
                             var percent = 100f * (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) / Math.abs(candleIntervalUpDownData.minClose);
