@@ -209,7 +209,9 @@ public class FactorialInstrumentByFiatService implements
                 && minDiff > 0
                 && minDiff/maxDiff > 0.8
                 && minDiffPercent > 25
+                && minDiffPercent <= 50
         ) {
+            res.annotation += " DOWN by 25";
             res.isIntervalDown = true;
             return res;
         }
@@ -218,6 +220,7 @@ public class FactorialInstrumentByFiatService implements
                 && minDiffPercent > 50
                 && maxDiff < minDiff
         ) {
+            res.annotation += " DOWN by 50";
             res.isIntervalDown = true;
             return res;
         }
