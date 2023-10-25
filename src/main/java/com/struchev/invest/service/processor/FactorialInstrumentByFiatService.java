@@ -158,7 +158,10 @@ public class FactorialInstrumentByFiatService implements
         var maxDiff = candleIntervalUpDownData.maxClose - candleIntervalUpDownDataPrev.maxClose;
         var minDiff = candleIntervalUpDownDataPrev.minClose - candleIntervalUpDownData.minClose;
 
-        var size = candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose;
+        var size = Math.max(
+                candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose,
+                candleIntervalUpDownDataPrev.maxClose - candleIntervalUpDownDataPrev.minClose
+        );
         var sizePercent = size / Math.abs(candleIntervalUpDownData.minClose) * 100f;
         if (sizePercent < strategy.getBuyCriteria().getCandlePriceMinFactor()) {
             res.annotation += " sizePercent=" + printPrice(sizePercent);
@@ -1731,7 +1734,7 @@ public class FactorialInstrumentByFiatService implements
                     if (
                             candleIntervalUpDownDataPrev.maxClose > candleIntervalUpDownData.maxClose
                             && maxDiffP > 5f
-                            && candleIntervalUpDownDataPrev.minClose < candleIntervalUpDownData.minClose
+                            && candleIntervalUpDownDataPrev.minClose > candleIntervalUpDownData.minClose
                     ) {
                         if ((maxBuyIntervalPrice.equals(BigDecimal.ZERO) || candleIntervalUpDownData.minClose < maxBuyIntervalPrice.floatValue())) {
                             var percent = 100f * (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) / Math.abs(candleIntervalUpDownData.minClose);
