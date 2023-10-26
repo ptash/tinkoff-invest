@@ -4693,7 +4693,7 @@ public class FactorialInstrumentByFiatService implements
                     candleIntervalUpDownDataPrevPrevPrev.maxClose != null
                             && candleIntervalUpDownDataPrevPrevPrev.maxClose > candleIntervalUpDownDataPrevPrev.maxClose
                             && candleIntervalUpDownDataPrevPrevPrev.minClose > candleIntervalUpDownDataPrev.minClose
-                            && (maxPercent > minPercent || candle.getClosingPrice().floatValue() > candleIntervalUpDownData.maxClose || candleIntervalUpDownDataPrevPrevPrev.minClose < candleIntervalUpDownData.minClose)
+                            && (maxPercent > minPercent || candle.getClosingPrice().floatValue() > candleIntervalUpDownDataPrevPrevPrev.maxClose || candleIntervalUpDownDataPrevPrevPrev.minClose < candleIntervalUpDownData.minClose)
             ) {
                 annotation += " up by down size1";
                 isIntervalUp = true;
@@ -4708,7 +4708,7 @@ public class FactorialInstrumentByFiatService implements
                     && candleIntervalUpDownDataPrevPrev.minClose < candleIntervalUpDownDataPrev.minClose
                     && candleIntervalUpDownDataPrevPrevPrev.maxClose > candleIntervalUpDownDataPrevPrev.maxClose
                     && candleIntervalUpDownDataPrevPrevPrev.minClose < candleIntervalUpDownDataPrevPrev.minClose
-                    && (maxPercent > minPercent || candle.getClosingPrice().floatValue() > candleIntervalUpDownData.maxClose || candleIntervalUpDownDataPrevPrevPrev.minClose < candleIntervalUpDownData.minClose)
+                    && (maxPercent > minPercent || candle.getClosingPrice().floatValue() > candleIntervalUpDownDataPrevPrevPrev.maxClose || candleIntervalUpDownDataPrevPrevPrev.minClose < candleIntervalUpDownData.minClose)
             ) {
                 isIntervalUp = true;
                 isIntervalUpAfterDown = true;
