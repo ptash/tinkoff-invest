@@ -116,7 +116,8 @@ public class FactorialInstrumentByFiatService implements
         if (null != isTrendDown) {
             return isTrendDown;
         }
-        isTrendDown = isTrendSellCalc(strategy, candle).isIntervalDown;
+        var newStrategy = buildAvgStrategy(strategy, candle);
+        isTrendDown = isTrendSellCalc(newStrategy, candle).isIntervalDown;
         setTrendUp(strategy, candle, isTrendDown);
         return isTrendDown;
     }
@@ -137,7 +138,40 @@ public class FactorialInstrumentByFiatService implements
         BigDecimal maxDiffPercent;
     }
 
-    public CandleIntervalDownResult isTrendSellCalc(AInstrumentByFiatFactorialStrategy strategy, CandleDomainEntity candle) {
+    public CandleIntervalDownResult isTrendSellCalc(FactorialDiffAvgAdapterStrategy strategy, CandleDomainEntity candle) {
+        var res = isTrendSellCalcInternal(strategy, candle);
+        if (res.isIntervalDown) {
+            var candleIntervalUpDownData = getCurCandleIntervalUpDownData(strategy, candle);
+            if (candleIntervalUpDownData.maxCandle == null) {
+                return res;
+            }
+            var candleIntervalUpDownDataPrev = getPrevCandleIntervalUpDownData(strategy, candleIntervalUpDownData);
+            if (candleIntervalUpDownDataPrev.maxCandle == null) {
+                return res;
+            }
+            var candleIntervalUpDownDataPrevPrev = getPrevCandleIntervalUpDownData(strategy, candleIntervalUpDownDataPrev);
+            if (candleIntervalUpDownDataPrevPrev.maxCandle == null) {
+                return res;
+            }
+            var order = orderService.findLastByFigiAndStrategy(candle.getFigi(), strategy);
+            var upRes = calcIsIntervalUp(
+                    candle,
+                    order,
+                    strategy.getBuyCriteria(),
+                    candleIntervalUpDownData,
+                    candleIntervalUpDownDataPrev,
+                    candleIntervalUpDownDataPrevPrev,
+                    getPrevCandleIntervalUpDownData(strategy, candleIntervalUpDownDataPrevPrev)
+            );
+            if (upRes.isIntervalUpAfterDown) {
+                res.isIntervalDown = false;
+                res.annotation += " SKIP DOWN after down";
+            }
+        }
+        return res;
+    }
+
+    public CandleIntervalDownResult isTrendSellCalcInternal(AInstrumentByFiatFactorialStrategy strategy, CandleDomainEntity candle) {
         var newStrategy = buildAvgStrategy(strategy, candle);
         var res = CandleIntervalDownResult.builder()
                 .isIntervalDown(false)
@@ -916,7 +950,7 @@ public class FactorialInstrumentByFiatService implements
                     }
                 }
 
-            var isTrendSell = isTrendSellCalc(strategy, candle);
+            var isTrendSell = isTrendSellCalc(newStrategy, candle);
             annotation += " isTrendSell=" + isTrendSell.isIntervalDown + ": " + isTrendSell.annotation;
             setTrendDown(strategy, candle, isTrendSell.isIntervalDown);
             if (isTrendSell.isIntervalDown && res) {
@@ -2416,7 +2450,7 @@ public class FactorialInstrumentByFiatService implements
             annotation += " resMaybe=" + isIntervalUpResMaybe.isIntervalUp + ": " + isIntervalUpResMaybe.annotation;
             setTrendUp(strategy, candle, isIntervalUpResMaybe.isIntervalUp);
 
-            var isTrendSell = isTrendSellCalc(strategy, candle);
+            var isTrendSell = isTrendSellCalc(newStrategy, candle);
             annotation += " isTrendSell=" + isTrendSell.isIntervalDown + ": " + isTrendSell.annotation;
             setTrendDown(strategy, candle, isTrendSell.isIntervalDown);
             if (
@@ -4497,6 +4531,7 @@ public class FactorialInstrumentByFiatService implements
     public static class CandleIntervalUpResult {
         String annotation;
         Boolean isIntervalUp;
+        Boolean isIntervalUpAfterDown;
         Boolean isIntervalUpMayBe;
         BigDecimal stopLossPrice;
         BigDecimal stopLossPriceBottom;
@@ -4600,6 +4635,7 @@ public class FactorialInstrumentByFiatService implements
             CandleIntervalUpDownData candleIntervalUpDownDataPrevPrevPrev
     ) {
         var isIntervalUp = false;
+        var isIntervalUpAfterDown = false;
         var annotation = "";
         BigDecimal StopLossPrice = BigDecimal.ZERO;
         var size = Math.max(
@@ -4661,6 +4697,7 @@ public class FactorialInstrumentByFiatService implements
             ) {
                 annotation += " up by down size1";
                 isIntervalUp = true;
+                isIntervalUpAfterDown = true;
                 StopLossPrice = BigDecimal.valueOf(Math.min(
                         candleIntervalUpDownData.minClose,
                         candleIntervalUpDownDataPrevPrev.minClose - (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) * 1.f
@@ -4674,6 +4711,7 @@ public class FactorialInstrumentByFiatService implements
                     && (maxPercent > minPercent || candle.getClosingPrice().floatValue() > candleIntervalUpDownData.maxClose || candleIntervalUpDownDataPrevPrevPrev.minClose < candleIntervalUpDownData.minClose)
             ) {
                 isIntervalUp = true;
+                isIntervalUpAfterDown = true;
                 annotation += " up by down size2";
             }
         }
@@ -4773,6 +4811,7 @@ public class FactorialInstrumentByFiatService implements
         var res = CandleIntervalUpResult.builder()
                 .annotation(annotation)
                 .isIntervalUp(isIntervalUp)
+                .isIntervalUpAfterDown(isIntervalUpAfterDown)
                 .stopLossPrice(StopLossPrice)
                 .stopLossPriceBottom(stopLossPriceBottom)
                 .minPercent(BigDecimal.ZERO)
