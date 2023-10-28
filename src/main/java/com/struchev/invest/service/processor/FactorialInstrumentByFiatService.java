@@ -2572,6 +2572,23 @@ public class FactorialInstrumentByFiatService implements
                 stopLossPriceBeginDate = candle.getDateTime();
                 order.getDetails().getDateTimes().put("stopLossPriceBeginDate", stopLossPriceBeginDate);
                 order.getDetails().getCurrentPrices().put("stopLossPriceBottom", stopLossPriceBottomA);
+
+
+                if (
+                        order.getPurchasePrice().compareTo(stopLossPriceBottomA) > 0
+                        && stopLossPrice.compareTo(stopLossPriceOld) > 0
+                ) {
+                    var intervalPercentNearDown = order.getDetails().getCurrentPrices().getOrDefault("intervalPercentNearDown", BigDecimal.ZERO);
+                    var intervalPercentNearDownNew = order.getPurchasePrice().subtract(stopLossPriceBottomA).divide(stopLossPriceBottomA.abs(), 8, RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(100f));
+                    annotation += " nearNew < near: " + printPrice(intervalPercentNearDownNew) + " < " + printPrice(intervalPercentNearDown);
+                    if (
+                            intervalPercentNearDown.equals(BigDecimal.ZERO)
+                            || intervalPercentNearDownNew.compareTo(intervalPercentNearDown) > 0
+                    ) {
+                        order.getDetails().getCurrentPrices().put("intervalPercentNearDown", intervalPercentNearDownNew);
+                    }
+                }
+
                 orderService.updateDetailsCurrentPrice(order, "stopLossPrice", stopLossPrice);
             }
 
