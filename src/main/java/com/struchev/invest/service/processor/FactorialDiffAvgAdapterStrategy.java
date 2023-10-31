@@ -13,6 +13,10 @@ public class FactorialDiffAvgAdapterStrategy extends AInstrumentByFiatFactorialS
 
     private SellLimitCriteria sellLimitOrig;
 
+    public String getExtName() {
+        return this.strategy.getExtName();
+    }
+
     public void setStrategy(AInstrumentByFiatFactorialStrategy strategy) {
         this.strategy = strategy;
     }

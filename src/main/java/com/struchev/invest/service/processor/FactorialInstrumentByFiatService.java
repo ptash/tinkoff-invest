@@ -97,7 +97,7 @@ public class FactorialInstrumentByFiatService implements
 
     public synchronized Boolean getTrendUp(AStrategy strategy, CandleDomainEntity candle)
     {
-        String key = strategy.getName() + candle.getFigi() + printDateTime(candle.getDateTime());
+        String key = strategy.getExtName() + candle.getFigi() + printDateTime(candle.getDateTime());
         if (trendUpMap.containsKey(key)) {
             return trendUpMap.get(key);
         }
@@ -106,7 +106,7 @@ public class FactorialInstrumentByFiatService implements
 
     private synchronized void setTrendUp(AStrategy strategy, CandleDomainEntity candle, Boolean value)
     {
-        String key = strategy.getName() + candle.getFigi() + printDateTime(candle.getDateTime());
+        String key = strategy.getExtName() + candle.getFigi() + printDateTime(candle.getDateTime());
         trendUpMap.put(key, value);
     }
 
@@ -267,7 +267,7 @@ public class FactorialInstrumentByFiatService implements
 
     public synchronized Boolean getTrendDown(AStrategy strategy, CandleDomainEntity candle)
     {
-        String key = strategy.getName() + candle.getFigi() + printDateTime(candle.getDateTime());
+        String key = strategy.getExtName() + candle.getFigi() + printDateTime(candle.getDateTime());
         if (trendDownMap.containsKey(key)) {
             return trendDownMap.get(key);
         }
@@ -276,7 +276,7 @@ public class FactorialInstrumentByFiatService implements
 
     private synchronized void setTrendDown(AStrategy strategy, CandleDomainEntity candle, Boolean value)
     {
-        String key = strategy.getName() + candle.getFigi() + printDateTime(candle.getDateTime());
+        String key = strategy.getExtName() + candle.getFigi() + printDateTime(candle.getDateTime());
         trendDownMap.put(key, value);
     }
 
@@ -1054,12 +1054,12 @@ public class FactorialInstrumentByFiatService implements
             }
         }
 
-        String key = buildKeyHour(strategy.getName(), candle);
+        String key = buildKeyHour(strategy.getExtName(), candle);
         var buyPrice = getCashedIsBuyValue(key);
         if (null == buyPrice
                 && buyCriteria.getProfitPercentFromBuyMinPriceLength() > 1
         ) {
-            String keyPrev = buildKeyHour(strategy.getName(), curHourCandleForFactorial);
+            String keyPrev = buildKeyHour(strategy.getExtName(), curHourCandleForFactorial);
             buyPrice = getCashedIsBuyValue(keyPrev);
             if (null != buyPrice) {
                 if (buyPrice.isResOverProfit) {
@@ -1328,10 +1328,10 @@ public class FactorialInstrumentByFiatService implements
         var curHourCandle = candleListPrev.get(strategy.getFactorialLossIgnoreSize() - 1);
         var factorial = findBestFactorialInPast(strategy, curHourCandle);
 
-        String key = buildKeyHour(strategy.getName(), candle);
+        String key = buildKeyHour(strategy.getExtName(), candle);
         addCashedIsBuyValue(key, null);
         if (strategy.getBuyCriteria().getProfitPercentFromBuyMinPriceLength() > 1) {
-            String keyPrev = buildKeyHour(strategy.getName(), curHourCandle);
+            String keyPrev = buildKeyHour(strategy.getExtName(), curHourCandle);
             addCashedIsBuyValue(keyPrev, null);
         }
         var order = orderService.findActiveByFigiAndStrategy(candle.getFigi(), strategy);
@@ -1659,7 +1659,7 @@ public class FactorialInstrumentByFiatService implements
                     annotation += candleIntervalRes.annotation;
                 }
             }
-            String keySell = "sellUp" + strategy.getName() + candle.getFigi() + printDateTime(order.getPurchaseDateTime());
+            String keySell = "sellUp" + strategy.getExtName() + candle.getFigi() + printDateTime(order.getPurchaseDateTime());
             var isSkipOnlyUp = false;
             if (
                     true
@@ -2772,7 +2772,7 @@ public class FactorialInstrumentByFiatService implements
         }
         var candleListCash = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
                 curDateTime, 1, strategy.getFactorialInterval());
-        String key = strategy.getName() + candle.getFigi() + candleListCash.get(0).getDateTime();
+        String key = strategy.getExtName() + candle.getFigi() + candleListCash.get(0).getDateTime();
         var ret = getCashedValue(key);
         if (ret != null) {
             return ret;
@@ -3304,7 +3304,7 @@ public class FactorialInstrumentByFiatService implements
             CandleDomainEntity candle,
             CandleIntervalResultData candleDownStart
     ) {
-        String key = strategy.getName() + candle.getFigi();
+        String key = strategy.getExtName() + candle.getFigi();
         List<CandleIntervalUpDownData> listRes;
         synchronized (candleIntervalUpDownDataMap) {
             if (!candleIntervalUpDownDataMap.containsKey(key)) {
@@ -4365,10 +4365,10 @@ public class FactorialInstrumentByFiatService implements
                         candle.getDateTime(), 2, strategy.getFactorialInterval());
                 var curHourCandleForFactorial = candleList.get(1);
                 if (candleIntervalResSell.res) {
-                    String key = buildKeyHour(strategy.getName(), candle);
+                    String key = buildKeyHour(strategy.getExtName(), candle);
                     addCashedIsBuyValue(key, null);
                     if (strategy.getBuyCriteria().getProfitPercentFromBuyMinPriceLength() > 1) {
-                        String keyPrev = buildKeyHour(strategy.getName(), curHourCandleForFactorial);
+                        String keyPrev = buildKeyHour(strategy.getExtName(), curHourCandleForFactorial);
                         addCashedIsBuyValue(keyPrev, null);
                     }
 
@@ -5135,7 +5135,7 @@ public class FactorialInstrumentByFiatService implements
 
     private String buildKeyCandleIntervals(AInstrumentByFiatFactorialStrategy strategy, CandleDomainEntity candle)
     {
-        String keyCandles = strategy.getName() + candle.getFigi();
+        String keyCandles = strategy.getExtName() + candle.getFigi();
         return keyCandles;
     }
 
@@ -5169,7 +5169,7 @@ public class FactorialInstrumentByFiatService implements
         log.info("{}: Candle Intervals size = {} from {}", keyCandles, candleIPrev.size(), candleIPrev.get(0).getDateTime());
         for (var i = 1; i < candleIPrev.size(); i++) {
             var candleCur = candleIPrev.get(i);
-            var cashed = candleStrategyResultRepository.findByStrategyAndFigiAndDateTimeAndInterval(strategy.getName(), candleCur.getFigi(), candleCur.getDateTime(), candleCur.getInterval());
+            var cashed = candleStrategyResultRepository.findByStrategyAndFigiAndDateTimeAndInterval(strategy.getExtName(), candleCur.getFigi(), candleCur.getDateTime(), candleCur.getInterval());
             if (cashed != null) {
                 if (cashed.getDetails().getBooleanDataMap().getOrDefault("res", false)) {
                     CandleIntervalResultData candleIntervalRes = CandleIntervalResultData.builder()
@@ -5236,7 +5236,7 @@ public class FactorialInstrumentByFiatService implements
                 details.getBooleanDataMap().put("isDown", candleIntervalRes.isDown);
             }
             CandleStrategyResultEntity candleStrategyResultEntity = CandleStrategyResultEntity.builder()
-                    .strategy(strategy.getName())
+                    .strategy(strategy.getExtName())
                     .figi(candleCur.getFigi())
                     .dateTime(candleCur.getDateTime())
                     .interval(candleCur.getInterval())
@@ -5484,13 +5484,13 @@ public class FactorialInstrumentByFiatService implements
 
     public synchronized Map<String, Boolean> getOrderBooleanDataMap(AStrategy strategy, CandleDomainEntity candle)
     {
-        String key = strategy.getName() + candle.getFigi();
+        String key = strategy.getExtName() + candle.getFigi();
         return booleanDataMap.getOrDefault(key, new ConcurrentHashMap<>()).entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     private synchronized void setOrderBooleanData(FactorialDiffAvgAdapterStrategy strategy, CandleDomainEntity candle, String key, Boolean value)
     {
-        String keyS = strategy.getName() + candle.getFigi();
+        String keyS = strategy.getExtName() + candle.getFigi();
         if (!booleanDataMap.containsKey(keyS)) {
             booleanDataMap.put(keyS, new ConcurrentHashMap<>());
         }
@@ -5501,13 +5501,13 @@ public class FactorialInstrumentByFiatService implements
 
     public synchronized Map<String, BigDecimal> getOrderBigDecimalDataMap(AStrategy strategy, CandleDomainEntity candle)
     {
-        String key = strategy.getName() + candle.getFigi();
+        String key = strategy.getExtName() + candle.getFigi();
         return bigDecimalDataMap.getOrDefault(key, new ConcurrentHashMap<>()).entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     private synchronized void setOrderBigDecimalData(FactorialDiffAvgAdapterStrategy strategy, CandleDomainEntity candle, String key, BigDecimal value)
     {
-        String keyS = strategy.getName() + candle.getFigi();
+        String keyS = strategy.getExtName() + candle.getFigi();
         if (!bigDecimalDataMap.containsKey(keyS)) {
             bigDecimalDataMap.put(keyS, new ConcurrentHashMap<>());
         }
