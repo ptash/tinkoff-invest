@@ -15,6 +15,8 @@ import java.util.Map;
  * Пример: продажа/покупка акций Apple за USD
  */
 public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy implements Cloneable {
+    String extName;
+
     /**
      * Период паузы в торговле, если продали по stop loss критерию
      * @return
@@ -22,6 +24,23 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
     @Override
     public Duration getDelayBySL() {
         return null;
+    }
+
+    @Override
+    public String getExtName() {
+        return extName == null ? super.getName() : extName;
+    }
+
+    public void setExtName(String name) {
+        this.extName = name;
+    }
+
+    public AInstrumentByFiatFactorialStrategy clone() {
+        try {
+            return (AInstrumentByFiatFactorialStrategy)super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public Duration getHistoryDuration() {

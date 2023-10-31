@@ -9,6 +9,7 @@ import com.struchev.invest.service.notification.NotificationService;
 import com.struchev.invest.service.order.OrderForShortService;
 import com.struchev.invest.service.order.OrderService;
 import com.struchev.invest.strategy.AStrategy;
+import com.struchev.invest.strategy.instrument_by_fiat_factorial.AInstrumentByFiatFactorialStrategy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.PostConstruct;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -30,6 +32,7 @@ public class CalculatorFacade {
     private final List<ICalculatorService> calculateServices;
     private Map<AStrategy.Type, ICalculatorService> calculateServiceByType;
     private Map<AStrategy.Type, ICalculatorService> calculateServiceByTypeShort;
+    private Map<String, AStrategy> strategShortMap = new HashMap<>();
 
     private final CandleHistoryService candleHistoryService;
     private final NotificationService notificationService;
@@ -86,9 +89,9 @@ public class CalculatorFacade {
     public <T extends AStrategy> boolean isShouldBuyShort(T strategy, CandleDomainEntity candle) {
         try {
             var s = calculateServiceByTypeShort.get(strategy.getType());
-            var c = candleHistoryReverseForShortService.prepareCandleForShort(candle.clone());
             if (s instanceof ICalculatorShortService) {
-                return s.isShouldBuy(strategy, c);
+                var c = candleHistoryReverseForShortService.prepareCandleForShort(candle.clone());
+                return s.isShouldBuy((T) getStrategyShort(strategy), c);
             }
             return false;
         } catch (RuntimeException e) {
@@ -100,9 +103,9 @@ public class CalculatorFacade {
     public <T extends AStrategy> boolean isTrendBuyShort(T strategy, CandleDomainEntity candle) {
         try {
             var s = calculateServiceByTypeShort.get(strategy.getType());
-            var c = candleHistoryReverseForShortService.prepareCandleForShort(candle.clone());
             if (s instanceof ICalculatorTrendService) {
-                return ((ICalculatorTrendService<T>) s).isTrendBuy(strategy, c);
+                var c = candleHistoryReverseForShortService.prepareCandleForShort(candle.clone());
+                return ((ICalculatorTrendService<T>) s).isTrendBuy((T) getStrategyShort(strategy), c);
             }
             return false;
         } catch (RuntimeException e) {
@@ -114,9 +117,9 @@ public class CalculatorFacade {
     public <T extends AStrategy> boolean isTrendSellShort(T strategy, CandleDomainEntity candle) {
         try {
             var s = calculateServiceByTypeShort.get(strategy.getType());
-            var c = candleHistoryReverseForShortService.prepareCandleForShort(candle.clone());
             if (s instanceof ICalculatorTrendService) {
-                return ((ICalculatorTrendService<T>) s).isTrendSell(strategy, c);
+                var c = candleHistoryReverseForShortService.prepareCandleForShort(candle.clone());
+                return ((ICalculatorTrendService<T>) s).isTrendSell((T) getStrategyShort(strategy), c);
             }
             return false;
         } catch (RuntimeException e) {
@@ -128,9 +131,9 @@ public class CalculatorFacade {
     public <T extends AStrategy> boolean isShouldSellShort(T strategy, CandleDomainEntity candle, BigDecimal purchaseRate) {
         try {
             var s = calculateServiceByTypeShort.get(strategy.getType());
-            var c = candleHistoryReverseForShortService.prepareCandleForShort(candle.clone());
             if (s instanceof ICalculatorShortService) {
-                return s.isShouldSell(strategy, c, candleHistoryReverseForShortService.preparePrice(purchaseRate));
+                var c = candleHistoryReverseForShortService.prepareCandleForShort(candle.clone());
+                return s.isShouldSell((T) getStrategyShort(strategy), c, candleHistoryReverseForShortService.preparePrice(purchaseRate));
             }
             return false;
         } catch (RuntimeException e) {
@@ -228,5 +231,18 @@ public class CalculatorFacade {
             }
             return c;
         }));
+    }
+
+    public AStrategy getStrategyShort(AStrategy strategy) {
+        if (!strategShortMap.containsKey(strategy.getName())) {
+            if (strategy instanceof AInstrumentByFiatFactorialStrategy) {
+                var strategyShort = ((AInstrumentByFiatFactorialStrategy) strategy).clone();
+                strategyShort.setExtName(strategy.getName() + "Short");
+                strategShortMap.put(strategy.getName(), strategyShort);
+            } else {
+                throw new RuntimeException("Short is not supported by " + strategy.getName());
+            }
+        }
+        return strategShortMap.get(strategy.getName());
     }
 }

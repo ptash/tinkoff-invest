@@ -44,6 +44,10 @@ public abstract class AStrategy {
         return this.getClass().getSimpleName();
     }
 
+    public String getExtName() {
+        return this.getClass().getSimpleName();
+    }
+
     public abstract Duration getDelayBySL();
 
     public Integer getDelayPlusBySL() { return null; }

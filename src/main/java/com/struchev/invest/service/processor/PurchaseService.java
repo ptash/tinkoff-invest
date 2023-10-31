@@ -280,21 +280,22 @@ public class PurchaseService {
     private OrderDetails buildOrderShortDetails(AStrategy strategy, CandleDomainEntity candleDomainEntity)
     {
         Map<String, BigDecimal> currentPrices = null;
+        var strategyShort = calculator.getStrategyShort(strategy);
         var c = calculator.getCalculatorServiceShort(strategy);
         if (c instanceof ICalculatorPriceDetailsService) {
             currentPrices = ((ICalculatorPriceDetailsService) c).getCurrentPrices();
         }
 
         if (currentPrices != null) {
-            AStrategy finalStrategy = strategy;
+            AStrategy finalStrategy = strategyShort;
             currentPrices = currentPrices.entrySet().stream()
                     .filter(e -> finalStrategy.getFigies().containsKey(e.getKey()))
                     .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
         }
         Map<String, Boolean> booleanDataMap = null;
         if (c instanceof ICalculatorDetailsService) {
-            booleanDataMap = ((ICalculatorDetailsService) c).getOrderBooleanDataMap(strategy, candleDomainEntity);
-            currentPrices = ((ICalculatorDetailsService) c).getOrderBigDecimalDataMap(strategy, candleDomainEntity);
+            booleanDataMap = ((ICalculatorDetailsService) c).getOrderBooleanDataMap(strategyShort, candleDomainEntity);
+            currentPrices = ((ICalculatorDetailsService) c).getOrderBigDecimalDataMap(strategyShort, candleDomainEntity);
         }
         return OrderDetails.builder()
                 .currentPrices(currentPrices)
