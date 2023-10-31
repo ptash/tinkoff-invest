@@ -191,6 +191,7 @@ public class FactorialInstrumentByFiatService implements
 
         var maxDiff = candleIntervalUpDownData.maxClose - candleIntervalUpDownDataPrev.maxClose;
         var minDiff = candleIntervalUpDownDataPrev.minClose - candleIntervalUpDownData.minClose;
+        var maxDiffCur = candle.getClosingPrice().floatValue() - candleIntervalUpDownDataPrev.maxClose;
 
         var size = Math.max(
                 candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose,
@@ -203,14 +204,17 @@ public class FactorialInstrumentByFiatService implements
         }
         var minDiffPercent = minDiff / size * 100f;
         res.annotation += " maxDiff=" + printPrice(maxDiff);
+        res.annotation += " maxDiffCur=" + printPrice(maxDiffCur);
         res.annotation += " minDiff=" + printPrice(minDiff);
         res.annotation += " minDiffPercent=" + printPrice(minDiffPercent);
         res.minDiffPercent = BigDecimal.valueOf(minDiffPercent);
 
         if (
                 maxDiff > 0
+                && maxDiffCur > 0
                 && minDiff > 0
-                && minDiff/maxDiff > 0.8
+                && minDiff/maxDiff > 0.99
+                && minDiff/maxDiffCur > 0.99
                 && minDiffPercent > 25
                 && candle.getClosingPrice().floatValue() > candleIntervalUpDownData.maxClose
         ) {
@@ -1280,8 +1284,8 @@ public class FactorialInstrumentByFiatService implements
                 candle,
                 "Date|open|high|low|close|ema2|profit|loss|limitPrice|lossAvg|deadLineTop|investBottom|investTop|smaTube|strategy|average|averageBottom"
                         + "|averageTop|candleBuySell|maxClose|minClose|priceBegin|priceEnd|ema|emaPrev|MinFactor|MaxFactor|underPrice|takeProfit|stopLossPrice|borderClose|takeProfitPriceStart"
-                        + "|stopLossPriceBottom|maxPriceProfitStep",
-                "{} | {} | {} | {} | {} | | {} | {} | | {} | ||||by {}||||{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|||{}|||",
+                        + "|stopLossPriceBottom|maxPriceProfitStep|trendUp|trendDown|buy|sell",
+                "{} | {} | {} | {} | {} | | {} | {} | | {} | ||||by {}||||{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|||{}||||{}|{}|{}|",
                 printDateTime(candle.getDateTime()),
                 candle.getOpenPrice(),
                 candle.getHighestPrice(),
@@ -1303,7 +1307,10 @@ public class FactorialInstrumentByFiatService implements
                 candleBuyRes.candlePriceMaxFactor == null ? "" : candleIntervalUpDownData.maxClose - (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) * candleBuyRes.candlePriceMaxFactor,
                 candleBuyRes.notLossBuyUnderPrice == null ? "": candleBuyRes.notLossBuyUnderPrice,
                 candleIntervalUpDownData.endPost == null ? ""
-                        : (candleIntervalUpDownData.endPost.candle.getDateTime().equals(candle.getDateTime()) ? candleIntervalUpDownData.minClose : candleIntervalUpDownData.maxClose)
+                        : (candleIntervalUpDownData.endPost.candle.getDateTime().equals(candle.getDateTime()) ? candleIntervalUpDownData.minClose : candleIntervalUpDownData.maxClose),
+                getTrendUp(strategy, candle) ? candle.getClosingPrice().add(candle.getClosingPrice().abs().multiply(BigDecimal.valueOf(2 * profitPercentFromBuyMinPrice / 100))) : "",
+                getTrendDown(strategy, candle) ? candle.getClosingPrice().subtract(candle.getClosingPrice().abs().multiply(BigDecimal.valueOf(2 * profitPercentFromBuyMinPrice / 100))) : "",
+                res ? candle.getClosingPrice().add(candle.getClosingPrice().abs().multiply(BigDecimal.valueOf(4 * profitPercentFromBuyMinPrice / 100))) : ""
                 );
         return resBuy;
     }
@@ -2718,8 +2725,8 @@ public class FactorialInstrumentByFiatService implements
                 candle,
                 "Date|open|high|low|close|ema2|profit|loss|limitPrice|lossAvg|deadLineTop|investBottom|investTop|smaTube|strategy|average|averageBottom" +
                         "|averageTop|candleBuySell|maxClose|minClose|priceBegin|priceEnd|ema|emaPrev|MinFactor|MaxFactor|underPrice|takeProfit|stopLossPrice|borderClose|takeProfitPriceStart" +
-                        "|stopLossPriceBottom|maxPriceProfitStep",
-                "{} | {} | {} | {} | {} | | {} | {} | {} |  |  |  |  |  |sell {}||||{}|{}|{}|{}|{}|{}|{}|{}|{}||{}|{}|{}|{}|{}|{}",
+                        "|stopLossPriceBottom|maxPriceProfitStep|trendUp|trendDown|buy|sell",
+                "{} | {} | {} | {} | {} | | {} | {} | {} |  |  |  |  |  |sell {}||||{}|{}|{}|{}|{}|{}|{}|{}|{}||{}|{}|{}|{}|{}|{}|{}|{}||{}",
                 printDateTime(candle.getDateTime()),
                 candle.getOpenPrice(),
                 candle.getHighestPrice(),
@@ -2745,7 +2752,10 @@ public class FactorialInstrumentByFiatService implements
                         : (candleIntervalUpDownData.endPost.candle.getDateTime().equals(candle.getDateTime()) ? candleIntervalUpDownData.minClose : candleIntervalUpDownData.maxClose),
                 takeProfitPriceStart.equals(BigDecimal.ZERO) ? "" : takeProfitPriceStart,
                 stopLossPriceBottomA == null || stopLossPriceBottomA.equals(BigDecimal.ZERO) ? "" : stopLossPriceBottomA,
-                maxPriceProfitStep == null || maxPriceProfitStep.equals(BigDecimal.ZERO) ? "" : maxPriceProfitStep
+                maxPriceProfitStep == null || maxPriceProfitStep.equals(BigDecimal.ZERO) ? "" : maxPriceProfitStep,
+                getTrendUp(strategy, candle) ? candle.getClosingPrice().add(candle.getClosingPrice().abs().multiply(BigDecimal.valueOf(2 * profitPercentFromBuyMinPrice / 100))) : "",
+                getTrendDown(strategy, candle) ? candle.getClosingPrice().subtract(candle.getClosingPrice().abs().multiply(BigDecimal.valueOf(2 * profitPercentFromBuyMinPrice / 100))) : "",
+                res ? candle.getClosingPrice().subtract(candle.getClosingPrice().abs().multiply(BigDecimal.valueOf(4 * profitPercentFromBuyMinPrice / 100))) : ""
         );
         return res;
     }
@@ -3527,9 +3537,16 @@ public class FactorialInstrumentByFiatService implements
                         if (
                                 lastTopPrice != null && lastTopPrice < maxPrice
                                 && deviationPercentTogether > 50f
-                                && (strategy.getBuyCriteria().getCandleUpDownSkipCount() == null || (upCount + upDown) > strategy.getBuyCriteria().getCandleUpDownSkipCount())
+                                //&& (strategy.getBuyCriteria().getCandleUpDownSkipCount() == null || (upCount + upDown) > strategy.getBuyCriteria().getCandleUpDownSkipCount())
                         ) {
-                            isAnother = true;
+                            if ((strategy.getBuyCriteria().getCandleUpDownSkipCount() == null || (upCount + upDown) > strategy.getBuyCriteria().getCandleUpDownSkipCount())) {
+                                isAnother = true;
+                            } else {
+                                lastTopPrice = null;
+                                lastMaxCandle = null;
+                                lastBottomPrice = null;
+                                lastMinCandle = null;
+                            }
                         }
                         annotation += " isAnother = " + isAnother;
                         if (
@@ -3546,7 +3563,7 @@ public class FactorialInstrumentByFiatService implements
                             //isOk = false;
                         }
                     }
-                    if (isOk) {
+                    if (isOk || lastTopPrice == null) {
                         annotation += " isOk";
                         if (lastTopPrice == null || lastTopPrice < maxPrice) {
                             lastTopPrice = (float) (maxPrice);
