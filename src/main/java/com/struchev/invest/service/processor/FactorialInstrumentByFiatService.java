@@ -3539,9 +3539,14 @@ public class FactorialInstrumentByFiatService implements
                                 && deviationPercentTogether > 50f
                                 //&& (strategy.getBuyCriteria().getCandleUpDownSkipCount() == null || (upCount + upDown) > strategy.getBuyCriteria().getCandleUpDownSkipCount())
                         ) {
-                            if ((strategy.getBuyCriteria().getCandleUpDownSkipCount() == null || (upCount + upDown) > strategy.getBuyCriteria().getCandleUpDownSkipCount())) {
+                            annotation += " upCount + upDown: " + upCount + " + " + upDown;
+                            if (
+                                    strategy.getBuyCriteria().getCandleUpOrDownMinCount() == null
+                                    || (upCount > strategy.getBuyCriteria().getCandleUpOrDownMinCount() && upDown > strategy.getBuyCriteria().getCandleUpOrDownMinCount())
+                            ) {
                                 isAnother = true;
                             } else {
+                                annotation += " isAnother new ";
                                 lastTopPrice = null;
                                 lastMaxCandle = null;
                                 lastBottomPrice = null;

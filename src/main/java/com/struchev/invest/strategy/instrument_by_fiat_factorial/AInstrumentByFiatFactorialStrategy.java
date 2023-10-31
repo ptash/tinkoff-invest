@@ -258,6 +258,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
         Integer candleOnlyUpPointLength;
         Integer candleOnlyUpLength;
         Integer candleUpDownSkipCount;
+        Integer candleUpOrDownMinCount;
         Integer candleUpDownSkipLength;
         Float candleUpDownSkipDeviationPercent;
         Integer candleUpSkipLength;
@@ -341,6 +342,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
                 .isOnlyUp(false)
                 .isDownWithLimits(false)
                 .candleInterval("1min")
+                .candleUpOrDownMinCount(2)
                 .build();
     }
 
