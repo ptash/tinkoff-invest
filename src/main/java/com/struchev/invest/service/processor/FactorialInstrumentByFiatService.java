@@ -3531,12 +3531,12 @@ public class FactorialInstrumentByFiatService implements
                     var isNewBottom = false;
                     var isAnother = false;
                     var isSkip = false;
-                    var downPrevPriceAvg = candleResDownPrevList.stream().mapToDouble(v -> v.getCandle().getClosingPrice().min(v.getCandle().getOpenPrice()).doubleValue())
-                            .average().orElseThrow();
-                    var upPriceAvg = intervalsBetweenLast.stream().mapToDouble(v -> v.getCandle().getClosingPrice().max(v.getCandle().getOpenPrice()).doubleValue())
-                            .average().orElseThrow();
-                    if (downPrevPriceAvg >= upPriceAvg) {
-                        annotation += " skip down >= up: " + downPrevPriceAvg + " >= " + upPriceAvg;
+                    var downPrevPriceMin = candleResDownPrevList.stream().mapToDouble(v -> v.getCandle().getClosingPrice().min(v.getCandle().getOpenPrice()).doubleValue())
+                            .min().orElseThrow();
+                    var upPriceAvgMax = intervalsBetweenLast.stream().mapToDouble(v -> v.getCandle().getClosingPrice().max(v.getCandle().getOpenPrice()).doubleValue())
+                            .max().orElseThrow();
+                    if (downPrevPriceMin >= upPriceAvgMax) {
+                        annotation += " skip down >= up: " + downPrevPriceMin + " >= " + upPriceAvgMax;
                         isSkip = true;
                         candleResUpFirst = candleResUpFirstPrev;
                         for (var i = 0; i < intervalsBetweenLast.size(); i++) {
