@@ -3518,9 +3518,19 @@ public class FactorialInstrumentByFiatService implements
                     var isNewTop = false;
                     var isNewBottom = false;
                     var isAnother = false;
+                    var isSkip = false;
+                    var downPrevPriceAvg = candleResDownPrevList.stream().mapToDouble(v -> v.getCandle().getClosingPrice().min(v.getCandle().getOpenPrice()).doubleValue())
+                            .average().orElseThrow();
+                    var upPriceAvg = intervalsBetweenLast.stream().mapToDouble(v -> v.getCandle().getClosingPrice().max(v.getCandle().getOpenPrice()).doubleValue())
+                            .average().orElseThrow();
+                    if (downPrevPriceAvg >= upPriceAvg) {
+                        annotation += " skip down >= up: " + downPrevPriceAvg + " >= " + upPriceAvg;
+                        isSkip = true;
+                    }
                     if (
                             null != maxPricePrev
                             && null != strategy.getBuyCriteria().getCandleUpDownSkipDeviationPercent()
+                            && !isSkip
                     ) {
                         var maxLength = Math.max(maxPricePrev - minPricePrev, maxPrice - minPrice);
                         var maxLengthAbs = Math.max(maxPricePrev, maxPrice) - Math.min(minPricePrev, minPrice);
@@ -3539,10 +3549,11 @@ public class FactorialInstrumentByFiatService implements
                                 && deviationPercentTogether > 50f
                                 //&& (strategy.getBuyCriteria().getCandleUpDownSkipCount() == null || (upCount + upDown) > strategy.getBuyCriteria().getCandleUpDownSkipCount())
                         ) {
-                            annotation += " upCount + upDown: " + upCount + " + " + upDown;
+                            annotation += " upCount : upDown: " + upCount + " : " + upDown + " > " + strategy.getBuyCriteria().getCandleUpOrDownMinCount();
                             if (
                                     strategy.getBuyCriteria().getCandleUpOrDownMinCount() == null
-                                    || (upCount > strategy.getBuyCriteria().getCandleUpOrDownMinCount() && upDown > strategy.getBuyCriteria().getCandleUpOrDownMinCount())
+                                    || (upCount > strategy.getBuyCriteria().getCandleUpOrDownMinCount()
+                                            && upDown > strategy.getBuyCriteria().getCandleUpOrDownMinCount())
                             ) {
                                 isAnother = true;
                             } else {
@@ -3568,7 +3579,10 @@ public class FactorialInstrumentByFiatService implements
                             //isOk = false;
                         }
                     }
-                    if (isOk || lastTopPrice == null) {
+                    if (
+                            (isOk || lastTopPrice == null)
+                            && !isSkip
+                    ) {
                         annotation += " isOk";
                         if (lastTopPrice == null || lastTopPrice < maxPrice) {
                             lastTopPrice = (float) (maxPrice);
@@ -3629,8 +3643,10 @@ public class FactorialInstrumentByFiatService implements
                         }
                         continue;
                     }
-                    isFind = true;
-                    break;
+                    if (!isSkip) {
+                        isFind = true;
+                        break;
+                    }
                 }
             }
         } else {
