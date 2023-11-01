@@ -229,6 +229,16 @@ public class FactorialInstrumentByFiatService implements
         var maxClose = cList.stream().mapToDouble(v -> v.getClosingPrice().max(v.getOpenPrice()).doubleValue()).max().orElse(-1);
         var minClose = cList.stream().mapToDouble(v -> v.getClosingPrice().min(v.getOpenPrice()).doubleValue()).min().orElse(-1);
 
+        size = (float) Math.max(
+                candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose,
+                maxClose - minClose
+        );
+        sizePercent = (float) (size / minClose) * 100f;
+        if (sizePercent < strategy.getBuyCriteria().getCandlePriceMinFactor()) {
+            res.annotation += " sizePercent=" + printPrice(sizePercent);
+            size = (float) (Math.abs(minClose) * strategy.getBuyCriteria().getCandlePriceMinFactor() / 100f);
+        }
+
         maxDiff = (float) (maxClose - candleIntervalUpDownData.maxClose);
         minDiff = (float) (candleIntervalUpDownData.minClose - minClose);
         var minDiffPercentPrev = minDiffPercent;
