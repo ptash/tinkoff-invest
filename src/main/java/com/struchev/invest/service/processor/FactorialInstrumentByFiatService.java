@@ -4771,7 +4771,8 @@ public class FactorialInstrumentByFiatService implements
                 ));
             }
             if (
-                    candleIntervalUpDownDataPrevPrevPrev.maxClose != null
+                    !isIntervalUp
+                    && candleIntervalUpDownDataPrevPrevPrev.maxClose != null
                     && candleIntervalUpDownDataPrevPrev.minClose < candleIntervalUpDownDataPrev.minClose
                     && candleIntervalUpDownDataPrevPrevPrev.maxClose > candleIntervalUpDownDataPrevPrev.maxClose
                     && candleIntervalUpDownDataPrevPrevPrev.minClose < candleIntervalUpDownDataPrevPrev.minClose
@@ -4780,6 +4781,21 @@ public class FactorialInstrumentByFiatService implements
                 isIntervalUp = true;
                 isIntervalUpAfterDown = true;
                 annotation += " up by down size2";
+            }
+
+            if (
+                    !isIntervalUp
+                    && candleIntervalUpDownDataPrevPrevPrev.maxClose != null
+                    && candleIntervalUpDownDataPrevPrevPrev.maxClose < candleIntervalUpDownDataPrevPrev.maxClose
+                    && candleIntervalUpDownDataPrevPrev.maxClose > candleIntervalUpDownDataPrev.maxClose
+                    && candleIntervalUpDownDataPrevPrev.minClose < candleIntervalUpDownDataPrev.minClose
+                    && (maxPercent > minPercent
+                            || candle.getClosingPrice().floatValue() > candleIntervalUpDownDataPrevPrev.maxClose
+                    )
+            ) {
+                isIntervalUp = true;
+                isIntervalUpAfterDown = true;
+                annotation += " up by down size3";
             }
         }
         if (
