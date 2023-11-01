@@ -2456,12 +2456,12 @@ public class FactorialInstrumentByFiatService implements
                 percentPrev = (100f * (candleIntervalUpDownDataPrev.maxClose - candleIntervalUpDownDataPrev.minClose) / Math.abs(candleIntervalUpDownDataPrev.minClose));
             }
             var percent = Math.max((percentCur + percentPrev) / 2f, percentCur);
+            annotation += " percent=" + printPrice(percent) + " < " + printPrice(buyCriteria.getCandlePriceMinFactor());
             if (
                     true
                     //candleIntervalUpDownDataPrev.minClose < candleIntervalUpDownData.minClose
                     && percent < buyCriteria.getCandlePriceMinFactor()
             ) {
-                annotation += " percent=" + printPrice(percent) + " < " + printPrice(buyCriteria.getCandlePriceMinFactor());
                 percent = buyCriteria.getCandlePriceMinFactor();
             }
 
@@ -2646,7 +2646,7 @@ public class FactorialInstrumentByFiatService implements
                     var curLength = 0;
                     var isUnder = false;
                     for (var i = 0; i < candlesPrevAllArray.size(); i++) {
-                        if (candlesPrevAllArray.get(i).getHighestPrice().compareTo(stopLossPrice) < 0) {
+                        if (candlesPrevAllArray.get(i).getClosingPrice().max(candlesPrevAllArray.get(i).getOpenPrice()).compareTo(stopLossPrice) < 0) {
                             curLength++;
                         } else {
                             if (curLength > 2 * sellCriteria.getStopLossSoftLength()) {
@@ -3577,11 +3577,14 @@ public class FactorialInstrumentByFiatService implements
                                 && deviationPercentTogether > 50f
                                 //&& (strategy.getBuyCriteria().getCandleUpDownSkipCount() == null || (upCount + upDown) > strategy.getBuyCriteria().getCandleUpDownSkipCount())
                         ) {
-                            annotation += " upCount : upDown: " + upCount + " : " + upDown + " > " + strategy.getBuyCriteria().getCandleUpOrDownMinCount();
+                            annotation += " upCount : upDown: " + upCount + " : " + upDown + " > " + strategy.getBuyCriteria().getCandleUpOrDownMinCount()
+                                    + " >> " + strategy.getBuyCriteria().getCandleUpDownMinCount();
                             if (
                                     strategy.getBuyCriteria().getCandleUpOrDownMinCount() == null
                                     || (upCount > strategy.getBuyCriteria().getCandleUpOrDownMinCount()
-                                            && upDown > strategy.getBuyCriteria().getCandleUpOrDownMinCount())
+                                            && upDown > strategy.getBuyCriteria().getCandleUpOrDownMinCount()
+                                            && upCount + upDown > strategy.getBuyCriteria().getCandleUpDownMinCount()
+                                    )
                             ) {
                                 isAnother = true;
                             } else {
