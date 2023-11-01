@@ -3350,6 +3350,7 @@ public class FactorialInstrumentByFiatService implements
         CandleIntervalResultData candleResDownFirst;
         CandleIntervalResultData candleResDownPrev = null;
         CandleIntervalResultData candleResUpFirst = null;
+        CandleIntervalResultData candleResUpFirstPrev = null;
         CandleIntervalResultData candleResUp = null;
         CandleIntervalResultData candleResDownPrevFirst = null;
         Float lastBottomPrice = null;
@@ -3428,6 +3429,7 @@ public class FactorialInstrumentByFiatService implements
                     annotation += " downFirst = " + printDateTime(candleResDownFirst.getCandle().getDateTime());
                     CandleIntervalResultData finalCandleResDownPrev = candleResDownPrev;
                     CandleIntervalResultData finalCandleResDown1 = candleResDownFirst;
+                    candleResUpFirstPrev = candleResUpFirst;
                     candleResUpFirst = intervalCandles.stream().filter(c ->
                             !c.isDown
                                     && finalCandleResDownPrev.getCandle().getDateTime().compareTo(c.getCandle().getDateTime()) < 0
@@ -3536,6 +3538,11 @@ public class FactorialInstrumentByFiatService implements
                     if (downPrevPriceAvg >= upPriceAvg) {
                         annotation += " skip down >= up: " + downPrevPriceAvg + " >= " + upPriceAvg;
                         isSkip = true;
+                        candleResUpFirst = candleResUpFirstPrev;
+                        for (var i = 0; i < intervalsBetweenLast.size(); i++) {
+                            var delRes = intervalCandles.remove(intervalsBetweenLast.get(i));
+                            annotation += " del i=" + i + ": " + delRes;
+                        }
                     }
                     if (
                             null != maxPricePrev
