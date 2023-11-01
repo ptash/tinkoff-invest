@@ -4747,7 +4747,13 @@ public class FactorialInstrumentByFiatService implements
         ) {
             annotation += " up by big size after down";
             isIntervalUp = true;
-            isIntervalUpAfterDown = true;
+            if (
+                    candleIntervalUpDownDataPrevPrev.maxClose > candleIntervalUpDownData.maxClose
+                    || (candleIntervalUpDownDataPrevPrevPrev.maxClose != null
+                            && candleIntervalUpDownDataPrevPrevPrev.maxClose > candleIntervalUpDownData.maxClose)
+            ) {
+                isIntervalUpAfterDown = true;
+            }
         } else if (
                 minPercent < -15f
                         && maxPercent > 15f
