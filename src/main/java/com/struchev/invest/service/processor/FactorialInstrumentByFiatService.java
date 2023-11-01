@@ -231,7 +231,7 @@ public class FactorialInstrumentByFiatService implements
 
         size = (float) Math.max(
                 candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose,
-                maxClose - minClose
+                candleIntervalUpDownData.maxClose - minClose
         );
         sizePercent = (float) (size / minClose) * 100f;
         if (sizePercent < strategy.getBuyCriteria().getCandlePriceMinFactor()) {
