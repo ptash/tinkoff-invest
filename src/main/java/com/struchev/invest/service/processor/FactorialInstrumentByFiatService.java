@@ -1044,7 +1044,10 @@ public class FactorialInstrumentByFiatService implements
             }
         }
 
-        if (res && buyCriteria.getNotLossSellLength() > 0) {
+        if (
+                (res || getTrendUp(strategy, candle))
+                && buyCriteria.getNotLossSellLength() > 0
+        ) {
             var order = orderService.findLastByFigiAndStrategy(candle.getFigi(), strategy);
             if (order != null) {
                 var profitPercent = 100f * (order.getSellPrice().floatValue() - order.getPurchasePrice().floatValue()) / order.getPurchasePrice().floatValue();
@@ -1059,6 +1062,7 @@ public class FactorialInstrumentByFiatService implements
                     if (listCandle.size() <= buyCriteria.getNotLossSellLength()) {
                         annotation += " skipNotLossSellLength=" + buyCriteria.getNotLossSellLength();
                         res = false;
+                        setTrendUp(strategy, candle, false);
                     }
                 }
             }
