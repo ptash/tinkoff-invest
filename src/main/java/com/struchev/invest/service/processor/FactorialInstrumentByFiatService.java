@@ -3555,10 +3555,10 @@ public class FactorialInstrumentByFiatService implements
                     var upPriceMax = intervalsBetweenLast.stream().mapToDouble(v -> v.getCandle().getClosingPrice().max(v.getCandle().getOpenPrice()).doubleValue())
                             .max().orElseThrow();
                     var percentUp = 100f * (upPriceMax - downPrevPriceMin) / Math.abs(downPrevPriceMin);
-                    annotation += " percentUp=" + printPrice(percentUp) + " < " + strategy.getBuyCriteria().getCandlePriceMinFactor();
+                    annotation += " percentUp=" + printPrice(percentUp) + " < " + strategy.getBuyCriteria().getCandlePriceMinUpDownPercent();
                     if (
                             downPrevPriceMin >= upPriceMax
-                            || percentUp < strategy.getBuyCriteria().getCandlePriceMinFactor()
+                            || percentUp < strategy.getBuyCriteria().getCandlePriceMinUpDownPercent()
                     ) {
                         annotation += " skip down >= up: " + downPrevPriceMin + " >= " + upPriceMax;
                         isSkip = true;
