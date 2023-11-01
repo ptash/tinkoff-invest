@@ -136,6 +136,7 @@ public class FactorialInstrumentByFiatService implements
         Boolean isIntervalDown;
         BigDecimal minDiffPercent;
         BigDecimal maxDiffPercent;
+        BigDecimal maxDiffCurPercent;
     }
 
     public CandleIntervalDownResult isTrendSellCalc(FactorialDiffAvgAdapterStrategy strategy, CandleDomainEntity candle) {
@@ -240,17 +241,21 @@ public class FactorialInstrumentByFiatService implements
         }
 
         maxDiff = (float) (maxClose - candleIntervalUpDownData.maxClose);
+        maxDiffCur = candle.getClosingPrice().floatValue() - candleIntervalUpDownData.maxClose;
         minDiff = (float) (candleIntervalUpDownData.minClose - minClose);
         var minDiffPercentPrev = minDiffPercent;
         minDiffPercent = minDiff / size * 100f;
         var maxDiffPercent = maxDiff / size * 100f;
+        var maxDiffCurPercent = maxDiffCur / size * 100f;
 
         res.annotation += " maxDiff=" + printPrice(maxDiff);
         res.annotation += " minDiff=" + printPrice(minDiff);
         res.annotation += " minDiffPercent=" + printPrice(minDiffPercent);
         res.annotation += " maxDiffPercent=" + printPrice(maxDiffPercent);
+        res.annotation += " maxDiffCurPercent=" + printPrice(maxDiffCurPercent);
         res.minDiffPercent = BigDecimal.valueOf(minDiffPercent);
         res.maxDiffPercent = BigDecimal.valueOf(maxDiffPercent);
+        res.maxDiffCurPercent = BigDecimal.valueOf(maxDiffCurPercent);
 
         if (
                 maxDiff > 0
@@ -976,7 +981,10 @@ public class FactorialInstrumentByFiatService implements
                 res = false;
                 annotation += " SKIP BY TREND SELL";
             }
-            if (isTrendSell.maxDiffPercent != null && isTrendSell.maxDiffPercent.floatValue() > 100) {
+            if (isTrendSell.maxDiffPercent != null
+                    && isTrendSell.maxDiffPercent.floatValue() > 100
+                    && isTrendSell.maxDiffCurPercent.floatValue() > 100
+            ) {
                 res = false;
                 annotation += " SKIP BY maxDiffPercent > 100";
             }
@@ -3544,10 +3552,15 @@ public class FactorialInstrumentByFiatService implements
                     var isSkip = false;
                     var downPrevPriceMin = candleResDownPrevList.stream().mapToDouble(v -> v.getCandle().getClosingPrice().min(v.getCandle().getOpenPrice()).doubleValue())
                             .min().orElseThrow();
-                    var upPriceAvgMax = intervalsBetweenLast.stream().mapToDouble(v -> v.getCandle().getClosingPrice().max(v.getCandle().getOpenPrice()).doubleValue())
+                    var upPriceMax = intervalsBetweenLast.stream().mapToDouble(v -> v.getCandle().getClosingPrice().max(v.getCandle().getOpenPrice()).doubleValue())
                             .max().orElseThrow();
-                    if (downPrevPriceMin >= upPriceAvgMax) {
-                        annotation += " skip down >= up: " + downPrevPriceMin + " >= " + upPriceAvgMax;
+                    var percentUp = 100f * (upPriceMax - downPrevPriceMin) / Math.abs(downPrevPriceMin);
+                    annotation += " percentUp=" + printPrice(percentUp) + " < " + strategy.getBuyCriteria().getCandlePriceMinFactor();
+                    if (
+                            downPrevPriceMin >= upPriceMax
+                            || percentUp < strategy.getBuyCriteria().getCandlePriceMinFactor()
+                    ) {
+                        annotation += " skip down >= up: " + downPrevPriceMin + " >= " + upPriceMax;
                         isSkip = true;
                         candleResUpFirst = candleResUpFirstPrev;
                         for (var i = 0; i < intervalsBetweenLast.size(); i++) {
