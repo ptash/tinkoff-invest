@@ -2714,8 +2714,10 @@ public class FactorialInstrumentByFiatService implements
         }
 
         if (limitPrice != null) {
+            annotation += " limitPrice=" + printPrice(limitPrice);
             var sellLimitCriteria = strategy.getSellLimitCriteria(candle.getFigi());
-            sellLimitCriteria.setExitProfitPercent((float) ((100.f * limitPrice.floatValue() / purchaseRate.floatValue()) - 100.));
+            sellLimitCriteria.setExitProfitPercent((float) ((100.f * limitPrice.floatValue() / purchaseRate.floatValue())
+                    - (limitPrice.floatValue()/Math.abs(limitPrice.floatValue())) *  100.));
             strategy.setSellLimitCriteria(candle.getFigi(), sellLimitCriteria);
             annotation += " sell limit=" + strategy.getSellLimitCriteria(candle.getFigi()).getExitProfitPercent();
         }

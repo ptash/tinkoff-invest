@@ -366,7 +366,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
                 .candleInterval("1min")
                 .candleUpOrDownMinCount(0)
                 .candleUpDownMinCount(2)
-                .candlePriceMinUpDownPercent(0.35f)
+                .candlePriceMinUpDownPercent(0.15f)
                 .build();
     }
 
