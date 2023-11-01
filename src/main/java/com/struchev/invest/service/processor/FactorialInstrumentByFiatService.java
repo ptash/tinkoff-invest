@@ -2418,6 +2418,13 @@ public class FactorialInstrumentByFiatService implements
             var stopLossMaxPrice = order.getDetails().getCurrentPrices().getOrDefault("stopLossMaxPrice", BigDecimal.ZERO);
             annotation += " stopLossMaxPrice=" + printPrice(stopLossMaxPrice);
             var minPrice = candleIntervalUpDownData.maxClose;
+            if (
+                    order.getPurchaseDateTime().isAfter(candleIntervalUpDownData.endPost.candle.getDateTime())
+                    && order.getPurchasePrice().floatValue() > minPrice
+            ) {
+                minPrice = order.getPurchasePrice().floatValue();
+                annotation += " up minPrice=" + printPrice(minPrice);
+            }
             annotation += " minPrice=" + printPrice(minPrice);
 
             var stopLossMaxPriceDown = order.getDetails().getCurrentPrices().getOrDefault("stopLossMaxPriceDown", BigDecimal.ZERO);
