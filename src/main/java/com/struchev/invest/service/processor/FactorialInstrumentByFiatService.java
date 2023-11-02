@@ -4684,10 +4684,11 @@ public class FactorialInstrumentByFiatService implements
                     candleIntervalUpDownDataPrevPrevPrev
             );
             annotation += " isIntervalUpRes=" + isIntervalUpRes.isIntervalUp;
-            if (isIntervalUpRes.isIntervalUp) {
+            //if (isIntervalUpRes.isIntervalUp) {
+                annotation += " new stopLossPrice BY PREV";
                 isIntervalUpRes.annotation += annotation + " new stopLossPrice BY PREV";
-                return isIntervalUpRes;
-            } else {
+                //return isIntervalUpRes;
+            //} else {
                 var candleResDownMaybe = CandleIntervalResultData.builder()
                         .res(true)
                         .candle(candle)
@@ -4730,10 +4731,13 @@ public class FactorialInstrumentByFiatService implements
                         annotation += " isIntervalUpResNew=" + isIntervalUpResNew.isIntervalUp + "isIntervalUpResNew";
                         if (isIntervalUpResNew.isIntervalUp) {
                             isIntervalUpResNew.annotation += annotation + " new stopLossPrice BY PREV MAYBE";
-                            return isIntervalUpResNew;
+                        } else {
+                            isIntervalUpResNew.isIntervalUp = isIntervalUpRes.isIntervalUp;
+                            isIntervalUpResNew.annotation += annotation + " old UP";
                         }
+                        return isIntervalUpResNew;
                     }
-                }
+//                }
             }
         }
         return CandleIntervalUpResult.builder()
