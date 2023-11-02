@@ -227,9 +227,16 @@ public class FactorialInstrumentByFiatService implements
         //    return res;
         //}
         var cList = candleHistoryService.getCandlesByFigiBetweenDateTimes(candle.getFigi(), candleIntervalUpDownData.endPost.candle.getDateTime(), candle.getDateTime(), strategy.getInterval());
-        var maxClose = cList.stream().mapToDouble(v -> v.getClosingPrice().max(v.getOpenPrice()).doubleValue()).max().orElse(-1);
-        var minClose = cList.stream().mapToDouble(v -> v.getClosingPrice().min(v.getOpenPrice()).doubleValue()).min().orElse(-1);
-
+        //var maxClose = cList.stream().mapToDouble(v -> v.getClosingPrice().max(v.getOpenPrice()).doubleValue()).max().orElse(-1);
+        var maxCandle = cList.stream().reduce((first, second) ->
+                first.getClosingPrice().max(first.getOpenPrice()).compareTo(second.getClosingPrice().max(second.getOpenPrice())) > 0 ? first : second
+        ).orElse(null);
+        float maxClose = -1;
+        double minClose = -1;
+        if (maxCandle != null) {
+            maxClose = maxCandle.getClosingPrice().max(maxCandle.getOpenPrice()).floatValue();
+            minClose = cList.stream().filter(v -> !v.getDateTime().isAfter(maxCandle.getDateTime())).mapToDouble(v -> v.getClosingPrice().min(v.getOpenPrice()).doubleValue()).min().orElse(-1);
+        }
         size = (float) Math.max(
                 candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose,
                 candleIntervalUpDownData.maxClose - minClose
@@ -947,7 +954,10 @@ public class FactorialInstrumentByFiatService implements
                 );
                 setTrendUp(strategy, candle, isIntervalUpResMaybe.isIntervalUp || candleBuyRes.res);
                 annotation += " resMaybe=" + isIntervalUpResMaybe.isIntervalUp + ": " + isIntervalUpResMaybe.annotation;
-                if (null != isIntervalUpResMaybe.isIntervalUpMayBe && isIntervalUpResMaybe.isIntervalUpMayBe) {
+                if (
+                        null != isIntervalUpResMaybe.isIntervalUpMayBe && isIntervalUpResMaybe.isIntervalUpMayBe
+                        || isIntervalUpResMaybe.isIntervalUp
+                ) {
                     annotation += " minPercent=" + printPrice(isIntervalUpResMaybe.minPercent);
                     annotation += " minPercentPrev=" + printPrice(isIntervalUpResMaybe.minPercentPrev);
                     annotation += " maxPercent=" + printPrice(isIntervalUpResMaybe.maxPercent);
