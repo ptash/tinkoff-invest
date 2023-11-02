@@ -206,7 +206,7 @@ public class PurchaseService {
                         order = orderService.closeOrder(candleDomainEntity, strategy);
                         notificationService.sendSellInfo(strategy, order, candleDomainEntity);
                         isSell = true;
-                        if (isShouldBuyShort) {
+                        if (isShouldBuyShort || calculator.isTrendBuyShort(strategy, candleDomainEntity)) {
                             order = orderService.openOrderShort(candleDomainEntity, strategy, buildOrderShortDetails(strategy, candleDomainEntity));
                             notificationForShortService.sendSellInfo(strategy, order, candleDomainEntity);
                             isSell = false;
@@ -227,7 +227,7 @@ public class PurchaseService {
                         order = orderService.closeOrderShort(candleDomainEntity, strategy);
                         notificationForShortService.sendBuyInfo(strategy, order, candleDomainEntity);
                         isSell = true;
-                        if (isShouldBuy) {
+                        if (isShouldBuy || calculator.isTrendBuy(strategy, candleDomainEntity)) {
                             order = orderService.openOrder(candleDomainEntity, strategy, buildOrderDetails(strategy, candleDomainEntity));
                             notificationService.sendBuyInfo(strategy, order, candleDomainEntity);
                             isSell = false;

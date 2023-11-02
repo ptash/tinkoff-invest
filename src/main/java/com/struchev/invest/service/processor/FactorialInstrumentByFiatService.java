@@ -974,15 +974,15 @@ public class FactorialInstrumentByFiatService implements
                     ) {
                         res = true;
                         annotation += " BYU MAY BE OK";
-                        var StopLossPrice = BigDecimal.ZERO;
-                        var StopLossPriceBottom = BigDecimal.ZERO;
-                        if (!isIntervalUpResMaybe.stopLossPrice.equals(BigDecimal.ZERO)) {
-                            StopLossPrice = isIntervalUpResMaybe.stopLossPrice;
-                            StopLossPriceBottom = isIntervalUpResMaybe.stopLossPriceBottom;
-                        }
-                        setOrderInfo(newStrategy, candle, true, candleIntervalUpDownData, StopLossPrice, StopLossPriceBottom);
                     }
                 }
+            var StopLossPrice = BigDecimal.ZERO;
+            var StopLossPriceBottom = BigDecimal.ZERO;
+            if (isIntervalUpResMaybe.stopLossPrice != null && !isIntervalUpResMaybe.stopLossPrice.equals(BigDecimal.ZERO)) {
+                StopLossPrice = isIntervalUpResMaybe.stopLossPrice;
+                StopLossPriceBottom = isIntervalUpResMaybe.stopLossPriceBottom;
+            }
+            setOrderInfo(newStrategy, candle, true, candleIntervalUpDownData, StopLossPrice, StopLossPriceBottom);
 
             var isTrendSell = isTrendSellCalc(newStrategy, candle);
             annotation += " isTrendSell=" + isTrendSell.isIntervalDown + ": " + isTrendSell.annotation;
@@ -2444,7 +2444,7 @@ public class FactorialInstrumentByFiatService implements
                     order.getPurchaseDateTime().isAfter(candleIntervalUpDownData.endPost.candle.getDateTime())
                     && order.getPurchasePrice().floatValue() > minPrice
             ) {
-                minPrice = order.getPurchasePrice().floatValue();
+                minPrice = order.getPurchasePrice().floatValue() + Math.abs(candleIntervalUpDownData.minClose) * lossPresent / 100f;
                 annotation += " up minPrice=" + printPrice(minPrice);
             }
             annotation += " minPrice=" + printPrice(minPrice);
