@@ -2676,7 +2676,10 @@ public class FactorialInstrumentByFiatService implements
                     }
                     annotation += " curLength=" + curLength + " > " + sellCriteria.getStopLossSoftLength();
                     annotation += " isUnder=" + isUnder;
-                    if (curLength > sellCriteria.getStopLossSoftLength() && isUnder) {
+                    if (
+                            (curLength > sellCriteria.getStopLossSoftLength() && candleIntervalSell)
+                            || isUnder
+                    ) {
                         if (null == candleBuyRes) {
                             candleBuyRes = getCandleBuyRes(newStrategy, candle);
                             if (!candleBuyRes.isIntervalUp) {
@@ -4862,6 +4865,10 @@ public class FactorialInstrumentByFiatService implements
                 isIntervalUp = true;
                 isIntervalUpAfterDown = true;
                 annotation += " up by down size3";
+                StopLossPrice = BigDecimal.valueOf(Math.max(
+                        candleIntervalUpDownData.minClose,
+                        candleIntervalUpDownDataPrevPrev.minClose - (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) * 1.f
+                ));
             }
         }
         if (
