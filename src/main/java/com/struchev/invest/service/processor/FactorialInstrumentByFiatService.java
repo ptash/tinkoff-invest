@@ -4854,6 +4854,7 @@ public class FactorialInstrumentByFiatService implements
 
             if (
                     !isIntervalUp
+                    && false
                     && candleIntervalUpDownDataPrevPrevPrev.maxClose != null
                     && candleIntervalUpDownDataPrevPrevPrev.maxClose < candleIntervalUpDownDataPrevPrev.maxClose
                     && candleIntervalUpDownDataPrevPrev.maxClose > candleIntervalUpDownDataPrev.maxClose
