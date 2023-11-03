@@ -4647,6 +4647,27 @@ public class FactorialInstrumentByFiatService implements
             }
             setOrderBigDecimalData(strategy, candle, "intervalPercentNearDown", BigDecimal.valueOf(intervalPercentNearDown));
         }
+        if (strategy.getBuyCriteria().getPrevLengthSearchTakeProfit() > 0) {
+            var candleIntervalUpDownDataCur = candleIntervalUpDownData;
+            var takeProfit = candleIntervalUpDownData.maxClose;
+            for(var i = 0; i < strategy.getBuyCriteria().getPrevLengthSearchTakeProfit(); i++) {
+                var candleIntervalUpDownDataPrev = getPrevCandleIntervalUpDownData(strategy, candleIntervalUpDownDataCur);
+                if (candleIntervalUpDownDataPrev.maxClose == null) {
+                    break;
+                }
+                if (candleIntervalUpDownDataPrev.maxClose > takeProfit) {
+                    takeProfit = candleIntervalUpDownDataPrev.maxClose;
+                }
+            }
+            if (takeProfit > candle.getClosingPrice().floatValue()) {
+                var takeProfitPriceStart = candle.getClosingPrice().floatValue() + (takeProfit - candle.getClosingPrice().floatValue()) / 2;
+                var intervalPercentStep = 100f * (takeProfit - takeProfitPriceStart) / takeProfitPriceStart;
+                if (intervalPercentStep > buyCriteria.getCandlePriceMinFactor()) {
+                    setOrderBigDecimalData(strategy, candle, "takeProfitPriceStart", BigDecimal.valueOf(takeProfitPriceStart));
+                    setOrderBigDecimalData(strategy, candle, "intervalPercentStep", BigDecimal.valueOf(intervalPercentStep));
+                }
+            }
+        }
     }
 
     @Builder
