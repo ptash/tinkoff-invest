@@ -2666,12 +2666,13 @@ public class FactorialInstrumentByFiatService implements
                     for (var i = 0; i < candlesPrevAllArray.size(); i++) {
                         if (candlesPrevAllArray.get(i).getClosingPrice().max(candlesPrevAllArray.get(i).getOpenPrice()).compareTo(stopLossPrice) < 0) {
                             curLength++;
-                        } else {
-                            if (curLength > 2 * sellCriteria.getStopLossSoftLength()) {
+                        }
+                        if (
+                                candlesPrevAllArray.get(i).getHighestPrice().compareTo(stopLossPrice) > 0
+                                && curLength > 2 * sellCriteria.getStopLossSoftLength()
+                        ) {
                                 isUnder = true;
                                 break;
-                            }
-                            //curLength = 0;
                         }
                     }
                     annotation += " curLength=" + curLength + " > " + sellCriteria.getStopLossSoftLength();
@@ -2679,6 +2680,7 @@ public class FactorialInstrumentByFiatService implements
                     if (
                             (curLength > sellCriteria.getStopLossSoftLength() && candleIntervalSell)
                             || isUnder
+                            || curLength > sellCriteria.getStopLossSoftLength() * 3
                     ) {
                         if (null == candleBuyRes) {
                             candleBuyRes = getCandleBuyRes(newStrategy, candle);
@@ -3565,17 +3567,19 @@ public class FactorialInstrumentByFiatService implements
                     var isNewBottom = false;
                     var isAnother = false;
                     var isSkip = false;
-                    var downPrevPriceMin = candleResDownPrevList.stream().mapToDouble(v -> v.getCandle().getClosingPrice().min(v.getCandle().getOpenPrice()).doubleValue())
-                            .min().orElseThrow();
-                    var upPriceMax = intervalsBetweenLast.stream().mapToDouble(v -> v.getCandle().getClosingPrice().max(v.getCandle().getOpenPrice()).doubleValue())
-                            .max().orElseThrow();
-                    var percentUp = 100f * (upPriceMax - downPrevPriceMin) / Math.abs(downPrevPriceMin);
+                    //var downPrevPriceMin = candleResDownPrevList.stream().mapToDouble(v -> v.getCandle().getClosingPrice().min(v.getCandle().getOpenPrice()).doubleValue())
+                    //        .min().orElseThrow();
+                    //var upPriceMax = intervalsBetweenLast.stream().mapToDouble(v -> v.getCandle().getClosingPrice().max(v.getCandle().getOpenPrice()).doubleValue())
+                    //        .max().orElseThrow();
+                    //var percentUp = 100f * (upPriceMax - downPrevPriceMin) / Math.abs(downPrevPriceMin);
+                    var percentUp = 100f * (maxPrice - minPrice) / Math.abs(minPrice);
                     annotation += " percentUp=" + printPrice(percentUp) + " < " + strategy.getBuyCriteria().getCandlePriceMinUpDownPercent();
                     if (
-                            downPrevPriceMin >= upPriceMax
+                            //downPrevPriceMin >= upPriceMax
+                            minPrice >= maxPrice
                             || percentUp < strategy.getBuyCriteria().getCandlePriceMinUpDownPercent()
                     ) {
-                        annotation += " skip down >= up: " + downPrevPriceMin + " >= " + upPriceMax;
+                        annotation += " skip down >= up: " + minPrice + " >= " + maxPrice;
                         isSkip = true;
                         candleResUpFirst = candleResUpFirstPrev;
                         for (var i = 0; i < intervalsBetweenLast.size(); i++) {
