@@ -175,7 +175,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
                 .stopLossPercent(0.4f)
                 .stopLossLength(2)
 
-                .stopLossSoftLength(5)
+                .stopLossSoftLength(10)
                 .stopLossSoftPercent(0.2f)
 
                 .exitLossPercent(4f)

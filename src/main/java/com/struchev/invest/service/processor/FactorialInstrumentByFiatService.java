@@ -186,7 +186,7 @@ public class FactorialInstrumentByFiatService implements
             return res;
         }
         var candleIntervalUpDownDataPrev = getPrevCandleIntervalUpDownData(newStrategy, candleIntervalUpDownData);
-        if (candleIntervalUpDownData.maxCandle == null) {
+        if (candleIntervalUpDownDataPrev.maxCandle == null) {
             return res;
         }
 
