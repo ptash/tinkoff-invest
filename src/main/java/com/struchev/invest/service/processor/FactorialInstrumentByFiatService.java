@@ -4659,9 +4659,11 @@ public class FactorialInstrumentByFiatService implements
                     takeProfit = candleIntervalUpDownDataPrev.maxClose;
                 }
             }
+            setOrderBigDecimalData(strategy, candle, "takeProfitForStep", BigDecimal.valueOf(takeProfit));
             if (takeProfit > candle.getClosingPrice().floatValue()) {
                 var takeProfitPriceStart = candle.getClosingPrice().floatValue() + (takeProfit - candle.getClosingPrice().floatValue()) / 2;
-                var intervalPercentStep = 100f * (takeProfit - takeProfitPriceStart) / takeProfitPriceStart;
+                var intervalPercentStep = 100f * (takeProfit - takeProfitPriceStart) / Math.abs(takeProfitPriceStart);
+                setOrderBigDecimalData(strategy, candle, "takeProfitForStepPercentStep", BigDecimal.valueOf(intervalPercentStep));
                 if (intervalPercentStep > buyCriteria.getCandlePriceMinFactor()) {
                     setOrderBigDecimalData(strategy, candle, "takeProfitPriceStart", BigDecimal.valueOf(takeProfitPriceStart));
                     setOrderBigDecimalData(strategy, candle, "intervalPercentStep", BigDecimal.valueOf(intervalPercentStep));
@@ -5314,7 +5316,7 @@ public class FactorialInstrumentByFiatService implements
                             .isDown(cashed.getDetails().getBooleanDataMap().getOrDefault("isDown", false))
                             .annotation(cashed.getDetails().getAnnotations().getOrDefault("annotation", "empty"))
                             .build();
-                    log.info("Cashed {} {} OK: {} {}", candle.getFigi(), candleIntervalRes.isDown ? "Buy" : "Sell", candleCur.getDateTime(), candleIntervalRes.annotation);
+                    log.info("Cashed {} {} {} OK: {} {}", strategy.getExtName(), candle.getFigi(), candleIntervalRes.isDown ? "Buy" : "Sell", candleCur.getDateTime(), candleIntervalRes.annotation);
                     results.add(candleIntervalRes);
                 }
                 continue;
@@ -5379,6 +5381,7 @@ public class FactorialInstrumentByFiatService implements
                     .details(details)
                     .build();
             candleStrategyResultRepository.save(candleStrategyResultEntity);
+            log.info("Save {} {} {} OK: {}", strategy.getExtName(), candle.getFigi(), candleIntervalRes.isDown ? "Buy" : "Sell", candleCur.getDateTime());
             if (
                     //results.size() > 1500 ||
                     (
