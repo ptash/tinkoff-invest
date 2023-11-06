@@ -190,6 +190,11 @@ public class FactorialInstrumentByFiatService implements
             return res;
         }
 
+        var candleIntervalUpDownDataPrevPrev = getPrevCandleIntervalUpDownData(newStrategy, candleIntervalUpDownDataPrev);
+        if (candleIntervalUpDownDataPrevPrev.maxCandle == null) {
+            return res;
+        }
+
         var maxDiff = candleIntervalUpDownData.maxClose - candleIntervalUpDownDataPrev.maxClose;
         var minDiff = candleIntervalUpDownDataPrev.minClose - candleIntervalUpDownData.minClose;
         var maxDiffCur = candle.getClosingPrice().floatValue() - candleIntervalUpDownDataPrev.maxClose;
@@ -205,12 +210,20 @@ public class FactorialInstrumentByFiatService implements
             size = Math.abs(candleIntervalUpDownData.minClose) * strategy.getBuyCriteria().getCandlePriceMinFactor() / 100f;
         }
         var minDiffPercent = minDiff / size * 100f;
+        var sizePrev = Math.max(
+                candleIntervalUpDownDataPrevPrev.maxClose - candleIntervalUpDownDataPrevPrev.minClose,
+                candleIntervalUpDownDataPrev.maxClose - candleIntervalUpDownDataPrev.minClose
+        );
+        var minDiffPrev = candleIntervalUpDownDataPrevPrev.minClose - candleIntervalUpDownDataPrev.minClose;
+        var minDiffPercentPrev = minDiffPrev / sizePrev * 100f;
         res.annotation += " maxDiff=" + printPrice(maxDiff);
         res.annotation += " maxDiffCur=" + printPrice(maxDiffCur);
         res.annotation += " minDiff=" + printPrice(minDiff);
         res.annotation += " minDiffPercent=" + printPrice(minDiffPercent);
+        res.annotation += " minDiffPercentPrev=" + printPrice(minDiffPercentPrev);
         res.minDiffPercent = BigDecimal.valueOf(minDiffPercent);
 
+        /*
         if (
                 maxDiff > 0
                 && maxDiffCur > 0
@@ -220,6 +233,27 @@ public class FactorialInstrumentByFiatService implements
                 && minDiffPercent > 25
                 && candle.getClosingPrice().floatValue() > candleIntervalUpDownData.maxClose
         ) {
+            res.isIntervalDown = true;
+            return res;
+        }*/
+
+        if (
+                maxDiff > 0
+                && minDiff > 0
+                && minDiff/maxDiff > 0.99
+                && minDiffPercent > 25
+                && minDiffPercent <= 50
+        ) {
+            res.annotation += " DOWN by 25";
+            res.isIntervalDown = true;
+            return res;
+        }
+        if (
+                minDiffPercentPrev > 50
+                && minDiffPercent > 50
+                && maxDiff < minDiff
+        ) {
+            res.annotation += " DOWN by 50";
             res.isIntervalDown = true;
             return res;
         }
@@ -253,7 +287,7 @@ public class FactorialInstrumentByFiatService implements
         maxDiff = (float) (maxClose - candleIntervalUpDownData.maxClose);
         maxDiffCur = candle.getClosingPrice().floatValue() - candleIntervalUpDownData.maxClose;
         minDiff = (float) (candleIntervalUpDownData.minClose - minClose);
-        var minDiffPercentPrev = minDiffPercent;
+        minDiffPercentPrev = minDiffPercent;
         minDiffPercent = minDiff / size * 100f;
         var maxDiffPercent = maxDiff / size * 100f;
         var maxDiffCurPercent = maxDiffCur / size * 100f;
