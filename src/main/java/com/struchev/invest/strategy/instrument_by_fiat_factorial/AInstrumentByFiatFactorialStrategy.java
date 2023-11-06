@@ -371,7 +371,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
                 .candleUpDownMinCount(2)
                 .candlePriceMinUpDownPercent(0.65f)
                 .prevLengthSearchTakeProfit(10)
-                .maxSizeUpMinClosePercent(100f)
+                .maxSizeUpMinClosePercent(200f)
                 .build();
     }
 

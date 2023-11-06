@@ -5093,8 +5093,15 @@ public class FactorialInstrumentByFiatService implements
                     candleIntervalUpDownData.minClose > candleIntervalUpDownDataPrev.minClose
                     && candleIntervalUpDownDataPrev.minClose > candleIntervalUpDownDataPrevPrev.minClose
             ) {
-                var minUpPercent = 100f * (candleIntervalUpDownData.minClose - candleIntervalUpDownDataPrev.minClose)
-                        / (candleIntervalUpDownDataPrev.minClose - candleIntervalUpDownDataPrevPrev.minClose);
+                var minDiffP = 100f * (candleIntervalUpDownData.minClose - candleIntervalUpDownDataPrev.minClose) / candleIntervalUpDownDataPrev.minClose;
+                var minDiffPPrev = 100f * (candleIntervalUpDownDataPrev.minClose - candleIntervalUpDownDataPrev.minClose) / candleIntervalUpDownDataPrev.minClose;
+                if (minDiffP < buyCriteria.getCandlePriceMinFactor()) {
+                    minDiffP = buyCriteria.getCandlePriceMinFactor();
+                }
+                if (minDiffPPrev < buyCriteria.getCandlePriceMinFactor()) {
+                    minDiffPPrev = buyCriteria.getCandlePriceMinFactor();
+                }
+                var minUpPercent = 100f * minDiffP / minDiffPPrev;
                 annotation += " minUpPercent=" +printPrice(minUpPercent);
                 if (minUpPercent >= buyCriteria.getMaxSizeUpMinClosePercent()) {
                     annotation += " isIntervalUp = false by size min up prev";
