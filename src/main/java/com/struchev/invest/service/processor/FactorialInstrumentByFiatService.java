@@ -4810,7 +4810,7 @@ public class FactorialInstrumentByFiatService implements
         if (
                 minPercent > 0f
                         && maxPercent > 0f
-                        && maxPercent > minPercent
+                        //&& maxPercent > minPercent
                         && candleIntervalUpDownDataPrevPrev.minClose >= candleIntervalUpDownDataPrev.minClose
                         && candleIntervalUpDownDataPrevPrev.maxClose >= candleIntervalUpDownDataPrev.maxClose
                         && (
