@@ -2549,6 +2549,12 @@ public class FactorialInstrumentByFiatService implements
                             var intervalPercentStepBottom = Math.max(intervalPercentStep.floatValue(), buyCriteria.getCandlePriceMinFactor());
                             stopLossPriceBottom = maxPrice.subtract(BigDecimal.valueOf(Math.abs(minPrice) * intervalPercentStepBottom / 100.));
                             annotation += " stopLossPriceBottom=" + printPrice(stopLossPriceBottom);
+                            var minPriceInInterval = candlesList.stream().mapToDouble(value -> value.getLowestPrice().doubleValue()).min().orElse(-1);
+                            annotation += " minPriceInInterval=" + printPrice(minPriceInInterval);
+                            if (minPriceInInterval < stopLossPriceBottom.floatValue()) {
+                                stopLossPriceBottom = BigDecimal.valueOf(minPriceInInterval);
+                                annotation += " new min stopLossPriceBottom=" + printPrice(stopLossPriceBottom);
+                            }
                             isDownStopLossCur = true;
                         }
                     }
@@ -4810,7 +4816,7 @@ public class FactorialInstrumentByFiatService implements
         if (
                 minPercent > 0f
                         && maxPercent > 0f
-                        //&& maxPercent > minPercent
+                        && (maxPercent > minPercent || candleIntervalUpDownDataPrevPrev.minClose > candleIntervalUpDownDataPrev.maxClose)
                         && candleIntervalUpDownDataPrevPrev.minClose >= candleIntervalUpDownDataPrev.minClose
                         && candleIntervalUpDownDataPrevPrev.maxClose >= candleIntervalUpDownDataPrev.maxClose
                         && (
