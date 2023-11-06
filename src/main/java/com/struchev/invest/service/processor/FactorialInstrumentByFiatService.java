@@ -2698,13 +2698,8 @@ public class FactorialInstrumentByFiatService implements
                             || isUnder
                             || curLength > sellCriteria.getStopLossSoftLength() * 3
                     ) {
-                        if (null == candleBuyRes) {
-                            candleBuyRes = getCandleBuyRes(newStrategy, candle);
-                            if (!candleBuyRes.isIntervalUp && !isTrendBuy(newStrategy, candle)) {
-                                res = true;
-                                annotation += " OK";
-                            }
-                        }
+                        res = true;
+                        annotation += " OK";
                     }
                     /*
                     var candlesPrevArray = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(), candle.getDateTime(), 10, strategy.getInterval());
@@ -2731,6 +2726,16 @@ public class FactorialInstrumentByFiatService implements
             } else if (candle.getHighestPrice().compareTo(stopLossPrice) < 0) {
                 res = true;
                 annotation += " stopLossPrice OK";
+            }
+        }
+
+        if (res) {
+            if (null == candleBuyRes) {
+                candleBuyRes = getCandleBuyRes(newStrategy, candle);
+            }
+            if (candleBuyRes.isIntervalUp || isTrendBuy(newStrategy, candle)) {
+                res = false;
+                annotation += " SKIP by UP";
             }
         }
 
