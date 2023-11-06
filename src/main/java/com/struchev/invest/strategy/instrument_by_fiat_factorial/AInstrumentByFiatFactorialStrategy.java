@@ -316,6 +316,8 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
         Float candlePriceMinUpDownPercent;
         Integer prevLengthSearchTakeProfit;
 
+        Float maxSizeUpMinClosePercent;
+
         public Boolean isCandleIntervalTargetDirection(BigDecimal openPrice, BigDecimal closePrice) {
             return openPrice.compareTo(closePrice) <= 0;
         }
@@ -369,6 +371,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
                 .candleUpDownMinCount(2)
                 .candlePriceMinUpDownPercent(0.65f)
                 .prevLengthSearchTakeProfit(10)
+                .maxSizeUpMinClosePercent(100f)
                 .build();
     }
 

@@ -198,6 +198,7 @@ public class FactorialInstrumentByFiatService implements
                 candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose,
                 candleIntervalUpDownDataPrev.maxClose - candleIntervalUpDownDataPrev.minClose
         );
+        res.annotation += " size=" + printPrice(size);
         var sizePercent = size / Math.abs(candleIntervalUpDownData.minClose) * 100f;
         if (sizePercent < strategy.getBuyCriteria().getCandlePriceMinFactor()) {
             res.annotation += " sizePercent=" + printPrice(sizePercent);
@@ -238,9 +239,10 @@ public class FactorialInstrumentByFiatService implements
             minClose = cList.stream().filter(v -> !v.getDateTime().isAfter(maxCandle.getDateTime())).mapToDouble(v -> v.getClosingPrice().min(v.getOpenPrice()).doubleValue()).min().orElse(-1);
         }
         size = (float) Math.max(
+                size, Math.max(
                 candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose,
                 candleIntervalUpDownData.maxClose - minClose
-        );
+        ));
         res.annotation += " size=" + printPrice(size);
         sizePercent = (float) (size / Math.abs(minClose)) * 100f;
         if (sizePercent < strategy.getBuyCriteria().getCandlePriceMinFactor()) {
@@ -5000,7 +5002,7 @@ public class FactorialInstrumentByFiatService implements
                 var minUpPercent = 100f * (candleIntervalUpDownData.minClose - candleIntervalUpDownDataPrev.minClose)
                         / (candleIntervalUpDownDataPrev.minClose - candleIntervalUpDownDataPrevPrev.minClose);
                 annotation += " minUpPercent=" +printPrice(minUpPercent);
-                if (minUpPercent >= 100f) {
+                if (minUpPercent >= buyCriteria.getMaxSizeUpMinClosePercent()) {
                     annotation += " isIntervalUp = false by size min up prev";
                     isIntervalUp = false;
                     StopLossPrice = BigDecimal.ZERO;
