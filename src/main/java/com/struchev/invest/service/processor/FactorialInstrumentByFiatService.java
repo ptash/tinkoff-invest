@@ -4897,6 +4897,7 @@ public class FactorialInstrumentByFiatService implements
     ) {
         var isIntervalUp = false;
         var isIntervalUpAfterDown = false;
+        var isIntervalUpMinMax = false;
         var annotation = "";
         BigDecimal StopLossPrice = BigDecimal.ZERO;
         var size = Math.max(
@@ -4943,6 +4944,7 @@ public class FactorialInstrumentByFiatService implements
             isIntervalUpAfterDown = true;
             minBuyPrice = BigDecimal.valueOf(candleIntervalUpDownData.minClose);
             maxBuyPrice = BigDecimal.valueOf(candleIntervalUpDownDataPrev.maxClose);
+            isIntervalUpMinMax = true;
         } else if (
                 minPercent < -15f
                         && maxPercent > 15f
@@ -5023,9 +5025,9 @@ public class FactorialInstrumentByFiatService implements
             }
         }
         if (
-                !isIntervalUp
-                        && maxPercent > 0
-                        && candle.getClosingPrice().floatValue() > candleIntervalUpDownData.maxClose
+                (!isIntervalUp || isIntervalUpMinMax || isIntervalUpAfterDown)
+                && maxPercent > 0
+                && candle.getClosingPrice().floatValue() > candleIntervalUpDownData.maxClose
         ) {
                                     /*var candlesList = candleHistoryService.getCandlesByFigiBetweenDateTimes(
                                             candle.getFigi(),
@@ -5042,6 +5044,12 @@ public class FactorialInstrumentByFiatService implements
             if (maxCandlePrice.floatValue() > candleIntervalUpDownDataPrev.maxClose) {
                 annotation += " up by 2 max";
                 isIntervalUp = true;
+                isIntervalUpMinMax = false;
+                isIntervalUpAfterDown = false;
+                if (isIntervalUpMinMax) {
+                    minBuyPrice = BigDecimal.ZERO;
+                    maxBuyPrice = BigDecimal.ZERO;
+                }
             }
         }
         if (
