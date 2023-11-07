@@ -1060,6 +1060,7 @@ public class FactorialInstrumentByFiatService implements
                             // && isIntervalUpResMaybe.minPercent.floatValue() < 25
                             && isIntervalUpResMaybe.maxPercent.floatValue() < 100
                             && isIntervalUpResMaybe.maxPercent.compareTo(minPercent) > 0
+                            && isIntervalUpResMaybe.maxPercent.compareTo(minPercent) > 5f
                             //&& isIntervalUpResMaybe.minPercent.floatValue() > 0
                     ) {
                         res = true;
@@ -3442,6 +3443,12 @@ public class FactorialInstrumentByFiatService implements
             FactorialDiffAvgAdapterStrategy strategy,
             CandleIntervalUpDownData candleIntervalUpDownData
     ) {
+        if (null == candleIntervalUpDownData.beginDownFirst) {
+            return CandleIntervalUpDownData.builder()
+                    .annotation(" null UpDownData")
+                    .isDown(true)
+                    .build();
+        }
         /*
         var candleResUpFirstPrevs = candleHistoryService.getCandlesByFigiByLength(
                 candleIntervalUpDownData.endPost.candle.getFigi(),
