@@ -2820,7 +2820,7 @@ public class FactorialInstrumentByFiatService implements
         if (
                 res
                 && candleIntervalUpDownData.minClose != null
-                && candle.getClosingPrice().max(candle.getOpenPrice()).floatValue() < candleIntervalUpDownData.minClose
+                && candle.getClosingPrice().max(candle.getOpenPrice()).floatValue() > candleIntervalUpDownData.minClose
         ) {
             if (null == candleBuyRes) {
                 candleBuyRes = getCandleBuyRes(newStrategy, candle);
