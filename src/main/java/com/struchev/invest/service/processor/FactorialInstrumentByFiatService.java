@@ -5046,13 +5046,13 @@ public class FactorialInstrumentByFiatService implements
             annotation += " maxCandlePrev = " + printDateTime(maxCandle.getDateTime()) + "(" + printPrice(maxCandlePrice) + ")";
             if (maxCandlePrice.floatValue() > candleIntervalUpDownDataPrev.maxClose) {
                 annotation += " up by 2 max";
-                isIntervalUp = true;
-                isIntervalUpMinMax = false;
-                isIntervalUpAfterDown = false;
                 if (isIntervalUpMinMax) {
                     minBuyPrice = BigDecimal.ZERO;
                     maxBuyPrice = BigDecimal.ZERO;
                 }
+                isIntervalUp = true;
+                isIntervalUpMinMax = false;
+                isIntervalUpAfterDown = false;
             }
         }
         if (
