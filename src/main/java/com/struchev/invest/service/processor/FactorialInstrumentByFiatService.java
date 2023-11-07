@@ -204,6 +204,12 @@ public class FactorialInstrumentByFiatService implements
                 candleIntervalUpDownDataPrevPrev.maxClose - candleIntervalUpDownDataPrevPrev.minClose,
                 candleIntervalUpDownDataPrev.maxClose - candleIntervalUpDownDataPrev.minClose
         );
+        res.annotation += " sizePrev=" + printPrice(sizePrev);
+        var sizePercentPrev = sizePrev / Math.abs(candleIntervalUpDownDataPrev.minClose) * 100f;
+        if (sizePercentPrev < strategy.getBuyCriteria().getCandlePriceMinFactor()) {
+            res.annotation += " sizePercentPrev=" + printPrice(sizePercentPrev);
+            sizePrev = Math.abs(candleIntervalUpDownDataPrev.minClose) * strategy.getBuyCriteria().getCandlePriceMinFactor() / 100f;
+        }
         var sizeOrig = Math.max(
                 candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose,
                 candleIntervalUpDownDataPrev.maxClose - candleIntervalUpDownDataPrev.minClose
@@ -221,6 +227,7 @@ public class FactorialInstrumentByFiatService implements
         var minDiffPercent = minDiff / size * 100f;
         var minDiffPrev = candleIntervalUpDownDataPrevPrev.minClose - candleIntervalUpDownDataPrev.minClose;
         var minDiffPercentPrev = minDiffPrev / sizePrev * 100f;
+        res.annotation += " minDiffPrev=" + printPrice(minDiffPrev);
         res.annotation += " maxDiff=" + printPrice(maxDiff);
         res.annotation += " maxDiffCur=" + printPrice(maxDiffCur);
         res.annotation += " minDiff=" + printPrice(minDiff);
@@ -337,17 +344,33 @@ public class FactorialInstrumentByFiatService implements
             res.isIntervalDown = true;
             return res;
         }
-        if (
-                (maxDiff < 0
-                        && maxDiffPrev < 0
-                ) || (maxDiffPrevPrev < 0
-                        && maxDiffPrev < 0
-                        && maxDiff < minDiff
-                )
+        if (maxDiff < 0
+            && maxDiffPrev < 0
         ) {
             res.annotation += " DOWN by down2";
             res.isIntervalDown = true;
             return res;
+        }
+        if (maxDiffPrevPrev < 0
+            && maxDiffPrev < 0
+        ) {
+            if (minDiff > 0 && maxDiff < minDiff) {
+                res.annotation += " DOWN by down2 2";
+                res.isIntervalDown = true;
+                return res;
+            }
+            if (minDiff <= 0) {
+                var maxLimitPrice = Math.min(
+                        candleIntervalUpDownDataPrevPrev.maxClose,
+                        candleIntervalUpDownData.maxClose + (candleIntervalUpDownData.maxClose - minClose)
+                );
+                res.annotation += " maxLimitPrice=" + maxLimitPrice;
+                if (maxClose < maxLimitPrice) {
+                    res.annotation += " DOWN by down2 3";
+                    res.isIntervalDown = true;
+                    return res;
+                }
+            }
         }
         return res;
     }
