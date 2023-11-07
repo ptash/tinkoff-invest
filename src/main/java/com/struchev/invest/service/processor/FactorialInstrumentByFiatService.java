@@ -2817,11 +2817,18 @@ public class FactorialInstrumentByFiatService implements
             }
         }
 
-        if (res) {
+        if (
+                res
+                && candleIntervalUpDownData.minClose != null
+                && candle.getClosingPrice().max(candle.getOpenPrice()).floatValue() < candleIntervalUpDownData.minClose
+        ) {
             if (null == candleBuyRes) {
                 candleBuyRes = getCandleBuyRes(newStrategy, candle);
             }
-            if (candleBuyRes.isIntervalUp || isTrendBuy(newStrategy, candle)) {
+            if (
+                    candleBuyRes.isIntervalUp
+                    || isTrendBuy(newStrategy, candle)
+            ) {
                 res = false;
                 annotation += " SKIP by UP";
             }
