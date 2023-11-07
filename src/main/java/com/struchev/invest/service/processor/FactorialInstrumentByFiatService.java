@@ -1007,6 +1007,7 @@ public class FactorialInstrumentByFiatService implements
         if (!res
                 //&& candle.getClosingPrice().floatValue() < factorial.getProfit()
                 && buyCriteria.getCandleIntervalMinPercent() != null
+                && candleIntervalUpDownData.beginDownFirst != null
         ) {
             annotation += candleBuyRes.annotation;
             if (candleBuyRes.res) {
@@ -1095,7 +1096,9 @@ public class FactorialInstrumentByFiatService implements
             //}
         }
 
-        if (res && buyCriteria.getSkipIfOutPrevLength() != null) {
+        if (res
+                && buyCriteria.getSkipIfOutPrevLength() != null
+        ) {
             var candleListPrevPrev = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
                     candle.getDateTime(), buyCriteria.getSkipIfOutPrevLength() + 1, strategy.getFactorialInterval());
             var isOut = false;
