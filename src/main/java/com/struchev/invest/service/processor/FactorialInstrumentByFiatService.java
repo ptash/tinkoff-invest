@@ -134,6 +134,7 @@ public class FactorialInstrumentByFiatService implements
     public static class CandleIntervalDownResult {
         String annotation;
         Boolean isIntervalDown;
+        BigDecimal minDiffPercentPrev;
         BigDecimal minDiffPercent;
         BigDecimal maxDiffPercent;
         BigDecimal maxDiffCurPercent;
@@ -233,6 +234,7 @@ public class FactorialInstrumentByFiatService implements
         res.annotation += " minDiff=" + printPrice(minDiff);
         res.annotation += " minDiffPercent=" + printPrice(minDiffPercent);
         res.annotation += " minDiffPercentPrev=" + printPrice(minDiffPercentPrev);
+        res.minDiffPercentPrev = BigDecimal.valueOf(minDiffPercent);
         res.minDiffPercent = BigDecimal.valueOf(minDiffPercent);
 
         /*
@@ -2595,9 +2597,10 @@ public class FactorialInstrumentByFiatService implements
             setTrendDown(strategy, candle, isTrendSell.isIntervalDown);
             if (
                     isTrendSell.isIntervalDown
-                    && isTrendSell.minDiffPercent.compareTo(BigDecimal.valueOf(50)) > 0
+                    && isTrendSell.minDiffPercentPrev.compareTo(BigDecimal.valueOf(50)) > 0
             ) {
                 limitPrice = BigDecimal.valueOf(candleIntervalUpDownData.maxClose);
+                annotation += " limitPrice=" + printPrice(limitPrice);
             }
             if (isTrendSell.isIntervalDown) {
                 setTrendUp(strategy, candle, false);
