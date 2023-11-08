@@ -4933,9 +4933,12 @@ public class FactorialInstrumentByFiatService implements
         );
         var minPercent = 100f * (candleIntervalUpDownDataPrev.minClose - candleIntervalUpDownData.minClose) / size;
         var minPercentPrev = 100f * (candleIntervalUpDownDataPrevPrev.minClose - candleIntervalUpDownDataPrev.minClose) / sizePrev;
+        var maxPercentPrev = 100f * (candleIntervalUpDownDataPrev.maxClose - candleIntervalUpDownDataPrevPrev.maxClose) / sizePrev;
         var maxPercent = 100f * (candleIntervalUpDownData.maxClose - candleIntervalUpDownDataPrev.maxClose) / size;
         var maxBuyPrice = BigDecimal.ZERO;
         var minBuyPrice = BigDecimal.ZERO;
+        annotation += " minPercentPrev=" + printPrice(minPercentPrev);
+        annotation += " maxPercentPrev=" + printPrice(maxPercentPrev);
         if (
                 minPercent > 0f
                         && maxPercent > 0f
@@ -4957,10 +4960,10 @@ public class FactorialInstrumentByFiatService implements
                 isIntervalUpAfterDown = true;
             }
         } else if (
-                minPercent < 0f
-                && maxPercent > 0f
-                && candleIntervalUpDownDataPrevPrev.minClose > candleIntervalUpDownDataPrev.minClose
-                && candleIntervalUpDownDataPrevPrev.maxClose < candleIntervalUpDownDataPrev.maxClose
+                minPercent < 5f
+                && maxPercent > 5f
+                && minPercentPrev > 0f
+                && maxPercentPrev > 0f
         ) {
             annotation += " up after big size";
             isIntervalUp = true;
@@ -5503,6 +5506,7 @@ public class FactorialInstrumentByFiatService implements
         log.info("{}: Candle Intervals size = {} from {}", keyCandles, candleIPrev.size(), candleIPrev.get(0).getDateTime());
         for (var i = 1; i < candleIPrev.size(); i++) {
             var candleCur = candleIPrev.get(i);
+            //log.info("Loading from cash {} {} {} {}", strategy.getExtName(), candleCur.getFigi(), candleCur.getDateTime(), candleCur.getInterval());
             var cashed = candleStrategyResultRepository.findByStrategyAndFigiAndDateTimeAndInterval(strategy.getExtName(), candleCur.getFigi(), candleCur.getDateTime(), candleCur.getInterval());
             if (cashed != null) {
                 if (cashed.getDetails().getBooleanDataMap().getOrDefault("res", false)) {
