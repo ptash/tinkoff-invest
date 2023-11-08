@@ -1156,8 +1156,9 @@ public class FactorialInstrumentByFiatService implements
             }
         }
 
+        var isTrendUp = getTrendUp(strategy, candle);
         if (
-                (res || getTrendUp(strategy, candle))
+                (res || (isTrendUp != null && isTrendUp))
                 && buyCriteria.getNotLossSellLength() > 0
         ) {
             var order = orderService.findLastByFigiAndStrategy(candle.getFigi(), strategy);
@@ -1404,6 +1405,8 @@ public class FactorialInstrumentByFiatService implements
         }
 
         annotation = " " + resBuy + " open = " + printPrice(candle.getOpenPrice()) + " close=" + printPrice(candle.getClosingPrice()) + " " + annotation;
+        isTrendUp = getTrendUp(strategy, candle);
+        var isTrendDown = getTrendDown(strategy, candle);
         notificationService.reportStrategyExt(
                 resBuy,
                 strategy,
@@ -1434,8 +1437,8 @@ public class FactorialInstrumentByFiatService implements
                 candleBuyRes.notLossBuyUnderPrice == null ? "": candleBuyRes.notLossBuyUnderPrice,
                 candleIntervalUpDownData.endPost == null ? ""
                         : (candleIntervalUpDownData.endPost.candle.getDateTime().equals(candle.getDateTime()) ? candleIntervalUpDownData.minClose : candleIntervalUpDownData.maxClose),
-                getTrendUp(strategy, candle) ? candle.getClosingPrice().add(candle.getClosingPrice().abs().multiply(BigDecimal.valueOf(2 * profitPercentFromBuyMinPrice / 100))) : "",
-                getTrendDown(strategy, candle) ? candle.getClosingPrice().subtract(candle.getClosingPrice().abs().multiply(BigDecimal.valueOf(2 * profitPercentFromBuyMinPrice / 100))) : "",
+                isTrendUp != null && isTrendUp ? candle.getClosingPrice().add(candle.getClosingPrice().abs().multiply(BigDecimal.valueOf(2 * profitPercentFromBuyMinPrice / 100))) : "",
+                isTrendDown != null && isTrendDown ? candle.getClosingPrice().subtract(candle.getClosingPrice().abs().multiply(BigDecimal.valueOf(2 * profitPercentFromBuyMinPrice / 100))) : "",
                 res ? candle.getClosingPrice().add(candle.getClosingPrice().abs().multiply(BigDecimal.valueOf(4 * profitPercentFromBuyMinPrice / 100))) : ""
                 );
         return resBuy;
