@@ -4992,6 +4992,7 @@ public class FactorialInstrumentByFiatService implements
         ) {
             annotation += " up by up";
             isIntervalUp = true;
+            minBuyPrice = BigDecimal.valueOf(candleIntervalUpDownData.minClose);
         } else if (
                 minPercent > 0f
                 && maxPercent > 0f
@@ -5087,10 +5088,18 @@ public class FactorialInstrumentByFiatService implements
         if (
                 isIntervalUp
                 && !minBuyPrice.equals(BigDecimal.ZERO)
-                && !(candle.getClosingPrice().min(candle.getOpenPrice()).compareTo(minBuyPrice) >= 0
-                && candle.getClosingPrice().min(candle.getOpenPrice()).compareTo(maxBuyPrice) <= 0)
+                && candle.getClosingPrice().min(candle.getOpenPrice()).compareTo(minBuyPrice) < 0
         ) {
-            annotation += " isIntervalUp = false by min-max: " + printPrice(minBuyPrice) + "-" + printPrice(maxBuyPrice);
+            annotation += " isIntervalUp = false by min: " + printPrice(minBuyPrice) + "-" + printPrice(maxBuyPrice);
+            isIntervalUp = false;
+            StopLossPrice = BigDecimal.ZERO;
+        }
+        if (
+                isIntervalUp
+                && !maxBuyPrice.equals(BigDecimal.ZERO)
+                && candle.getClosingPrice().min(candle.getOpenPrice()).compareTo(maxBuyPrice) > 0
+        ) {
+            annotation += " isIntervalUp = false by max: " + printPrice(minBuyPrice) + "-" + printPrice(maxBuyPrice);
             isIntervalUp = false;
             StopLossPrice = BigDecimal.ZERO;
         }
