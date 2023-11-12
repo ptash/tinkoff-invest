@@ -1914,7 +1914,10 @@ public class FactorialInstrumentByFiatService implements
                             && maxDiffP > 5f
                             && candleIntervalUpDownDataPrev.minClose > candleIntervalUpDownData.minClose
                     ) {
-                        if ((maxBuyIntervalPrice.equals(BigDecimal.ZERO) || candleIntervalUpDownData.minClose < maxBuyIntervalPrice.floatValue())) {
+                        //if (
+                        //        (maxBuyIntervalPrice.equals(BigDecimal.ZERO)
+                        //        || candleIntervalUpDownData.minClose < maxBuyIntervalPrice.floatValue())
+                        //) {
                             var percent = 100f * (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) / Math.abs(candleIntervalUpDownData.minClose);
                             if (
                                     candleIntervalUpDownDataPrev.minClose < candleIntervalUpDownData.minClose
@@ -1927,7 +1930,7 @@ public class FactorialInstrumentByFiatService implements
                             takeProfitPriceOrig = takeProfitPrice = BigDecimal.valueOf(candleIntervalUpDownData.endPost.candle.getClosingPrice().doubleValue()
                                     + candleIntervalUpDownData.endPost.candle.getClosingPrice().abs().doubleValue() * percent / 100f);
                             annotation += " takeProfitPrice=" + printPrice(takeProfitPrice);
-                        }
+                        //}
                     } else if (candleIntervalUpDownDataPrev.maxClose < candleIntervalUpDownData.maxClose) {
                         annotation += " PmaxCandle: " + printDateTime(candleIntervalUpDownDataPrev.beginDownFirst.candle.getDateTime());
                         var candleIntervalUpDownDataPrevPrev = getPrevCandleIntervalUpDownData(newStrategy, candleIntervalUpDownDataPrev);
