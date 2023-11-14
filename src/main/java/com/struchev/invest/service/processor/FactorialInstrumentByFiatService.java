@@ -4794,6 +4794,7 @@ public class FactorialInstrumentByFiatService implements
                 candleIntervalUpDownDataCur = candleIntervalUpDownDataPrev;
             }
             setOrderBigDecimalData(strategy, candle, "takeProfitForStep", BigDecimal.valueOf(takeProfit));
+            var isSet = false;
             if (takeProfit > candle.getClosingPrice().floatValue()) {
                 var takeProfitPriceStart = candle.getClosingPrice().floatValue() + (takeProfit - candle.getClosingPrice().floatValue()) / 2;
                 var intervalPercentStep = 100f * (takeProfit - takeProfitPriceStart) / Math.abs(takeProfitPriceStart);
@@ -4801,6 +4802,21 @@ public class FactorialInstrumentByFiatService implements
                 if (intervalPercentStep > buyCriteria.getCandlePriceMinFactor()) {
                     setOrderBigDecimalData(strategy, candle, "takeProfitPriceStart", BigDecimal.valueOf(takeProfitPriceStart));
                     setOrderBigDecimalData(strategy, candle, "intervalPercentStep", BigDecimal.valueOf(intervalPercentStep));
+                    isSet = true;
+                }
+            }
+            if (!isSet && !StopLossPrice.equals(BigDecimal.ZERO) && StopLossPrice.compareTo(candle.getClosingPrice()) < 0) {
+                takeProfit = candle.getClosingPrice().floatValue() + (candle.getClosingPrice().floatValue() - StopLossPrice.floatValue());
+                setOrderBigDecimalData(strategy, candle, "takeProfitFromLossForStep", BigDecimal.valueOf(takeProfit));
+                if (takeProfit > candle.getClosingPrice().floatValue()) {
+                    var takeProfitPriceStart = candle.getClosingPrice().floatValue() + (takeProfit - candle.getClosingPrice().floatValue()) / 2;
+                    var intervalPercentStep = 100f * (takeProfit - takeProfitPriceStart) / Math.abs(takeProfitPriceStart);
+                    setOrderBigDecimalData(strategy, candle, "takeProfitForStepPercentStep", BigDecimal.valueOf(intervalPercentStep));
+                    if (intervalPercentStep > buyCriteria.getCandlePriceMinFactor()) {
+                        setOrderBigDecimalData(strategy, candle, "takeProfitPriceStart", BigDecimal.valueOf(takeProfitPriceStart));
+                        setOrderBigDecimalData(strategy, candle, "intervalPercentStep", BigDecimal.valueOf(intervalPercentStep));
+                        isSet = true;
+                    }
                 }
             }
         }
