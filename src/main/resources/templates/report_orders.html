@@ -31,11 +31,11 @@
             <td th:text="${o.strategy}"/>
             <td th:text="${o.lots}"/>
             <td>
-                <span th:text="${#numbers.formatDecimal((o.purchasePriceMoney != null ? o.purchasePriceMoney : o.purchasePrice), 1, 4, 'DEFAULT')}"/>
+                <span th:text="${o.purchasePrice == null ? null : ${#numbers.formatDecimal((o.purchasePriceMoney != null ? o.purchasePriceMoney : o.purchasePrice), 1, 4, 'DEFAULT')}"/>
                 <span th:text="${#numbers.formatDecimal(o.purchasePrice, 1, 4, 'DEFAULT')}"
                       th:if="${o.purchasePriceMoney != null && o.purchasePriceMoney != o.purchasePrice}"/>
             </td>
-            <td th:text="${T(com.struchev.invest.expression.Date).formatDateTime(o.purchaseDateTime)}"/>
+            <td th:text="${o.purchaseDateTime == null ? null : T(com.struchev.invest.expression.Date).formatDateTime(o.purchaseDateTime)}"/>
             <td th:text="${o.sellPriceLimitWanted == null ? null : #numbers.formatDecimal(o.sellPriceLimitWanted, 1, 4, 'DEFAULT')}"/>
             <td th:text="${o.cellLots}"/>
             <td>

@@ -3,7 +3,7 @@ select a.figi_title                                                   figi_title
        coalesce(round(100 * a.total / (a.first_price * a.lots), 2), -555)             profit_by_robot,
        coalesce(round(100 * (a.last_price - a.first_price) / a.first_price, 2), -555) profit_by_invest,
        a.offers                                                       offers,
-       a.first_price                                                  first_price,
+       coalesce(a.first_price, -555)                                  first_price,
        coalesce(a.last_price, -555)                                   last_price
        , a.figi                                                       figi
         , (select min(purchase_date_time) FROM offer where figi = a.figi AND strategy=a.strategy) AS start_date
