@@ -109,7 +109,7 @@ class StrategiesByCandleHistoryTests {
                         return new ArrayList<CandleDomainEntity>().stream();
                     }
                     var startDateTime = candles.get(0).getDateTime().minusHours(historyDuration.toHours());
-                    return candleRepository.findByFigiAndIntervalAndDateTimeAfterAndDateTimeBeforeOrderByDateTime(figi, "1min", startDateTime, dateBefore).stream();
+                    return candleRepository.findByFigiAndIntervalAndBetweenDateTimes(figi, "1min", startDateTime, dateBefore).stream();
                 })
                 .sorted(Comparator.comparing(CandleDomainEntity::getDateTime))
                 .forEach(c -> purchaseService.observeNewCandle(c));
