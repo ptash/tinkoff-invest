@@ -8,10 +8,10 @@ import java.util.Map;
 public class BuyProfit1InvestPercent02SellWithMaxProfitCrossStrategy extends BuyEma600DeadLineP1Profit1DeadLine2InvestPercent02CrossStrategy {
 
     private Map FIGIES = Map.of(
-            "BBG00178PGX3", 6,    // VK
+/*            "BBG00178PGX3", 6,    // VK
             "BBG005DXJS36", 5 // TCS Group (Tinkoff Bank holder)
             //"BBG000N625H8", 1 // Freedom Holding Corp/NV
-/*
+
             "BBG006L8G4H1", 1,   // Yandex
             "BBG00178PGX3", 6,    // VK ??
             "BBG004S68696", 10,    // Распадская

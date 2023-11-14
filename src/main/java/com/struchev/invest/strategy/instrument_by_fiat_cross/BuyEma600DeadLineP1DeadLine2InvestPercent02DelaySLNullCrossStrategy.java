@@ -17,7 +17,7 @@ public class BuyEma600DeadLineP1DeadLine2InvestPercent02DelaySLNullCrossStrategy
             "BBG000LWVHN8", 6000 // Дагестанская энергосбытовая компания
             */
 
-            "BBG006G2JVL2", 1 // Alibaba
+            //"BBG006G2JVL2", 1 // Alibaba
     );
 
     //public Map<String, Integer> getFigies() { return FIGIES; }

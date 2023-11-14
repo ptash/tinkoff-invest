@@ -138,6 +138,12 @@ public class InstrumentService {
     }
 
     public void printInstrumentInfo(Instrument instrument) {
+        if (instrument == null) {
+            log.info("instrument null...");
+        }
+        if (instrument.getType() == null) {
+            log.info("instrument type null...: {}", instrument);
+        }
         if (instrument.getType() == InstrumentService.Type.future) {
             //var feature = tinkoffCommonAPI.getApi().getInstrumentsService().getFutureByFigiSync(instrument.getFigi());
             //log.info("feature: {}", feature);
