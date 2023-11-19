@@ -376,7 +376,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
     }
 
     public Boolean isFactorialSimple() { return false; }
-    public Integer getFactorialSimpleLength() { return 14; }
+    public Integer getFactorialSimpleLength() { return 4; }
 
     public Integer getFactorialLength() { return 20; }
     public Integer getFactorialLengthFuture() { return 4; }

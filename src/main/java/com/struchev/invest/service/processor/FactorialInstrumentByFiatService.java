@@ -462,7 +462,7 @@ public class FactorialInstrumentByFiatService implements
                 candle.getDateTime(), 2, strategy.getFactorialInterval());
         var candleList2 = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
                 curDateTime, 1, strategy.getFactorialInterval());
-        var curHourCandleForFactorial = candleList.get(1);
+        var curHourCandleForFactorial = getCandleHour(strategy, candle);
         var curHourCandle = candleList2.get(0);
         var factorial = findBestFactorialInPast(strategy, curHourCandleForFactorial);
         if (null == factorial) {
@@ -495,7 +495,9 @@ public class FactorialInstrumentByFiatService implements
         annotation += " futureProfit=" + futureProfit;
         annotation += " futureLoss=" + futureLoss;
         annotation += " closeMax=" + closeMax;
-        //annotation += " info: " + factorial.getInfo();
+        annotation += " expectProfit=" + factorial.getExpectProfit();
+        annotation += " expectLoss=" + factorial.getExpectLoss();
+        annotation += " info: " + factorial.getInfo();
         Double lossAvg = null;
         Double profitAvg = null;
         if (null != factorial && factorial.candleList != null) {
@@ -2975,19 +2977,28 @@ public class FactorialInstrumentByFiatService implements
 
     private FactorialData findBestFactorialInPastSimple(AInstrumentByFiatFactorialStrategy strategy, CandleDomainEntity candle, OffsetDateTime curDateTime) {
         var pastDateTime = curDateTime;
+        if (strategy.getFactorialInterval().equals("1hour")) {
+            pastDateTime = pastDateTime.plusHours(1);
+        }
         List<Double> expectProfitList = new ArrayList<>();
         List<Double> expectLossList = new ArrayList<>();
+        String bestInfo = " bestInfo:" + printDateTime(candle.getDateTime());
         for (var i = 0; i < strategy.getFactorialSimpleLength(); i++) {
             pastDateTime = pastDateTime.minusDays(7);
+            bestInfo += "i=" + i + " pastDateTime=" + printDateTime(pastDateTime);
             var list = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
                     pastDateTime, 2, strategy.getFactorialInterval());
             if (list == null) {
                 break;
             }
-            var candleCur = list.get(0);
-            var candlePrev = list.get(1);
+            var candlePrev = list.get(0);
+            var candleCur = list.get(1);
+            bestInfo += " candleCur=" + printDateTime(candleCur.getDateTime()) + ": " + printPrice(candleCur.getLowestPrice()) + "-" + printPrice(candleCur.getHighestPrice());
+            bestInfo += " candlePrev=" + printDateTime(candlePrev.getDateTime()) + ": " + printPrice(candlePrev.getClosingPrice());
             var expectProfit = 100f * (candleCur.getHighestPrice().doubleValue() - candlePrev.getClosingPrice().doubleValue()) / Math.abs(candleCur.getHighestPrice().doubleValue());
             var expectLoss = 100f * (candlePrev.getClosingPrice().doubleValue() - candleCur.getLowestPrice().doubleValue()) / Math.abs(candleCur.getLowestPrice().doubleValue());
+            bestInfo += " expectProfit=" + printPrice(expectProfit);
+            bestInfo += " expectLoss=" + printPrice(expectLoss);
             expectProfitList.add(expectProfit);
             expectLossList.add(expectLoss);
         }
@@ -3002,12 +3013,12 @@ public class FactorialInstrumentByFiatService implements
                 .diffPrice(bestDiff)
                 .candleList(candleList.subList(startCandleI, startCandleI + strategy.getFactorialLength() * bestSize))
                 .candleListFeature(candleList.subList(startCandleI + strategy.getFactorialLength() * bestSize, startCandleI + strategy.getFactorialLength() * bestSize + strategy.getFactorialLengthFuture() * bestSize))
-                .candleListPast(candleList.subList(candleList.size() - strategy.getFactorialLength(), candleList.size()))
-                .info(bestInfo)*/
+                .candleListPast(candleList.subList(candleList.size() - strategy.getFactorialLength(), candleList.size()))*/
+                .info(bestInfo)
                 .expectProfit((float) expectProfit)
                 .expectLoss((float) expectLoss)
-                .profit(candle.getHighestPrice().doubleValue() * (1f + expectProfit / 100f))
-                .loss(candle.getLowestPrice().doubleValue() * (1f - expectLoss / 100f))
+                .profit(candle.getClosingPrice().doubleValue() * (1f + expectProfit / 100f))
+                .loss(candle.getClosingPrice().doubleValue() * (1f - expectLoss / 100f))
                 .build();
         return res;
     }
@@ -3456,17 +3467,19 @@ public class FactorialInstrumentByFiatService implements
         var curHourCandleForFactorial = getCandleHour(strategy, candle);
         var factorial = findBestFactorialInPast(strategy, curHourCandleForFactorial);
 
-        var candleListForAvg = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
-                candle.getDateTime(), strategy.getPriceDiffAvgLength() + 1, strategy.getFactorialInterval());
         var priceDiffAvgReal = factorial.getExpectLoss() + factorial.getExpectProfit();
-        for (var i = 0; i < (candleListForAvg.size() - 1); i++) {
-            var factorialForAvg = findBestFactorialInPast(strategy, candleListForAvg.get(i));
-            if (null == factorialForAvg) {
-                return null;
+        if (strategy.getPriceDiffAvgLength() > 0) {
+            var candleListForAvg = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
+                    candle.getDateTime(), strategy.getPriceDiffAvgLength() + 1, strategy.getFactorialInterval());
+            for (var i = 0; i < (candleListForAvg.size() - 1); i++) {
+                var factorialForAvg = findBestFactorialInPast(strategy, candleListForAvg.get(i));
+                if (null == factorialForAvg) {
+                    return null;
+                }
+                priceDiffAvgReal += factorialForAvg.getExpectLoss() + factorialForAvg.getExpectProfit();
             }
-            priceDiffAvgReal += factorialForAvg.getExpectLoss() + factorialForAvg.getExpectProfit();
+            priceDiffAvgReal = priceDiffAvgReal / candleListForAvg.size();
         }
-        priceDiffAvgReal = priceDiffAvgReal / candleListForAvg.size();
         newStrategy.setPriceDiffAvgReal(candle.getFigi(), priceDiffAvgReal);
         return newStrategy;
     }
