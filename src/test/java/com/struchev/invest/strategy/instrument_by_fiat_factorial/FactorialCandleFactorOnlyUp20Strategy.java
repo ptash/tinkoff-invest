@@ -7,6 +7,7 @@ public class FactorialCandleFactorOnlyUp20Strategy extends FactorialCandleFactor
 
     public Boolean isFactorialSimple() { return true; }
     public Integer getPriceDiffAvgLength() { return 0; }
+    public Float getPriceDiffAvg() { return 1f; }
 
     public BuyCriteria getBuyCriteria() {
         var buy = super.getBuyCriteria();
