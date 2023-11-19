@@ -498,7 +498,7 @@ public class FactorialInstrumentByFiatService implements
         //annotation += " info: " + factorial.getInfo();
         Double lossAvg = null;
         Double profitAvg = null;
-        if (null != factorial) {
+        if (null != factorial && factorial.candleList != null) {
             annotation += "factorial from " + factorial.getCandleList().get(0).getDateTime()
                     + " to " + factorial.getCandleList().get(factorial.getCandleList().size() - 1).getDateTime() + " size=" + factorial.getSize()
                     + " diff=" + factorial.diffPrice
@@ -2960,6 +2960,59 @@ public class FactorialInstrumentByFiatService implements
         if (ret != null) {
             return ret;
         }
+        if (strategy.isFactorialSimple()) {
+            ret = findBestFactorialInPastSimple(strategy, candle, curDateTime);
+        } else {
+            ret = findBestFactorialInPastOrig(strategy, candle, curDateTime);
+        }
+        if (ret == null) {
+            return null;
+        }
+        ret.setDateTime(candleListCash.get(0).getDateTime());
+        addCashedValue(key, ret);
+        return ret;
+    }
+
+    private FactorialData findBestFactorialInPastSimple(AInstrumentByFiatFactorialStrategy strategy, CandleDomainEntity candle, OffsetDateTime curDateTime) {
+        var pastDateTime = curDateTime;
+        List<Double> expectProfitList = new ArrayList<>();
+        List<Double> expectLossList = new ArrayList<>();
+        for (var i = 0; i < strategy.getFactorialSimpleLength(); i++) {
+            pastDateTime = pastDateTime.minusDays(7);
+            var list = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
+                    pastDateTime, 2, strategy.getFactorialInterval());
+            if (list == null) {
+                break;
+            }
+            var candleCur = list.get(0);
+            var candlePrev = list.get(1);
+            var expectProfit = 100f * (candleCur.getHighestPrice().doubleValue() - candlePrev.getClosingPrice().doubleValue()) / Math.abs(candleCur.getHighestPrice().doubleValue());
+            var expectLoss = 100f * (candlePrev.getClosingPrice().doubleValue() - candleCur.getLowestPrice().doubleValue()) / Math.abs(candleCur.getLowestPrice().doubleValue());
+            expectProfitList.add(expectProfit);
+            expectLossList.add(expectLoss);
+        }
+
+        var expectProfit = expectProfitList.stream().mapToDouble(i -> i).average().orElse(-1);
+        var expectLoss = expectLossList.stream().mapToDouble(i -> i).average().orElse(-1);
+
+
+        var res = FactorialData.builder()
+                /*.size(bestSize)
+                .length(strategy.getFactorialLength())
+                .diffPrice(bestDiff)
+                .candleList(candleList.subList(startCandleI, startCandleI + strategy.getFactorialLength() * bestSize))
+                .candleListFeature(candleList.subList(startCandleI + strategy.getFactorialLength() * bestSize, startCandleI + strategy.getFactorialLength() * bestSize + strategy.getFactorialLengthFuture() * bestSize))
+                .candleListPast(candleList.subList(candleList.size() - strategy.getFactorialLength(), candleList.size()))
+                .info(bestInfo)*/
+                .expectProfit((float) expectProfit)
+                .expectLoss((float) expectLoss)
+                .profit(candle.getHighestPrice().doubleValue() * (1f + expectProfit / 100f))
+                .loss(candle.getLowestPrice().doubleValue() * (1f - expectLoss / 100f))
+                .build();
+        return res;
+    }
+
+    private FactorialData findBestFactorialInPastOrig(AInstrumentByFiatFactorialStrategy strategy, CandleDomainEntity candle, OffsetDateTime curDateTime) {
         var candleList = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
                 curDateTime, strategy.getFactorialHistoryLength(), strategy.getFactorialInterval());
         if (null == candleList) {
@@ -3168,9 +3221,7 @@ public class FactorialInstrumentByFiatService implements
                 .expectLoss((float) expectLoss)
                 .profit(candle.getHighestPrice().doubleValue() * (1f + expectProfit / 100f))
                 .loss(candle.getLowestPrice().doubleValue() * (1f - expectLoss / 100f))
-                .dateTime(candleListCash.get(0).getDateTime())
                 .build();
-        addCashedValue(key, res);
         return res;
     }
 

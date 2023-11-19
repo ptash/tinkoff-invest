@@ -5,6 +5,9 @@ import org.springframework.stereotype.Component;
 @Component
 public class FactorialCandleFactorOnlyUp20Strategy extends FactorialCandleFactorUp20Strategy {
 
+    public Boolean isFactorialSimple() { return true; }
+    public Integer getPriceDiffAvgLength() { return 0; }
+
     public BuyCriteria getBuyCriteria() {
         var buy = super.getBuyCriteria();
         buy.setIsOnlyUp(true);
