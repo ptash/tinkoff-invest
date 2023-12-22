@@ -23,6 +23,7 @@ import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertTrue;
 
@@ -78,7 +79,17 @@ class StrategiesByCandleHistoryTests {
     //private OffsetDateTime dateBefore = OffsetDateTime.parse("2023-10-07T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
     //private OffsetDateTime dateBefore = OffsetDateTime.parse("2023-10-14T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
 
-    private OffsetDateTime dateBefore = OffsetDateTime.parse("2023-10-21T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+    //private OffsetDateTime dateBefore = OffsetDateTime.parse("2023-10-21T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+    //private OffsetDateTime dateBefore = OffsetDateTime.parse("2023-10-28T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+    //private OffsetDateTime dateBefore = OffsetDateTime.parse("2023-11-04T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+    //private OffsetDateTime dateBefore = OffsetDateTime.parse("2023-11-11T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+
+    //private OffsetDateTime dateBefore = OffsetDateTime.parse("2023-11-18T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+    //private OffsetDateTime dateBefore = OffsetDateTime.parse("2023-11-25T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+    //private OffsetDateTime dateBefore = OffsetDateTime.parse("2023-12-02T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+    //private OffsetDateTime dateBefore = OffsetDateTime.parse("2023-12-09T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+    //private OffsetDateTime dateBefore = OffsetDateTime.parse("2023-12-16T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+    private OffsetDateTime dateBefore = OffsetDateTime.parse("2023-12-16T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
 
     @Value("${tinkoff.emulator}")
     private Boolean isTinkoffEmulator;
@@ -99,6 +110,20 @@ class StrategiesByCandleHistoryTests {
         var days = historyDuration.toDays();
         var strategies = strategySelector.getFigiesForActiveStrategies();
         log.info("Эмулируем поток свечей за заданный интервал в днях {} часах {} до {} for {} strategies", days, historyDuration.toHours(), dateBefore, strategies.size());
+
+        strategies.stream()
+                .flatMap(figi -> {
+                    var candles = candleRepository.findByFigiAndIntervalAndBeforeDateTimeLimit(figi,
+                            "5min", dateBefore, PageRequest.of(0, 1));
+                    if (candles == null || candles.size() == 0) {
+                        log.info("getFigiesForActiveStrategies cancel {}: getCandlesByFigiByLength return {}", figi, candles);
+                        return new ArrayList<CandleDomainEntity>().stream();
+                    }
+                    var startDateTime = candles.get(0).getDateTime().minusHours(historyDuration.toHours());
+                    return candleRepository.findByFigiAndIntervalAndDateTimeAfterAndDateTimeBeforeOrderByDateTime(figi, "5min", startDateTime, dateBefore).stream();
+                })
+                .sorted(Comparator.comparing(CandleDomainEntity::getDateTime))
+                .forEach(c -> purchaseService.observeNewCandle(c));
 
         strategies.stream()
                 .flatMap(figi -> {

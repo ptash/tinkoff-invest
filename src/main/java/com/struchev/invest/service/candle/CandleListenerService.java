@@ -96,9 +96,22 @@ public class CandleListenerService {
                         }
 
                         if (null != candleDomainEntity) {
+                            CandleDomainEntity candleDomainEntity5Min = null;
                             if (isNewCandle) {
                                 log.info("Need refresh 1min candles {}", candleDomainEntity.getFigi());
                                 candleHistoryService.loadCandlesHistory(candleDomainEntity.getFigi(), 1L, CandleInterval.CANDLE_INTERVAL_1_MIN, OffsetDateTime.now());
+                                log.info("Need refresh 5min candles {}", candleDomainEntity.getFigi());
+                                candleHistoryService.loadCandlesHistory(candleDomainEntity.getFigi(), 1L, CandleInterval.CANDLE_INTERVAL_5_MIN, OffsetDateTime.now());
+
+                                var candle5MinList = candleHistoryService.getAllCandlesByFigiByLength(
+                                        candleDomainEntity.getFigi(),
+                                        candleDomainEntity.getDateTime(),
+                                        1,
+                                        "5min"
+                                );
+                                if (candle5MinList.size() > 0) {
+                                    candleDomainEntity5Min = candle5MinList.get(0);
+                                }
                             }
                             var candleHour = candleHistoryService.getAllCandlesByFigiByLength(
                                     candleDomainEntity.getFigi(),
@@ -123,12 +136,15 @@ public class CandleListenerService {
                                 }
                             }
                             purchaseService.observeNewCandleNoThrow(candleDomainEntity);
+                            if (candleDomainEntity5Min != null) {
+                                purchaseService.observeNewCandleNoThrow(candleDomainEntity5Min);
+                            }
                         }
                     }, e -> {
                         log.error("An error in candles_stream " + interval + " , listener will be restarted", e);
                         startToListen(number + 1);
                     })
-                    .subscribeCandles(new ArrayList<>(figies));
+                    .subscribeCandles(new ArrayList<>(figies), SubscriptionInterval.SUBSCRIPTION_INTERVAL_ONE_MINUTE);
         } catch (Throwable th) {
             log.error("An error in subscriber, listener " + interval + " will be restarted", th);
             startToListen(number + 1);
