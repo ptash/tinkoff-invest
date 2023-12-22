@@ -42,11 +42,17 @@ public class CandleHistoryReverseForShortService implements ICandleHistoryServic
 
     public List<CandleDomainEntity> getCandlesByFigiBetweenDateTimes(String figi, OffsetDateTime startDateTime, OffsetDateTime endDateTime, String interval) {
         var res = candleHistoryService.getCandlesByFigiBetweenDateTimes(figi, startDateTime, endDateTime, interval);
+        if (null == res) {
+            return null;
+        }
         return prepareForShort(res);
     }
 
     public List<CandleDomainEntity> getCandlesByFigiByLength(String figi, OffsetDateTime currentDateTime, Integer length, String interval) {
         var res = candleHistoryService.getCandlesByFigiByLength(figi, currentDateTime, length, interval);
+        if (null == res) {
+            return null;
+        }
         return prepareForShort(res);
     }
 
