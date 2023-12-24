@@ -11,7 +11,7 @@ public class BuyProfit1InvestPercent02SellWithMaxProfitCrossSimpleStrategy exten
             //"BBG005DXJS36", 1   , // TCS Group (Tinkoff Bank holder)
             /*"BBG003QBJKN0", 4, // Allakos Inc
             "BBG000J3D1Y8", 6 // OraSure Technologies Inc*/
-            "BBG000LWVHN8", 20000 // Дагестанская энергосбытовая компания
+            //"BBG000LWVHN8", 20000 // Дагестанская энергосбытовая компания
     );
     public Map<String, Integer> getFigies() {
         return FIGIES;
