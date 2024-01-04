@@ -2553,7 +2553,6 @@ public class FactorialInstrumentByFiatService implements
             var stopLossMaxPrice = order.getDetails().getCurrentPrices().getOrDefault("stopLossMaxPrice", BigDecimal.ZERO);
             annotation += " stopLossMaxPrice=" + printPrice(stopLossMaxPrice);
             var minPrice = candleIntervalUpDownData.maxClose;
-            var minPriceF = candleIntervalUpDownData.minClose;
             if (
                     order.getPurchaseDateTime().isAfter(candleIntervalUpDownData.endPost.candle.getDateTime())
                     && order.getPurchasePrice().floatValue() > minPrice
@@ -2598,6 +2597,25 @@ public class FactorialInstrumentByFiatService implements
             }
 
             BigDecimal maxPrice = BigDecimal.valueOf(minPrice + Math.abs(candleIntervalUpDownData.minClose) * percent / 100f);
+
+            if (sellCriteria.getIsMaxPriceByFib()) {
+                var minPriceF = candleIntervalUpDownData.minClose;
+                var fibPercent = 1.618;
+                var diffPrice = (Math.abs(candleIntervalUpDownData.minClose) * percent / 100f);
+
+                annotation += " diffPrice=" + printPrice(diffPrice);
+
+                maxPrice = BigDecimal.valueOf(minPriceF + diffPrice * fibPercent);
+
+                annotation += " maxPriceF=" + printPrice(maxPrice);
+                if (!stopLossMaxPrice.equals(BigDecimal.ZERO)) {
+                    while (maxPrice.subtract(errorD).compareTo(stopLossMaxPrice) < 0) {
+                        fibPercent = fibPercent * 1.618;
+                        maxPrice = BigDecimal.valueOf(minPriceF + diffPrice * fibPercent);
+                        annotation += " maxPriceF=" + printPrice(maxPrice);
+                    }
+                }
+            }
 
             var isDownStopLoss = false;
             var isDownStopLossCur = false;
@@ -2700,11 +2718,14 @@ public class FactorialInstrumentByFiatService implements
             var stopLossMaxPriceNew = BigDecimal.ZERO;
             annotation += " maxPriceInInterval=" + printPrice(maxPriceInInterval);
             if (maxPriceInInterval > maxPrice.doubleValue()) {
-                minPrice = Math.min(candleIntervalUpDownData.minClose, minPrice);
-                lossPresent = 0.382f;
-                var lossPresentBottom = 0.618f;
                 var newStopLossPrice = BigDecimal.valueOf(maxPrice.doubleValue() - (maxPrice.doubleValue() - minPrice) * lossPresent);
-                stopLossPriceBottom = BigDecimal.valueOf(maxPrice.doubleValue() - (maxPrice.doubleValue() - minPrice) * lossPresentBottom);
+                if (sellCriteria.getIsMaxPriceByFib()) {
+                    minPrice = Math.min(candleIntervalUpDownData.minClose, minPrice);
+                    lossPresent = 0.382f;
+                    var lossPresentBottom = 0.618f;
+                    newStopLossPrice = BigDecimal.valueOf(maxPrice.doubleValue() - (maxPrice.doubleValue() - minPrice) * lossPresent);
+                    stopLossPriceBottom = BigDecimal.valueOf(maxPrice.doubleValue() - (maxPrice.doubleValue() - minPrice) * lossPresentBottom);
+                }
                 if (newStopLossPrice.compareTo(stopLossPrice) > 0) {
                     stopLossMaxPriceNew = maxPrice;
                     stopLossPrice = newStopLossPrice;
