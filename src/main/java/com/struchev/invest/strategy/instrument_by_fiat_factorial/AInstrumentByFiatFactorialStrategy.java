@@ -158,6 +158,8 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
 
         String candleInterval;
 
+        Boolean isMaxPriceByFib;
+
         public Boolean isCandleIntervalTargetDirection(BigDecimal openPrice, BigDecimal closePrice) {
             return openPrice.compareTo(closePrice) > 0;
         }
@@ -188,6 +190,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
                 .CandleUpMiddleFactorMinBegin(0)
                 .isOnlyStopLoss(false)
                 .candleInterval("1min")
+                .isMaxPriceByFib(false)
                 .build();
     }
 

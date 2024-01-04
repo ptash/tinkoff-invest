@@ -14,6 +14,7 @@ public class FactorialCandleFactorOnlyUp20Strategy extends FactorialCandleFactor
     public SellCriteria getSellCriteria() {
         var sell = super.getSellCriteria();
         sell.setIsOnlyStopLoss(true);
+        sell.setIsMaxPriceByFib(true);
         return sell;
     }
 
@@ -22,5 +23,5 @@ public class FactorialCandleFactorOnlyUp20Strategy extends FactorialCandleFactor
         return SellLimitCriteria.builder().exitProfitPercent(25.0f).build();
     }
 
-    public boolean isEnabled() { return true; }
+    public boolean isEnabled() { return false; }
 }

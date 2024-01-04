@@ -5279,9 +5279,19 @@ public class FactorialInstrumentByFiatService implements
         if (
                 isIntervalUp
                         && candle.getClosingPrice().min(candle.getOpenPrice()).floatValue() < (candleIntervalUpDownData.minClose
-                        - (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) * 0.33f)
+                        - Math.abs(candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) * 0.33f)
         ) {
             annotation += " isIntervalUp = false by under minClose";
+            isIntervalUp = false;
+            StopLossPrice = BigDecimal.ZERO;
+        }
+        if (
+                isIntervalUp
+                && isIntervalUpAfterDown
+                && candle.getClosingPrice().min(candle.getOpenPrice()).floatValue() < (candleIntervalUpDownData.minClose
+                + Math.abs(candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) * 0.382f)
+        ) {
+            annotation += " isIntervalUp = false by under minCloseF";
             isIntervalUp = false;
             StopLossPrice = BigDecimal.ZERO;
         }
