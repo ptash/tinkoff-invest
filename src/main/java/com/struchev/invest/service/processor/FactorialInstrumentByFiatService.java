@@ -2657,7 +2657,7 @@ public class FactorialInstrumentByFiatService implements
                     var v = BigDecimal.valueOf(order.getPurchasePrice().floatValue() + diffPrice * 1.618f);
                     annotation += " v=" + printPrice(v);
                     if (stopLossMaxPrice.equals(BigDecimal.ZERO) || stopLossMaxPrice.compareTo(v) < 0) {
-                        stopLossMaxPrice = v;
+                        stopLossMaxPriceF = v;
                         annotation += " stopLossMaxPriceF=" + printPrice(stopLossMaxPriceF);
                     }
                 }
