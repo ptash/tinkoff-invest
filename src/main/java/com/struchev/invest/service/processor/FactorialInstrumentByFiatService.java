@@ -192,6 +192,7 @@ public class FactorialInstrumentByFiatService implements
                         minClose = Math.min(minClose, candleIntervalUpDownDataPrev.minClose);
                     } else {
                         k++;
+                        minClose = Math.min(minClose, candleIntervalUpDownDataPrev.minClose);
                     }
                     if (k > 1) {
                         break;
@@ -2402,6 +2403,7 @@ public class FactorialInstrumentByFiatService implements
         var takeProfitPriceStart = order.getDetails().getCurrentPrices().getOrDefault("takeProfitPriceStart", BigDecimal.ZERO);
         var intervalPercentStep = order.getDetails().getCurrentPrices().getOrDefault("intervalPercentStep", BigDecimal.ZERO);
         var errorD =  BigDecimal.valueOf(0.00001);
+        var isIntervalDown = true;
         if (
                 sellCriteria.getIsOnlyStopLoss()
                 || isIntervalUp
@@ -2673,6 +2675,7 @@ public class FactorialInstrumentByFiatService implements
             setTrendUp(strategy, candle, isIntervalUpResMaybe.isIntervalUp);
 
             var isTrendSell = isTrendSellCalc(newStrategy, candle);
+            isIntervalDown = isTrendSell.isIntervalDown;
             annotation += " isTrendSell=" + isTrendSell.isIntervalDown + ": " + isTrendSell.annotation;
             setTrendDown(strategy, candle, isTrendSell.isIntervalDown);
             if (
@@ -2927,6 +2930,7 @@ public class FactorialInstrumentByFiatService implements
                 && takeProfitPrice != null
                 && takeProfitPrice.abs().compareTo(errorD) > 0
                 && takeProfitPrice.compareTo(candle.getClosingPrice()) < 0
+                && isIntervalDown
         ) {
             res = true;
             annotation += " takeProfitPrice OK";
