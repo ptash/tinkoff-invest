@@ -2553,6 +2553,7 @@ public class FactorialInstrumentByFiatService implements
             var stopLossMaxPrice = order.getDetails().getCurrentPrices().getOrDefault("stopLossMaxPrice", BigDecimal.ZERO);
             annotation += " stopLossMaxPrice=" + printPrice(stopLossMaxPrice);
             var minPrice = candleIntervalUpDownData.maxClose;
+            var minPriceF = candleIntervalUpDownData.minClose;
             if (
                     order.getPurchaseDateTime().isAfter(candleIntervalUpDownData.endPost.candle.getDateTime())
                     && order.getPurchasePrice().floatValue() > minPrice
@@ -2699,7 +2700,11 @@ public class FactorialInstrumentByFiatService implements
             var stopLossMaxPriceNew = BigDecimal.ZERO;
             annotation += " maxPriceInInterval=" + printPrice(maxPriceInInterval);
             if (maxPriceInInterval > maxPrice.doubleValue()) {
+                minPrice = Math.min(candleIntervalUpDownData.minClose, minPrice);
+                lossPresent = 0.382f;
+                var lossPresentBottom = 0.618f;
                 var newStopLossPrice = BigDecimal.valueOf(maxPrice.doubleValue() - (maxPrice.doubleValue() - minPrice) * lossPresent);
+                stopLossPriceBottom = BigDecimal.valueOf(maxPrice.doubleValue() - (maxPrice.doubleValue() - minPrice) * lossPresentBottom);
                 if (newStopLossPrice.compareTo(stopLossPrice) > 0) {
                     stopLossMaxPriceNew = maxPrice;
                     stopLossPrice = newStopLossPrice;
@@ -3903,6 +3908,7 @@ public class FactorialInstrumentByFiatService implements
                             && (isNewTop || isNewBottom)
                     ) {
                         annotation += " < " + strategy.getBuyCriteria().getCandleUpDownSkipLength();
+                        annotation += " < " + strategy.getBuyCriteria().getCandleUpDownSkipCount();
                         upCount += intervalsBetweenLast.size();
                         upDown += candleResDownPrevList.size();
                         if (maxPricePrev == null) {
