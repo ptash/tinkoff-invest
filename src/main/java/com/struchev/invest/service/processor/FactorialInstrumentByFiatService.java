@@ -2648,8 +2648,21 @@ public class FactorialInstrumentByFiatService implements
                 maxPrice = BigDecimal.valueOf(minPriceF + diffPrice * fibPercent);
 
                 annotation += " maxPriceF=" + printPrice(maxPrice);
-                if (!stopLossMaxPrice.equals(BigDecimal.ZERO)) {
-                    while (maxPrice.subtract(errorD).compareTo(stopLossMaxPrice) < 0) {
+                var stopLossMaxPriceF = stopLossMaxPrice;
+
+                if (
+                        order.getPurchaseDateTime().isAfter(candleIntervalUpDownData.endPost.candle.getDateTime())
+                        && order.getPurchasePrice().floatValue() > candleIntervalUpDownData.maxClose
+                ) {
+                    var v = BigDecimal.valueOf(order.getPurchasePrice().floatValue() + diffPrice * 1.618f);
+                    annotation += " v=" + printPrice(v);
+                    if (stopLossMaxPrice.equals(BigDecimal.ZERO) || stopLossMaxPrice.compareTo(v) < 0) {
+                        stopLossMaxPrice = v;
+                        annotation += " stopLossMaxPriceF=" + printPrice(stopLossMaxPriceF);
+                    }
+                }
+                if (!stopLossMaxPriceF.equals(BigDecimal.ZERO)) {
+                    while (maxPrice.subtract(errorD).compareTo(stopLossMaxPriceF) < 0) {
                         fibPercent = fibPercent * 1.618;
                         maxPrice = BigDecimal.valueOf(minPriceF + diffPrice * fibPercent);
                         annotation += " maxPriceF=" + printPrice(maxPrice);
