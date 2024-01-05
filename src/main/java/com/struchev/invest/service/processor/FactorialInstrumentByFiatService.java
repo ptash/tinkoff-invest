@@ -3075,7 +3075,7 @@ public class FactorialInstrumentByFiatService implements
             bestInfo += "i=" + i + " pastDateTime=" + printDateTime(pastDateTime);
             var size = 5;
             var list = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
-                    pastDateTime, 2 + size, strategy.getFactorialInterval());
+                    pastDateTime, 1 + size, strategy.getFactorialInterval());
             if (list == null) {
                 break;
             }
@@ -3085,17 +3085,17 @@ public class FactorialInstrumentByFiatService implements
             var kPrev = 1;
             var sizeK = 0;
             for(var j = 0; j < size; j++) {
-                var candlePrev = list.get(0 + j);
-                var candleCur = list.get(1 + j);
+                var candlePrev = list.get((size - 1) - j);
+                var candleCur = list.get((size - 1) - j + 1);
                 bestInfo += " candleCur=" + printDateTime(candleCur.getDateTime()) + ": " + printPrice(candleCur.getLowestPrice()) + "-" + printPrice(candleCur.getHighestPrice());
                 bestInfo += " candlePrev=" + printDateTime(candlePrev.getDateTime()) + ": " + printPrice(candlePrev.getClosingPrice());
                 var expectProfit = 100f * (candleCur.getHighestPrice().doubleValue() - candlePrev.getClosingPrice().doubleValue()) / Math.abs(candleCur.getHighestPrice().doubleValue());
                 var expectLoss = 100f * (candlePrev.getClosingPrice().doubleValue() - candleCur.getLowestPrice().doubleValue()) / Math.abs(candleCur.getLowestPrice().doubleValue());
                 bestInfo += " expectProfit=" + printPrice(expectProfit);
                 bestInfo += " expectLoss=" + printPrice(expectLoss);
-                expectProfitSum += expectProfit / k;
-                expectLossSum += expectLoss / k;
-                sizeK += 1 / k;
+                expectProfitSum += expectProfit * k;
+                expectLossSum += expectLoss * k;
+                sizeK += 1 * k;
                 var kSave = k;
                 k = k + kPrev;
                 kPrev = kSave;
