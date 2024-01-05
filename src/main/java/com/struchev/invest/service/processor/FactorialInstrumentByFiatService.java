@@ -3085,8 +3085,8 @@ public class FactorialInstrumentByFiatService implements
             var kPrev = 1;
             var sizeK = 0;
             for(var j = 0; j < size; j++) {
-                var candlePrev = list.get(0 + size);
-                var candleCur = list.get(1 + size);
+                var candlePrev = list.get(0 + j);
+                var candleCur = list.get(1 + j);
                 bestInfo += " candleCur=" + printDateTime(candleCur.getDateTime()) + ": " + printPrice(candleCur.getLowestPrice()) + "-" + printPrice(candleCur.getHighestPrice());
                 bestInfo += " candlePrev=" + printDateTime(candlePrev.getDateTime()) + ": " + printPrice(candlePrev.getClosingPrice());
                 var expectProfit = 100f * (candleCur.getHighestPrice().doubleValue() - candlePrev.getClosingPrice().doubleValue()) / Math.abs(candleCur.getHighestPrice().doubleValue());
