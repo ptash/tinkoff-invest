@@ -3073,21 +3073,33 @@ public class FactorialInstrumentByFiatService implements
         for (var i = 0; i < strategy.getFactorialSimpleLength(); i++) {
             pastDateTime = pastDateTime.minusDays(7);
             bestInfo += "i=" + i + " pastDateTime=" + printDateTime(pastDateTime);
+            var size = 5;
             var list = candleHistoryService.getCandlesByFigiByLength(candle.getFigi(),
-                    pastDateTime, 2, strategy.getFactorialInterval());
+                    pastDateTime, 2 + size, strategy.getFactorialInterval());
             if (list == null) {
                 break;
             }
-            var candlePrev = list.get(0);
-            var candleCur = list.get(1);
-            bestInfo += " candleCur=" + printDateTime(candleCur.getDateTime()) + ": " + printPrice(candleCur.getLowestPrice()) + "-" + printPrice(candleCur.getHighestPrice());
-            bestInfo += " candlePrev=" + printDateTime(candlePrev.getDateTime()) + ": " + printPrice(candlePrev.getClosingPrice());
-            var expectProfit = 100f * (candleCur.getHighestPrice().doubleValue() - candlePrev.getClosingPrice().doubleValue()) / Math.abs(candleCur.getHighestPrice().doubleValue());
-            var expectLoss = 100f * (candlePrev.getClosingPrice().doubleValue() - candleCur.getLowestPrice().doubleValue()) / Math.abs(candleCur.getLowestPrice().doubleValue());
-            bestInfo += " expectProfit=" + printPrice(expectProfit);
-            bestInfo += " expectLoss=" + printPrice(expectLoss);
-            expectProfitList.add(expectProfit);
-            expectLossList.add(expectLoss);
+            double expectProfitSum = 0;
+            double expectLossSum = 0;
+            var k = 1;
+            var kPrev = 1;
+            for(var j = 0; j < size; j++) {
+                var candlePrev = list.get(0 + size);
+                var candleCur = list.get(1 + size);
+                bestInfo += " candleCur=" + printDateTime(candleCur.getDateTime()) + ": " + printPrice(candleCur.getLowestPrice()) + "-" + printPrice(candleCur.getHighestPrice());
+                bestInfo += " candlePrev=" + printDateTime(candlePrev.getDateTime()) + ": " + printPrice(candlePrev.getClosingPrice());
+                var expectProfit = 100f * (candleCur.getHighestPrice().doubleValue() - candlePrev.getClosingPrice().doubleValue()) / Math.abs(candleCur.getHighestPrice().doubleValue());
+                var expectLoss = 100f * (candlePrev.getClosingPrice().doubleValue() - candleCur.getLowestPrice().doubleValue()) / Math.abs(candleCur.getLowestPrice().doubleValue());
+                bestInfo += " expectProfit=" + printPrice(expectProfit);
+                bestInfo += " expectLoss=" + printPrice(expectLoss);
+                expectProfitSum += expectProfit / k;
+                expectLossSum += expectLoss / k;
+                var kSave = k;
+                k = k + kPrev;
+                kPrev = kSave;
+            }
+            expectProfitList.add(expectProfitSum / size);
+            expectLossList.add(expectLossSum / size);
         }
 
         var expectProfit = expectProfitList.stream().mapToDouble(i -> i).average().orElse(-1);
