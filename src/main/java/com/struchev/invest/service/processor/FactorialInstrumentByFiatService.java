@@ -2631,7 +2631,7 @@ public class FactorialInstrumentByFiatService implements
                     percentPrevPrev = (100f * (candleIntervalUpDownDataPrevPrev.maxClose - candleIntervalUpDownDataPrevPrev.minClose) / Math.abs(candleIntervalUpDownDataPrevPrev.minClose));
                 }
             }
-            var percent = Math.max((3 * percentCur + 2 * percentPrev + percentPrevPrev) / 6f, percentCur);
+            var percent = Math.max((5 * percentCur + 2 * percentPrev + percentPrevPrev) / 8f, percentCur);
             annotation += " percent=" + printPrice(percent) + " < " + printPrice(buyCriteria.getCandlePriceMinFactor());
             if (
                     true

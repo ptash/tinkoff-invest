@@ -62,7 +62,7 @@ from (select o.figi_title,
              (select oi.purchase_price from offer oi where oi.figi = o.figi AND oi.strategy = o.strategy order by oi.id limit 1)         first_price
       from offer o
       group by figi_title, figi, strategy, lots) a
-order by figi_title, profit_by_robot desc, strategy;
+order by figi_title, strategy desc, profit_by_robot desc;
 
 --=============
 select date, diff, LAG(diff) OVER (),
