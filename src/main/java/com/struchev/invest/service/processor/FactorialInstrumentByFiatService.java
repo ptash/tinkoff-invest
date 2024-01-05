@@ -5125,10 +5125,14 @@ public class FactorialInstrumentByFiatService implements
         annotation += " maxPercent=" + printPrice(maxPercent);
         annotation += " minPercentPrev=" + printPrice(minPercentPrev);
         annotation += " maxPercentPrev=" + printPrice(maxPercentPrev);
+        annotation += " prevPrevDown=" + printPrice((candleIntervalUpDownDataPrevPrev.minClose - candleIntervalUpDownDataPrev.maxClose) / size);
         if (
                 minPercent > 0f
                         && maxPercent > 0f
-                        && (maxPercent > minPercent || candleIntervalUpDownDataPrevPrev.minClose > candleIntervalUpDownDataPrev.maxClose)
+                        && (maxPercent > minPercent
+                            || (candleIntervalUpDownDataPrevPrev.minClose > candleIntervalUpDownDataPrev.maxClose
+                                && (candleIntervalUpDownDataPrevPrev.minClose - candleIntervalUpDownDataPrev.maxClose) / size > (minPercent - maxPercent)
+                            ))
                         && candleIntervalUpDownDataPrevPrev.minClose >= candleIntervalUpDownDataPrev.minClose
                         && candleIntervalUpDownDataPrevPrev.maxClose >= candleIntervalUpDownDataPrev.maxClose
                         && (
