@@ -2698,6 +2698,7 @@ public class FactorialInstrumentByFiatService implements
             setTrendDown(strategy, candle, isTrendSell.isIntervalDown);
             if (
                     isTrendSell.isIntervalDown
+                    && order.getPurchaseDateTime().isAfter(candleIntervalUpDownData.endPost.candle.getDateTime())
                     && isTrendSell.minDiffPercentPrev.compareTo(BigDecimal.valueOf(50)) > 0
                     && (stopLossPriceBottomA == null || stopLossPriceBottomA.equals(BigDecimal.ZERO) || stopLossPriceBottomA.compareTo(order.getPurchasePrice()) < 0)
             ) {
@@ -2943,21 +2944,16 @@ public class FactorialInstrumentByFiatService implements
             }
         }
 
-        if (isIntervalDown
-                && order.getPurchaseDateTime().isAfter(candleIntervalUpDownData.endPost.candle.getDateTime())) {
-            if (
-                    !res
-                            && takeProfitPrice != null
-                            && takeProfitPrice.abs().compareTo(errorD) > 0
-                            && takeProfitPrice.compareTo(candle.getClosingPrice()) < 0
-
-            ) {
-                res = true;
-                annotation += " takeProfitPrice OK";
-            }
-        } else {
-            takeProfitPrice = BigDecimal.ZERO;
-            annotation += " new takeProfitPrice=" + printPrice(takeProfitPrice);
+        if (
+                !res
+                && takeProfitPrice != null
+                && takeProfitPrice.abs().compareTo(errorD) > 0
+                && takeProfitPrice.compareTo(candle.getClosingPrice()) < 0
+                && isIntervalDown
+                && order.getPurchaseDateTime().isAfter(candleIntervalUpDownData.endPost.candle.getDateTime())
+        ) {
+            res = true;
+            annotation += " takeProfitPrice OK";
         }
 
         if (limitPrice != null) {
