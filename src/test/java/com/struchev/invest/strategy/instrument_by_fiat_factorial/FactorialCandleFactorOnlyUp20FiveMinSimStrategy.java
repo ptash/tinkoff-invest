@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 public class FactorialCandleFactorOnlyUp20FiveMinSimStrategy extends FactorialCandleFactorOnlyUp20FiveMinStrategy {
     public Boolean isFactorialSimple() { return true; }
     public Integer getPriceDiffAvgLength() { return 0; }
-    public Float getPriceDiffAvg() { return 1f; }
+    public Float getPriceDiffAvg() { return 0.5f; }
 
     //public boolean isEnabled() { return true; }
 }
