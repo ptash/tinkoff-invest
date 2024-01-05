@@ -2949,6 +2949,7 @@ public class FactorialInstrumentByFiatService implements
                 && takeProfitPrice.abs().compareTo(errorD) > 0
                 && takeProfitPrice.compareTo(candle.getClosingPrice()) < 0
                 && isIntervalDown
+                && order.getPurchaseDateTime().isAfter(candleIntervalUpDownData.endPost.candle.getDateTime())
         ) {
             res = true;
             annotation += " takeProfitPrice OK";
