@@ -2698,7 +2698,7 @@ public class FactorialInstrumentByFiatService implements
             setTrendDown(strategy, candle, isTrendSell.isIntervalDown);
             if (
                     isTrendSell.isIntervalDown
-                    && order.getPurchaseDateTime().isAfter(candleIntervalUpDownData.endPost.candle.getDateTime())
+                    && order.getPurchaseDateTime().isBefore(candleIntervalUpDownData.endPost.candle.getDateTime())
                     && isTrendSell.minDiffPercentPrev.compareTo(BigDecimal.valueOf(50)) > 0
                     && (stopLossPriceBottomA == null || stopLossPriceBottomA.equals(BigDecimal.ZERO) || stopLossPriceBottomA.compareTo(order.getPurchasePrice()) < 0)
             ) {
@@ -2950,7 +2950,7 @@ public class FactorialInstrumentByFiatService implements
                 && takeProfitPrice.abs().compareTo(errorD) > 0
                 && takeProfitPrice.compareTo(candle.getClosingPrice()) < 0
                 && isIntervalDown
-                && order.getPurchaseDateTime().isAfter(candleIntervalUpDownData.endPost.candle.getDateTime())
+                && order.getPurchaseDateTime().isBefore(candleIntervalUpDownData.endPost.candle.getDateTime())
         ) {
             res = true;
             annotation += " takeProfitPrice OK";
