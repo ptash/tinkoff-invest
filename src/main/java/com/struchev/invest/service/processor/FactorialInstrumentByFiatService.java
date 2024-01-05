@@ -3083,6 +3083,7 @@ public class FactorialInstrumentByFiatService implements
             double expectLossSum = 0;
             var k = 1;
             var kPrev = 1;
+            var sizeK = 0;
             for(var j = 0; j < size; j++) {
                 var candlePrev = list.get(0 + size);
                 var candleCur = list.get(1 + size);
@@ -3094,12 +3095,13 @@ public class FactorialInstrumentByFiatService implements
                 bestInfo += " expectLoss=" + printPrice(expectLoss);
                 expectProfitSum += expectProfit / k;
                 expectLossSum += expectLoss / k;
+                sizeK += 1 / k;
                 var kSave = k;
                 k = k + kPrev;
                 kPrev = kSave;
             }
-            expectProfitList.add(expectProfitSum / size);
-            expectLossList.add(expectLossSum / size);
+            expectProfitList.add(expectProfitSum / sizeK);
+            expectLossList.add(expectLossSum / sizeK);
         }
 
         var expectProfit = expectProfitList.stream().mapToDouble(i -> i).average().orElse(-1);
