@@ -2943,16 +2943,21 @@ public class FactorialInstrumentByFiatService implements
             }
         }
 
-        if (
-                !res
-                && takeProfitPrice != null
-                && takeProfitPrice.abs().compareTo(errorD) > 0
-                && takeProfitPrice.compareTo(candle.getClosingPrice()) < 0
-                && isIntervalDown
-                && order.getPurchaseDateTime().isAfter(candleIntervalUpDownData.endPost.candle.getDateTime())
-        ) {
-            res = true;
-            annotation += " takeProfitPrice OK";
+        if (isIntervalDown
+                && order.getPurchaseDateTime().isAfter(candleIntervalUpDownData.endPost.candle.getDateTime())) {
+            if (
+                    !res
+                            && takeProfitPrice != null
+                            && takeProfitPrice.abs().compareTo(errorD) > 0
+                            && takeProfitPrice.compareTo(candle.getClosingPrice()) < 0
+
+            ) {
+                res = true;
+                annotation += " takeProfitPrice OK";
+            }
+        } else {
+            takeProfitPrice = BigDecimal.ZERO;
+            annotation += " new takeProfitPrice=" + printPrice(takeProfitPrice);
         }
 
         if (limitPrice != null) {
