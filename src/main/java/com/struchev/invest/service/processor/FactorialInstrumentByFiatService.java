@@ -2814,6 +2814,8 @@ public class FactorialInstrumentByFiatService implements
                 var newStopLossPrice = BigDecimal.valueOf(maxPrice.doubleValue() - (maxPrice.doubleValue() - minPrice) * lossPresent);
                 if (sellCriteria.getIsMaxPriceByFib()) {
                     minPrice = Math.min(candleIntervalUpDownData.minClose, minPrice);
+                    minPrice = Math.max(order.getPurchasePrice().floatValue(), minPrice);
+                    minPrice = Math.max(stopLossPrice.floatValue(), minPrice);
                     lossPresent = 0.382f;
                     var lossPresentBottom = 0.618f;
                     newStopLossPrice = BigDecimal.valueOf(maxPrice.doubleValue() - (maxPrice.doubleValue() - minPrice) * lossPresent);
@@ -5495,11 +5497,14 @@ public class FactorialInstrumentByFiatService implements
             }
             res.annotation += " minClose=" + printPrice(minClose);
             res.annotation += " maxClose=" + printPrice(maxClose);
-            var sellTrendPrice = minClose + Math.abs(maxClose - minClose) * 0.382;
+            var sellTrendPrice = minClose + Math.abs(maxClose - minClose) * 0.236;
             res.annotation += " sellTrendPrice=" + printPrice(sellTrendPrice);
+            var buyTrendPrice = minClose + Math.abs(maxClose - minClose) * (1 - 0.236);
+            res.annotation += " buyTrendPrice=" + printPrice(buyTrendPrice);
+            var minCloseBottom = minClose - Math.abs(maxClose - minClose) * 0.382;
 
-            res.setStopLossPrice(BigDecimal.valueOf(sellTrendPrice));
-            res.setStopLossPriceBottom(BigDecimal.valueOf(minClose));
+            res.setStopLossPrice(BigDecimal.valueOf(minClose));
+            res.setStopLossPriceBottom(BigDecimal.valueOf(minCloseBottom));
             res.setTakeProfitPriceStart(BigDecimal.valueOf(minClose));
             res.setTakeProfitPriceStep(BigDecimal.valueOf(maxClose - minClose).abs());
 
@@ -5511,10 +5516,17 @@ public class FactorialInstrumentByFiatService implements
                     res.isIntervalUpAfterDown = false;
                 }
             }
-            var diff = Math.abs(sellTrendPrice - minClose);
+            if (candlePrice > buyTrendPrice) {
+                if (isIntervalUpAfterDown) {
+                    res.annotation += " isIntervalUp = false by over trend";
+                    res.isIntervalUp = false;
+                    res.isIntervalUpAfterDown = false;
+                }
+            }
+            var diff = Math.abs(minClose - minCloseBottom);
             res.annotation += " diff=" + printPrice(diff);
-            if (candlePrice - diff < sellTrendPrice) {
-                sellTrendPrice = Math.min(sellTrendPrice, candlePrice) - diff;
+            if (candlePrice - diff < minClose) {
+                sellTrendPrice = Math.min(minClose, candlePrice) - diff;
                 res.setStopLossPrice(BigDecimal.valueOf(sellTrendPrice));
                 res.setStopLossPriceBottom(BigDecimal.valueOf(sellTrendPrice - diff));
                 res.annotation += " new StopLossPrice=" + printPrice(res.getStopLossPrice());
