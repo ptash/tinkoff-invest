@@ -199,11 +199,15 @@ public class FactorialInstrumentByFiatService implements
                     }
                     candleIntervalUpDownDataCur = candleIntervalUpDownDataPrev;
                 }
+                res.annotation += " maxClose=" + printPrice(maxClose);
+                res.annotation += " minClose=" + printPrice(minClose);
                 var sellTrendPrice = minClose + Math.abs(maxClose - minClose) * (1 - 0.382);
-                res.annotation += " sellTrendPrice=" + printPrice(sellTrendPrice);
+                res.annotation += " sellTrendPrice=" + printPrice(sellTrendPrice) + ">=" + printPrice(candle.getClosingPrice().floatValue());
                 if (candle.getClosingPrice().floatValue() >= sellTrendPrice) {
                     res.isIntervalDown = false;
                     res.annotation += " SKIP DOWN UNDER TREND";
+                } else {
+                    res.annotation += " DOWN UNDER TREND";
                 }
             }
         }
@@ -301,15 +305,17 @@ public class FactorialInstrumentByFiatService implements
             res.isIntervalDown = true;
             return res;
         }
+        var isCheckMaxLassMin = false;
         if (
                 minDiffPercentPrev > 50
                 && minDiffPercent > 50
                 && maxDiff < minDiff
                 && candle.getClosingPrice().floatValue() < candleIntervalUpDownDataPrev.maxClose
         ) {
-            res.annotation += " DOWN by 50";
-            res.isIntervalDown = true;
-            return res;
+            res.annotation += " DOWN by 50 1";
+            isCheckMaxLassMin = true;
+            //res.isIntervalDown = true;
+            //return res;
         }
 
         if (
@@ -365,6 +371,15 @@ public class FactorialInstrumentByFiatService implements
         res.minDiffPercent = BigDecimal.valueOf(minDiffPercent);
         res.maxDiffPercent = BigDecimal.valueOf(maxDiffPercent);
         res.maxDiffCurPercent = BigDecimal.valueOf(maxDiffCurPercent);
+
+        if (
+                isCheckMaxLassMin
+                && maxDiff < minDiff
+        ) {
+            res.annotation += " Max < Min";
+            res.isIntervalDown = true;
+            return res;
+        }
 
         if (
                 maxDiff > 0
@@ -5394,6 +5409,7 @@ public class FactorialInstrumentByFiatService implements
             isIntervalUp = false;
             StopLossPrice = BigDecimal.ZERO;
         }
+        var isSizeUp = false;
         if (
                 isIntervalUp
                         && !isIntervalUpAfterDown
@@ -5416,6 +5432,7 @@ public class FactorialInstrumentByFiatService implements
                 annotation += " isIntervalUp = false by size up";
                 isIntervalUp = false;
                 StopLossPrice = BigDecimal.ZERO;
+                isSizeUp = true;
             }
             if (
                     buyCriteria.getIsUpMaxPercentSeePrevSize() != null
@@ -5553,6 +5570,10 @@ public class FactorialInstrumentByFiatService implements
                     res.annotation += " isIntervalUp = false by over trend";
                     res.isIntervalUp = false;
                     res.isIntervalUpAfterDown = false;
+                }
+                if (isSizeUp && candlePrice > maxClose) {
+                    res.annotation += " up by over max";
+                    res.isIntervalUp = true;
                 }
             }
             var diff = Math.abs(minClose - minCloseBottom);
