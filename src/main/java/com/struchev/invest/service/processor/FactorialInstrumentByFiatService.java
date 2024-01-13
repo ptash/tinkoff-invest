@@ -1147,6 +1147,7 @@ public class FactorialInstrumentByFiatService implements
             if (isTrendSell.maxDiffPercent != null
                     && isTrendSell.maxDiffPercent.floatValue() > 100
                     && isTrendSell.maxDiffCurPercent.floatValue() > 100
+                    && !sellCriteria.getIsMaxPriceByFib()
             ) {
                 res = false;
                 annotation += " SKIP BY maxDiffPercent > 100";
