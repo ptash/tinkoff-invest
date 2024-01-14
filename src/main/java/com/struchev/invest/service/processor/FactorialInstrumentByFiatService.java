@@ -2674,7 +2674,7 @@ public class FactorialInstrumentByFiatService implements
                         order.getPurchaseDateTime().isAfter(candleIntervalUpDownData.endPost.candle.getDateTime())
                         && order.getPurchasePrice().floatValue() > candleIntervalUpDownData.maxClose
                 ) {
-                    var v = BigDecimal.valueOf(order.getPurchasePrice().floatValue() + diffPrice * 1.618f);
+                    var v = BigDecimal.valueOf(order.getPurchasePrice().floatValue() + diffPrice * 0.236f);
                     annotation += " v=" + printPrice(v);
                     if (stopLossMaxPrice.equals(BigDecimal.ZERO) || stopLossMaxPrice.compareTo(v) < 0) {
                         stopLossMaxPriceF = v;
@@ -2949,7 +2949,7 @@ public class FactorialInstrumentByFiatService implements
                     annotation += " curLength=" + curLength + " > " + sellCriteria.getStopLossSoftLength();
                     annotation += " isUnder=" + isUnder;
                     if (
-                            (curLength > sellCriteria.getStopLossSoftLength() && candleIntervalSell)
+                            (curLength > sellCriteria.getStopLossSoftLength() && candleIntervalSell && !sellCriteria.getIsMaxPriceByFib())
                             || isUnder
                             || curLength > sellCriteria.getStopLossSoftLength() * 3
                     ) {
@@ -5509,7 +5509,8 @@ public class FactorialInstrumentByFiatService implements
             res.annotation += " beginDownFirst=" + printDateTime(candleIntervalUpDownDataCur.beginDownFirst.candle.getDateTime());
             res.annotation += " minClose=" + printPrice(minClose);
             res.annotation += " maxClose=" + printPrice(maxClose);
-            var k = 0;
+            var iDown = 0;
+            var iUp = 0;
             var i = 0;
             for (; i < newStrategy.getBuyCriteria().getPrevLengthSearchTakeProfit(); i++) {
                 var candleIntervalUpDownDataCurPrev = getPrevCandleIntervalUpDownData(newStrategy, candleIntervalUpDownDataCur);
@@ -5520,13 +5521,17 @@ public class FactorialInstrumentByFiatService implements
                         + "-" + printPrice(candleIntervalUpDownDataCurPrev.minClose) + "-" +printPrice(candleIntervalUpDownDataCurPrev.maxClose);
 
                 if (candleIntervalUpDownDataCur.maxClose < candleIntervalUpDownDataCurPrev.maxClose) {
-                    maxClose = Math.max(maxClose, candleIntervalUpDownDataCurPrev.maxClose);
+                    if (maxClose < candleIntervalUpDownDataCurPrev.maxClose) {
+                        maxClose = Math.max(maxClose, candleIntervalUpDownDataCurPrev.maxClose);
+                    } else {
+                        iUp++;
+                    }
                     minClose = Math.min(minClose, candleIntervalUpDownDataCurPrev.minClose);
                 } else {
-                    k++;
+                    iDown++;
                     minClose = Math.min(minClose, candleIntervalUpDownDataCurPrev.minClose);
                 }
-                if (k > 2) {
+                if (iDown > 2 || iUp > 2) {
                     break;
                 }
                 res.annotation += " i=" + i;
@@ -5535,7 +5540,7 @@ public class FactorialInstrumentByFiatService implements
                 candleIntervalUpDownDataCur = candleIntervalUpDownDataCurPrev;
             }
             res.annotation += " i=" + i;
-            res.annotation += " k=" + k;
+            res.annotation += " k=" + iDown;
             res.annotation += " minClose=" + printPrice(minClose);
             res.annotation += " maxClose=" + printPrice(maxClose);
             var sellTrendPrice = minClose + Math.abs(maxClose - minClose) * 0.236;
@@ -5567,7 +5572,7 @@ public class FactorialInstrumentByFiatService implements
                 }
             }
             if (candlePrice > buyTrendPrice) {
-                if (isIntervalUpAfterAllDown || candlePrice < maxClose) {
+                if (isIntervalUpAfterAllDown || (res.isIntervalUp && candlePrice < maxClose)) {
                     res.annotation += " isIntervalUp = false by over trend";
                     res.isIntervalUp = false;
                     res.isIntervalUpAfterDown = false;
