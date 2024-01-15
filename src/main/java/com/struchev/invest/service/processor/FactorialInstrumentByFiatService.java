@@ -2967,7 +2967,7 @@ public class FactorialInstrumentByFiatService implements
                     if (
                             (curLength > sellCriteria.getStopLossSoftLength() && candleIntervalSell && !sellCriteria.getIsMaxPriceByFib())
                             || isUnder
-                            //|| (curLength > sellCriteria.getStopLossSoftLength() * 3 && isUnderMiddle)
+                            || (curLength > sellCriteria.getStopLossSoftLength() * 3 && isUnderMiddle)
                             || (curLength > sellCriteria.getStopLossSoftLength() * 6)
                     ) {
                         res = true;
