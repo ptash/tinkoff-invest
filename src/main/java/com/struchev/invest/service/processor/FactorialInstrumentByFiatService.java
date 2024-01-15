@@ -2518,11 +2518,6 @@ public class FactorialInstrumentByFiatService implements
                                 }
                                 var newValue = candleIntervalUpDownDataPrevMax.minClose - Math.abs(candleIntervalUpDownDataPrevMax.minClose) * percentMax * 2f / 100f;
                                 var newStopLossPriceBottomA = newValue - Math.abs(candleIntervalUpDownDataPrevMax.minClose) * percentMax * 1f / 100f;
-                                if (sellCriteria.getIsMaxPriceByFib()) {
-                                    var minCur = Math.min(stopLossPrice.floatValue(), candleIntervalUpDownDataPrevMax.minClose);
-                                    newValue = minCur + Math.abs(candleIntervalUpDownDataPrevMax.maxClose - minCur) * (1 - 0.382f);
-                                    newStopLossPriceBottomA = minCur + Math.abs(candleIntervalUpDownDataPrevMax.maxClose - minCur) * 0.382f;
-                                }
                                 if (
                                         candleIntervalUpDownDataPrevMax != null
                                         && stopLossPrice.doubleValue() < newValue
@@ -2550,11 +2545,6 @@ public class FactorialInstrumentByFiatService implements
                     );
                     var newStopLossPriceBottomA = newStopLossPriceByMax - Math.abs(candleIntervalUpDownData.minClose) * percent / 100f;
                     annotation += " newStopLossPriceByMax=" + printPrice(newStopLossPriceByMax);
-                    if (sellCriteria.getIsMaxPriceByFib()) {
-                        var minCur = Math.min(stopLossPrice.floatValue(), candleIntervalUpDownData.minClose);
-                        newStopLossPriceByMax = minCur + Math.abs(candleIntervalUpDownData.maxClose - minCur) * (1 - 0.382f);
-                        newStopLossPriceBottomA = minCur + Math.abs(candleIntervalUpDownData.maxClose - minCur) * 0.382f;
-                    }
                     if (candleIntervalUpDownDataPrevPrev.minClose == null) {
                         annotation += " something wrong: " + candleIntervalUpDownDataPrev.annotation;
                     } else if (
@@ -2565,6 +2555,32 @@ public class FactorialInstrumentByFiatService implements
                         stopLossPrice = BigDecimal.valueOf(newStopLossPriceByMax);
                         stopLossPriceBottomA = stopLossPriceBottomA.max(BigDecimal.valueOf(newStopLossPriceBottomA));
                         annotation += "new stopLossPrice by MAX MAX=" + printPrice(stopLossPrice) + "-" + printPrice(stopLossPriceBottomA);
+                    }
+                }
+
+                if (
+                        candleIntervalUpDownData.maxClose > order.getPurchasePrice().floatValue()
+                        && sellCriteria.getIsMaxPriceByFib()
+                ) {
+                    BigDecimal stopLossPriceByMaxInterval = order.getDetails().getCurrentPrices().getOrDefault("stopLossPriceByMaxInterval", BigDecimal.ZERO);
+                    annotation += " stopLossPriceByMaxInterval=" + printPrice(stopLossPriceByMaxInterval);
+                    if (
+                            stopLossPriceByMaxInterval.equals(BigDecimal.ZERO)
+                            || stopLossPriceByMaxInterval.subtract(BigDecimal.valueOf(candleIntervalUpDownData.maxClose)).abs().compareTo(errorD) < 0
+                    ) {
+                        var minCur = Math.min(stopLossPrice.floatValue(), candleIntervalUpDownData.minClose);
+                        var newStopLossPriceByMax = minCur + Math.abs(candleIntervalUpDownData.maxClose - minCur) * (1 - 0.382f);
+                        var newStopLossPriceBottomA = minCur + Math.abs(candleIntervalUpDownData.maxClose - minCur) * 0.382f;
+                        annotation += " newStopLossPriceBottomA=" + printPrice(newStopLossPriceBottomA);
+                        if (
+                                newStopLossPriceBottomA > order.getPurchasePrice().floatValue()
+                                        && stopLossPrice.doubleValue() < newStopLossPriceByMax
+                        ) {
+                            stopLossPrice = BigDecimal.valueOf(newStopLossPriceByMax);
+                            stopLossPriceBottomA = stopLossPriceBottomA.max(BigDecimal.valueOf(newStopLossPriceBottomA));
+                            annotation += "new stopLossPrice by MAX Interval=" + printPrice(stopLossPrice) + "-" + printPrice(stopLossPriceBottomA);
+                            orderService.updateDetailsCurrentPrice(order, "stopLossPriceByMaxInterval", BigDecimal.valueOf(candleIntervalUpDownData.maxClose));
+                        }
                     }
                 }
 
