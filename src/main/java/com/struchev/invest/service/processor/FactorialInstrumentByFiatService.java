@@ -2566,7 +2566,7 @@ public class FactorialInstrumentByFiatService implements
                     annotation += " stopLossPriceByMaxInterval=" + printPrice(stopLossPriceByMaxInterval);
                     if (
                             stopLossPriceByMaxInterval.equals(BigDecimal.ZERO)
-                            || stopLossPriceByMaxInterval.subtract(BigDecimal.valueOf(candleIntervalUpDownData.maxClose)).abs().compareTo(errorD) < 0
+                            || stopLossPriceByMaxInterval.subtract(BigDecimal.valueOf(candleIntervalUpDownData.maxClose)).abs().compareTo(errorD) > 0
                     ) {
                         var minCur = Math.min(stopLossPrice.floatValue(), candleIntervalUpDownData.minClose);
                         var newStopLossPriceByMax = minCur + Math.abs(candleIntervalUpDownData.maxClose - minCur) * (1 - 0.382f);
@@ -2578,8 +2578,8 @@ public class FactorialInstrumentByFiatService implements
                         ) {
                             stopLossPrice = BigDecimal.valueOf(newStopLossPriceByMax);
                             stopLossPriceBottomA = stopLossPriceBottomA.max(BigDecimal.valueOf(newStopLossPriceBottomA));
-                            annotation += "new stopLossPrice by MAX Interval=" + printPrice(stopLossPrice) + "-" + printPrice(stopLossPriceBottomA);
-                            orderService.updateDetailsCurrentPrice(order, "stopLossPriceByMaxInterval", BigDecimal.valueOf(candleIntervalUpDownData.maxClose));
+                            annotation += " new stopLossPrice by MAX Interval=" + printPrice(stopLossPrice) + "-" + printPrice(stopLossPriceBottomA);
+                            order.getDetails().getCurrentPrices().put("stopLossPriceByMaxInterval", BigDecimal.valueOf(candleIntervalUpDownData.maxClose));
                         }
                     }
                 }
@@ -2982,7 +2982,7 @@ public class FactorialInstrumentByFiatService implements
                     annotation += " isUnderMiddle=" + isUnderMiddle;
                     if (
                             (curLength > sellCriteria.getStopLossSoftLength() && candleIntervalSell && !sellCriteria.getIsMaxPriceByFib())
-                            || isUnder
+                            || (isUnder && !sellCriteria.getIsMaxPriceByFib())
                             || (curLength > sellCriteria.getStopLossSoftLength() * 3 && isUnderMiddle)
                             || (curLength > sellCriteria.getStopLossSoftLength() * 6)
                     ) {
