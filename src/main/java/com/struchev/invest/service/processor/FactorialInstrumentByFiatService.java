@@ -2560,6 +2560,7 @@ public class FactorialInstrumentByFiatService implements
 
                 if (
                         candleIntervalUpDownData.maxClose > order.getPurchasePrice().floatValue()
+                        && candleIntervalUpDownData.maxClose > candleIntervalUpDownDataPrev.maxClose
                         && sellCriteria.getIsMaxPriceByFib()
                 ) {
                     BigDecimal stopLossPriceByMaxInterval = order.getDetails().getCurrentPrices().getOrDefault("stopLossPriceByMaxInterval", BigDecimal.ZERO);
