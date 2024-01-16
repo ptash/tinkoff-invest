@@ -2566,7 +2566,7 @@ public class FactorialInstrumentByFiatService implements
                     annotation += " stopLossPriceByMaxInterval=" + printPrice(stopLossPriceByMaxInterval);
                     if (
                             stopLossPriceByMaxInterval.equals(BigDecimal.ZERO)
-                            || stopLossPriceByMaxInterval.subtract(BigDecimal.valueOf(candleIntervalUpDownData.maxClose)).abs().compareTo(errorD) > 0
+                            || stopLossPriceByMaxInterval.add(errorD).compareTo(BigDecimal.valueOf(candleIntervalUpDownData.maxClose)) < 0
                     ) {
                         var minCur = Math.min(stopLossPrice.floatValue(), candleIntervalUpDownData.minClose);
                         var newStopLossPriceByMax = minCur + Math.abs(candleIntervalUpDownData.maxClose - minCur) * (1 - 0.382f);
