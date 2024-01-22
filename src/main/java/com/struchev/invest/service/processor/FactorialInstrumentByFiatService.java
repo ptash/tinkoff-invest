@@ -5029,6 +5029,17 @@ public class FactorialInstrumentByFiatService implements
         var buyCriteria = strategy.getBuyCriteria();
 
         var stopLossPrice = BigDecimal.ZERO;
+        var intervalPercentNear = 100f * (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) / Math.abs(candleIntervalUpDownData.minClose);
+        if (intervalPercentNear < buyCriteria.getCandlePriceMinFactor()) {
+            intervalPercentNear = buyCriteria.getCandlePriceMinFactor();
+        }
+        var intervalPercentNearDown = intervalPercentNear;
+        if (candle.getClosingPrice().doubleValue() > candleIntervalUpDownData.maxClose) {
+            intervalPercentNearDown = (float) (100f * (candle.getClosingPrice().doubleValue() - candleIntervalUpDownData.minClose) / Math.abs(candleIntervalUpDownData.minClose));
+            if (intervalPercentNearDown < buyCriteria.getCandlePriceMinFactor()) {
+                intervalPercentNearDown = buyCriteria.getCandlePriceMinFactor();
+            }
+        }
         //var stopLossPriceBottom = BigDecimal.ZERO;
         if (isIntervalUpRes != null && isIntervalUpRes.stopLossPrice != null && !isIntervalUpRes.stopLossPrice.equals(BigDecimal.ZERO)) {
             stopLossPrice = isIntervalUpRes.stopLossPrice;
@@ -5043,29 +5054,23 @@ public class FactorialInstrumentByFiatService implements
             setOrderBigDecimalData(strategy, candle, "takeProfitPriceStep", isIntervalUpRes.takeProfitPriceStep);
             var intervalPercentStep = 100f * (isIntervalUpRes.takeProfitPriceStep.floatValue()) / isIntervalUpRes.takeProfitPriceStart.abs().floatValue();
             setOrderBigDecimalData(strategy, candle, "intervalPercentStep", BigDecimal.valueOf(intervalPercentStep));
+            intervalPercentNear = 100f * isIntervalUpRes.takeProfitPriceStep.floatValue()/ Math.abs(isIntervalUpRes.stopLossPrice.floatValue());
+            if (intervalPercentNear < buyCriteria.getCandlePriceMinFactor()) {
+                intervalPercentNear = buyCriteria.getCandlePriceMinFactor();
+            }
+            intervalPercentNearDown = intervalPercentNear;
         } else {
             setOrderBigDecimalData(strategy, candle, "takeProfitPriceStart", BigDecimal.ZERO);
             setOrderBigDecimalData(strategy, candle, "takeProfitPriceStep", BigDecimal.ZERO);
             setOrderBigDecimalData(strategy, candle, "intervalPercentStep", BigDecimal.ZERO);
         }
-
         setOrderBooleanData(strategy, candle, "isIntervalUp", isIntervalUp);
         setOrderBooleanData(strategy, candle, "isMinMin", false);
         setOrderBooleanData(strategy, candle, "isDownWithLimits", false);
         setOrderBigDecimalData(strategy, candle, "maxBuyIntervalPrice", BigDecimal.valueOf(candleIntervalUpDownData.maxClose));
-        var intervalPercentNear = 100f * (candleIntervalUpDownData.maxClose - candleIntervalUpDownData.minClose) / Math.abs(candleIntervalUpDownData.minClose);
-        if (intervalPercentNear < buyCriteria.getCandlePriceMinFactor()) {
-            intervalPercentNear = buyCriteria.getCandlePriceMinFactor();
-        }
         setOrderBigDecimalData(strategy, candle, "intervalPercentNear", BigDecimal.valueOf(intervalPercentNear));
-        setOrderBigDecimalData(strategy, candle, "intervalPercentNearDown", BigDecimal.valueOf(intervalPercentNear));
-        if (candle.getClosingPrice().doubleValue() > candleIntervalUpDownData.maxClose) {
-            var intervalPercentNearDown = 100f * (candle.getClosingPrice().doubleValue() - candleIntervalUpDownData.minClose) / Math.abs(candleIntervalUpDownData.minClose);
-            if (intervalPercentNearDown < buyCriteria.getCandlePriceMinFactor()) {
-                intervalPercentNearDown = buyCriteria.getCandlePriceMinFactor();
-            }
-            setOrderBigDecimalData(strategy, candle, "intervalPercentNearDown", BigDecimal.valueOf(intervalPercentNearDown));
-        }
+        setOrderBigDecimalData(strategy, candle, "intervalPercentNearDown", BigDecimal.valueOf(intervalPercentNearDown));
+
         if (!isSetProfit && strategy.getBuyCriteria().getPrevLengthSearchTakeProfit() > 0) {
             var candleIntervalUpDownDataCur = candleIntervalUpDownData;
             var takeProfit = candleIntervalUpDownData.maxClose;

@@ -7,7 +7,7 @@ public class FactorialCandleFactorOnlyUp20SimStrategy extends FactorialCandleFac
 
     public Boolean isFactorialSimple() { return true; }
     public Integer getPriceDiffAvgLength() { return 0; }
-    public Float getPriceDiffAvg() { return 0.5f; }
+    public Float getPriceDiffAvg() { return 1f; }
 
     //public boolean isEnabled() { return true; }
 }
