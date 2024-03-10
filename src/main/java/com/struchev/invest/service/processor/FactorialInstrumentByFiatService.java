@@ -2988,6 +2988,8 @@ public class FactorialInstrumentByFiatService implements
 
         annotation = " res=" + res + " open = " + printPrice(candle.getOpenPrice()) + " close=" + printPrice(candle.getClosingPrice()) + " " + annotation;
 
+        var isTrendUp = getTrendUp(strategy, candle);
+        var isTrendDown = getTrendDown(strategy, candle);
         notificationService.reportStrategyExt(
                 res,
                 strategy,
@@ -3022,13 +3024,13 @@ public class FactorialInstrumentByFiatService implements
                 takeProfitPriceStart.equals(BigDecimal.ZERO) ? "" : takeProfitPriceStart,
                 stopLossPriceBottomA == null || stopLossPriceBottomA.equals(BigDecimal.ZERO) ? "" : stopLossPriceBottomA,
                 maxPriceProfitStep == null || maxPriceProfitStep.equals(BigDecimal.ZERO) ? "" : maxPriceProfitStep,
-                getTrendUp(strategy, candle) ?
+                (isTrendUp != null && isTrendUp) ?
                         candle.getClosingPrice().add(
                                 candle.getClosingPrice().abs().multiply(
                                         BigDecimal.valueOf(2 * profitPercentFromBuyMinPrice / 100)
                                 ))
                         : "",
-                getTrendDown(strategy, candle) ? candle.getClosingPrice().subtract(candle.getClosingPrice().abs().multiply(BigDecimal.valueOf(2 * profitPercentFromBuyMinPrice / 100))) : "",
+                (isTrendDown != null && isTrendDown) ? candle.getClosingPrice().subtract(candle.getClosingPrice().abs().multiply(BigDecimal.valueOf(2 * profitPercentFromBuyMinPrice / 100))) : "",
                 res ? candle.getClosingPrice().subtract(candle.getClosingPrice().abs().multiply(BigDecimal.valueOf(4 * profitPercentFromBuyMinPrice / 100))) : ""
         );
         return res;
