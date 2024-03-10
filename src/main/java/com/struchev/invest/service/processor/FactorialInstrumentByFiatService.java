@@ -2033,6 +2033,7 @@ public class FactorialInstrumentByFiatService implements
             if (
                     !isSkipUp
                     && isIntervalUp
+                    && candleIntervalUpDownData.endPost != null
             ) {
                 annotation += " isIntervalUp " + printDateTime(candleIntervalUpDownData.endPost.candle.getDateTime());
                 if (!order.getPurchaseDateTime().isBefore(candleIntervalUpDownData.endPost.candle.getDateTime())) {
