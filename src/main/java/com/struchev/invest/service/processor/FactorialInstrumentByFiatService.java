@@ -2406,9 +2406,10 @@ public class FactorialInstrumentByFiatService implements
         var errorD =  BigDecimal.valueOf(0.00001);
         var isIntervalDown = true;
         if (
-                sellCriteria.getIsOnlyStopLoss()
+                candleIntervalUpDownData.beginDownFirst != null
+                && (sellCriteria.getIsOnlyStopLoss()
                 || isIntervalUp
-                || isDownWithLimits
+                || isDownWithLimits)
         ) {
             res = false;
             stopLossPrice = order.getDetails().getCurrentPrices().getOrDefault("stopLossPrice", BigDecimal.ZERO);
