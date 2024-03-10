@@ -62,7 +62,7 @@ public class CandleListenerService {
                     return candles.stream();
                 })
                 .sorted(Comparator.comparing(CandleDomainEntity::getDateTime))
-                .forEach(c -> purchaseService.observeNewCandle(c));
+                .forEach(c -> purchaseService.observeNewCandleNoThrow(c));
 
         notificationService.sendMessageAndLog("Listening candle events... " + number);
         try {
