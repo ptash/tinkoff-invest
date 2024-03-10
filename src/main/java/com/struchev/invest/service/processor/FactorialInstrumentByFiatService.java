@@ -3022,7 +3022,12 @@ public class FactorialInstrumentByFiatService implements
                 takeProfitPriceStart.equals(BigDecimal.ZERO) ? "" : takeProfitPriceStart,
                 stopLossPriceBottomA == null || stopLossPriceBottomA.equals(BigDecimal.ZERO) ? "" : stopLossPriceBottomA,
                 maxPriceProfitStep == null || maxPriceProfitStep.equals(BigDecimal.ZERO) ? "" : maxPriceProfitStep,
-                getTrendUp(strategy, candle) ? candle.getClosingPrice().add(candle.getClosingPrice().abs().multiply(BigDecimal.valueOf(2 * profitPercentFromBuyMinPrice / 100))) : "",
+                getTrendUp(strategy, candle) ?
+                        candle.getClosingPrice().add(
+                                candle.getClosingPrice().abs().multiply(
+                                        BigDecimal.valueOf(2 * profitPercentFromBuyMinPrice / 100)
+                                ))
+                        : "",
                 getTrendDown(strategy, candle) ? candle.getClosingPrice().subtract(candle.getClosingPrice().abs().multiply(BigDecimal.valueOf(2 * profitPercentFromBuyMinPrice / 100))) : "",
                 res ? candle.getClosingPrice().subtract(candle.getClosingPrice().abs().multiply(BigDecimal.valueOf(4 * profitPercentFromBuyMinPrice / 100))) : ""
         );
