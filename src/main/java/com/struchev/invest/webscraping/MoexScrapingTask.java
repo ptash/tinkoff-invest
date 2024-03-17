@@ -54,7 +54,7 @@ public class MoexScrapingTask {
     private final InstrumentService instrumentService;
 
     @Value("${moex.scraping.enabled:true}")
-    Boolean isEnabled = false;
+    Boolean isEnabled = true;
 
     @Scheduled(cron = "5,10,15 11,16 * * *")
     public void getDerivativeUsdRates() {
@@ -134,6 +134,98 @@ public class MoexScrapingTask {
                 log.error("Getting moex contract results fail for {}: empty moexCode", instrument.getFigi());
                 continue;
             }
+            /*
+            try {
+                URL buildUrl = new URL("https://iss.moex.com/iss/apps/loader/v1/build.json");
+                HttpURLConnection con = (HttpsURLConnection)buildUrl.openConnection();
+                con.setRequestMethod("POST");
+                con.setRequestProperty("Content-Type", "application/json");
+                con.setRequestProperty("Accept", "application/json");
+                con.setDoOutput(true);
+                String jsonInputString = String.format(
+                        "{\"name\":\"security_history\",\"extension\":\"csv\",\"compressed\":0,\"filters\":{\"engine\":\"futures\",\"market\":\"forts\",\"security\":\"%s\",\"from\":\"%s\",\"till\":\"%s\",\"iss.delimiter\":\",\",\"lang\":\"ru\"}}",
+                        instrument.getMoexCode(),
+                        OffsetDateTime.now().minusDays(30).format(DateTimeFormatter.ofPattern("yyyy-MM-dd")),
+                        OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+                );
+                try(OutputStream os = con.getOutputStream()) {
+                    byte[] input = jsonInputString.getBytes("utf-8");
+                    os.write(input, 0, input.length);
+                }
+                String jsonString = "";
+                try(BufferedReader br = new BufferedReader(
+                        new InputStreamReader(con.getInputStream(), "utf-8"))) {
+                    StringBuilder response = new StringBuilder();
+                    String responseLine = null;
+                    while ((responseLine = br.readLine()) != null) {
+                        response.append(responseLine.trim());
+                    }
+                    jsonString = response.toString();
+                }
+                Gson gson = new Gson();
+                Type typeOfHashMap = new TypeToken<Map<String, String>>() { }.getType();
+                Map<String, String> csvResult = gson.fromJson(jsonString, typeOfHashMap);
+                var uuid = csvResult.get("uuid");
+                if (uuid.isEmpty()) {
+                    log.error("Uuid is empty for {}", instrument.getMoexCode());
+                    continue;
+                }
+            } catch (Exception e) {
+                var msg = String.format("An error during get moex contract results from %s: %s", urlString, e.getMessage());
+                log.error(msg, e);
+                continue;
+            }
+            */
+            String urlString = String.format(
+                    "https://iss.moex.com/iss/history/engines/futures/markets/forts/securities/%s.json?iss.meta=off&iss.json=extended&callback=JSON_CALLBACK&lang=ru&iss.only=history&limit=100&start=0&from=%s&till=%s",
+                    instrument.getTiket(),
+                    OffsetDateTime.now().minusDays(30).format(DateTimeFormatter.ofPattern("yyyy-MM-dd")),
+                    OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+            );
+            log.info("Getting moex contract results for {} ({}) from {}", instrument.getFigi(), instrument.getTiket(), urlString);
+            try {
+                ContractResultEntity contractResult = null;
+                List<String> shortnames = new ArrayList<>();
+                URL url = new URL(urlString);
+                InputStream stream = url.openStream();
+                JSONParser jsonParser = new JSONParser(stream, "UTF-8");
+                ArrayList jsonObject = (ArrayList)jsonParser.parse();
+                log.info("Get json: {}", jsonObject);
+                if (jsonObject.size() > 1) {
+                    LinkedHashMap obj2 = (LinkedHashMap)jsonObject.get(1);
+                    ArrayList history = (ArrayList)obj2.get("history");
+                    for (var ij = 0; ij < history.size(); ij++) {
+                        LinkedHashMap security = (LinkedHashMap)history.get(ij);
+                        if (!instrument.getTiket().equals(security.get("SECID"))) {
+                            shortnames.add((String)security.get("SECID"));
+                            continue;
+                        }
+                        var lastSettlePrice = security.get("SETTLEPRICE");
+                        BigDecimal price;
+                        if (lastSettlePrice instanceof BigDecimal) {
+                            price = (BigDecimal) lastSettlePrice;
+                        } else if (lastSettlePrice instanceof BigInteger) {
+                            price = new BigDecimal((BigInteger)lastSettlePrice);
+                        } else {
+                            log.error("Getting moex page contract result {} ({}) fail: SETTLEPRICE = {} in unknown format", instrument.getFigi(), instrument.getMoexCode(), lastSettlePrice);
+                            continue;
+                        }
+                        String date = (String)security.get("TRADEDATE");
+                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                        TemporalAccessor acc = formatter.parse(date);
+                        OffsetDateTime dateTime = LocalDate.from(acc).atStartOfDay().atOffset(ZoneId.systemDefault().getRules().getOffset(Instant.now()));
+                        dateTime = dateTime.plusHours(19);
+                        contractResult = saveContractResult(instrument, dateTime, price);
+                    }
+                }
+                if (null == contractResult) {
+                    log.error("Getting moex page contract result {} ({}) fail: no suitable code found among {}", instrument.getFigi(), instrument.getTiket(), String.join(",", shortnames));
+                }
+            } catch (Exception e) {
+                var msg = String.format("An error during get moex page contract result from %s: %s", urlString, e.getMessage());
+                log.error(msg, e);
+            }
+            /*
             String urlString = String.format(
                     "https://www.moex.com/ru/derivatives/contractresults-exp.aspx?day1=%s&day2=%s&code=%s",
                     OffsetDateTime.now().minusDays(30).format(DateTimeFormatter.ofPattern("yyyyMMdd")),
@@ -165,7 +257,7 @@ public class MoexScrapingTask {
             } catch (Exception e) {
                 var msg = String.format("An error during get moex contract results from %s: %s", urlString, e.getMessage());
                 log.error(msg, e);
-            }
+            }*/
         }
     }
 
@@ -226,6 +318,9 @@ public class MoexScrapingTask {
                         OffsetDateTime dateTime = LocalDateTime.from(acc).atOffset(ZoneId.systemDefault().getRules().getOffset(Instant.now()));
                         dateTime = dateTime.minusMinutes(dateTime.getMinute());
                         dateTime = dateTime.minusSeconds(dateTime.getSecond());
+                        if (dateTime.getHour() == 18 || dateTime.getHour() == 13) {
+                            dateTime = dateTime.plusHours(1);
+                        }
                         if (dateTime.getHour() != 19 && dateTime.getHour() != 14) {
                             log.error("Getting moex page contract result {} ({}) fail: hour in {} ({}) is not 19 or 14", instrument.getFigi(), instrument.getMoexCode(), imTime, dateTime);
                             continue;
