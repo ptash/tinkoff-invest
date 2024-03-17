@@ -32,6 +32,9 @@ public abstract class ATinkoffAPI implements ITinkoffCommonAPI, ITinkoffOrderAPI
     @Value("${tinkoff.is-token-sandbox:false}")
     private Boolean isSandboxMode;
 
+    @Value("${tinkoff.net.debug:null}")
+    private String netDebug;
+
     private InvestApi api;
 
     @Override
@@ -59,6 +62,10 @@ public abstract class ATinkoffAPI implements ITinkoffCommonAPI, ITinkoffOrderAPI
 
     @PostConstruct
     private void init() {
+        //System.setProperty("javax.net.debug", "ssl:handshake");
+        if (netDebug != null && !netDebug.isEmpty()) {
+            System.setProperty("javax.net.debug", netDebug);
+        }
         if (null == token || token.isEmpty()) {
             throw new RuntimeException("Token is empty");
         }

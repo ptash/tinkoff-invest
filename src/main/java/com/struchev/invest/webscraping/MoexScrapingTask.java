@@ -152,7 +152,7 @@ public class MoexScrapingTask {
                     {new FakeX509TrustManager()};
             context.init(null, trustManagers, new java.security.SecureRandom());
         } catch (Exception e) {
-            var msg = String.format("An error during get moex derivative usd rates from %s new candle %s", e.getMessage());
+            var msg = String.format("An error during get moex derivative usd rates %s", e.getMessage());
             log.error(msg, e);
             return;
         }
@@ -161,11 +161,23 @@ public class MoexScrapingTask {
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
             DocumentBuilder docBuilder = dbf.newDocumentBuilder();
 
-            URL url = new URL(urlString);
-            var https = (HttpsURLConnection)url.openConnection();
-            https.setHostnameVerifier(new FakeHostnameVerifier());
-            https.setSSLSocketFactory(context.getSocketFactory());
-            InputStream stream = https.getInputStream();
+            InputStream stream = null;
+            var maxTry = 2;
+            for (var i = 0; i < maxTry; i++) {
+                try {
+                    URL url = new URL(urlString);
+                    var https = (HttpsURLConnection) url.openConnection();
+                    https.setHostnameVerifier(new FakeHostnameVerifier());
+                    https.setSSLSocketFactory(context.getSocketFactory());
+                    stream = https.getInputStream();
+                } catch (Exception e) {
+                    if ((i + 1) == maxTry) {
+                        throw e;
+                    }
+                    var msg = String.format("An error during get moex derivative usd rates from %s new candle %s", urlString, e.getMessage());
+                    log.warn(msg);
+                }
+            }
             var doc = docBuilder.parse(stream);
             doc.getDocumentElement().normalize();
             if (!doc.getDocumentElement().getAttribute("exchange-type").equals(exchangeType)) {
