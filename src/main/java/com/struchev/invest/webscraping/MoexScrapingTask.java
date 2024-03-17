@@ -24,6 +24,9 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import javax.annotation.PostConstruct;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLSession;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.InputStream;
@@ -31,7 +34,10 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.net.Socket;
 import java.net.URL;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
@@ -56,6 +62,72 @@ public class MoexScrapingTask {
     @Value("${moex.scraping.enabled:true}")
     Boolean isEnabled = true;
 
+    public static class FakeX509TrustManager implements javax.net.ssl.X509TrustManager
+    {
+        @Override
+        public void checkClientTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
+
+        }
+
+        @Override
+        public void checkServerTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
+
+        }
+
+        @Override
+        public X509Certificate[] getAcceptedIssuers() {
+            return null;
+            //return new X509Certificate[0];
+        }
+    }
+
+    public static class FakeX509TrustManager2 extends javax.net.ssl.X509ExtendedTrustManager {
+        @Override
+        public void checkClientTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
+
+        }
+
+        @Override
+        public void checkServerTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
+
+        }
+
+        @Override
+        public java.security.cert.X509Certificate[] getAcceptedIssuers()
+        {
+            return null;
+        }
+
+        @Override
+        public void checkClientTrusted(X509Certificate[] x509Certificates, String s, Socket socket) throws CertificateException {
+
+        }
+
+        @Override
+        public void checkServerTrusted(X509Certificate[] x509Certificates, String s, Socket socket) throws CertificateException {
+
+        }
+
+        @Override
+        public void checkClientTrusted(X509Certificate[] x509Certificates, String s, SSLEngine sslEngine) throws CertificateException {
+
+        }
+
+        @Override
+        public void checkServerTrusted(X509Certificate[] x509Certificates, String s, SSLEngine sslEngine) throws CertificateException {
+
+        }
+    }
+
+    public static class FakeHostnameVerifier implements javax.net.ssl.HostnameVerifier
+    {
+
+        @Override
+        public boolean verify(String s, SSLSession sslSession) {
+            return true;
+        }
+    }
+
     @Scheduled(cron = "5,10,15 11,16 * * *")
     public void getDerivativeUsdRates() {
         if (!isEnabled) {
@@ -71,12 +143,29 @@ public class MoexScrapingTask {
                 OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
         );
         log.info("Getting moex derivative usd rates from {}", urlString);
+
+        // fix Couldn't kickstart handshaking
+        javax.net.ssl.SSLContext context = null;
+        try {
+            context = javax.net.ssl.SSLContext.getInstance("SSL");
+            var trustManagers = new javax.net.ssl.TrustManager[]
+                    {new FakeX509TrustManager()};
+            context.init(null, trustManagers, new java.security.SecureRandom());
+        } catch (Exception e) {
+            var msg = String.format("An error during get moex derivative usd rates from %s new candle %s", e.getMessage());
+            log.error(msg, e);
+            return;
+        }
+
         try {
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
             DocumentBuilder docBuilder = dbf.newDocumentBuilder();
 
             URL url = new URL(urlString);
-            InputStream stream = url.openStream();
+            var https = (HttpsURLConnection)url.openConnection();
+            https.setHostnameVerifier(new FakeHostnameVerifier());
+            https.setSSLSocketFactory(context.getSocketFactory());
+            InputStream stream = https.getInputStream();
             var doc = docBuilder.parse(stream);
             doc.getDocumentElement().normalize();
             if (!doc.getDocumentElement().getAttribute("exchange-type").equals(exchangeType)) {
