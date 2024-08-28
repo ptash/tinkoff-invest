@@ -504,7 +504,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
             var featureData = getFeatureData(instrument);
             addFeatureDataCashed(instrument, featureData);
             annotate += " initialMargin: " + featureData.initialMargin;
-            price = featureData.initialMargin.multiply(BigDecimal.valueOf(2));
+            price = featureData.initialMargin.multiply(BigDecimal.valueOf(getFeatureMultiply()));
         }
         var total = price.multiply(BigDecimal.valueOf(count));
         log.info("Checking buy of figi {}: {} > {}", instrument.getFigi(), money, total);

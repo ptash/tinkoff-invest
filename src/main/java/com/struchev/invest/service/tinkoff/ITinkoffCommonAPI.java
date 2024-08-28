@@ -15,4 +15,5 @@ public interface ITinkoffCommonAPI {
     InvestApi getApi();
     String getAccountId();
     boolean getIsSandboxMode();
+    Integer getFeatureMultiply();
 }

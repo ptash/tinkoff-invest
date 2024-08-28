@@ -35,6 +35,9 @@ public abstract class ATinkoffAPI implements ITinkoffCommonAPI, ITinkoffOrderAPI
     @Value("${tinkoff.net.debug:null}")
     private String netDebug;
 
+    @Value("${tinkoff.feature.multiply:1}")
+    private Integer featureMultiply;
+
     private InvestApi api;
 
     @Override
@@ -58,6 +61,10 @@ public abstract class ATinkoffAPI implements ITinkoffCommonAPI, ITinkoffOrderAPI
     @Override
     public boolean getIsSandboxMode() {
         return isSandboxMode;
+    }
+
+    public Integer getFeatureMultiply() {
+        return featureMultiply;
     }
 
     @PostConstruct

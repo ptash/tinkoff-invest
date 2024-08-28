@@ -1,4 +1,4 @@
-FROM gradle:6.9.2-jdk11-alpine AS build
+FROM gradle:6.9.2-jdk11 AS build
 WORKDIR /app
 COPY . ./
 RUN gradle clean bootJar --info
