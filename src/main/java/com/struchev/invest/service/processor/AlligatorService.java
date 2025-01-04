@@ -126,9 +126,9 @@ public class AlligatorService implements
                 strategy,
                 candle,
                 "Date|open|high|low|close|ema2|profit|loss|limitPrice|lossAvg|deadLineTop|investBottom|investTop|smaTube|strategy"
-                        + "|emaBlue1|emaRed|emaGreen|emaBlue|max|min|zs|waitMax|maxBuy",
+                        + "|emaBlue1|emaRed|emaGreen|emaBlue|max|min|zs|waitMax|maxBuy|limitPrice",
                 "{} | {} | {} | {} | {} | | {} | {} | | {} | ||||by {}"
-                        + "| {} | {} | {} | {} | {} | {} | {} | {} | {}",
+                        + "| {} | {} | {} | {} | {} | {} | {} | {} | {} |",
                 printDateTime(candle.getDateTime()),
                 candle.getOpenPrice(),
                 candle.getHighestPrice(),
@@ -182,7 +182,8 @@ public class AlligatorService implements
 
         Double limitPrice = null;
         if (
-                zs > green
+                zs != null
+                && zs > green
                 && green > red
                 && red > blue
         ) {

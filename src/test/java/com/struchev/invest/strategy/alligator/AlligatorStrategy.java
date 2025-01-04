@@ -11,6 +11,9 @@ public class AlligatorStrategy extends AAlligatorStrategy {
     static {
         //FIGIES.put("FUTNG1124000", 1); // NG-11.24 Природный газ
         FIGIES.put("FUTNG0125000", 1); // NG-01.25 Природный газ
+        FIGIES.put("FUTGLDRUBF00", 1); // GLDRUBF Золото (rub)
+        FIGIES.put("FUTUSDRUBF00", 1); // USDRUBF USDRUBF Доллар - Рубль
+        FIGIES.put("FUTIMOEXF000", 1); // USDRUBF USDRUBF Доллар - Рубль
     }
     @Override
     public Map<String, Integer> getFigies()  { return FIGIES; }
