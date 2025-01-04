@@ -110,12 +110,16 @@ public class AlligatorService implements
         if (green != null) {
             zs = green + (green - blue) * 1.618;
             Float newGreenPercent = (float) ((100.f * (zs - green) / Math.abs(green)));
+            var average = getAveragePercent(candle.getFigi(), candle.getDateTime(), strategy);
             annotation += " newGreenPercent=" + printPrice(newGreenPercent);
-            if (newGreenPercent < strategy.getMinGreenPercent()) {
+            annotation += " average=" + printPrice(average);
+            Float newGreenPercentAverage = (float) (newGreenPercent / average);
+            annotation += " newGreenPercentAverage=" + printPrice(newGreenPercentAverage);
+            if (newGreenPercentAverage < strategy.getMinGreenPercent()) {
                 annotation += " skip by percent<" + strategy.getMinGreenPercent();
                 resBuy = false;
             }
-            if (newGreenPercent > strategy.getMaxGreenPercent()) {
+            if (newGreenPercentAverage > strategy.getMaxGreenPercent()) {
                 annotation += " skip by percent<" + strategy.getMaxGreenPercent();
                 resBuy = false;
             }
@@ -193,13 +197,20 @@ public class AlligatorService implements
             var sellLimitCriteria = strategy.getSellLimitCriteria(candle.getFigi());
             Float newLimitPercent = (float) ((100.f * (limitPrice.floatValue() - purchaseRate.floatValue()) / Math.abs(purchaseRate.floatValue())));
             Float newGreenPercent = (float) ((100.f * (zs - green) / Math.abs(green)));
+            var average = getAveragePercent(candle.getFigi(), candle.getDateTime(), strategy);
+            annotation += " average=" + printPrice(average);
+            Float newGreenPercentAverage = (float) (newGreenPercent / average);
+            Float newLimitPercentAverage = (float) (newLimitPercent / average);
+
             annotation += " limitPrice=" + printPrice(limitPrice);
             annotation += " newLimitPercent=" + printPrice(newLimitPercent);
+            annotation += " newLimitPercentAverage=" + printPrice(newLimitPercentAverage);
             annotation += " newGreenPercent=" + printPrice(newGreenPercent);
+            annotation += " newGreenPercentAverage=" + printPrice(newGreenPercentAverage);
             annotation += " origProfitPercent=" + strategy.getSellLimitCriteriaOrig().getExitProfitPercent();
             if (
-                    newLimitPercent > strategy.getSellLimitCriteriaOrig().getExitProfitPercent()
-                    && newGreenPercent > strategy.getSellLimitCriteriaOrig().getExitProfitPercent()
+                    newLimitPercentAverage > strategy.getSellLimitCriteriaOrig().getExitProfitPercent()
+                    && newGreenPercentAverage > strategy.getSellLimitCriteriaOrig().getExitProfitPercent()
             ) {
                 sellLimitCriteria.setExitProfitPercent(newLimitPercent);
                 strategy.setSellLimitCriteria(candle.getFigi(), sellLimitCriteria);
@@ -282,6 +293,21 @@ public class AlligatorService implements
         return false;
     }
 
+    private Double getAveragePercent(
+            String figi,
+            OffsetDateTime currentDateTime,
+            AAlligatorStrategy strategy
+    ) {
+        var candleList = getCandlesByFigiByLength(figi, currentDateTime, strategy.getMaxDeep(), strategy.getInterval());
+        Double average = 0.0;
+        for (var i = 0; i < candleList.size(); i++) {
+            var blue = getAlligatorBlue(figi, candleList.get(i).getDateTime(), strategy);
+            var green = getAlligatorGreen(figi, candleList.get(i).getDateTime(), strategy);
+            average += 100 * Math.abs(blue - green) / Math.abs(green) / strategy.getMaxDeep();
+        }
+        return average;
+    }
+
     private CandleDomainEntity getLastFMaxCandle(
             String figi,
             OffsetDateTime currentDateTime,
@@ -297,8 +323,10 @@ public class AlligatorService implements
             var green = getAlligatorGreen(figi, middleCandle.getDateTime(), strategy);
             if (
                     blue == null
-                    //|| !(blue < red && red < green)
-                    || middleCandle.getLowestPrice().doubleValue() < red
+                    || !(
+                        (blue < red && red < green)
+                        || middleCandle.getLowestPrice().doubleValue() > red
+                    )
             ) {
                 break;
             }
@@ -325,8 +353,15 @@ public class AlligatorService implements
             OffsetDateTime currentDateTime,
             AAlligatorStrategy strategy
     ) {
+        String key = "Blue" + strategy.getExtName() + figi + currentDateTime;
+        var ret = getCashedValueDouble(key);
+        if (ret != null) {
+            return ret;
+        }
         List<Double> list = getSmma(figi, currentDateTime, strategy.getSmaBlueLength(), strategy.getInterval(), CandleDomainEntity::getMedianPrice, strategy.getSmaBlueOffset());
-        return list == null ? null : list.get(0);
+        var v = list == null ? null : list.get(0);
+        addCashedValueDouble(key, v);
+        return v;
     }
 
     private Double getAlligatorRed(
@@ -334,8 +369,15 @@ public class AlligatorService implements
             OffsetDateTime currentDateTime,
             AAlligatorStrategy strategy
     ) {
+        String key = "Red" + strategy.getExtName() + figi + currentDateTime;
+        var ret = getCashedValueDouble(key);
+        if (ret != null) {
+            return ret;
+        }
         List<Double> list = getSmma(figi, currentDateTime, strategy.getSmaRedLength(), strategy.getInterval(), CandleDomainEntity::getMedianPrice, strategy.getSmaRedOffset());
-        return list == null ? null : list.get(0);
+        var v = list == null ? null : list.get(0);
+        addCashedValueDouble(key, v);
+        return v;
     }
 
     private Double getAlligatorGreen(
@@ -343,8 +385,15 @@ public class AlligatorService implements
             OffsetDateTime currentDateTime,
             AAlligatorStrategy strategy
     ) {
+        String key = "Green" + strategy.getExtName() + figi + currentDateTime;
+        var ret = getCashedValueDouble(key);
+        if (ret != null) {
+            return ret;
+        }
         List<Double> list = getSmma(figi, currentDateTime, strategy.getSmaGreenLength(), strategy.getInterval(), CandleDomainEntity::getMedianPrice, strategy.getSmaGreenOffset());
-        return list == null ? null : list.get(0);
+        var v = list == null ? null : list.get(0);
+        addCashedValueDouble(key, v);
+        return v;
     }
 
     private List<Double> getSma(
@@ -532,5 +581,28 @@ public class AlligatorService implements
     private synchronized Double getCashedValueEma(String indent)
     {
         return null;
+    }
+
+    private Map<String, Double> doubleCashMap = new LinkedHashMap<>() {
+        @Override
+        protected boolean removeEldestEntry(final Map.Entry eldest) {
+            return size() > 1000;
+        }
+    };
+
+    private synchronized Double getCashedValueDouble(String indent)
+    {
+        if (doubleCashMap.containsKey(indent)) {
+            return doubleCashMap.get(indent);
+        }
+        if (doubleCashMap.size() > 1000) {
+            doubleCashMap.clear();
+        }
+        return null;
+    }
+
+    private synchronized void addCashedValueDouble(String indent, Double v)
+    {
+        doubleCashMap.put(indent, v);
     }
 }
