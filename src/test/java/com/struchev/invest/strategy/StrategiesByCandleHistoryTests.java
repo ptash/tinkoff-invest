@@ -89,7 +89,9 @@ class StrategiesByCandleHistoryTests {
     //private OffsetDateTime dateBefore = OffsetDateTime.parse("2023-12-02T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
     //private OffsetDateTime dateBefore = OffsetDateTime.parse("2023-12-09T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
     //private OffsetDateTime dateBefore = OffsetDateTime.parse("2023-12-16T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
-    private OffsetDateTime dateBefore = OffsetDateTime.parse("2023-12-16T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+    //private OffsetDateTime dateBefore = OffsetDateTime.parse("2023-12-16T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+    //private OffsetDateTime dateBefore = OffsetDateTime.parse("2024-11-16T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+    private OffsetDateTime dateBefore = OffsetDateTime.parse("2024-12-29T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
 
     @Value("${tinkoff.emulator}")
     private Boolean isTinkoffEmulator;
@@ -110,6 +112,20 @@ class StrategiesByCandleHistoryTests {
         var days = historyDuration.toDays();
         var strategies = strategySelector.getFigiesForActiveStrategies();
         log.info("Эмулируем поток свечей за заданный интервал в днях {} часах {} до {} for {} strategies", days, historyDuration.toHours(), dateBefore, strategies.size());
+
+        strategies.stream()
+                .flatMap(figi -> {
+                    var candles = candleRepository.findByFigiAndIntervalAndBeforeDateTimeLimit(figi,
+                            "1hour", dateBefore, PageRequest.of(0, 1));
+                    if (candles == null || candles.size() == 0) {
+                        log.info("getFigiesForActiveStrategies cancel {}: getCandlesByFigiByLength return {}", figi, candles);
+                        return new ArrayList<CandleDomainEntity>().stream();
+                    }
+                    var startDateTime = candles.get(0).getDateTime().minusHours(historyDuration.toHours());
+                    return candleRepository.findByFigiAndIntervalAndDateTimeAfterAndDateTimeBeforeOrderByDateTime(figi, "1hour", startDateTime, dateBefore).stream();
+                })
+                .sorted(Comparator.comparing(CandleDomainEntity::getDateTime))
+                .forEach(c -> purchaseService.observeNewCandle(c));
 
         strategies.stream()
                 .flatMap(figi -> {

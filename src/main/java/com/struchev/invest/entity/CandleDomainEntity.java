@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.OffsetDateTime;
 
 @Data
@@ -62,5 +63,9 @@ public class CandleDomainEntity implements Cloneable {
         } catch (CloneNotSupportedException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public BigDecimal getMedianPrice() {
+        return getHighestPrice().add(getLowestPrice()).divide(BigDecimal.valueOf(2), 8, RoundingMode.HALF_UP);
     }
 }

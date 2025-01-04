@@ -9,7 +9,7 @@ import com.struchev.invest.service.notification.NotificationService;
 import com.struchev.invest.service.order.OrderForShortService;
 import com.struchev.invest.service.order.OrderService;
 import com.struchev.invest.strategy.AStrategy;
-import com.struchev.invest.strategy.instrument_by_fiat_factorial.AInstrumentByFiatFactorialStrategy;
+import com.struchev.invest.strategy.IStrategyShort;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -235,10 +235,10 @@ public class CalculatorFacade {
 
     public AStrategy getStrategyShort(AStrategy strategy) {
         if (!strategShortMap.containsKey(strategy.getName())) {
-            if (strategy instanceof AInstrumentByFiatFactorialStrategy) {
-                var strategyShort = ((AInstrumentByFiatFactorialStrategy) strategy).clone();
+            if (strategy instanceof IStrategyShort && strategy instanceof Cloneable) {
+                var strategyShort = ((IStrategyShort) strategy).clone();
                 strategyShort.setExtName(strategy.getName() + "Short");
-                strategShortMap.put(strategy.getName(), strategyShort);
+                strategShortMap.put(strategy.getName(), (AStrategy) strategyShort);
             } else {
                 throw new RuntimeException("Short is not supported by " + strategy.getName());
             }

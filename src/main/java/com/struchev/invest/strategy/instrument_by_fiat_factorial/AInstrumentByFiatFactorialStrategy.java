@@ -1,6 +1,7 @@
 package com.struchev.invest.strategy.instrument_by_fiat_factorial;
 
 import com.struchev.invest.strategy.AStrategy;
+import com.struchev.invest.strategy.IStrategyShort;
 import lombok.Builder;
 import lombok.Data;
 
@@ -14,7 +15,7 @@ import java.util.Map;
  * Стратегии торговли, зарабатывающие на изменении стоимости торговых инструментов, относительно фиатной валюты
  * Пример: продажа/покупка акций Apple за USD
  */
-public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy implements Cloneable {
+public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy implements Cloneable, IStrategyShort {
     String extName;
 
     /**
@@ -35,7 +36,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
         this.extName = name;
     }
 
-    public AInstrumentByFiatFactorialStrategy clone() {
+    public IStrategyShort clone() {
         try {
             return (AInstrumentByFiatFactorialStrategy)super.clone();
         } catch (CloneNotSupportedException e) {

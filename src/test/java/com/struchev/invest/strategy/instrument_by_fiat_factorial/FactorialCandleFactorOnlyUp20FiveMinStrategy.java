@@ -19,5 +19,5 @@ public class FactorialCandleFactorOnlyUp20FiveMinStrategy extends FactorialCandl
         sell.setCandleInterval("5min");
         return sell;
     }
-    public boolean isEnabled() { return true; }
+    //public boolean isEnabled() { return true; }
 }
