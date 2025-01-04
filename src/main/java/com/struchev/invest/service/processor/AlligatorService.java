@@ -72,24 +72,49 @@ public class AlligatorService implements
         var annotation = "";
         var resBuy = false;
 
-        List<Double> emaBlue = getSmma(candle.getFigi(), candle.getDateTime(), strategy.getSmaBlueLength(), strategy.getInterval(), CandleDomainEntity::getMedianPrice, strategy.getSmaBlueOffset());
-        List<Double> emaRed = getSmma(candle.getFigi(), candle.getDateTime(), strategy.getSmaRedLength(), strategy.getInterval(), CandleDomainEntity::getMedianPrice, strategy.getSmaRedOffset());
-        List<Double> emaGreen = getSmma(candle.getFigi(), candle.getDateTime(), strategy.getSmaGreenLength(), strategy.getInterval(), CandleDomainEntity::getMedianPrice, strategy.getSmaGreenOffset());
+        var blue = getAlligatorBlue(candle.getFigi(), candle.getDateTime(), strategy);
+        var red = getAlligatorRed(candle.getFigi(), candle.getDateTime(), strategy);
+        var green = getAlligatorGreen(candle.getFigi(), candle.getDateTime(), strategy);
 
-        var candleList = getCandlesByFigiByLength(candle.getFigi(), candle.getDateTime(), 5, strategy.getInterval());
-        var maxCandle = candleList.stream().reduce((first, second) ->
+        var candleMinMaxList = getCandlesByFigiByLength(candle.getFigi(), candle.getDateTime(), 5, strategy.getInterval());
+        var maxCandle = candleMinMaxList.stream().reduce((first, second) ->
                 first.getHighestPrice().compareTo(second.getHighestPrice()) > 0 ? first : second
         ).orElse(null);
-        var minCandle = candleList.stream().reduce((first, second) ->
+        var minCandle = candleMinMaxList.stream().reduce((first, second) ->
                 first.getLowestPrice().compareTo(second.getLowestPrice()) < 0 ? first : second
         ).orElse(null);
-        var middleCandle = candleList.get(2);
+        var middleCandle = candleMinMaxList.get(2);
         var isMax = maxCandle == middleCandle;
         var isMin = minCandle == middleCandle;
 
+        var lastFMaxCandle = getLastFMaxCandle(candle.getFigi(), candle.getDateTime(), strategy);
+        if (null != lastFMaxCandle) {
+            var candleListMax = candleHistoryService.getCandlesByFigiBetweenDateTimes(candle.getFigi(), lastFMaxCandle.getDateTime(), candle.getDateTime(), strategy.getInterval());
+            var maxIntervalCandle = candleListMax.stream().reduce((first, second) ->
+                    first.getHighestPrice().compareTo(second.getHighestPrice()) > 0 ? first : second
+            ).orElse(null);
+            if (
+                    maxIntervalCandle != lastFMaxCandle
+                            && maxIntervalCandle.getHighestPrice().compareTo(lastFMaxCandle.getHighestPrice()) > 0
+            ) {
+                if (
+                        candle.getLowestPrice().compareTo(lastFMaxCandle.getClosingPrice().max(lastFMaxCandle.getOpenPrice())) < 0
+                        && candle.getLowestPrice().doubleValue() > green
+                ) {
+                    resBuy = true;
+                }
+            }
+        }
+
         Double zs = null;
-        if (emaGreen != null) {
-            zs = emaGreen.get(0) + (emaGreen.get(0) - emaBlue.get(0)) * 1.618;
+        if (green != null) {
+            zs = green + (green - blue) * 1.618;
+            Float newGreenPercent = (float) ((100.f * zs / green) - (zs / Math.abs(zs)) * 100.);
+            annotation += " newGreenPercent=" + printPrice(newGreenPercent);
+            if (newGreenPercent < strategy.getSellLimitCriteriaOrig().getExitProfitPercent()) {
+                annotation += " skip by percent<" + strategy.getSellLimitCriteriaOrig().getExitProfitPercent();
+                resBuy = false;
+            }
         }
 
         notificationService.reportStrategyExt(
@@ -97,9 +122,9 @@ public class AlligatorService implements
                 strategy,
                 candle,
                 "Date|open|high|low|close|ema2|profit|loss|limitPrice|lossAvg|deadLineTop|investBottom|investTop|smaTube|strategy"
-                        + "|emaBlue1|emaRed|emaGreen|emaBlue|max|min|zs",
+                        + "|emaBlue1|emaRed|emaGreen|emaBlue|max|min|zs|waitMax|maxBuy",
                 "{} | {} | {} | {} | {} | | {} | {} | | {} | ||||by {}"
-                        + "| {} | {} | {} | {} | {} | {} | {}",
+                        + "| {} | {} | {} | {} | {} | {} | {} | {} | {}",
                 printDateTime(candle.getDateTime()),
                 candle.getOpenPrice(),
                 candle.getHighestPrice(),
@@ -109,20 +134,111 @@ public class AlligatorService implements
                 "",
                 "",
                 annotation,
-                emaBlue == null ? "" : emaBlue.get(0),
-                emaRed == null ? "" : emaRed.get(0),
-                emaGreen == null ? "" : emaGreen.get(0),
-                emaBlue == null ? "" : emaBlue.get(0),
+                blue == null ? "" : blue,
+                red == null ? "" : red,
+                green == null ? "" : green,
+                blue == null ? "" : blue,
                 isMax ? middleCandle.getHighestPrice() : "",
                 isMin ? middleCandle.getLowestPrice() : "",
-                zs == null ? "" : zs
+                zs == null ? "" : zs,
+                lastFMaxCandle == null ? "" : lastFMaxCandle.getHighestPrice(),
+                lastFMaxCandle == null ? "" : lastFMaxCandle.getClosingPrice().max(lastFMaxCandle.getOpenPrice())
         );
         return resBuy;
     }
 
     @Override
     public boolean isShouldSell(AAlligatorStrategy strategy, CandleDomainEntity candle, BigDecimal purchaseRate) {
-        return false;
+        var annotation = "";
+        var res = false;
+
+        var blue = getAlligatorBlue(candle.getFigi(), candle.getDateTime(), strategy);
+        var red = getAlligatorRed(candle.getFigi(), candle.getDateTime(), strategy);
+        var green = getAlligatorGreen(candle.getFigi(), candle.getDateTime(), strategy);
+
+        var candleMinMaxList = getCandlesByFigiByLength(candle.getFigi(), candle.getDateTime(), 5, strategy.getInterval());
+        var maxCandle = candleMinMaxList.stream().reduce((first, second) ->
+                first.getHighestPrice().compareTo(second.getHighestPrice()) > 0 ? first : second
+        ).orElse(null);
+        var minCandle = candleMinMaxList.stream().reduce((first, second) ->
+                first.getLowestPrice().compareTo(second.getLowestPrice()) < 0 ? first : second
+        ).orElse(null);
+        var middleCandle = candleMinMaxList.get(2);
+        var isMax = maxCandle == middleCandle;
+        var isMin = minCandle == middleCandle;
+
+        Double zs = null;
+        if (green != null) {
+            zs = green + (green - blue) * 1.618;
+            if (red > candle.getLowestPrice().doubleValue()) {
+                annotation += " stop lost OK";
+                res = true;
+            }
+        }
+
+        Double limitPrice = null;
+        if (
+                zs > green
+                && green > red
+                && red > blue
+        ) {
+            limitPrice = zs;
+        }
+        if (limitPrice != null) {
+            var sellLimitCriteria = strategy.getSellLimitCriteria(candle.getFigi());
+            Float newLimitPercent = (float) ((100.f * limitPrice.floatValue() / purchaseRate.floatValue())
+                    - (limitPrice.floatValue() / Math.abs(limitPrice.floatValue())) * 100.);
+            Float newGreenPercent = (float) ((100.f * zs / green) - (zs / Math.abs(zs)) * 100.);
+            annotation += " limitPrice=" + printPrice(limitPrice);
+            annotation += " newLimitPercent=" + printPrice(newLimitPercent);
+            annotation += " newGreenPercent=" + printPrice(newGreenPercent);
+            annotation += " origProfitPercent=" + strategy.getSellLimitCriteriaOrig().getExitProfitPercent();
+            if (
+                    newLimitPercent > strategy.getSellLimitCriteriaOrig().getExitProfitPercent()
+                    && newGreenPercent > strategy.getSellLimitCriteriaOrig().getExitProfitPercent()
+            ) {
+                sellLimitCriteria.setExitProfitPercent(newLimitPercent);
+                strategy.setSellLimitCriteria(candle.getFigi(), sellLimitCriteria);
+            } else {
+                limitPrice = null;
+            }
+        }
+
+        if (
+                limitPrice != null
+                && candle.getClosingPrice().doubleValue() > limitPrice
+        ) {
+            annotation += " limit OK";
+            res = true;
+        }
+
+        notificationService.reportStrategyExt(
+                res,
+                strategy,
+                candle,
+                "Date|open|high|low|close|ema2|profit|loss|limitPrice|lossAvg|deadLineTop|investBottom|investTop|smaTube|strategy"
+                        + "|emaBlue1|emaRed|emaGreen|emaBlue|max|min|zs|waitMax|maxBuy|limitPrice",
+                "{} | {} | {} | {} | {} | | {} | {} | | {} | ||||sell {}"
+                        + "| {} | {} | {} | {} | {} | {} | {} ||| {}",
+                printDateTime(candle.getDateTime()),
+                candle.getOpenPrice(),
+                candle.getHighestPrice(),
+                candle.getLowestPrice(),
+                candle.getClosingPrice(),
+                "",
+                "",
+                "",
+                annotation,
+                blue == null ? "" : blue,
+                red == null ? "" : red,
+                green == null ? "" : green,
+                blue == null ? "" : blue,
+                isMax ? middleCandle.getHighestPrice() : "",
+                isMin ? middleCandle.getLowestPrice() : "",
+                zs == null ? "" : zs,
+                limitPrice == null ? "" : limitPrice
+        );
+        return res;
     }
 
     @Override
@@ -160,6 +276,71 @@ public class AlligatorService implements
     @Override
     public boolean isTrendSell(AAlligatorStrategy strategy, CandleDomainEntity candle) {
         return false;
+    }
+
+    private CandleDomainEntity getLastFMaxCandle(
+            String figi,
+            OffsetDateTime currentDateTime,
+            AAlligatorStrategy strategy
+    ) {
+        var candleList = getCandlesByFigiByLength(figi, currentDateTime, strategy.getMaxDeep(), strategy.getInterval());
+        CandleDomainEntity maxCandle = null;
+        for (var i = candleList.size() - 1 - 2; i >= 2; i--) {
+            var curCandleList = candleList.subList(i - 2, i + 3);
+            var middleCandle = curCandleList.get(2);
+            var blue = getAlligatorBlue(figi, middleCandle.getDateTime(), strategy);
+            var red = getAlligatorRed(figi, middleCandle.getDateTime(), strategy);
+            var green = getAlligatorGreen(figi, middleCandle.getDateTime(), strategy);
+            if (
+                    blue == null
+                    //|| !(blue < red && red < green)
+                    || middleCandle.getLowestPrice().doubleValue() < blue
+            ) {
+                break;
+            }
+            var curMaxCandle = curCandleList.stream().reduce((first, second) ->
+                    first.getHighestPrice().compareTo(second.getHighestPrice()) > 0 ? first : second
+            ).orElse(null);
+            var isMax = middleCandle == curMaxCandle;
+            if (
+                    isMax
+                    //&& (
+                    //        maxCandle == null
+                    //        || middleCandle.getHighestPrice().compareTo(maxCandle.getHighestPrice()) > 0
+                    //)
+                    && middleCandle.getLowestPrice().doubleValue() > Math.max(blue, green)
+            ) {
+                maxCandle = middleCandle;
+            }
+        }
+        return maxCandle;
+    }
+
+    private Double getAlligatorBlue(
+            String figi,
+            OffsetDateTime currentDateTime,
+            AAlligatorStrategy strategy
+    ) {
+        List<Double> list = getSmma(figi, currentDateTime, strategy.getSmaBlueLength(), strategy.getInterval(), CandleDomainEntity::getMedianPrice, strategy.getSmaBlueOffset());
+        return list == null ? null : list.get(0);
+    }
+
+    private Double getAlligatorRed(
+            String figi,
+            OffsetDateTime currentDateTime,
+            AAlligatorStrategy strategy
+    ) {
+        List<Double> list = getSmma(figi, currentDateTime, strategy.getSmaRedLength(), strategy.getInterval(), CandleDomainEntity::getMedianPrice, strategy.getSmaRedOffset());
+        return list == null ? null : list.get(0);
+    }
+
+    private Double getAlligatorGreen(
+            String figi,
+            OffsetDateTime currentDateTime,
+            AAlligatorStrategy strategy
+    ) {
+        List<Double> list = getSmma(figi, currentDateTime, strategy.getSmaGreenLength(), strategy.getInterval(), CandleDomainEntity::getMedianPrice, strategy.getSmaGreenOffset());
+        return list == null ? null : list.get(0);
     }
 
     private List<Double> getSma(
@@ -303,6 +484,30 @@ public class AlligatorService implements
     {
         return candleHistoryService.getCandlesByFigiByLength(figi,
                 currentDateTime, length, interval);
+    }
+
+    private String printPrice(BigDecimal s)
+    {
+        if (s == null) {
+            return "null";
+        }
+        return printPrice(s.toString());
+    }
+
+    private String printPrice(Double s)
+    {
+        if (s == null) {
+            return "null";
+        }
+        return printPrice(s.toString());
+    }
+
+    private String printPrice(Float s)
+    {
+        if (s == null) {
+            return "null";
+        }
+        return printPrice(s.toString());
     }
 
     private String printPrice(String s)

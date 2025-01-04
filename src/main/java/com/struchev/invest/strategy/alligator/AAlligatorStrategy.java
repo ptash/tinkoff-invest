@@ -2,8 +2,11 @@ package com.struchev.invest.strategy.alligator;
 
 import com.struchev.invest.strategy.AStrategy;
 import com.struchev.invest.strategy.IStrategyShort;
+import org.springframework.data.relational.core.sql.In;
 
 import java.time.Duration;
+import java.util.HashMap;
+import java.util.Map;
 
 public abstract class AAlligatorStrategy extends AStrategy implements Cloneable, IStrategyShort {
     @Override
@@ -52,4 +55,34 @@ public abstract class AAlligatorStrategy extends AStrategy implements Cloneable,
     public Integer getSmaBlueOffset() { return 8; }
     public Integer getSmaRedOffset() { return 5; }
     public Integer getSmaGreenOffset() { return 3; }
+
+    public Integer getMaxDeep() { return 100; }
+
+    private SellLimitCriteria sellLimit;
+    private Map<String, SellLimitCriteria> sellLimitMap = new HashMap<>();
+
+    public SellLimitCriteria getSellLimitCriteriaOrig() {
+        return SellLimitCriteria.builder().exitProfitPercent(2.0f).build();
+    }
+
+    public SellLimitCriteria getSellLimitCriteria() {
+        if (null == this.sellLimit) {
+            this.sellLimit = this.getSellLimitCriteriaOrig();
+        }
+        return this.sellLimit;
+    }
+
+    public SellLimitCriteria getSellLimitCriteria(String figi) {
+        if (null == this.getSellLimitCriteria()) {
+            return null;
+        }
+        if (!this.sellLimitMap.containsKey(figi)) {
+            this.sellLimitMap.put(figi, SellLimitCriteria.builder().exitProfitPercent(this.getSellLimitCriteria().getExitProfitPercent()).build());
+        }
+        return this.sellLimitMap.get(figi);
+    }
+
+    public void setSellLimitCriteria(String figi, SellLimitCriteria sellLimit) {
+        this.sellLimitMap.put(figi, sellLimit);
+    }
 }
