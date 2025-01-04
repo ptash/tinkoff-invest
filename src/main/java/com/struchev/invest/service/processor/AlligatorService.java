@@ -109,10 +109,14 @@ public class AlligatorService implements
         Double zs = null;
         if (green != null) {
             zs = green + (green - blue) * 1.618;
-            Float newGreenPercent = (float) ((100.f * zs / green) - (zs / Math.abs(zs)) * 100.);
+            Float newGreenPercent = (float) ((100.f * (zs - green) / Math.abs(green)));
             annotation += " newGreenPercent=" + printPrice(newGreenPercent);
-            if (newGreenPercent < strategy.getSellLimitCriteriaOrig().getExitProfitPercent()) {
-                annotation += " skip by percent<" + strategy.getSellLimitCriteriaOrig().getExitProfitPercent();
+            if (newGreenPercent < strategy.getMinGreenPercent()) {
+                annotation += " skip by percent<" + strategy.getMinGreenPercent();
+                resBuy = false;
+            }
+            if (newGreenPercent > strategy.getMaxGreenPercent()) {
+                annotation += " skip by percent<" + strategy.getMaxGreenPercent();
                 resBuy = false;
             }
         }
@@ -186,9 +190,8 @@ public class AlligatorService implements
         }
         if (limitPrice != null) {
             var sellLimitCriteria = strategy.getSellLimitCriteria(candle.getFigi());
-            Float newLimitPercent = (float) ((100.f * limitPrice.floatValue() / purchaseRate.floatValue())
-                    - (limitPrice.floatValue() / Math.abs(limitPrice.floatValue())) * 100.);
-            Float newGreenPercent = (float) ((100.f * zs / green) - (zs / Math.abs(zs)) * 100.);
+            Float newLimitPercent = (float) ((100.f * (limitPrice.floatValue() - purchaseRate.floatValue()) / Math.abs(purchaseRate.floatValue())));
+            Float newGreenPercent = (float) ((100.f * (zs - green) / Math.abs(green)));
             annotation += " limitPrice=" + printPrice(limitPrice);
             annotation += " newLimitPercent=" + printPrice(newLimitPercent);
             annotation += " newGreenPercent=" + printPrice(newGreenPercent);
@@ -294,7 +297,7 @@ public class AlligatorService implements
             if (
                     blue == null
                     //|| !(blue < red && red < green)
-                    || middleCandle.getLowestPrice().doubleValue() < blue
+                    || middleCandle.getLowestPrice().doubleValue() < red
             ) {
                 break;
             }

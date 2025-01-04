@@ -58,6 +58,10 @@ public abstract class AAlligatorStrategy extends AStrategy implements Cloneable,
 
     public Integer getMaxDeep() { return 100; }
 
+    public Double getMinGreenPercent() { return 2.0; }
+
+    public Double getMaxGreenPercent() { return 3.0; }
+
     private SellLimitCriteria sellLimit;
     private Map<String, SellLimitCriteria> sellLimitMap = new HashMap<>();
 
