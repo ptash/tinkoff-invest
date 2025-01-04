@@ -99,7 +99,7 @@ public class AlligatorService implements
             ) {
                 if (
                         candle.getLowestPrice().compareTo(lastFMaxCandle.getClosingPrice().max(lastFMaxCandle.getOpenPrice())) < 0
-                        && candle.getLowestPrice().doubleValue() > green
+                        //&& candle.getLowestPrice().doubleValue() > green
                 ) {
                     resBuy = true;
                 }
@@ -115,7 +115,21 @@ public class AlligatorService implements
             annotation += " average=" + printPrice(average);
             Float newGreenPercentAverage = (float) (newGreenPercent / average);
             annotation += " newGreenPercentAverage=" + printPrice(newGreenPercentAverage);
-            if (newGreenPercentAverage < strategy.getMinGreenPercent()) {
+            Float maxBuyPercentAverage = null;
+            if (resBuy) {
+                var maxBuy = lastFMaxCandle.getClosingPrice().max(lastFMaxCandle.getOpenPrice());
+                Float maxBuyPercent = (float) Math.abs(((100.f * (maxBuy.doubleValue() - green) * 1.618 / green)));
+                maxBuyPercentAverage = (float) (maxBuyPercent / average);
+                annotation += " maxBuyPercent=" + printPrice(maxBuyPercent);
+                annotation += " maxBuyPercentAverage=" + printPrice(maxBuyPercentAverage);
+            }
+            if (
+                    newGreenPercentAverage < strategy.getMinGreenPercent()
+                    && (
+                            (maxBuyPercentAverage != null && maxBuyPercentAverage > strategy.getMinGreenPercent())
+                            || candle.getLowestPrice().doubleValue() > green
+                    )
+            ) {
                 annotation += " skip by percent<" + strategy.getMinGreenPercent();
                 resBuy = false;
             }
@@ -217,6 +231,11 @@ public class AlligatorService implements
                 strategy.setSellLimitCriteria(candle.getFigi(), sellLimitCriteria);
             } else {
                 limitPrice = null;
+            }
+
+            if (res && newGreenPercentAverage < strategy.getMinGreenPercent()) {
+                annotation += " skip by percent<" + strategy.getMinGreenPercent();
+                res = false;
             }
         }
 
