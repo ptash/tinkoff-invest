@@ -99,7 +99,7 @@ public class AlligatorService implements
             ) {
                 if (
                         candle.getLowestPrice().compareTo(lastFMaxCandle.getClosingPrice().max(lastFMaxCandle.getOpenPrice())) < 0
-                        //&& candle.getLowestPrice().doubleValue() > green
+                        && candle.getLowestPrice().doubleValue() > blue
                 ) {
                     resBuy = true;
                 }
