@@ -221,7 +221,7 @@ public class AlligatorService implements
 
         if (
                 limitPrice != null
-                && candle.getClosingPrice().doubleValue() > limitPrice
+                && candle.getHighestPrice().doubleValue() > limitPrice
         ) {
             annotation += " limit OK";
             res = true;

@@ -70,18 +70,15 @@ public abstract class AAlligatorStrategy extends AStrategy implements Cloneable,
     }
 
     public SellLimitCriteria getSellLimitCriteria() {
-        if (null == this.sellLimit) {
-            this.sellLimit = this.getSellLimitCriteriaOrig();
-        }
         return this.sellLimit;
     }
 
     public SellLimitCriteria getSellLimitCriteria(String figi) {
-        if (null == this.getSellLimitCriteria()) {
+        if (null == this.getSellLimitCriteriaOrig()) {
             return null;
         }
         if (!this.sellLimitMap.containsKey(figi)) {
-            this.sellLimitMap.put(figi, SellLimitCriteria.builder().exitProfitPercent(this.getSellLimitCriteria().getExitProfitPercent()).build());
+            this.sellLimitMap.put(figi, SellLimitCriteria.builder().exitProfitPercent(this.getSellLimitCriteriaOrig().getExitProfitPercent()).build());
         }
         return this.sellLimitMap.get(figi);
     }
