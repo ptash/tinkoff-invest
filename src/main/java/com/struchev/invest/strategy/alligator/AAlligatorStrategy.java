@@ -66,7 +66,7 @@ public abstract class AAlligatorStrategy extends AStrategy implements Cloneable,
     private Map<String, SellLimitCriteria> sellLimitMap = new HashMap<>();
 
     public SellLimitCriteria getSellLimitCriteriaOrig() {
-        return SellLimitCriteria.builder().exitProfitPercent(1.0f).build();
+        return SellLimitCriteria.builder().exitProfitPercent(2.0f).build();
     }
 
     public SellLimitCriteria getSellLimitCriteria() {
