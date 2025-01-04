@@ -78,7 +78,7 @@ public abstract class AAlligatorStrategy extends AStrategy implements Cloneable,
             return null;
         }
         if (!this.sellLimitMap.containsKey(figi)) {
-            this.sellLimitMap.put(figi, SellLimitCriteria.builder().exitProfitPercent(this.getSellLimitCriteriaOrig().getExitProfitPercent()).build());
+            this.sellLimitMap.put(figi, SellLimitCriteria.builder().build());
         }
         return this.sellLimitMap.get(figi);
     }

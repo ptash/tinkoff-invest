@@ -211,6 +211,7 @@ public class AlligatorService implements
             if (
                     newLimitPercentAverage > strategy.getSellLimitCriteriaOrig().getExitProfitPercent()
                     && newGreenPercentAverage > strategy.getSellLimitCriteriaOrig().getExitProfitPercent()
+                    && false
             ) {
                 sellLimitCriteria.setExitProfitPercent(newLimitPercent);
                 strategy.setSellLimitCriteria(candle.getFigi(), sellLimitCriteria);
