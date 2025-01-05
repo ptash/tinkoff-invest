@@ -6,8 +6,11 @@ import com.struchev.invest.service.notification.INotificationService;
 import com.struchev.invest.service.order.IOrderService;
 import com.struchev.invest.strategy.AStrategy;
 import com.struchev.invest.strategy.alligator.AAlligatorStrategy;
+import lombok.Builder;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.relational.core.sql.In;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -69,6 +72,10 @@ public class AlligatorService implements
 
     @Override
     public boolean isShouldBuy(AAlligatorStrategy strategy, CandleDomainEntity candle) {
+        return isShouldBuyInternal(strategy, candle, true);
+    }
+
+    public boolean isShouldBuyInternal(AAlligatorStrategy strategy, CandleDomainEntity candle, Boolean isReport) {
         var annotation = "";
         var resBuy = false;
 
@@ -142,33 +149,35 @@ public class AlligatorService implements
             }
         }
 
-        notificationService.reportStrategyExt(
-                resBuy,
-                strategy,
-                candle,
-                "Date|open|high|low|close|ema2|profit|loss|limitPrice|lossAvg|deadLineTop|investBottom|investTop|smaTube|strategy"
-                        + "|emaBlue1|emaRed|emaGreen|emaBlue|max|min|zs|waitMax|maxBuy|limitPrice",
-                "{} | {} | {} | {} | {} | | {} | {} | | {} | ||||by {}"
-                        + "| {} | {} | {} | {} | {} | {} | {} | {} | {} |",
-                printDateTime(candle.getDateTime()),
-                candle.getOpenPrice(),
-                candle.getHighestPrice(),
-                candle.getLowestPrice(),
-                candle.getClosingPrice(),
-                "",
-                "",
-                "",
-                annotation,
-                blue == null ? "" : blue,
-                red == null ? "" : red,
-                green == null ? "" : green,
-                blue == null ? "" : blue,
-                isMax ? middleCandle.getHighestPrice() : "",
-                isMin ? middleCandle.getLowestPrice() : "",
-                zs == null ? "" : zs,
-                lastFMaxCandle == null ? "" : lastFMaxCandle.getHighestPrice(),
-                lastFMaxCandle == null ? "" : lastFMaxCandle.getClosingPrice().max(lastFMaxCandle.getOpenPrice())
-        );
+        if (isReport) {
+            notificationService.reportStrategyExt(
+                    resBuy,
+                    strategy,
+                    candle,
+                    "Date|open|high|low|close|ema2|profit|loss|limitPrice|lossAvg|deadLineTop|investBottom|investTop|smaTube|strategy"
+                            + "|emaBlue1|emaRed|emaGreen|emaBlue|max|min|zs|waitMax|maxBuy|limitPrice",
+                    "{} | {} | {} | {} | {} | | {} | {} | | {} | ||||by {}"
+                            + "| {} | {} | {} | {} | {} | {} | {} | {} | {} |",
+                    printDateTime(candle.getDateTime()),
+                    candle.getOpenPrice(),
+                    candle.getHighestPrice(),
+                    candle.getLowestPrice(),
+                    candle.getClosingPrice(),
+                    "",
+                    "",
+                    "",
+                    annotation,
+                    blue == null ? "" : blue,
+                    red == null ? "" : red,
+                    green == null ? "" : green,
+                    blue == null ? "" : blue,
+                    isMax ? middleCandle.getHighestPrice() : "",
+                    isMin ? middleCandle.getLowestPrice() : "",
+                    zs == null ? "" : zs,
+                    lastFMaxCandle == null ? "" : lastFMaxCandle.getHighestPrice(),
+                    lastFMaxCandle == null ? "" : lastFMaxCandle.getClosingPrice().max(lastFMaxCandle.getOpenPrice())
+            );
+        }
         return resBuy;
     }
 
@@ -195,8 +204,8 @@ public class AlligatorService implements
         Double zs = null;
         if (green != null) {
             zs = green + (green - blue) * 1.618;
-            if (red > candle.getLowestPrice().doubleValue()) {
-                annotation += " stop lost OK";
+            if (red > candle.getClosingPrice().doubleValue()) {
+                annotation += " red stop lost OK";
                 res = true;
             }
         }
@@ -242,9 +251,29 @@ public class AlligatorService implements
             }
         }
 
+        if (res) {
+            var alligatorLengthAverage = getAlligatorLengthAverage(candle.getFigi(), candle.getDateTime(), strategy);
+            var curAlligatorMouth = getAlligatorMouth(candle.getFigi(), candle.getDateTime(), strategy);
+            annotation += " MonthBegin=" + printDateTime(curAlligatorMouth.getCandleBegin().getDateTime());
+            annotation += " MonthEnd=" + printDateTime(curAlligatorMouth.getCandleEnd().getDateTime());
+            var curAlligatorLength = curAlligatorMouth.getSize();
+            annotation += " alligatorLengthAverage=" + printPrice(alligatorLengthAverage);
+            annotation += " curAlligatorLength=" + curAlligatorLength;
+            if (curAlligatorLength < alligatorLengthAverage / 3) {
+                annotation += " skip by AlligatorLength<" + printPrice(alligatorLengthAverage / 3);
+                res = false;
+            }
+        }
+        if (res) {
+            if (isShouldBuyInternal(strategy, candle, false)) {
+                annotation += " skip by buy";
+                res = false;
+            }
+        }
+
         if (
                 limitPrice != null
-                && candle.getHighestPrice().doubleValue() > limitPrice
+                && candle.getClosingPrice().doubleValue() > limitPrice
         ) {
             annotation += " limit OK";
             res = true;
@@ -314,6 +343,90 @@ public class AlligatorService implements
     @Override
     public boolean isTrendSell(AAlligatorStrategy strategy, CandleDomainEntity candle) {
         return false;
+    }
+
+    private Double getAlligatorLengthAverage(
+            String figi,
+            OffsetDateTime currentDateTime,
+            AAlligatorStrategy strategy
+    ) {
+        Double lengthAverage = 0.0;
+        int size = 0;
+        for(var i = 0; i < strategy.getMaxDeepAlligatorMouth(); i++) {
+            var mouth = getAlligatorMouth(figi, currentDateTime, strategy);
+            if (mouth.isFindBegin && mouth.isFindEnd) {
+                lengthAverage += mouth.size;
+                size++;
+            } else if (size > 0) {
+                break;
+            }
+            currentDateTime = mouth.candleBegin.getDateTime();
+        }
+        return lengthAverage / size;
+    }
+
+    private Integer getAlligatorLength(
+            String figi,
+            OffsetDateTime currentDateTime,
+            AAlligatorStrategy strategy
+    ) {
+        return getAlligatorMouth(figi, currentDateTime, strategy).getSize();
+    }
+
+    @Builder
+    @Data
+    public static class AlligatorMouth {
+        CandleDomainEntity candleBegin;
+        CandleDomainEntity candleEnd;
+        Integer size;
+        Boolean isFindBegin;
+        Boolean isFindEnd;
+    }
+
+    private AlligatorMouth getAlligatorMouth(
+            String figi,
+            OffsetDateTime currentDateTime,
+            AAlligatorStrategy strategy
+    ) {
+        var candleList = getCandlesByFigiByLength(figi, currentDateTime, strategy.getMaxDeep(), strategy.getInterval());
+        Boolean isUpCur = null;
+        Integer size = 0;
+        var resBuilder = AlligatorMouth.builder()
+                .isFindBegin(false)
+                .isFindEnd(false)
+                .size(0);
+        for (var i = candleList.size() - 1; i >= 0; i--) {
+            var blue = getAlligatorBlue(figi, candleList.get(i).getDateTime(), strategy);
+            var red = getAlligatorRed(figi, candleList.get(i).getDateTime(), strategy);
+            var green = getAlligatorGreen(figi, candleList.get(i).getDateTime(), strategy);
+            var isUp = green > red && red > blue;
+            var isDown = green < red && red < blue;
+            if (null == isUpCur && isUp) {
+                isUpCur = true;
+                resBuilder.candleEnd(candleList.get(i));
+                resBuilder.isFindEnd(i < candleList.size() - 1);
+            }
+            if (null == isUpCur && isDown) {
+                isUpCur = false;
+                resBuilder.candleEnd(candleList.get(i));
+                resBuilder.isFindEnd(i < candleList.size() - 1);
+            }
+            if (null != isUpCur && isUpCur && !isUp) {
+                resBuilder.isFindBegin(true);
+                break;
+            }
+            if (null != isUpCur && !isUpCur && !isDown) {
+                resBuilder.isFindBegin(true);
+                break;
+            }
+            if (null != isUpCur) {
+                resBuilder.candleBegin(candleList.get(i));
+                size++;
+            }
+        }
+        return resBuilder
+                .size(size)
+                .build();
     }
 
     private Double getAveragePercent(
