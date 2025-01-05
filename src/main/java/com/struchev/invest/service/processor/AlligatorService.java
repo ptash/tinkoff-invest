@@ -260,10 +260,10 @@ public class AlligatorService implements
                 if (
                         res
                         && newGreenPercentAverage < strategy.getMinGreenPercent()
-                        && curAlligatorLength < alligatorLengthAverage / 2
+                        && curAlligatorLength < alligatorLengthAverage
                 ) {
                     annotation += " skip by percent<" + strategy.getMinGreenPercent();
-                    annotation += " AlligatorLength<" + printPrice(alligatorLengthAverage / 2);
+                    annotation += " AlligatorLength<" + printPrice(alligatorLengthAverage);
                     res = false;
                 }
             }
@@ -368,27 +368,21 @@ public class AlligatorService implements
             OffsetDateTime currentDateTime,
             AAlligatorStrategy strategy
     ) {
-        Double lengthAverage = 0.0;
-        int size = 0;
+        List<Double> ret = new ArrayList<Double>();
         for(var i = 0; i < strategy.getMaxDeepAlligatorMouth(); i++) {
             var mouth = getAlligatorMouth(figi, currentDateTime, strategy);
             if (mouth.isFindBegin && mouth.isFindEnd) {
-                lengthAverage += mouth.size;
-                size++;
-            } else if (size > 0) {
+                ret.add(Double.valueOf(mouth.size));
+            } else if (ret.size() > 0) {
                 break;
             }
             currentDateTime = mouth.candleBegin.getDateTime();
         }
-        return lengthAverage / size;
-    }
-
-    private Integer getAlligatorLength(
-            String figi,
-            OffsetDateTime currentDateTime,
-            AAlligatorStrategy strategy
-    ) {
-        return getAlligatorMouth(figi, currentDateTime, strategy).getSize();
+        var average = ret.stream().mapToDouble(a -> a).average().orElse(0);
+        return average;
+        //var dispersia = Math.sqrt(ret.stream().mapToDouble(a -> (a - average) * (a - average)).sum() / ret.size());
+        //var retFiltered = ret.stream().filter(a -> a >= average - dispersia && a <= average + dispersia);
+        //return retFiltered.mapToDouble(a -> a).average().orElse(average);
     }
 
     @Builder
