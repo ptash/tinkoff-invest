@@ -116,7 +116,7 @@ public class AlligatorService implements
         }
 
         Double zs = null;
-        if (green != null) {
+        if (green != null && blue != null) {
             zs = green + (green - blue) * 1.618;
             Float newGreenPercent = (float) ((100.f * (zs - green) / Math.abs(green)));
             var average = getAveragePercent(candle.getFigi(), candle.getDateTime(), strategy);
@@ -411,6 +411,9 @@ public class AlligatorService implements
             var blue = getAlligatorBlue(figi, candleList.get(i).getDateTime(), strategy);
             var red = getAlligatorRed(figi, candleList.get(i).getDateTime(), strategy);
             var green = getAlligatorGreen(figi, candleList.get(i).getDateTime(), strategy);
+            if (blue == null || red == null || green == null) {
+                break;
+            }
             var isUp = green > red && red > blue;
             var isDown = green < red && red < blue;
             if (null == isUpCur && isUp) {
@@ -448,10 +451,15 @@ public class AlligatorService implements
     ) {
         var candleList = getCandlesByFigiByLength(figi, currentDateTime, strategy.getMaxDeep(), strategy.getInterval());
         Double average = 0.0;
+        var size = strategy.getMaxDeep();
         for (var i = 0; i < candleList.size(); i++) {
             var blue = getAlligatorBlue(figi, candleList.get(i).getDateTime(), strategy);
             var green = getAlligatorGreen(figi, candleList.get(i).getDateTime(), strategy);
-            average += 100 * Math.abs(blue - green) / Math.abs(green) / strategy.getMaxDeep();
+            if (blue == null || green == null) {
+                size--;
+                continue;
+            }
+            average += 100 * Math.abs(blue - green) / Math.abs(green) / size;
         }
         return average;
     }
@@ -462,6 +470,9 @@ public class AlligatorService implements
             AAlligatorStrategy strategy
     ) {
         var candleList = getCandlesByFigiByLength(figi, currentDateTime, strategy.getMaxDeep(), strategy.getInterval());
+        if (candleList == null) {
+            return null;
+        }
         CandleDomainEntity maxCandle = null;
         for (var i = candleList.size() - 1 - 2; i >= 2; i--) {
             var curCandleList = candleList.subList(i - 2, i + 3);
@@ -642,6 +653,9 @@ public class AlligatorService implements
             return null;
         }
         var smaList = getSma(figi, currentDateTime, length, interval, keyExtractor, maxPrevTicks);
+        if (smaList == null) {
+            return null;
+        }
         for (var j = 0; j < maxPrevTicks; j++) {
             if (ret.size() > 0) {
                 var prev = ret.get(ret.size() - 1);
