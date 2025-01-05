@@ -48,4 +48,8 @@ public class OrderDetails {
         }
         return annotations;
     }
+
+    public BigDecimal getPriceWanted() {
+        return getCurrentPrices().getOrDefault("priceWanted", null);
+    }
 }

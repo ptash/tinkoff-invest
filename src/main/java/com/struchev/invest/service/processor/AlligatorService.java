@@ -61,7 +61,7 @@ public class AlligatorService implements
         return bigDecimalDataMap.getOrDefault(key, new ConcurrentHashMap<>()).entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
-    private synchronized void setOrderBigDecimalData(FactorialDiffAvgAdapterStrategy strategy, CandleDomainEntity candle, String key, BigDecimal value)
+    private synchronized void setOrderBigDecimalData(AStrategy strategy, CandleDomainEntity candle, String key, BigDecimal value)
     {
         String keyS = strategy.getExtName() + candle.getFigi();
         if (!bigDecimalDataMap.containsKey(keyS)) {
@@ -78,6 +78,8 @@ public class AlligatorService implements
     public boolean isShouldBuyInternal(AAlligatorStrategy strategy, CandleDomainEntity candle, Boolean isReport) {
         var annotation = "";
         var resBuy = false;
+
+        var currentPrice = candle.getLowestPrice();
 
         var blue = getAlligatorBlue(candle.getFigi(), candle.getDateTime(), strategy);
         var red = getAlligatorRed(candle.getFigi(), candle.getDateTime(), strategy);
@@ -105,11 +107,12 @@ public class AlligatorService implements
                             && maxIntervalCandle.getHighestPrice().compareTo(lastFMaxCandle.getHighestPrice()) > 0
             ) {
                 if (
-                        candle.getLowestPrice().compareTo(lastFMaxCandle.getClosingPrice().max(lastFMaxCandle.getOpenPrice())) < 0
-                        && candle.getLowestPrice().doubleValue() > blue
+                        currentPrice.compareTo(lastFMaxCandle.getClosingPrice().max(lastFMaxCandle.getOpenPrice())) < 0
+                        && currentPrice.doubleValue() > blue
                         && green > red
                         && red > blue
                 ) {
+                    setOrderBigDecimalData(strategy, candle, "priceWanted", currentPrice.max(lastFMaxCandle.getClosingPrice().max(lastFMaxCandle.getOpenPrice())));
                     resBuy = true;
                 }
             }
@@ -132,12 +135,12 @@ public class AlligatorService implements
                 annotation += " maxBuyPercent=" + printPrice(maxBuyPercent);
                 annotation += " maxBuyPercentAverage=" + printPrice(maxBuyPercentAverage);
             }
-            if (candle.getLowestPrice().doubleValue() > green && newGreenPercentAverage < strategy.getMinGreenPercent()) {
+            if (currentPrice.doubleValue() > green && newGreenPercentAverage < strategy.getMinGreenPercent()) {
                 annotation += " skip by percent<" + strategy.getMinGreenPercent();
                 resBuy = false;
             }
             if (
-                    candle.getLowestPrice().doubleValue() < green
+                    currentPrice.doubleValue() < green
                     && (maxBuyPercentAverage != null && maxBuyPercentAverage > strategy.getMinGreenPercent())
             ) {
                 annotation += " skip by buy percent>" + strategy.getMinGreenPercent();

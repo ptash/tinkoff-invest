@@ -4,6 +4,7 @@ import com.struchev.invest.entity.CandleDomainEntity;
 import com.struchev.invest.entity.OrderDetails;
 import com.struchev.invest.entity.OrderDomainEntity;
 import com.struchev.invest.repository.OrderRepository;
+import com.struchev.invest.service.candle.CandleHistoryReverseForShortService;
 import com.struchev.invest.service.dictionary.InstrumentService;
 import com.struchev.invest.service.tinkoff.ITinkoffOrderAPI;
 import com.struchev.invest.strategy.AStrategy;
@@ -28,6 +29,7 @@ public class OrderService implements IOrderService {
     private final OrderRepository orderRepository;
     private final InstrumentService instrumentService;
     private final ITinkoffOrderAPI tinkoffOrderAPI;
+    private final CandleHistoryReverseForShortService candleHistoryReverseForShortService;
 
     private volatile List<OrderDomainEntity> orders;
 
@@ -115,11 +117,15 @@ public class OrderService implements IOrderService {
     @Transactional
     public synchronized OrderDomainEntity openOrderShort(CandleDomainEntity candle, AStrategy strategy, OrderDetails orderDetails) {
         var instrument = instrumentService.getInstrument(candle.getFigi());
+        var priceWanted = candle.getClosingPrice();
+        if (orderDetails.getPriceWanted() != null) {
+            priceWanted = candleHistoryReverseForShortService.preparePrice(orderDetails.getPriceWanted());
+        }
         var order = OrderDomainEntity.builder()
                 .currency(instrument.getCurrency())
                 .figi(instrument.getFigi())
                 .figiTitle(instrument.getName())
-                .sellPriceWanted(candle.getClosingPrice())
+                .sellPriceWanted(priceWanted)
                 .strategy(strategy.getName())
                 .sellDateTime(candle.getDateTime())
                 .lots(strategy.getCount(candle.getFigi()))
@@ -129,10 +135,10 @@ public class OrderService implements IOrderService {
                 .build();
 
         if (strategy.isCheckBook()
-                && !tinkoffOrderAPI.checkGoodSell(instrument, candle.getClosingPrice(), order.getLots(), strategy.getPriceError())) {
+                && !tinkoffOrderAPI.checkGoodSell(instrument, priceWanted, order.getLots(), strategy.getPriceError())) {
             throw new RuntimeException("checkGoodSell return false for figi " + instrument.getFigi());
         }
-        var result = tinkoffOrderAPI.buyShort(instrument, candle.getClosingPrice(), order.getLots());
+        var result = tinkoffOrderAPI.buyShort(instrument, priceWanted, order.getLots());
         order.setSellCommissionInitial(result.getCommissionInitial());
         order.setSellCommission(result.getCommission());
         order.setSellPriceMoney(result.getPrice());
@@ -152,11 +158,15 @@ public class OrderService implements IOrderService {
     @Transactional
     public synchronized OrderDomainEntity openOrder(CandleDomainEntity candle, AStrategy strategy, OrderDetails orderDetails) {
         var instrument = instrumentService.getInstrument(candle.getFigi());
+        var priceWanted = candle.getClosingPrice();
+        if (orderDetails.getPriceWanted() != null) {
+            priceWanted = orderDetails.getPriceWanted();
+        }
         var order = OrderDomainEntity.builder()
                 .currency(instrument.getCurrency())
                 .figi(instrument.getFigi())
                 .figiTitle(instrument.getName())
-                .purchasePriceWanted(candle.getClosingPrice())
+                .purchasePriceWanted(priceWanted)
                 .strategy(strategy.getName())
                 .purchaseDateTime(candle.getDateTime())
                 .lots(strategy.getCount(candle.getFigi()))
@@ -165,10 +175,10 @@ public class OrderService implements IOrderService {
                 .build();
 
         if (strategy.isCheckBook()
-                && !tinkoffOrderAPI.checkGoodBuy(instrument, candle.getClosingPrice(), order.getLots(), strategy.getPriceError())) {
+                && !tinkoffOrderAPI.checkGoodBuy(instrument, priceWanted, order.getLots(), strategy.getPriceError())) {
             throw new RuntimeException("checkGoodBuy return false for figi " + instrument.getFigi());
         }
-        var result = tinkoffOrderAPI.buy(instrument, candle.getClosingPrice(), order.getLots());
+        var result = tinkoffOrderAPI.buy(instrument, priceWanted, order.getLots());
         order.setPurchaseCommissionInitial(result.getCommissionInitial());
         order.setPurchaseCommission(result.getCommission());
         order.setPurchasePriceMoney(result.getPrice());
