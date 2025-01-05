@@ -245,9 +245,27 @@ public class AlligatorService implements
                 limitPrice = null;
             }
 
-            if (res && newGreenPercentAverage < strategy.getMinGreenPercent()) {
-                annotation += " skip by percent<" + strategy.getMinGreenPercent();
-                res = false;
+            if (res) {
+                var alligatorLengthAverage = getAlligatorLengthAverage(candle.getFigi(), candle.getDateTime(), strategy);
+                var curAlligatorMouth = getAlligatorMouth(candle.getFigi(), candle.getDateTime(), strategy);
+                annotation += " MonthBegin=" + printDateTime(curAlligatorMouth.getCandleBegin().getDateTime());
+                annotation += " MonthEnd=" + printDateTime(curAlligatorMouth.getCandleEnd().getDateTime());
+                var curAlligatorLength = curAlligatorMouth.getSize();
+                annotation += " alligatorLengthAverage=" + printPrice(alligatorLengthAverage);
+                annotation += " curAlligatorLength=" + curAlligatorLength;
+                if (curAlligatorLength < alligatorLengthAverage / 3) {
+                    annotation += " skip by AlligatorLength<" + printPrice(alligatorLengthAverage / 3);
+                    res = false;
+                }
+                if (
+                        res
+                        && newGreenPercentAverage < strategy.getMinGreenPercent()
+                        && curAlligatorLength < alligatorLengthAverage / 2
+                ) {
+                    annotation += " skip by percent<" + strategy.getMinGreenPercent();
+                    annotation += " AlligatorLength<" + printPrice(alligatorLengthAverage / 2);
+                    res = false;
+                }
             }
         }
 
