@@ -100,6 +100,8 @@ public class AlligatorService implements
                 if (
                         candle.getLowestPrice().compareTo(lastFMaxCandle.getClosingPrice().max(lastFMaxCandle.getOpenPrice())) < 0
                         && candle.getLowestPrice().doubleValue() > blue
+                        && green > red
+                        && red > blue
                 ) {
                     resBuy = true;
                 }
@@ -123,14 +125,15 @@ public class AlligatorService implements
                 annotation += " maxBuyPercent=" + printPrice(maxBuyPercent);
                 annotation += " maxBuyPercentAverage=" + printPrice(maxBuyPercentAverage);
             }
-            if (
-                    newGreenPercentAverage < strategy.getMinGreenPercent()
-                    && (
-                            (maxBuyPercentAverage != null && maxBuyPercentAverage > strategy.getMinGreenPercent())
-                            || candle.getLowestPrice().doubleValue() > green
-                    )
-            ) {
+            if (candle.getLowestPrice().doubleValue() > green && newGreenPercentAverage < strategy.getMinGreenPercent()) {
                 annotation += " skip by percent<" + strategy.getMinGreenPercent();
+                resBuy = false;
+            }
+            if (
+                    candle.getLowestPrice().doubleValue() < green
+                    && (maxBuyPercentAverage != null && maxBuyPercentAverage > strategy.getMinGreenPercent())
+            ) {
+                annotation += " skip by buy percent>" + strategy.getMinGreenPercent();
                 resBuy = false;
             }
             if (newGreenPercentAverage > strategy.getMaxGreenPercent()) {
