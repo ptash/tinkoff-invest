@@ -253,7 +253,7 @@ public class AlligatorService implements
             if (
                     //newLimitPercent > strategy.getSellLimitCriteriaOrig().getExitProfitPercent()
                     //&& newGreenPercentAverage > strategy.getSellLimitCriteriaOrig().getExitProfitPercent()
-                    true
+                    false
             ) {
                 sellLimitCriteria.setExitProfitPercent(newLimitPercent);
                 strategy.setSellLimitCriteria(candle.getFigi(), sellLimitCriteria);
@@ -275,7 +275,7 @@ public class AlligatorService implements
                 }
                 if (
                         res
-                        && newGreenPercentAverage < strategy.getMinGreenPercent()
+                        && (newGreenPercentAverage < strategy.getMinGreenPercent() && newGreenPercentAverage > 0)
                         && curAlligatorLength < alligatorLengthAverage
                 ) {
                     annotation += " skip by percent<" + strategy.getMinGreenPercent();
