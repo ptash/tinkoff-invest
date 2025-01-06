@@ -227,33 +227,27 @@ public class AlligatorService implements
         }
 
         Double limitPrice = null;
-        if (
-                zs != null
-                && zs > green
-                && green > red
-                && red > blue
-        ) {
-            limitPrice = zs;
-        }
-        if (limitPrice != null) {
+        if (green != null && blue != null) {
             var sellLimitCriteria = strategy.getSellLimitCriteria(candle.getFigi());
-            Float newLimitPercent = (float) ((100.f * (limitPrice.floatValue() - purchaseRate.floatValue()) / Math.abs(purchaseRate.floatValue())));
             Float newGreenPercent = (float) ((100.f * (zs - green) / Math.abs(green)));
             var average = getAveragePercent(candle.getFigi(), candle.getDateTime(), strategy);
             annotation += " average=" + printPrice(average);
             Float newGreenPercentAverage = (float) (newGreenPercent / average);
-            Float newLimitPercentAverage = (float) (newLimitPercent / average);
+
+            limitPrice = green + Math.abs(green / average / 100.) * 1.618;
+            Float newLimitPercent = (float) ((100.f * (limitPrice.floatValue() - purchaseRate.floatValue()) / Math.abs(purchaseRate.floatValue())));
+            //Float newLimitPercentAverage = (float) (newLimitPercent / average);
 
             annotation += " limitPrice=" + printPrice(limitPrice);
             annotation += " newLimitPercent=" + printPrice(newLimitPercent);
-            annotation += " newLimitPercentAverage=" + printPrice(newLimitPercentAverage);
+            //annotation += " newLimitPercentAverage=" + printPrice(newLimitPercentAverage);
             annotation += " newGreenPercent=" + printPrice(newGreenPercent);
             annotation += " newGreenPercentAverage=" + printPrice(newGreenPercentAverage);
             annotation += " origProfitPercent=" + strategy.getSellLimitCriteriaOrig().getExitProfitPercent();
             if (
-                    newLimitPercentAverage > strategy.getSellLimitCriteriaOrig().getExitProfitPercent()
-                    && newGreenPercentAverage > strategy.getSellLimitCriteriaOrig().getExitProfitPercent()
-                    && false
+                    newLimitPercent > strategy.getSellLimitCriteriaOrig().getExitProfitPercent()
+                    //&& newGreenPercentAverage > strategy.getSellLimitCriteriaOrig().getExitProfitPercent()
+                    //&& false
             ) {
                 sellLimitCriteria.setExitProfitPercent(newLimitPercent);
                 strategy.setSellLimitCriteria(candle.getFigi(), sellLimitCriteria);
