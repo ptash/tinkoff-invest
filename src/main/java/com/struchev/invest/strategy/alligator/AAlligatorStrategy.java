@@ -58,6 +58,7 @@ public abstract class AAlligatorStrategy extends AStrategy implements Cloneable,
 
     public Integer getMaxDeep() { return 100; }
     public Integer getMaxDeepAlligatorMouth() { return 10; }
+    public Integer getAlligatorMouthAverageMinSize() { return 4; }
 
     public Double getMinGreenPercent() { return 1.0; }
 

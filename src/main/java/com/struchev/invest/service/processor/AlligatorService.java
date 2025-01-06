@@ -261,7 +261,7 @@ public class AlligatorService implements
                 limitPrice = null;
             }
 
-            if (res) {
+            /*if (res) {
                 var alligatorLengthAverage = getAlligatorLengthAverage(candle.getFigi(), candle.getDateTime(), strategy);
                 var curAlligatorMouth = getAlligatorMouth(candle.getFigi(), candle.getDateTime(), strategy);
                 annotation += " MonthBegin=" + printDateTime(curAlligatorMouth.getCandleBegin().getDateTime());
@@ -276,13 +276,13 @@ public class AlligatorService implements
                 if (
                         res
                         && newGreenPercentAverage < strategy.getMinGreenPercent()
-                        && curAlligatorLength < alligatorLengthAverage
+                        && curAlligatorLength < alligatorLengthAverage * 2
                 ) {
                     annotation += " skip by percent<" + strategy.getMinGreenPercent();
-                    annotation += " AlligatorLength<" + printPrice(alligatorLengthAverage);
+                    annotation += " AlligatorLength<" + printPrice(alligatorLengthAverage * 2);
                     res = false;
                 }
-            }
+            }*/
         }
 
         if (res) {
@@ -385,10 +385,15 @@ public class AlligatorService implements
             AAlligatorStrategy strategy
     ) {
         List<Double> ret = new ArrayList<Double>();
-        for(var i = 0; i < strategy.getMaxDeepAlligatorMouth(); i++) {
+        var skipped = 0;
+        for(var i = 0; i < strategy.getMaxDeepAlligatorMouth() + skipped; i++) {
             var mouth = getAlligatorMouth(figi, currentDateTime, strategy);
             if (mouth.isFindBegin && mouth.isFindEnd) {
-                ret.add(Double.valueOf(mouth.size));
+                if (mouth.size > strategy.getAlligatorMouthAverageMinSize()) {
+                    ret.add(Double.valueOf(mouth.size));
+                } else {
+                    skipped++;
+                }
             } else if (ret.size() > 0) {
                 break;
             }
@@ -500,7 +505,6 @@ public class AlligatorService implements
                     blue == null
                     || !(
                         (blue < red && red < green)
-                        || middleCandle.getLowestPrice().doubleValue() > red
                         || middleCandle.getHighestPrice().doubleValue() > red
                     )
             ) {
@@ -774,7 +778,7 @@ public class AlligatorService implements
         if (doubleCashMap.containsKey(indent)) {
             return doubleCashMap.get(indent);
         }
-        if (doubleCashMap.size() > 1000) {
+        if (doubleCashMap.size() > 2000) {
             doubleCashMap.clear();
         }
         return null;
