@@ -234,7 +234,7 @@ public class AlligatorService implements
             annotation += " average=" + printPrice(average);
             Float newGreenPercentAverage = (float) (newGreenPercent / average);
 
-            limitPrice = green + Math.abs(green / average / 100.) * 1.618;
+            limitPrice = green + strategy.getSellLimitCriteriaOrig().getExitProfitPercent() * Math.abs(green * average / 100.) * 1.618;
             Float newLimitPercent = (float) ((100.f * (limitPrice.floatValue() - purchaseRate.floatValue()) / Math.abs(purchaseRate.floatValue())));
             //Float newLimitPercentAverage = (float) (newLimitPercent / average);
 
@@ -244,10 +244,16 @@ public class AlligatorService implements
             annotation += " newGreenPercent=" + printPrice(newGreenPercent);
             annotation += " newGreenPercentAverage=" + printPrice(newGreenPercentAverage);
             annotation += " origProfitPercent=" + strategy.getSellLimitCriteriaOrig().getExitProfitPercent();
+            if (newLimitPercent < strategy.getSellLimitCriteriaOrig().getExitProfitPercent()) {
+                newLimitPercent = strategy.getSellLimitCriteriaOrig().getExitProfitPercent();
+                limitPrice = (double) (purchaseRate.floatValue() + Math.abs(purchaseRate.floatValue() * newLimitPercent / 100.f));
+                annotation += " new limitPrice=" + printPrice(limitPrice);
+                annotation += " new newLimitPercent=" + printPrice(newLimitPercent);
+            }
             if (
-                    newLimitPercent > strategy.getSellLimitCriteriaOrig().getExitProfitPercent()
+                    //newLimitPercent > strategy.getSellLimitCriteriaOrig().getExitProfitPercent()
                     //&& newGreenPercentAverage > strategy.getSellLimitCriteriaOrig().getExitProfitPercent()
-                    //&& false
+                    true
             ) {
                 sellLimitCriteria.setExitProfitPercent(newLimitPercent);
                 strategy.setSellLimitCriteria(candle.getFigi(), sellLimitCriteria);
