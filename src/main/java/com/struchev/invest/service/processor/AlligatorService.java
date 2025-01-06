@@ -501,6 +501,7 @@ public class AlligatorService implements
                     || !(
                         (blue < red && red < green)
                         || middleCandle.getLowestPrice().doubleValue() > red
+                        || middleCandle.getHighestPrice().doubleValue() > red
                     )
             ) {
                 break;
