@@ -11,10 +11,10 @@ public class BuyP10AndTP1PercentAndSL3PercentStrategy extends AInstrumentByFiatS
             //"BBG004S683W7", 10,   // Аэрофлот
             //"BBG00178PGX3", 1,    // VK
             //"BBG008NMBXN8", 1, // Robinhood
-            "BBG005F1DK91", 1, // G1
-            "BBG002NLDLV8", 1, // VIPS
-            "BBG000BLY663", 1, // CROCS
-            "BBG00W0KZD98", 1  //LI
+            //"BBG005F1DK91", 1, // G1
+            //"BBG002NLDLV8", 1, // VIPS
+            //"BBG000BLY663", 1, // CROCS
+            //"BBG00W0KZD98", 1  //LI
     );
 
     public Map<String, Integer> getFigies() {
