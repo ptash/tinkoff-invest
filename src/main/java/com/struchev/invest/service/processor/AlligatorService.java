@@ -151,6 +151,19 @@ public class AlligatorService implements
                 resBuy = false;
             }
         }
+        if (resBuy) {
+            var alligatorLengthAverage = getAlligatorLengthAverage(candle.getFigi(), candle.getDateTime(), strategy);
+            var curAlligatorMouth = getAlligatorMouth(candle.getFigi(), candle.getDateTime(), strategy);
+            annotation += " MonthBegin=" + printDateTime(curAlligatorMouth.getCandleBegin().getDateTime());
+            annotation += " MonthEnd=" + printDateTime(curAlligatorMouth.getCandleEnd().getDateTime());
+            var curAlligatorLength = curAlligatorMouth.getSize();
+            annotation += " alligatorLengthAverage=" + printPrice(alligatorLengthAverage);
+            annotation += " curAlligatorLength=" + curAlligatorLength;
+            if (curAlligatorLength > alligatorLengthAverage) {
+                annotation += " skip by AlligatorLength>" + printPrice(alligatorLengthAverage);
+                resBuy = false;
+            }
+        }
 
         if (isReport) {
             notificationService.reportStrategyExt(

@@ -21,6 +21,8 @@ public class OrderDetails {
     Map<String, OffsetDateTime> dateTimes;
     Map<String, String> annotations;
 
+    BigDecimal priceWanted;
+
     public Map<String, BigDecimal> getCurrentPrices() {
         if (currentPrices == null) {
             currentPrices = new HashMap<>();
