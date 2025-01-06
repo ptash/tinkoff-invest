@@ -97,11 +97,14 @@ public class CandleListenerService {
 
                         if (null != candleDomainEntity) {
                             CandleDomainEntity candleDomainEntity5Min = null;
+                            CandleDomainEntity candleDomainEntity1Hour = null;
                             if (isNewCandle) {
                                 log.info("Need refresh 1min candles {}", candleDomainEntity.getFigi());
                                 candleHistoryService.loadCandlesHistory(candleDomainEntity.getFigi(), 1L, CandleInterval.CANDLE_INTERVAL_1_MIN, OffsetDateTime.now());
                                 log.info("Need refresh 5min candles {}", candleDomainEntity.getFigi());
                                 candleHistoryService.loadCandlesHistory(candleDomainEntity.getFigi(), 1L, CandleInterval.CANDLE_INTERVAL_5_MIN, OffsetDateTime.now());
+                                log.info("Need refresh 1hour candles {}", candleDomainEntity.getFigi());
+                                candleHistoryService.loadCandlesHistory(candleDomainEntity.getFigi(), 1L, CandleInterval.CANDLE_INTERVAL_HOUR, OffsetDateTime.now());
 
                                 var candle5MinList = candleHistoryService.getAllCandlesByFigiByLength(
                                         candleDomainEntity.getFigi(),
@@ -111,6 +114,15 @@ public class CandleListenerService {
                                 );
                                 if (candle5MinList.size() > 0) {
                                     candleDomainEntity5Min = candle5MinList.get(0);
+                                }
+                                var candle1HourList = candleHistoryService.getAllCandlesByFigiByLength(
+                                        candleDomainEntity.getFigi(),
+                                        candleDomainEntity.getDateTime(),
+                                        1,
+                                        "1hour"
+                                );
+                                if (candle1HourList.size() > 0) {
+                                    candleDomainEntity1Hour = candle1HourList.get(0);
                                 }
                             }
                             var candleHour = candleHistoryService.getAllCandlesByFigiByLength(
@@ -138,6 +150,9 @@ public class CandleListenerService {
                             purchaseService.observeNewCandleNoThrow(candleDomainEntity);
                             if (candleDomainEntity5Min != null) {
                                 purchaseService.observeNewCandleNoThrow(candleDomainEntity5Min);
+                            }
+                            if (candleDomainEntity1Hour != null) {
+                                purchaseService.observeNewCandleNoThrow(candleDomainEntity1Hour);
                             }
                         }
                     }, e -> {
