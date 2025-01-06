@@ -152,15 +152,16 @@ public class AlligatorService implements
             }
         }
         if (resBuy) {
-            var alligatorLengthAverage = getAlligatorLengthAverage(candle.getFigi(), candle.getDateTime(), strategy);
+            var alligatorAverage = getAlligatorLengthAverage(candle.getFigi(), candle.getDateTime(), strategy);
             var curAlligatorMouth = getAlligatorMouth(candle.getFigi(), candle.getDateTime(), strategy);
             annotation += " MonthBegin=" + printDateTime(curAlligatorMouth.getCandleBegin().getDateTime());
             annotation += " MonthEnd=" + printDateTime(curAlligatorMouth.getCandleEnd().getDateTime());
             var curAlligatorLength = curAlligatorMouth.getSize();
-            annotation += " alligatorLengthAverage=" + printPrice(alligatorLengthAverage);
+            annotation += " alligatorLengthAverage=" + printPrice(alligatorAverage.getSize());
+            //annotation += " Average=" + alligatorAverage.getAnnotation();
             annotation += " curAlligatorLength=" + curAlligatorLength;
-            if (curAlligatorLength > alligatorLengthAverage) {
-                annotation += " skip by AlligatorLength>" + printPrice(alligatorLengthAverage);
+            if (curAlligatorLength > alligatorAverage.getSize()) {
+                annotation += " skip by AlligatorLength>" + printPrice(alligatorAverage.getSize());
                 resBuy = false;
             }
         }
@@ -201,6 +202,7 @@ public class AlligatorService implements
     public boolean isShouldSell(AAlligatorStrategy strategy, CandleDomainEntity candle, BigDecimal purchaseRate) {
         var annotation = "";
         var res = false;
+        var resForce = false;
 
         var blue = getAlligatorBlue(candle.getFigi(), candle.getDateTime(), strategy);
         var red = getAlligatorRed(candle.getFigi(), candle.getDateTime(), strategy);
@@ -223,6 +225,9 @@ public class AlligatorService implements
             if (red > candle.getClosingPrice().doubleValue()) {
                 annotation += " red stop lost OK";
                 res = true;
+                if (candle.getHighestPrice().doubleValue() < blue) {
+                    resForce = true;
+                }
             }
         }
 
@@ -261,43 +266,37 @@ public class AlligatorService implements
                 limitPrice = null;
             }
 
-            if (res) {
-                var alligatorLengthAverage = getAlligatorLengthAverage(candle.getFigi(), candle.getDateTime(), strategy);
+            if (res && !resForce) {
+                var alligatorAverage = getAlligatorLengthAverage(candle.getFigi(), candle.getDateTime(), strategy);
                 var curAlligatorMouth = getAlligatorMouth(candle.getFigi(), candle.getDateTime(), strategy);
                 annotation += " MonthBegin=" + printDateTime(curAlligatorMouth.getCandleBegin().getDateTime());
                 annotation += " MonthEnd=" + printDateTime(curAlligatorMouth.getCandleEnd().getDateTime());
                 var curAlligatorLength = curAlligatorMouth.getSize();
-                annotation += " alligatorLengthAverage=" + printPrice(alligatorLengthAverage);
+                annotation += " alligatorLengthAverage=" + printPrice(alligatorAverage.getSize());
+                //annotation += " Average=" + alligatorAverage.getAnnotation();
                 annotation += " curAlligatorLength=" + curAlligatorLength;
-                if (curAlligatorLength < alligatorLengthAverage / 3) {
-                    annotation += " skip by AlligatorLength<" + printPrice(alligatorLengthAverage / 3);
+                if (curAlligatorLength < alligatorAverage.getSize() / 3) {
+                    annotation += " skip by AlligatorLength<" + printPrice(alligatorAverage.getSize() / 3);
                     res = false;
                 }
                 if (
                         res
                         && (newGreenPercentAverage < strategy.getMinGreenPercent() && newGreenPercentAverage > 0)
-                        && curAlligatorLength < alligatorLengthAverage
+                        && curAlligatorLength < alligatorAverage.getSize()
                 ) {
                     annotation += " skip by percent<" + strategy.getMinGreenPercent();
-                    annotation += " AlligatorLength<" + printPrice(alligatorLengthAverage);
+                    annotation += " AlligatorLength<" + printPrice(alligatorAverage.getSize());
+                    res = false;
+                }
+
+                if (res
+                    && curAlligatorLength < alligatorAverage.getSize() / strategy.getSellSkipCurAlligatorLengthDivider()) {
+                    annotation += " skip by AlligatorLength<" + printPrice(alligatorAverage.getSize() / 3);
                     res = false;
                 }
             }
         }
 
-        if (res) {
-            var alligatorLengthAverage = getAlligatorLengthAverage(candle.getFigi(), candle.getDateTime(), strategy);
-            var curAlligatorMouth = getAlligatorMouth(candle.getFigi(), candle.getDateTime(), strategy);
-            annotation += " MonthBegin=" + printDateTime(curAlligatorMouth.getCandleBegin().getDateTime());
-            annotation += " MonthEnd=" + printDateTime(curAlligatorMouth.getCandleEnd().getDateTime());
-            var curAlligatorLength = curAlligatorMouth.getSize();
-            annotation += " alligatorLengthAverage=" + printPrice(alligatorLengthAverage);
-            annotation += " curAlligatorLength=" + curAlligatorLength;
-            if (curAlligatorLength < alligatorLengthAverage / 3) {
-                annotation += " skip by AlligatorLength<" + printPrice(alligatorLengthAverage / 3);
-                res = false;
-            }
-        }
         if (res) {
             if (isShouldBuyInternal(strategy, candle, false)) {
                 annotation += " skip by buy";
@@ -379,15 +378,29 @@ public class AlligatorService implements
         return false;
     }
 
-    private Double getAlligatorLengthAverage(
+    @Builder
+    @Data
+    public static class AlligatorMouthAverage {
+        Double size;
+        String annotation;
+    }
+
+    private AlligatorMouthAverage getAlligatorLengthAverage(
             String figi,
             OffsetDateTime currentDateTime,
             AAlligatorStrategy strategy
     ) {
         List<Double> ret = new ArrayList<Double>();
         var skipped = 0;
+        String annotation = "";
         for(var i = 0; i < strategy.getMaxDeepAlligatorMouth() + skipped; i++) {
             var mouth = getAlligatorMouth(figi, currentDateTime, strategy);
+            annotation += " i=" + i;
+            annotation += " size=" + mouth.size;
+            annotation += " begin=" + printDateTime(mouth.getCandleBegin().getDateTime());
+            annotation += " end=" + printDateTime(mouth.getCandleEnd().getDateTime());
+            annotation += " isFindBegin=" + mouth.isFindBegin;
+            annotation += " isFindEnd=" + mouth.isFindEnd;
             if (mouth.isFindBegin && mouth.isFindEnd) {
                 if (mouth.size > strategy.getAlligatorMouthAverageMinSize()) {
                     ret.add(Double.valueOf(mouth.size));
@@ -400,7 +413,10 @@ public class AlligatorService implements
             currentDateTime = mouth.candleBegin.getDateTime();
         }
         var average = ret.stream().mapToDouble(a -> a).average().orElse(0);
-        return average;
+        return AlligatorMouthAverage.builder()
+                .size(average)
+                .annotation(annotation)
+                .build();
         //var dispersia = Math.sqrt(ret.stream().mapToDouble(a -> (a - average) * (a - average)).sum() / ret.size());
         //var retFiltered = ret.stream().filter(a -> a >= average - dispersia && a <= average + dispersia);
         //return retFiltered.mapToDouble(a -> a).average().orElse(average);
@@ -718,6 +734,9 @@ public class AlligatorService implements
 
     private List<CandleDomainEntity> getCandlesByFigiByLength(String figi, OffsetDateTime currentDateTime, Integer length, String interval)
     {
+        if (interval.equals("5min")) {
+            currentDateTime = currentDateTime.minusMinutes(1);
+        }
         return candleHistoryService.getCandlesByFigiByLength(figi,
                 currentDateTime, length, interval);
     }
