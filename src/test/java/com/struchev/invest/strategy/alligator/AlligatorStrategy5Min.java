@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 public class AlligatorStrategy5Min extends AlligatorStrategy {
     public String getInterval() { return "5min"; }
 
-    public boolean isEnabled() { return true; }
+    public boolean isEnabled() { return false; }
 
     public Integer getMaxDeep() { return 500; }
     public Integer getAlligatorMouthAverageMinSize() { return 20; }

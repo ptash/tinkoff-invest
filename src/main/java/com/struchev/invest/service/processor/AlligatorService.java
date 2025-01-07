@@ -172,7 +172,7 @@ public class AlligatorService implements
                     strategy,
                     candle,
                     "Date|open|high|low|close|ema2|profit|loss|limitPrice|lossAvg|deadLineTop|investBottom|investTop|smaTube|strategy"
-                            + "|emaBlue1|emaRed|emaGreen|emaBlue|max|min|zs|waitMax|maxBuy|limitPrice",
+                            + "|emaBlue1|emaRed|emaGreen|emaBlue|max|min|zs|waitMax|maxBuy|stopLoss",
                     "{} | {} | {} | {} | {} | | {} | {} | | {} | ||||by {}"
                             + "| {} | {} | {} | {} | {} | {} | {} | {} | {} |",
                     printDateTime(candle.getDateTime()),
@@ -202,7 +202,6 @@ public class AlligatorService implements
     public boolean isShouldSell(AAlligatorStrategy strategy, CandleDomainEntity candle, BigDecimal purchaseRate) {
         var annotation = "";
         var res = false;
-        var resForce = false;
 
         var blue = getAlligatorBlue(candle.getFigi(), candle.getDateTime(), strategy);
         var red = getAlligatorRed(candle.getFigi(), candle.getDateTime(), strategy);
@@ -220,15 +219,10 @@ public class AlligatorService implements
         var isMin = minCandle == middleCandle;
 
         Double zs = null;
+        Double stopLoss = null;
         if (green != null) {
+            stopLoss = red;
             zs = green + (green - blue) * 1.618;
-            if (red > candle.getClosingPrice().doubleValue()) {
-                annotation += " red stop lost OK";
-                res = true;
-                if (candle.getHighestPrice().doubleValue() < blue) {
-                    resForce = true;
-                }
-            }
         }
 
         Double limitPrice = null;
@@ -239,7 +233,45 @@ public class AlligatorService implements
             annotation += " average=" + printPrice(average);
             Float newGreenPercentAverage = (float) (newGreenPercent / average);
 
-            limitPrice = green + strategy.getSellLimitCriteriaOrig().getExitProfitPercent() * Math.abs(green * average / 100.) * 1.618;
+            var alligatorAverage = getAlligatorLengthAverage(candle.getFigi(), candle.getDateTime(), strategy);
+            var curAlligatorMouth = getAlligatorMouth(candle.getFigi(), candle.getDateTime(), strategy);
+            annotation += " MonthBegin=" + printDateTime(curAlligatorMouth.getCandleBegin().getDateTime());
+            annotation += " MonthEnd=" + printDateTime(curAlligatorMouth.getCandleEnd().getDateTime());
+            var curAlligatorLength = curAlligatorMouth.getSize();
+            annotation += " alligatorLengthAverage=" + printPrice(alligatorAverage.getSize());
+            //annotation += " Average=" + alligatorAverage.getAnnotation();
+            annotation += " curAlligatorLength=" + curAlligatorLength;
+            if (curAlligatorLength < alligatorAverage.getSize() / 3) {
+                annotation += " skip by AlligatorLength<" + printPrice(alligatorAverage.getSize() / 3);
+                stopLoss = blue;
+            }
+            if (
+                    (newGreenPercentAverage < strategy.getMinGreenPercent() && newGreenPercentAverage > 0)
+                            && curAlligatorLength < alligatorAverage.getSize()
+            ) {
+                annotation += " skip by percent<" + strategy.getMinGreenPercent();
+                annotation += " AlligatorLength<" + printPrice(alligatorAverage.getSize());
+                stopLoss = blue;
+            }
+
+            if (curAlligatorLength < alligatorAverage.getSize() / strategy.getSellSkipCurAlligatorLengthDivider()) {
+                annotation += " skip by AlligatorLength<" + printPrice(alligatorAverage.getSize() / 3);
+                stopLoss = blue;
+            }
+
+            //limitPrice = green + strategy.getSellLimitCriteriaOrig().getExitProfitPercent() * Math.abs(green * average / 100.) * 1.618;
+            var order = orderService.findActiveByFigiAndStrategy(candle.getFigi(), strategy);
+            var orderAlligatorMouth = getAlligatorMouth(candle.getFigi(), order.getPurchaseDateTime(), strategy);
+            annotation += " orderDate=" + printDateTime(order.getPurchaseDateTime());
+            annotation += " orderAlligatorMouthSize=" + orderAlligatorMouth.getSize();
+            annotation += " purchaseRate=" + printPrice(purchaseRate);
+            annotation += " limitPercentByCandle=" + printPrice(strategy.getLimitPercentByCandle());
+            var limitPercent = Math.max(1, (alligatorAverage.getSize() - orderAlligatorMouth.getSize()))
+                    * strategy.getLimitPercentByCandle() * average;
+            annotation += " limitPercent=" + printPrice(limitPercent);
+            limitPrice = purchaseRate.doubleValue()
+                    + Math.abs((purchaseRate.doubleValue() / 100.) * limitPercent);
+
             Float newLimitPercent = (float) ((100.f * (limitPrice.floatValue() - purchaseRate.floatValue()) / Math.abs(purchaseRate.floatValue())));
             //Float newLimitPercentAverage = (float) (newLimitPercent / average);
 
@@ -256,44 +288,20 @@ public class AlligatorService implements
                 annotation += " new newLimitPercent=" + printPrice(newLimitPercent);
             }
             if (
-                    //newLimitPercent > strategy.getSellLimitCriteriaOrig().getExitProfitPercent()
+                    true
+                    //&& newLimitPercent > strategy.getSellLimitCriteriaOrig().getExitProfitPercent()
                     //&& newGreenPercentAverage > strategy.getSellLimitCriteriaOrig().getExitProfitPercent()
-                    false
             ) {
                 sellLimitCriteria.setExitProfitPercent(newLimitPercent);
                 strategy.setSellLimitCriteria(candle.getFigi(), sellLimitCriteria);
             } else {
                 limitPrice = null;
             }
-
-            if (res && !resForce) {
-                var alligatorAverage = getAlligatorLengthAverage(candle.getFigi(), candle.getDateTime(), strategy);
-                var curAlligatorMouth = getAlligatorMouth(candle.getFigi(), candle.getDateTime(), strategy);
-                annotation += " MonthBegin=" + printDateTime(curAlligatorMouth.getCandleBegin().getDateTime());
-                annotation += " MonthEnd=" + printDateTime(curAlligatorMouth.getCandleEnd().getDateTime());
-                var curAlligatorLength = curAlligatorMouth.getSize();
-                annotation += " alligatorLengthAverage=" + printPrice(alligatorAverage.getSize());
-                //annotation += " Average=" + alligatorAverage.getAnnotation();
-                annotation += " curAlligatorLength=" + curAlligatorLength;
-                if (curAlligatorLength < alligatorAverage.getSize() / 3) {
-                    annotation += " skip by AlligatorLength<" + printPrice(alligatorAverage.getSize() / 3);
-                    res = false;
-                }
-                if (
-                        res
-                        && (newGreenPercentAverage < strategy.getMinGreenPercent() && newGreenPercentAverage > 0)
-                        && curAlligatorLength < alligatorAverage.getSize()
-                ) {
-                    annotation += " skip by percent<" + strategy.getMinGreenPercent();
-                    annotation += " AlligatorLength<" + printPrice(alligatorAverage.getSize());
-                    res = false;
-                }
-
-                if (res
-                    && curAlligatorLength < alligatorAverage.getSize() / strategy.getSellSkipCurAlligatorLengthDivider()) {
-                    annotation += " skip by AlligatorLength<" + printPrice(alligatorAverage.getSize() / 3);
-                    res = false;
-                }
+        }
+        if (null != stopLoss) {
+            if (candle.getHighestPrice().doubleValue() < stopLoss) {
+                annotation += " stop lost OK";
+                res = true;
             }
         }
 
@@ -317,8 +325,8 @@ public class AlligatorService implements
                 strategy,
                 candle,
                 "Date|open|high|low|close|ema2|profit|loss|limitPrice|lossAvg|deadLineTop|investBottom|investTop|smaTube|strategy"
-                        + "|emaBlue1|emaRed|emaGreen|emaBlue|max|min|zs|waitMax|maxBuy|limitPrice",
-                "{} | {} | {} | {} | {} | | {} | {} | | {} | ||||sell {}"
+                        + "|emaBlue1|emaRed|emaGreen|emaBlue|max|min|zs|waitMax|maxBuy|stopLoss",
+                "{} | {} | {} | {} | {} | | {} | {} | {} | {} | ||||sell {}"
                         + "| {} | {} | {} | {} | {} | {} | {} ||| {}",
                 printDateTime(candle.getDateTime()),
                 candle.getOpenPrice(),
@@ -327,6 +335,7 @@ public class AlligatorService implements
                 candle.getClosingPrice(),
                 "",
                 "",
+                limitPrice == null ? "" : printPrice(limitPrice),
                 "",
                 annotation,
                 blue == null ? "" : blue,
@@ -336,7 +345,7 @@ public class AlligatorService implements
                 isMax ? middleCandle.getHighestPrice() : "",
                 isMin ? middleCandle.getLowestPrice() : "",
                 zs == null ? "" : zs,
-                limitPrice == null ? "" : limitPrice
+                stopLoss == null ? "" : printPrice(stopLoss)
         );
         return res;
     }
@@ -788,7 +797,7 @@ public class AlligatorService implements
     private Map<String, Double> doubleCashMap = new LinkedHashMap<>() {
         @Override
         protected boolean removeEldestEntry(final Map.Entry eldest) {
-            return size() > 1000;
+            return size() > 2000;
         }
     };
 
@@ -797,7 +806,7 @@ public class AlligatorService implements
         if (doubleCashMap.containsKey(indent)) {
             return doubleCashMap.get(indent);
         }
-        if (doubleCashMap.size() > 10000) {
+        if (doubleCashMap.size() > 2000) {
             doubleCashMap.clear();
         }
         return null;

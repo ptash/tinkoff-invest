@@ -66,6 +66,8 @@ public abstract class AAlligatorStrategy extends AStrategy implements Cloneable,
 
     public Double getSellSkipCurAlligatorLengthDivider() { return 3.0; }
 
+    public Double getLimitPercentByCandle() { return 0.375 / 1.4; }
+
     private SellLimitCriteria sellLimit;
     private Map<String, SellLimitCriteria> sellLimitMap = new HashMap<>();
 
