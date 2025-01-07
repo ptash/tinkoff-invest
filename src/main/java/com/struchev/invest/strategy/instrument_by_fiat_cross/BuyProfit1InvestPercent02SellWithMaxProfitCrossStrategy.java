@@ -22,7 +22,7 @@ public class BuyProfit1InvestPercent02SellWithMaxProfitCrossStrategy extends Buy
             "BBG005F1DK91", 2, // G1
             "BBG002NLDLV8", 2, // VIPS
             //"BBG00W0KZD98", 1,  //LI ?
-            "BBG000BLY663", 1, // CROCS
+            //"BBG000BLY663", 1, // CROCS
             //"BBG000J3D1Y8", 6, // OraSure Technologies Inc
             "BBG0016XJ8S0", 4, // TAL Education Group
             //"BBG000GRZDV1", 1, // Strategic Education Inc

@@ -797,7 +797,7 @@ public class AlligatorService implements
         if (doubleCashMap.containsKey(indent)) {
             return doubleCashMap.get(indent);
         }
-        if (doubleCashMap.size() > 2000) {
+        if (doubleCashMap.size() > 10000) {
             doubleCashMap.clear();
         }
         return null;
