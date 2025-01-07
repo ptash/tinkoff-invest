@@ -157,11 +157,11 @@ public class AlligatorService implements
             annotation += " MonthBegin=" + printDateTime(curAlligatorMouth.getCandleBegin().getDateTime());
             annotation += " MonthEnd=" + printDateTime(curAlligatorMouth.getCandleEnd().getDateTime());
             var curAlligatorLength = curAlligatorMouth.getSize();
-            annotation += " alligatorLengthAverage=" + printPrice(alligatorAverage.getSize());
+            annotation += " alligatorLengthAverage=" + alligatorAverage.getSize();
             //annotation += " Average=" + alligatorAverage.getAnnotation();
             annotation += " curAlligatorLength=" + curAlligatorLength;
             if (curAlligatorLength > alligatorAverage.getSize()) {
-                annotation += " skip by AlligatorLength>" + printPrice(alligatorAverage.getSize());
+                annotation += " skip by AlligatorLength>" + alligatorAverage.getSize();
                 resBuy = false;
             }
         }
@@ -227,6 +227,7 @@ public class AlligatorService implements
 
         Double limitPrice = null;
         if (green != null && blue != null) {
+            var stopLossForce = blue - Math.abs(red - blue);
             var sellLimitCriteria = strategy.getSellLimitCriteria(candle.getFigi());
             Float newGreenPercent = (float) ((100.f * (zs - green) / Math.abs(green)));
             var average = getAveragePercent(candle.getFigi(), candle.getDateTime(), strategy);
@@ -238,25 +239,25 @@ public class AlligatorService implements
             annotation += " MonthBegin=" + printDateTime(curAlligatorMouth.getCandleBegin().getDateTime());
             annotation += " MonthEnd=" + printDateTime(curAlligatorMouth.getCandleEnd().getDateTime());
             var curAlligatorLength = curAlligatorMouth.getSize();
-            annotation += " alligatorLengthAverage=" + printPrice(alligatorAverage.getSize());
+            annotation += " alligatorLengthAverage=" + alligatorAverage.getSize();
             //annotation += " Average=" + alligatorAverage.getAnnotation();
             annotation += " curAlligatorLength=" + curAlligatorLength;
-            if (curAlligatorLength < alligatorAverage.getSize() / 3) {
-                annotation += " skip by AlligatorLength<" + printPrice(alligatorAverage.getSize() / 3);
-                stopLoss = blue;
+            if (curAlligatorLength < alligatorAverage.getSize() / 3. + 1) {
+                annotation += " skip by AlligatorLength<" + printPrice(alligatorAverage.getSize() / 3.);
+                stopLoss = stopLossForce;
             }
             if (
                     (newGreenPercentAverage < strategy.getMinGreenPercent() && newGreenPercentAverage > 0)
                             && curAlligatorLength < alligatorAverage.getSize()
             ) {
                 annotation += " skip by percent<" + strategy.getMinGreenPercent();
-                annotation += " AlligatorLength<" + printPrice(alligatorAverage.getSize());
-                stopLoss = blue;
+                annotation += " AlligatorLength<" + alligatorAverage.getSize();
+                stopLoss = stopLossForce;
             }
 
-            if (curAlligatorLength < alligatorAverage.getSize() / strategy.getSellSkipCurAlligatorLengthDivider()) {
-                annotation += " skip by AlligatorLength<" + printPrice(alligatorAverage.getSize() / 3);
-                stopLoss = blue;
+            if (curAlligatorLength < alligatorAverage.getSize() / strategy.getSellSkipCurAlligatorLengthDivider() + 1) {
+                annotation += " skip by AlligatorLength<" + alligatorAverage.getSize() / strategy.getSellSkipCurAlligatorLengthDivider();
+                stopLoss = stopLossForce;
             }
 
             //limitPrice = green + strategy.getSellLimitCriteriaOrig().getExitProfitPercent() * Math.abs(green * average / 100.) * 1.618;
@@ -390,7 +391,7 @@ public class AlligatorService implements
     @Builder
     @Data
     public static class AlligatorMouthAverage {
-        Double size;
+        Integer size;
         String annotation;
     }
 
@@ -423,7 +424,7 @@ public class AlligatorService implements
         }
         var average = ret.stream().mapToDouble(a -> a).average().orElse(0);
         return AlligatorMouthAverage.builder()
-                .size(average)
+                .size((int) Math.round(Math.ceil(average)))
                 .annotation(annotation)
                 .build();
         //var dispersia = Math.sqrt(ret.stream().mapToDouble(a -> (a - average) * (a - average)).sum() / ret.size());
