@@ -808,7 +808,7 @@ public class AlligatorService implements
     private Map<String, Double> doubleCashMap = new LinkedHashMap<>() {
         @Override
         protected boolean removeEldestEntry(final Map.Entry eldest) {
-            return size() > 2000;
+            return size() > 5000;
         }
     };
 
@@ -817,7 +817,7 @@ public class AlligatorService implements
         if (doubleCashMap.containsKey(indent)) {
             return doubleCashMap.get(indent);
         }
-        if (doubleCashMap.size() > 2000) {
+        if (doubleCashMap.size() > 4000) {
             doubleCashMap.clear();
         }
         return null;
