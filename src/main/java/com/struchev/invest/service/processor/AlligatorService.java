@@ -266,9 +266,18 @@ public class AlligatorService implements
             annotation += " orderDate=" + printDateTime(order.getPurchaseDateTime());
             annotation += " orderAlligatorMouthSize=" + orderAlligatorMouth.getSize();
             annotation += " purchaseRate=" + printPrice(purchaseRate);
-            annotation += " limitPercentByCandle=" + printPrice(strategy.getLimitPercentByCandle());
-            var limitPercent = Math.max(1, (alligatorAverage.getSize() - orderAlligatorMouth.getSize()))
-                    * strategy.getLimitPercentByCandle() * average;
+            Double limitPercent;
+            if (strategy.getLimitPercentByCandle() > 0) {
+                annotation += " limitPercentByCandle=" + printPrice(strategy.getLimitPercentByCandle());
+                limitPercent = Math.max(1, (alligatorAverage.getSize() - orderAlligatorMouth.getSize()))
+                        * strategy.getLimitPercentByCandle() * average;
+            } else {
+                var limitPercentByCandle = Math.abs(100. * alligatorAverage.getPrice() / alligatorAverage.getSize() / purchaseRate.doubleValue());
+                annotation += " alligatorAveragePrice=" + printPrice(alligatorAverage.getPrice());
+                annotation += " limitPercentByCandle=" + printPrice(limitPercentByCandle);
+                limitPercent = Math.max(1, (alligatorAverage.getSize() - orderAlligatorMouth.getSize()))
+                        * limitPercentByCandle;
+            }
             annotation += " limitPercent=" + printPrice(limitPercent);
             limitPrice = purchaseRate.doubleValue()
                     + Math.abs((purchaseRate.doubleValue() / 100.) * limitPercent);
@@ -393,6 +402,7 @@ public class AlligatorService implements
     public static class AlligatorMouthAverage {
         Integer size;
         String annotation;
+        Double price;
     }
 
     private AlligatorMouthAverage getAlligatorLengthAverage(
@@ -401,6 +411,7 @@ public class AlligatorService implements
             AAlligatorStrategy strategy
     ) {
         List<Double> ret = new ArrayList<Double>();
+        List<Double> retPrice = new ArrayList<Double>();
         var skipped = 0;
         String annotation = "";
         var mouthCur = getAlligatorMouth(figi, currentDateTime, strategy);
@@ -421,6 +432,7 @@ public class AlligatorService implements
                     skipped++;
                 } else if (mouth.size > strategy.getAlligatorMouthAverageMinSize()) {
                     ret.add(Double.valueOf(mouth.size));
+                    retPrice.add(Math.abs(mouth.candleMax.getHighestPrice().doubleValue() - mouth.candleMin.getLowestPrice().doubleValue()));
                 } else {
                     skipped++;
                 }
@@ -432,6 +444,7 @@ public class AlligatorService implements
         var average = ret.stream().mapToDouble(a -> a).average().orElse(0);
         return AlligatorMouthAverage.builder()
                 .size((int) Math.round(Math.ceil(average)))
+                .price(retPrice.stream().mapToDouble(a -> a).average().orElse(0))
                 .annotation(annotation)
                 .build();
         //var dispersia = Math.sqrt(ret.stream().mapToDouble(a -> (a - average) * (a - average)).sum() / ret.size());
@@ -448,6 +461,8 @@ public class AlligatorService implements
         Boolean isFindBegin;
         Boolean isFindEnd;
         Boolean isUp;
+        CandleDomainEntity candleMin;
+        CandleDomainEntity candleMax;
     }
 
     private AlligatorMouth getAlligatorMouth(
@@ -476,12 +491,16 @@ public class AlligatorService implements
                 resBuilder.candleEnd(candleList.get(i));
                 resBuilder.isFindEnd(i < candleList.size() - 1);
                 resBuilder.isUp(true);
+                resBuilder.candleMin(candleList.get(i));
+                resBuilder.candleMax(candleList.get(i));
             }
             if (null == isUpCur && isDown) {
                 isUpCur = false;
                 resBuilder.candleEnd(candleList.get(i));
                 resBuilder.isFindEnd(i < candleList.size() - 1);
                 resBuilder.isUp(false);
+                resBuilder.candleMin(candleList.get(i));
+                resBuilder.candleMax(candleList.get(i));
             }
             if (null != isUpCur && isUpCur && !isUp) {
                 resBuilder.isFindBegin(true);
@@ -493,6 +512,12 @@ public class AlligatorService implements
             }
             if (null != isUpCur) {
                 resBuilder.candleBegin(candleList.get(i));
+                if (resBuilder.candleBegin.getHighestPrice().compareTo(resBuilder.candleMax.getHighestPrice()) > 0) {
+                    resBuilder.candleMax(resBuilder.candleBegin);
+                }
+                if (resBuilder.candleBegin.getLowestPrice().compareTo(resBuilder.candleMin.getLowestPrice()) < 0) {
+                    resBuilder.candleMin(resBuilder.candleBegin);
+                }
                 size++;
             }
         }
