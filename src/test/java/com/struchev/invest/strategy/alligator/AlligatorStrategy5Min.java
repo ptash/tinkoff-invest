@@ -11,4 +11,6 @@ public class AlligatorStrategy5Min extends AlligatorStrategy {
     public Integer getMaxDeep() { return 500; }
     public Integer getAlligatorMouthAverageMinSize() { return 20; }
     public Double getSellSkipCurAlligatorLengthDivider() { return 2.0; }
+
+    public Double getLimitPercentByCandle() { return 0.375 / 0.4; }
 }

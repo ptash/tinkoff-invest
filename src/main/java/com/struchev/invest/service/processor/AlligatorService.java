@@ -403,6 +403,8 @@ public class AlligatorService implements
         List<Double> ret = new ArrayList<Double>();
         var skipped = 0;
         String annotation = "";
+        var mouthCur = getAlligatorMouth(figi, currentDateTime, strategy);
+        currentDateTime = mouthCur.candleBegin.getDateTime();
         for(var i = 0; i < strategy.getMaxDeepAlligatorMouth() + skipped; i++) {
             var mouth = getAlligatorMouth(figi, currentDateTime, strategy);
             annotation += " i=" + i;
@@ -412,7 +414,12 @@ public class AlligatorService implements
             annotation += " isFindBegin=" + mouth.isFindBegin;
             annotation += " isFindEnd=" + mouth.isFindEnd;
             if (mouth.isFindBegin && mouth.isFindEnd) {
-                if (mouth.size > strategy.getAlligatorMouthAverageMinSize()) {
+                if (
+                        strategy.isAlligatorMouthAverageLikeCur()
+                        && ((mouthCur.isUp && !mouth.isUp) || (!mouthCur.isUp && mouth.isUp))
+                ) {
+                    skipped++;
+                } else if (mouth.size > strategy.getAlligatorMouthAverageMinSize()) {
                     ret.add(Double.valueOf(mouth.size));
                 } else {
                     skipped++;
@@ -440,6 +447,7 @@ public class AlligatorService implements
         Integer size;
         Boolean isFindBegin;
         Boolean isFindEnd;
+        Boolean isUp;
     }
 
     private AlligatorMouth getAlligatorMouth(
@@ -467,11 +475,13 @@ public class AlligatorService implements
                 isUpCur = true;
                 resBuilder.candleEnd(candleList.get(i));
                 resBuilder.isFindEnd(i < candleList.size() - 1);
+                resBuilder.isUp(true);
             }
             if (null == isUpCur && isDown) {
                 isUpCur = false;
                 resBuilder.candleEnd(candleList.get(i));
                 resBuilder.isFindEnd(i < candleList.size() - 1);
+                resBuilder.isUp(false);
             }
             if (null != isUpCur && isUpCur && !isUp) {
                 resBuilder.isFindBegin(true);
