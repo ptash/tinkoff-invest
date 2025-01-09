@@ -220,6 +220,7 @@ public class AlligatorService implements
 
         Double zs = null;
         Double stopLoss = null;
+        Boolean isStopLossForce = false;
         if (green != null) {
             stopLoss = red;
             zs = green + (green - blue) * 1.618;
@@ -245,6 +246,7 @@ public class AlligatorService implements
             if (curAlligatorLength < alligatorAverage.getSize() / 3. + 1) {
                 annotation += " skip by AlligatorLength<" + printPrice(alligatorAverage.getSize() / 3.);
                 stopLoss = stopLossForce;
+                isStopLossForce = true;
             }
             if (
                     (newGreenPercentAverage < strategy.getMinGreenPercent() && newGreenPercentAverage > 0)
@@ -253,11 +255,13 @@ public class AlligatorService implements
                 annotation += " skip by percent<" + strategy.getMinGreenPercent();
                 annotation += " AlligatorLength<" + alligatorAverage.getSize();
                 stopLoss = stopLossForce;
+                isStopLossForce = true;
             }
 
             if (curAlligatorLength < alligatorAverage.getSize() / strategy.getSellSkipCurAlligatorLengthDivider() + 1) {
                 annotation += " skip by AlligatorLength<" + alligatorAverage.getSize() / strategy.getSellSkipCurAlligatorLengthDivider();
                 stopLoss = stopLossForce;
+                isStopLossForce = true;
             }
 
             //limitPrice = green + strategy.getSellLimitCriteriaOrig().getExitProfitPercent() * Math.abs(green * average / 100.) * 1.618;
@@ -309,8 +313,11 @@ public class AlligatorService implements
             }
         }
         if (null != stopLoss) {
-            if (candle.getHighestPrice().doubleValue() < stopLoss) {
+            if (!isStopLossForce && candle.getClosingPrice().doubleValue() < stopLoss) {
                 annotation += " stop lost OK";
+                res = true;
+            } else if (isStopLossForce && candle.getHighestPrice().doubleValue() < stopLoss) {
+                annotation += " stop lost force OK";
                 res = true;
             }
         }
@@ -424,7 +431,7 @@ public class AlligatorService implements
             annotation += " end=" + printDateTime(mouth.getCandleEnd().getDateTime());
             annotation += " isFindBegin=" + mouth.isFindBegin;
             annotation += " isFindEnd=" + mouth.isFindEnd;
-            if (mouth.isFindBegin && mouth.isFindEnd) {
+            if (mouth.isFindBegin) {
                 if (
                         strategy.isAlligatorMouthAverageLikeCur()
                         && ((mouthCur.isUp && !mouth.isUp) || (!mouthCur.isUp && mouth.isUp))
@@ -484,8 +491,8 @@ public class AlligatorService implements
             if (blue == null || red == null || green == null) {
                 break;
             }
-            var isUp = green > red && red > blue;
-            var isDown = green < red && red < blue;
+            var isUp = green > blue;
+            var isDown = green < blue;
             if (null == isUpCur && isUp) {
                 isUpCur = true;
                 resBuilder.candleEnd(candleList.get(i));
