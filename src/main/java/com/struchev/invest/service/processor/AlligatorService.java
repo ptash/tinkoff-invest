@@ -782,6 +782,9 @@ public class AlligatorService implements
         if (interval.equals("5min")) {
             currentDateTime = currentDateTime.minusMinutes(1);
         }
+        if (interval.equals("15min")) {
+            currentDateTime = currentDateTime.minusMinutes(1);
+        }
         return candleHistoryService.getCandlesByFigiByLength(figi,
                 currentDateTime, length, interval);
     }

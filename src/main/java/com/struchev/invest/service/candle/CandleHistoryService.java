@@ -46,6 +46,7 @@ public class CandleHistoryService implements ICandleHistoryService {
     protected Map<String, OffsetDateTime> firstCandleDateTimeByFigi;
     protected Map<String, List<CandleDomainEntity>> candlesLocalCacheMinute;
     protected Map<String, List<CandleDomainEntity>> candlesLocalCacheFiveMinute;
+    protected Map<String, List<CandleDomainEntity>> candlesLocalCache15Minute;
     protected Map<String, List<CandleDomainEntity>> candlesLocalCacheDay;
     protected Map<String, List<CandleDomainEntity>> candlesLocalCacheHour;
 
@@ -132,6 +133,7 @@ public class CandleHistoryService implements ICandleHistoryService {
         if (!isCandleListenerEnabled) {
             var candlesByFigi = interval.equals("1min") ? candlesLocalCacheMinute.get(figi)
                     : interval.equals("5min") ? candlesLocalCacheFiveMinute.get(figi)
+                    : interval.equals("15min") ? candlesLocalCache15Minute.get(figi)
                     : (interval.equals("1hour") ? candlesLocalCacheHour.get(figi) : candlesLocalCacheDay.get(figi));
             if (candlesByFigi.size() == 0) {
                 throw new RuntimeException("Candles not found in local cache for " + figi);
@@ -180,6 +182,7 @@ public class CandleHistoryService implements ICandleHistoryService {
         if (!isCandleListenerEnabled) {
             var candlesByFigi = interval.equals("1min") ? candlesLocalCacheMinute.get(figi)
                     : interval.equals("5min") ? candlesLocalCacheFiveMinute.get(figi)
+                    : interval.equals("15min") ? candlesLocalCache15Minute.get(figi)
                     : (interval.equals("1hour") ? candlesLocalCacheHour.get(figi) : candlesLocalCacheDay.get(figi));
             if (candlesByFigi.size() == 0) {
                 throw new RuntimeException("Candles not found in local cache for " + figi);
@@ -257,6 +260,7 @@ public class CandleHistoryService implements ICandleHistoryService {
             }
             loadCandlesHistory(instrument.getFigi(), curDays, CandleInterval.CANDLE_INTERVAL_1_MIN, now);
             loadCandlesHistory(instrument.getFigi(), curDays, CandleInterval.CANDLE_INTERVAL_5_MIN, now);
+            loadCandlesHistory(instrument.getFigi(), curDays, CandleInterval.CANDLE_INTERVAL_15_MIN, now);
             loadCandlesHistory(instrument.getFigi(), curDays, CandleInterval.CANDLE_INTERVAL_DAY, now);
             loadCandlesHistory(instrument.getFigi(), curDays, CandleInterval.CANDLE_INTERVAL_HOUR, now);
         });
@@ -268,18 +272,21 @@ public class CandleHistoryService implements ICandleHistoryService {
     {
         String interval = candleInterval == CandleInterval.CANDLE_INTERVAL_1_MIN ? "1min"
                 : (candleInterval == CandleInterval.CANDLE_INTERVAL_5_MIN ? "5min"
-                : (candleInterval == CandleInterval.CANDLE_INTERVAL_HOUR ? "1hour" : "1day"));
+                : (candleInterval == CandleInterval.CANDLE_INTERVAL_15_MIN ? "15min"
+                : (candleInterval == CandleInterval.CANDLE_INTERVAL_HOUR ? "1hour" : "1day")));
         Integer minutesInInterval = candleInterval == CandleInterval.CANDLE_INTERVAL_1_MIN ? 60 * 24
                 : (candleInterval == CandleInterval.CANDLE_INTERVAL_5_MIN ? 60 * 24
-                : (candleInterval == CandleInterval.CANDLE_INTERVAL_HOUR ? 60 * 24 * 6 : 60 * 24 * 365));
+                : (candleInterval == CandleInterval.CANDLE_INTERVAL_15_MIN ? 60 * 24
+                : (candleInterval == CandleInterval.CANDLE_INTERVAL_HOUR ? 60 * 24 * 6 : 60 * 24 * 365)));
         var candlesMax = candleRepository.findFirstByFigiAndIntervalAndIsCompleteOrderByDateTimeDesc(figi, interval, true);
         var candlesMin = candleRepository.findFirstByFigiAndIntervalAndIsCompleteOrderByDateTimeAsc(figi, interval, true);
 
         var dayStart = 0;
         var dayEnd = candleInterval == CandleInterval.CANDLE_INTERVAL_1_MIN ? days
                 : (candleInterval == CandleInterval.CANDLE_INTERVAL_5_MIN ? days
+                : (candleInterval == CandleInterval.CANDLE_INTERVAL_15_MIN ? days
                 : (candleInterval == CandleInterval.CANDLE_INTERVAL_HOUR ? days
-                : Long.max(Long.divideUnsigned(days, 365), 1)));
+                : Long.max(Long.divideUnsigned(days, 365), 1))));
         log.info("Candles history from {} to {} {}", dayStart, dayEnd, interval);
         LongStream datesRange = LongStream.empty();
         var timeStart = now.minusMinutes((dayEnd) * minutesInInterval);
@@ -342,6 +349,12 @@ public class CandleHistoryService implements ICandleHistoryService {
             log.info("Load candles for {} from {} days {} strategy days {}", figies, OffsetDateTime.now().minusDays(days), days, historyDurationByStrategies.toDays());
             var candles = candleRepository.findByByFigiesAndIntervalOrderByDateTime(figies, "1min", OffsetDateTime.now().minusDays(days));
             candlesLocalCacheMinute = candles.stream()
+                    .peek(c -> entityManager.detach(c))
+                    .collect(Collectors.groupingBy(CandleDomainEntity::getFigi));
+
+            log.info("Loading candles for 15min");
+            var candles15Min = candleRepository.findByFigiesAndByIntervalOrderByDateTime(figies, "15min");
+            candlesLocalCache15Minute = candles15Min.stream()
                     .peek(c -> entityManager.detach(c))
                     .collect(Collectors.groupingBy(CandleDomainEntity::getFigi));
 

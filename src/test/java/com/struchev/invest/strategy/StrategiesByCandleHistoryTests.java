@@ -130,6 +130,20 @@ class StrategiesByCandleHistoryTests {
         strategies.stream()
                 .flatMap(figi -> {
                     var candles = candleRepository.findByFigiAndIntervalAndBeforeDateTimeLimit(figi,
+                            "15min", dateBefore, PageRequest.of(0, 1));
+                    if (candles == null || candles.size() == 0) {
+                        log.info("getFigiesForActiveStrategies cancel {}: getCandlesByFigiByLength return {}", figi, candles);
+                        return new ArrayList<CandleDomainEntity>().stream();
+                    }
+                    var startDateTime = candles.get(0).getDateTime().minusHours(historyDuration.toHours());
+                    return candleRepository.findByFigiAndIntervalAndDateTimeAfterAndDateTimeBeforeOrderByDateTime(figi, "15min", startDateTime, dateBefore).stream();
+                })
+                .sorted(Comparator.comparing(CandleDomainEntity::getDateTime))
+                .forEach(c -> purchaseService.observeNewCandle(c));
+
+        strategies.stream()
+                .flatMap(figi -> {
+                    var candles = candleRepository.findByFigiAndIntervalAndBeforeDateTimeLimit(figi,
                             "5min", dateBefore, PageRequest.of(0, 1));
                     if (candles == null || candles.size() == 0) {
                         log.info("getFigiesForActiveStrategies cancel {}: getCandlesByFigiByLength return {}", figi, candles);

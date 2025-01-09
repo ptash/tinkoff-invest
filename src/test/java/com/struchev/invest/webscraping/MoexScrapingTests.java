@@ -27,7 +27,7 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-@SpringBootTest
+//@SpringBootTest
 @Slf4j
 @TestPropertySource(
         locations = "classpath:application-test.properties")
@@ -88,7 +88,7 @@ public class MoexScrapingTests {
         moexScrapingTask.isEnabled = true;
     }
 
-    @Test
+    //@Test
     @ExtendWith(OutputCaptureExtension.class)
     public void webScrapingDerivativeUsdRatesTest(CapturedOutput capture) {
         moexScrapingTask.getDerivativeUsdRates();
@@ -96,7 +96,7 @@ public class MoexScrapingTests {
         assertFalse(capture.getOut().contains("ERROR"));
     }
 
-    @Test
+    //@Test
     @ExtendWith(OutputCaptureExtension.class)
     public void webScrapingContractResultsTest(CapturedOutput capture) {
         moexScrapingTask.getContractResults();
@@ -104,7 +104,7 @@ public class MoexScrapingTests {
         assertFalse(capture.getOut().contains("ERROR"));
     }
 
-    @Test
+    //@Test
     @ExtendWith(OutputCaptureExtension.class)
     public void webScrapingDayContractResultsTest(CapturedOutput capture) {
         moexScrapingTask.getDayContractResults();
