@@ -78,6 +78,7 @@ public class AlligatorService implements
     public boolean isShouldBuyInternal(AAlligatorStrategy strategy, CandleDomainEntity candle, Boolean isReport) {
         var annotation = "";
         var resBuy = false;
+        var resBuyMax = false;
 
         var currentPrice = candle.getLowestPrice();
 
@@ -97,7 +98,13 @@ public class AlligatorService implements
         var isMin = minCandle == middleCandle;
 
         var lastFMaxCandle = getLastFMaxCandle(candle.getFigi(), candle.getDateTime(), strategy);
-        if (null != lastFMaxCandle) {
+        BigDecimal waitMax = null;
+        BigDecimal waitMax2 = null;
+        BigDecimal waitMaxBuy = null;
+        if (null != lastFMaxCandle && green != null && blue != null) {
+            waitMax = lastFMaxCandle.getHighestPrice();
+            var delta = lastFMaxCandle.getHighestPrice().subtract(lastFMaxCandle.getClosingPrice()).abs()
+                    .min(lastFMaxCandle.getHighestPrice().subtract(lastFMaxCandle.getOpenPrice()).abs());
             var candleListMax = candleHistoryService.getCandlesByFigiBetweenDateTimes(candle.getFigi(), lastFMaxCandle.getDateTime(), candle.getDateTime(), strategy.getInterval());
             var maxIntervalCandle = candleListMax.stream().reduce((first, second) ->
                     first.getHighestPrice().compareTo(second.getHighestPrice()) > 0 ? first : second
@@ -106,14 +113,36 @@ public class AlligatorService implements
                     maxIntervalCandle != lastFMaxCandle
                             && maxIntervalCandle.getHighestPrice().compareTo(lastFMaxCandle.getHighestPrice()) > 0
             ) {
-                if (
-                        currentPrice.compareTo(lastFMaxCandle.getClosingPrice().max(lastFMaxCandle.getOpenPrice())) < 0
-                        && currentPrice.doubleValue() > blue
-                        && green > red
-                        && red > blue
-                ) {
-                    setOrderBigDecimalData(strategy, candle, "priceWanted", currentPrice.max(lastFMaxCandle.getClosingPrice().max(lastFMaxCandle.getOpenPrice())));
-                    resBuy = true;
+                var blueMax = getAlligatorBlue(candle.getFigi(), maxIntervalCandle.getDateTime(), strategy);
+                var greenMax = getAlligatorGreen(candle.getFigi(), maxIntervalCandle.getDateTime(), strategy);
+                if (blueMax != null && greenMax != null) {
+                    delta = delta.max(BigDecimal.valueOf(Math.abs(greenMax - blueMax)));
+                }
+                waitMax2 = waitMax.add(delta);
+                var isMax2 = maxIntervalCandle.getHighestPrice().compareTo(waitMax2) > 0;
+                if (isMax2) {
+                    waitMaxBuy = waitMax.subtract(delta);
+                    if (
+                            currentPrice.compareTo(waitMaxBuy) < 0
+                                    && currentPrice.doubleValue() > blue
+                                    && green > red
+                                    && red > blue
+                    ) {
+                        setOrderBigDecimalData(strategy, candle, "priceWanted", currentPrice.max(lastFMaxCandle.getClosingPrice().max(lastFMaxCandle.getOpenPrice())));
+                        annotation += " OK by DOWN";
+                        resBuy = true;
+                    }
+                    if (
+                            currentPrice.compareTo(waitMaxBuy) > 0
+                                    && currentPrice.doubleValue() > blue
+                                    && green > red
+                                    && red > blue
+                    ) {
+                        setOrderBigDecimalData(strategy, candle, "priceWanted", currentPrice.max(lastFMaxCandle.getClosingPrice().max(lastFMaxCandle.getOpenPrice())));
+                        annotation += " OK by UP";
+                        resBuy = true;
+                        resBuyMax = true;
+                    }
                 }
             }
         }
@@ -135,19 +164,24 @@ public class AlligatorService implements
                 annotation += " maxBuyPercent=" + printPrice(maxBuyPercent);
                 annotation += " maxBuyPercentAverage=" + printPrice(maxBuyPercentAverage);
             }
-            if (currentPrice.doubleValue() > green && newGreenPercentAverage < strategy.getMinGreenPercent()) {
+            if (!resBuyMax && currentPrice.doubleValue() > green && newGreenPercentAverage < strategy.getMinGreenPercent()) {
                 annotation += " skip by percent<" + strategy.getMinGreenPercent();
                 resBuy = false;
             }
             if (
                     currentPrice.doubleValue() < green
                     && (maxBuyPercentAverage != null && maxBuyPercentAverage > strategy.getMinGreenPercent())
+                    && !resBuyMax
             ) {
                 annotation += " skip by buy percent>" + strategy.getMinGreenPercent();
                 resBuy = false;
             }
-            if (newGreenPercentAverage > strategy.getMaxGreenPercent()) {
-                annotation += " skip by percent<" + strategy.getMaxGreenPercent();
+            if (!resBuyMax && newGreenPercentAverage > strategy.getMaxGreenPercent()) {
+                annotation += " skip by percent>" + strategy.getMaxGreenPercent();
+                resBuy = false;
+            }
+            if (resBuyMax && newGreenPercentAverage < strategy.getMaxGreenPercent()) {
+                annotation += " skip max by percent<" + strategy.getMaxGreenPercent();
                 resBuy = false;
             }
         }
@@ -172,9 +206,9 @@ public class AlligatorService implements
                     strategy,
                     candle,
                     "Date|open|high|low|close|ema2|profit|loss|limitPrice|lossAvg|deadLineTop|investBottom|investTop|smaTube|strategy"
-                            + "|emaBlue1|emaRed|emaGreen|emaBlue|max|min|zs|waitMax|maxBuy|stopLoss",
+                            + "|emaBlue1|emaRed|emaGreen|emaBlue|max|min|zs|waitMax|maxBuy|stopLoss|waitMax2",
                     "{} | {} | {} | {} | {} | | {} | {} | | {} | ||||by {}"
-                            + "| {} | {} | {} | {} | {} | {} | {} | {} | {} |",
+                            + "| {} | {} | {} | {} | {} | {} | {} | {} | {} || {}",
                     printDateTime(candle.getDateTime()),
                     candle.getOpenPrice(),
                     candle.getHighestPrice(),
@@ -191,8 +225,9 @@ public class AlligatorService implements
                     isMax ? middleCandle.getHighestPrice() : "",
                     isMin ? middleCandle.getLowestPrice() : "",
                     zs == null ? "" : zs,
-                    lastFMaxCandle == null ? "" : lastFMaxCandle.getHighestPrice(),
-                    lastFMaxCandle == null ? "" : lastFMaxCandle.getClosingPrice().max(lastFMaxCandle.getOpenPrice())
+                    waitMax == null ? "" : waitMax,
+                    waitMaxBuy == null ? "" : waitMaxBuy,
+                    waitMax2 == null ? "" : waitMax2
             );
         }
         return resBuy;
@@ -342,9 +377,9 @@ public class AlligatorService implements
                 strategy,
                 candle,
                 "Date|open|high|low|close|ema2|profit|loss|limitPrice|lossAvg|deadLineTop|investBottom|investTop|smaTube|strategy"
-                        + "|emaBlue1|emaRed|emaGreen|emaBlue|max|min|zs|waitMax|maxBuy|stopLoss",
+                        + "|emaBlue1|emaRed|emaGreen|emaBlue|max|min|zs|waitMax|maxBuy|stopLoss|waitMax2",
                 "{} | {} | {} | {} | {} | | {} | {} | {} | {} | ||||sell {}"
-                        + "| {} | {} | {} | {} | {} | {} | {} ||| {}",
+                        + "| {} | {} | {} | {} | {} | {} | {} ||| {}|",
                 printDateTime(candle.getDateTime()),
                 candle.getOpenPrice(),
                 candle.getHighestPrice(),
@@ -412,6 +447,26 @@ public class AlligatorService implements
         Double price;
     }
 
+    private Map<String, AlligatorMouthAverage> alligatorMouthAverageCashMap = new LinkedHashMap<>() {
+        @Override
+        protected boolean removeEldestEntry(final Map.Entry eldest) {
+            return size() > 20;
+        }
+    };
+
+    private synchronized AlligatorMouthAverage getAlligatorMouthAverageFromCache(String indent)
+    {
+        if (doubleCashMap.containsKey(indent)) {
+            return alligatorMouthAverageCashMap.get(indent);
+        }
+        return null;
+    }
+
+    private synchronized void addAlligatorMouthAverageToCache(String indent, AlligatorMouthAverage v)
+    {
+        alligatorMouthAverageCashMap.put(indent, v);
+    }
+
     private AlligatorMouthAverage getAlligatorLengthAverage(
             String figi,
             OffsetDateTime currentDateTime,
@@ -422,6 +477,15 @@ public class AlligatorService implements
         var skipped = 0;
         String annotation = "";
         var mouthCur = getAlligatorMouth(figi, currentDateTime, strategy);
+        var candleList = getCandlesByFigiByLength(figi, currentDateTime, 1, strategy.getInterval());
+        if (candleList != null && mouthCur.size > 1) {
+            // можно в кеше поискать предыдущее значение
+            var key = strategy.getExtName() + printDateTime(candleList.get(0).getDateTime());
+            var v = getAlligatorMouthAverageFromCache(key);
+            if (v != null) {
+                return v;
+            }
+        }
         currentDateTime = mouthCur.candleBegin.getDateTime();
         for(var i = 0; i < strategy.getMaxDeepAlligatorMouth() + skipped; i++) {
             var mouth = getAlligatorMouth(figi, currentDateTime, strategy);
@@ -449,11 +513,14 @@ public class AlligatorService implements
             currentDateTime = mouth.candleBegin.getDateTime();
         }
         var average = ret.stream().mapToDouble(a -> a).average().orElse(0);
-        return AlligatorMouthAverage.builder()
+        var v = AlligatorMouthAverage.builder()
                 .size((int) Math.round(Math.ceil(average)))
                 .price(retPrice.stream().mapToDouble(a -> a).average().orElse(0))
                 .annotation(annotation)
                 .build();
+        var key = strategy.getExtName() + printDateTime(currentDateTime);
+        addAlligatorMouthAverageToCache(key, v);
+        return v;
         //var dispersia = Math.sqrt(ret.stream().mapToDouble(a -> (a - average) * (a - average)).sum() / ret.size());
         //var retFiltered = ret.stream().filter(a -> a >= average - dispersia && a <= average + dispersia);
         //return retFiltered.mapToDouble(a -> a).average().orElse(average);
