@@ -194,8 +194,12 @@ public class AlligatorService implements
             annotation += " alligatorLengthAverage=" + alligatorAverage.getSize();
             //annotation += " Average=" + alligatorAverage.getAnnotation();
             annotation += " curAlligatorLength=" + curAlligatorLength;
-            if (curAlligatorLength > alligatorAverage.getSize()) {
-                annotation += " skip by AlligatorLength>" + alligatorAverage.getSize();
+            if (!resBuyMax && curAlligatorLength > alligatorAverage.getSize()) {
+                annotation += " skip max by AlligatorLength>" + alligatorAverage.getSize();
+                resBuy = false;
+            }
+            if (resBuyMax && curAlligatorLength > alligatorAverage.getSize() / strategy.getSellSkipCurAlligatorLengthDivider()) {
+                annotation += " skip by AlligatorLength>" + printPrice(alligatorAverage.getSize() / 2.);
                 resBuy = false;
             }
         }
@@ -456,7 +460,7 @@ public class AlligatorService implements
 
     private synchronized AlligatorMouthAverage getAlligatorMouthAverageFromCache(String indent)
     {
-        if (doubleCashMap.containsKey(indent)) {
+        if (alligatorMouthAverageCashMap.containsKey(indent)) {
             return alligatorMouthAverageCashMap.get(indent);
         }
         return null;
@@ -478,11 +482,17 @@ public class AlligatorService implements
         String annotation = "";
         var mouthCur = getAlligatorMouth(figi, currentDateTime, strategy);
         var candleList = getCandlesByFigiByLength(figi, currentDateTime, 1, strategy.getInterval());
+        var keyCur = strategy.getExtName() + printDateTime(currentDateTime);
+        annotation += " size=" + alligatorMouthAverageCashMap.size();
+        annotation += " keyCur=" + keyCur;
         if (candleList != null && mouthCur.size > 1) {
             // можно в кеше поискать предыдущее значение
-            var key = strategy.getExtName() + printDateTime(candleList.get(0).getDateTime());
-            var v = getAlligatorMouthAverageFromCache(key);
+            var keyPrev = strategy.getExtName() + printDateTime(candleList.get(0).getDateTime());
+            annotation += " keyPrev=" + keyPrev;
+            var v = getAlligatorMouthAverageFromCache(keyPrev);
             if (v != null) {
+                v.setAnnotation("from Cache " + keyPrev + " " + v.getAnnotation());
+                addAlligatorMouthAverageToCache(keyCur, v);
                 return v;
             }
         }
@@ -518,8 +528,8 @@ public class AlligatorService implements
                 .price(retPrice.stream().mapToDouble(a -> a).average().orElse(0))
                 .annotation(annotation)
                 .build();
-        var key = strategy.getExtName() + printDateTime(currentDateTime);
-        addAlligatorMouthAverageToCache(key, v);
+        v.setAnnotation("orig " + v.getAnnotation());
+        addAlligatorMouthAverageToCache(keyCur, v);
         return v;
         //var dispersia = Math.sqrt(ret.stream().mapToDouble(a -> (a - average) * (a - average)).sum() / ret.size());
         //var retFiltered = ret.stream().filter(a -> a >= average - dispersia && a <= average + dispersia);
