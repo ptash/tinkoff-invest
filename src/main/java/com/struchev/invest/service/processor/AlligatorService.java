@@ -109,12 +109,16 @@ public class AlligatorService implements
             var maxIntervalCandle = candleListMax.stream().reduce((first, second) ->
                     first.getHighestPrice().compareTo(second.getHighestPrice()) > 0 ? first : second
             ).orElse(null);
+            var maxFirstIntervalCandle = candleListMax.stream().filter(v ->
+                    v.getHighestPrice().compareTo(lastFMaxCandle.getHighestPrice()) > 0
+            ).findFirst().orElse(null);
             if (
                     maxIntervalCandle != lastFMaxCandle
-                            && maxIntervalCandle.getHighestPrice().compareTo(lastFMaxCandle.getHighestPrice()) > 0
+                    && maxFirstIntervalCandle != null
+                    && maxIntervalCandle.getHighestPrice().compareTo(lastFMaxCandle.getHighestPrice()) > 0
             ) {
-                var blueMax = getAlligatorBlue(candle.getFigi(), maxIntervalCandle.getDateTime(), strategy);
-                var greenMax = getAlligatorGreen(candle.getFigi(), maxIntervalCandle.getDateTime(), strategy);
+                var blueMax = getAlligatorBlue(candle.getFigi(), maxFirstIntervalCandle.getDateTime(), strategy);
+                var greenMax = getAlligatorGreen(candle.getFigi(), maxFirstIntervalCandle.getDateTime(), strategy);
                 if (blueMax != null && greenMax != null) {
                     delta = delta.max(BigDecimal.valueOf(Math.abs(greenMax - blueMax)));
                 }
