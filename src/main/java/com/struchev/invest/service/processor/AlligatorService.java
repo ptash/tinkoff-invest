@@ -256,10 +256,18 @@ public class AlligatorService implements
                     - delta.doubleValue();
 
             Float newLimitPercent = (float) ((100.f * (limitPrice.floatValue() - purchaseRate.floatValue()) / Math.abs(purchaseRate.floatValue())));
-            //Float newLimitPercentAverage = (float) (newLimitPercent / average);
-
             annotation += " limitPrice=" + printPrice(limitPrice);
             annotation += " newLimitPercent=" + printPrice(newLimitPercent);
+            if (newLimitPercent < 0) {
+                limitPrice = limitPrice
+                        + Math.abs((startPrice.doubleValue() / 100.) * limitPercent)
+                        - delta.doubleValue();
+                newLimitPercent = (float) ((100.f * (limitPrice.floatValue() - purchaseRate.floatValue()) / Math.abs(purchaseRate.floatValue())));
+                annotation += " limitPrice=" + printPrice(limitPrice);
+                annotation += " newLimitPercent=" + printPrice(newLimitPercent);
+            }
+            //Float newLimitPercentAverage = (float) (newLimitPercent / average);
+
             annotation += " origProfitPercent=" + strategy.getSellLimitCriteriaOrig().getExitProfitPercent();
             if (newLimitPercent < strategy.getSellLimitCriteriaOrig().getExitProfitPercent()) {
                 annotation += " SKIP ProfitPercent";
