@@ -120,7 +120,13 @@ public class AlligatorService implements
                 var blueMax = getAlligatorBlue(candle.getFigi(), maxFirstIntervalCandle.getDateTime(), strategy);
                 var greenMax = getAlligatorGreen(candle.getFigi(), maxFirstIntervalCandle.getDateTime(), strategy);
                 if (blueMax != null && greenMax != null) {
-                    delta = delta.max(BigDecimal.valueOf(Math.abs(greenMax - blueMax)));
+                    var averageMax = getAveragePercent(candle.getFigi(), maxFirstIntervalCandle.getDateTime(), strategy);
+                    var zsMax = greenMax + (greenMax - blueMax) * 1.618;
+                    Float newGreenPercentMax = (float) ((100.f * (zsMax - greenMax) / Math.abs(greenMax)));
+                    annotation += " averageMax=" + printPrice(averageMax);
+                    Float newGreenPercentAverage = (float) (newGreenPercentMax / averageMax);
+                    annotation += " newGreenPercentAverageMax=" + printPrice(newGreenPercentAverage);
+                    delta = delta.max(BigDecimal.valueOf(Math.abs(greenMax - blueMax) / newGreenPercentAverage));
                 }
                 waitMax2 = waitMax.add(delta);
                 var isMax2 = maxIntervalCandle.getHighestPrice().compareTo(waitMax2) > 0;
@@ -485,15 +491,19 @@ public class AlligatorService implements
         var skipped = 0;
         String annotation = "";
         var mouthCur = getAlligatorMouth(figi, currentDateTime, strategy);
-        var candleList = getCandlesByFigiByLength(figi, currentDateTime, 1, strategy.getInterval());
         var keyCur = strategy.getExtName() + printDateTime(currentDateTime);
         annotation += " size=" + alligatorMouthAverageCashMap.size();
         annotation += " keyCur=" + keyCur;
+        var v = getAlligatorMouthAverageFromCache(keyCur);
+        if (v != null) {
+            return v;
+        }
+        var candleList = getCandlesByFigiByLength(figi, currentDateTime, 1, strategy.getInterval());
         if (candleList != null && mouthCur.size > 1) {
             // можно в кеше поискать предыдущее значение
             var keyPrev = strategy.getExtName() + printDateTime(candleList.get(0).getDateTime());
             annotation += " keyPrev=" + keyPrev;
-            var v = getAlligatorMouthAverageFromCache(keyPrev);
+            v = getAlligatorMouthAverageFromCache(keyPrev);
             if (v != null) {
                 v.setAnnotation("from Cache " + keyPrev + " " + v.getAnnotation());
                 addAlligatorMouthAverageToCache(keyCur, v);
@@ -527,7 +537,7 @@ public class AlligatorService implements
             currentDateTime = mouth.candleBegin.getDateTime();
         }
         var average = ret.stream().mapToDouble(a -> a).average().orElse(0);
-        var v = AlligatorMouthAverage.builder()
+        v = AlligatorMouthAverage.builder()
                 .size((int) Math.round(Math.ceil(average)))
                 .price(retPrice.stream().mapToDouble(a -> a).average().orElse(0))
                 .annotation(annotation)
