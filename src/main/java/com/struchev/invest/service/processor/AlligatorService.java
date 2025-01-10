@@ -198,12 +198,12 @@ public class AlligatorService implements
             annotation += " alligatorLengthAverage=" + alligatorAverage.getSize();
             //annotation += " Average=" + alligatorAverage.getAnnotation();
             annotation += " curAlligatorLength=" + curAlligatorLength;
-            if (!resBuyMax && curAlligatorLength > alligatorAverage.getSize()) {
+            if (resBuyMax && curAlligatorLength > alligatorAverage.getSize()) {
                 annotation += " skip max by AlligatorLength>" + alligatorAverage.getSize();
                 resBuy = false;
             }
-            if (resBuyMax && curAlligatorLength > alligatorAverage.getSize() / strategy.getSellSkipCurAlligatorLengthDivider()) {
-                annotation += " skip by AlligatorLength>" + printPrice(alligatorAverage.getSize() / 2.);
+            if (!resBuyMax && curAlligatorLength > alligatorAverage.getSize() / strategy.getSellSkipCurAlligatorLengthDivider()) {
+                annotation += " skip by AlligatorLength>" + printPrice(alligatorAverage.getSize() / strategy.getSellSkipCurAlligatorLengthDivider());
                 resBuy = false;
             }
         }
