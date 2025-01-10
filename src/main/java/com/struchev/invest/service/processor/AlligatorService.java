@@ -236,7 +236,8 @@ public class AlligatorService implements
             var alligatorAverage = getAlligatorLengthAverage(candle.getFigi(), candle.getDateTime(), strategy);
             var orderAlligatorMouth = getAlligatorMouth(candle.getFigi(), candle.getDateTime(), strategy);
             var greenMonthBegin = getAlligatorGreen(candle.getFigi(), orderAlligatorMouth.getCandleBegin().getDateTime(), strategy);
-            var purchaseRate = greenMonthBegin;
+            var startPrice = greenMonthBegin;
+            var purchaseRate = candle.getClosingPrice();
             Double limitPercent;
             if (strategy.getLimitPercentByCandle() > 0) {
                 annotation += " limitPercentByCandle=" + printPrice(strategy.getLimitPercentByCandle());
@@ -250,8 +251,8 @@ public class AlligatorService implements
                         * limitPercentByCandle;
             }
             annotation += " limitPercent=" + printPrice(limitPercent);
-            Double limitPrice = purchaseRate.doubleValue()
-                    + Math.abs((purchaseRate.doubleValue() / 100.) * limitPercent)
+            Double limitPrice = startPrice.doubleValue()
+                    + Math.abs((startPrice.doubleValue() / 100.) * limitPercent)
                     - delta.doubleValue();
 
             Float newLimitPercent = (float) ((100.f * (limitPrice.floatValue() - purchaseRate.floatValue()) / Math.abs(purchaseRate.floatValue())));
