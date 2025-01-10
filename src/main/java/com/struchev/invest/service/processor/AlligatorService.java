@@ -235,7 +235,7 @@ public class AlligatorService implements
         if (resBuy) {
             var alligatorAverage = getAlligatorLengthAverage(candle.getFigi(), candle.getDateTime(), strategy);
             var orderAlligatorMouth = getAlligatorMouth(candle.getFigi(), candle.getDateTime(), strategy);
-            var purchaseRate = candle.getClosingPrice();
+            var purchaseRate = green;
             Double limitPercent;
             if (strategy.getLimitPercentByCandle() > 0) {
                 annotation += " limitPercentByCandle=" + printPrice(strategy.getLimitPercentByCandle());
@@ -250,7 +250,8 @@ public class AlligatorService implements
             }
             annotation += " limitPercent=" + printPrice(limitPercent);
             Double limitPrice = purchaseRate.doubleValue()
-                    + Math.abs((purchaseRate.doubleValue() / 100.) * limitPercent);
+                    + Math.abs((purchaseRate.doubleValue() / 100.) * limitPercent)
+                    - delta.doubleValue();
 
             Float newLimitPercent = (float) ((100.f * (limitPrice.floatValue() - purchaseRate.floatValue()) / Math.abs(purchaseRate.floatValue())));
             //Float newLimitPercentAverage = (float) (newLimitPercent / average);
@@ -631,14 +632,15 @@ public class AlligatorService implements
                 .isFindEnd(false)
                 .size(0);
         for (var i = candleList.size() - 1; i >= 0; i--) {
-            var blue = getAlligatorBlue(figi, candleList.get(i).getDateTime(), strategy);
-            var red = getAlligatorRed(figi, candleList.get(i).getDateTime(), strategy);
-            var green = getAlligatorGreen(figi, candleList.get(i).getDateTime(), strategy);
+            var candle = candleList.get(i);
+            var blue = getAlligatorBlue(figi, candle.getDateTime(), strategy);
+            var red = getAlligatorRed(figi, candle.getDateTime(), strategy);
+            var green = getAlligatorGreen(figi, candle.getDateTime(), strategy);
             if (blue == null || red == null || green == null) {
                 break;
             }
-            var isUp = green > blue;
-            var isDown = green < blue;
+            var isUp = green > red && red > blue || candle.getHighestPrice().doubleValue() > red;
+            var isDown = green < red && red < blue || candle.getLowestPrice().doubleValue() < red;
             if (null == isUpCur && isUp) {
                 isUpCur = true;
                 resBuilder.candleEnd(candleList.get(i));
