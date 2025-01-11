@@ -651,8 +651,12 @@ public class AlligatorService implements
             var mouth = getAlligatorMouth(figi, currentDateTime, strategy);
             annotation += " i=" + i;
             annotation += " size=" + mouth.size;
-            annotation += " begin=" + printDateTime(mouth.getCandleBegin().getDateTime());
-            annotation += " end=" + printDateTime(mouth.getCandleEnd().getDateTime());
+            if (mouth.isFindBegin) {
+                annotation += " begin=" + printDateTime(mouth.getCandleBegin().getDateTime());
+            }
+            if (mouth.isFindEnd) {
+                annotation += " end=" + printDateTime(mouth.getCandleEnd().getDateTime());
+            }
             annotation += " isFindBegin=" + mouth.isFindBegin;
             annotation += " isFindEnd=" + mouth.isFindEnd;
             if (mouth.isFindBegin) {
@@ -711,6 +715,9 @@ public class AlligatorService implements
                 .isFindBegin(false)
                 .isFindEnd(false)
                 .size(0);
+        if (null == candleList) {
+            return resBuilder.build();
+        }
         for (var i = candleList.size() - 1; i >= 0; i--) {
             var candle = candleList.get(i);
             var blue = getAlligatorBlue(figi, candle.getDateTime(), strategy);
