@@ -232,6 +232,7 @@ public class AlligatorService implements
                 resBuy = false;
             }
         }
+        var isDayEnd = false;
         if (resBuy) {
             var alligatorAverage = getAlligatorLengthAverage(candle.getFigi(), candle.getDateTime(), strategy);
             var orderAlligatorMouth = getAlligatorMouth(candle.getFigi(), candle.getDateTime(), strategy);
@@ -276,6 +277,19 @@ public class AlligatorService implements
                 setOrderBigDecimalData(strategy, candle, "limitPrice", BigDecimal.valueOf(limitPrice));
                 setOrderBigDecimalData(strategy, candle, "limitPercent", BigDecimal.valueOf(newLimitPercent));
             }
+
+            if (strategy.getDayTimeEndTrading() != null) {
+                var lengthToDayEnd = getLengthToDayEnd(candle.getFigi(), candle.getDateTime(), strategy.getDayTimeEndTrading(), strategy.getInterval());
+                annotation += " lengthToDayEnd=" + lengthToDayEnd;
+                if (
+                        lengthToDayEnd != null
+                        && lengthToDayEnd < (alligatorAverage.getSize() - orderAlligatorMouth.getSize())
+                ) {
+                    annotation += " SKIP lengthToDayEnd<" + (alligatorAverage.getSize() - orderAlligatorMouth.getSize());
+                    resBuy = false;
+                    isDayEnd = true;
+                }
+            }
         }
 
         if (isReport) {
@@ -284,9 +298,9 @@ public class AlligatorService implements
                     strategy,
                     candle,
                     "Date|open|high|low|close|ema2|profit|loss|limitPrice|lossAvg|deadLineTop|investBottom|investTop|smaTube|strategy"
-                            + "|emaBlue1|emaRed|emaGreen|emaBlue|max|min|zs|waitMax|maxBuy|stopLoss|waitMax2",
+                            + "|emaBlue1|emaRed|emaGreen|emaBlue|max|min|zs|waitMax|maxBuy|stopLoss|waitMax2|isDayEnd",
                     "{} | {} | {} | {} | {} | | {} | {} | | {} | ||||by {}"
-                            + "| {} | {} | {} | {} | {} | {} | {} | {} | {} || {}",
+                            + "| {} | {} | {} | {} | {} | {} | {} | {} | {} || {} | {}",
                     printDateTime(candle.getDateTime()),
                     candle.getOpenPrice(),
                     candle.getHighestPrice(),
@@ -305,7 +319,8 @@ public class AlligatorService implements
                     zs == null ? "" : zs,
                     waitMax == null ? "" : waitMax,
                     waitMaxBuy == null ? "" : waitMaxBuy,
-                    waitMax2 == null ? "" : waitMax2
+                    waitMax2 == null ? "" : waitMax2,
+                    isDayEnd ? candle.getLowestPrice().subtract(candle.getLowestPrice().abs().multiply(BigDecimal.valueOf(0.01))) : ""
             );
         }
         return resBuy;
@@ -340,6 +355,8 @@ public class AlligatorService implements
         }
 
         Double limitPrice = null;
+        AlligatorMouthAverage alligatorAverage = null;
+        AlligatorMouth curAlligatorMouth = null;
         if (green != null && blue != null) {
             var stopLossForce = blue - Math.abs(red - blue);
             var sellLimitCriteria = strategy.getSellLimitCriteria(candle.getFigi());
@@ -348,8 +365,8 @@ public class AlligatorService implements
             annotation += " average=" + printPrice(average);
             Float newGreenPercentAverage = (float) (newGreenPercent / average);
 
-            var alligatorAverage = getAlligatorLengthAverage(candle.getFigi(), candle.getDateTime(), strategy);
-            var curAlligatorMouth = getAlligatorMouth(candle.getFigi(), candle.getDateTime(), strategy);
+            alligatorAverage = getAlligatorLengthAverage(candle.getFigi(), candle.getDateTime(), strategy);
+            curAlligatorMouth = getAlligatorMouth(candle.getFigi(), candle.getDateTime(), strategy);
             annotation += " MonthBegin=" + printDateTime(curAlligatorMouth.getCandleBegin().getDateTime());
             annotation += " MonthEnd=" + printDateTime(curAlligatorMouth.getCandleEnd().getDateTime());
             var curAlligatorLength = curAlligatorMouth.getSize();
@@ -452,14 +469,31 @@ public class AlligatorService implements
             res = true;
         }
 
+        var isDayEnd = false;
+        if (!res && alligatorAverage != null && curAlligatorMouth != null) {
+            if (strategy.getDayTimeEndTrading() != null) {
+                var dayEndDateTime = strategy.getDayTimeEndTrading();
+                var curDayEnd = candle.getDateTime()
+                        .withHour(dayEndDateTime.getHour())
+                        .withMinute(dayEndDateTime.getMinute())
+                        .withSecond(dayEndDateTime.getSecond());
+                annotation += " curDayEnd=" + printDateTime(curDayEnd);
+                if (candle.getDateTime().compareTo(curDayEnd) > 0) {
+                    annotation += " SELL by day end";
+                    res = true;
+                    isDayEnd = true;
+                }
+            }
+        }
+
         notificationService.reportStrategyExt(
                 res,
                 strategy,
                 candle,
                 "Date|open|high|low|close|ema2|profit|loss|limitPrice|lossAvg|deadLineTop|investBottom|investTop|smaTube|strategy"
-                        + "|emaBlue1|emaRed|emaGreen|emaBlue|max|min|zs|waitMax|maxBuy|stopLoss|waitMax2",
+                        + "|emaBlue1|emaRed|emaGreen|emaBlue|max|min|zs|waitMax|maxBuy|stopLoss|waitMax2|isDayEnd",
                 "{} | {} | {} | {} | {} | | {} | {} | {} | {} | ||||sell {}"
-                        + "| {} | {} | {} | {} | {} | {} | {} ||| {}|",
+                        + "| {} | {} | {} | {} | {} | {} | {} ||| {}|| {}",
                 printDateTime(candle.getDateTime()),
                 candle.getOpenPrice(),
                 candle.getHighestPrice(),
@@ -477,7 +511,8 @@ public class AlligatorService implements
                 isMax ? middleCandle.getHighestPrice() : "",
                 isMin ? middleCandle.getLowestPrice() : "",
                 zs == null ? "" : zs,
-                stopLoss == null ? "" : printPrice(stopLoss)
+                stopLoss == null ? "" : printPrice(stopLoss),
+                isDayEnd ? candle.getLowestPrice().subtract(candle.getLowestPrice().abs().multiply(BigDecimal.valueOf(0.01))) : ""
         );
         return res;
     }
@@ -517,6 +552,29 @@ public class AlligatorService implements
     @Override
     public boolean isTrendSell(AAlligatorStrategy strategy, CandleDomainEntity candle) {
         return false;
+    }
+
+    public Integer getLengthToDayEnd(
+            String figi,
+            OffsetDateTime currentDateTime,
+            OffsetDateTime dayEndDateTime,
+            String interval
+    ) {
+        for(var i = 1; i < 30; i++) {
+            var begin = currentDateTime.minusDays(i);
+            var end = currentDateTime.minusDays(i)
+                    .withHour(dayEndDateTime.getHour())
+                    .withMinute(dayEndDateTime.getMinute())
+                    .withSecond(dayEndDateTime.getSecond());
+            if (begin.compareTo(end) >= 0) {
+                return 0;
+            }
+            var candleList = candleHistoryService.getCandlesByFigiBetweenDateTimes(figi, begin, end, interval);
+            if (candleList != null && candleList.size() > 0) {
+                return candleList.size();
+            }
+        }
+        return null;
     }
 
     @Builder

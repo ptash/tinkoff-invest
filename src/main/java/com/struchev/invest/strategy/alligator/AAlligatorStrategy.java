@@ -2,9 +2,9 @@ package com.struchev.invest.strategy.alligator;
 
 import com.struchev.invest.strategy.AStrategy;
 import com.struchev.invest.strategy.IStrategyShort;
-import org.springframework.data.relational.core.sql.In;
 
 import java.time.Duration;
+import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -68,6 +68,8 @@ public abstract class AAlligatorStrategy extends AStrategy implements Cloneable,
     public Double getSellSkipCurAlligatorLengthDivider() { return 3.0; }
 
     public Double getLimitPercentByCandle() { return 0.375 / 1.4; }
+
+    public OffsetDateTime getDayTimeEndTrading() { return null; }
 
     private SellLimitCriteria sellLimit;
     private Map<String, SellLimitCriteria> sellLimitMap = new HashMap<>();
