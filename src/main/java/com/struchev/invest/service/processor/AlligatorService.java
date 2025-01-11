@@ -282,12 +282,20 @@ public class AlligatorService implements
                 setOrderBigDecimalData(strategy, candle, "limitPercent", BigDecimal.valueOf(newLimitPercent));
             }
 
-            var timeEndBuy = strategy.getDayTimeEndBuy();
-            if (timeEndBuy == null) {
-                timeEndBuy = strategy.getDayTimeEndTrading();
-            }
-            if (timeEndBuy != null) {
-                var lengthToDayEnd = getLengthToDayEnd(candle.getFigi(), candle.getDateTime(), timeEndBuy, strategy.getInterval());
+            if (null != strategy.getDayTimeEndBuy()) {
+                var dayEndDateTime = strategy.getDayTimeEndBuy();
+                var curDayEnd = candle.getDateTime()
+                        .withHour(dayEndDateTime.getHour())
+                        .withMinute(dayEndDateTime.getMinute())
+                        .withSecond(dayEndDateTime.getSecond());
+                annotation += " curDayEnd=" + printDateTime(curDayEnd);
+                if (candle.getDateTime().compareTo(curDayEnd) > 0) {
+                    annotation += " SKIP by day end";
+                    resBuy = false;
+                    isDayEnd = true;
+                }
+            } else if (null != strategy.getDayTimeEndTrading()) {
+                var lengthToDayEnd = getLengthToDayEnd(candle.getFigi(), candle.getDateTime(), strategy.getDayTimeEndTrading(), strategy.getInterval());
                 annotation += " lengthToDayEnd=" + lengthToDayEnd;
                 if (
                         lengthToDayEnd != null
