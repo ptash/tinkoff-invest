@@ -237,7 +237,7 @@ public class CalculatorFacade {
         if (!strategShortMap.containsKey(strategy.getName())) {
             if (strategy instanceof IStrategyShort && strategy instanceof Cloneable) {
                 var strategyShort = ((IStrategyShort) strategy).clone();
-                strategyShort.setShort();
+                strategyShort.setExtName(strategy.getName() + "Short");
                 strategShortMap.put(strategy.getName(), (AStrategy) strategyShort);
             } else {
                 throw new RuntimeException("Short is not supported by " + strategy.getName());

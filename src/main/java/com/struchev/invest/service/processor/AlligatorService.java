@@ -1,12 +1,10 @@
 package com.struchev.invest.service.processor;
 
 import com.struchev.invest.entity.CandleDomainEntity;
-import com.struchev.invest.service.candle.CandleHistoryReverseForShortService;
 import com.struchev.invest.service.candle.ICandleHistoryService;
 import com.struchev.invest.service.notification.INotificationService;
 import com.struchev.invest.service.order.IOrderService;
 import com.struchev.invest.strategy.AStrategy;
-import com.struchev.invest.strategy.IStrategyShort;
 import com.struchev.invest.strategy.alligator.AAlligatorStrategy;
 import lombok.Builder;
 import lombok.Data;
@@ -37,8 +35,6 @@ public class AlligatorService implements
     private INotificationService notificationService;
 
     private IOrderService orderService;
-
-    private final CandleHistoryReverseForShortService candleHistoryReverseForShortService;
 
     private final Map<String, Map<String, Boolean>> booleanDataMap = new ConcurrentHashMap<>();
 
@@ -540,7 +536,7 @@ public class AlligatorService implements
 
     @Override
     public ICalculatorShortService cloneService(IOrderService orderService) throws CloneNotSupportedException {
-        var obj = new AlligatorService(candleHistoryReverseForShortService);
+        var obj = new AlligatorService();
         obj.orderService = orderService;
         return obj;
     }
@@ -595,18 +591,10 @@ public class AlligatorService implements
 
     @Builder
     @Data
-    public static class AlligatorMouthAverage implements Cloneable {
+    public static class AlligatorMouthAverage {
         Integer size;
         String annotation;
         Double price;
-
-        public AlligatorMouthAverage clone() {
-            try {
-                return (AlligatorMouthAverage)super.clone();
-            } catch (CloneNotSupportedException e) {
-                throw new RuntimeException(e);
-            }
-        }
     }
 
     private Map<String, AlligatorMouthAverage> alligatorMouthAverageCashMap = new LinkedHashMap<>() {
@@ -616,42 +604,17 @@ public class AlligatorService implements
         }
     };
 
-    private synchronized AlligatorMouthAverage getAlligatorMouthAverageFromCache(
-            String figi,
-            AAlligatorStrategy strategy,
-            OffsetDateTime currentDateTime
-    ) {
-        String indent;
-        if (strategy.isShort()) {
-            indent = figi + strategy.getInterval() + "Short" + printDateTime(currentDateTime);
-        } else {
-            indent = figi + strategy.getInterval() + "" + printDateTime(currentDateTime);
-        }
+    private synchronized AlligatorMouthAverage getAlligatorMouthAverageFromCache(String indent)
+    {
         if (alligatorMouthAverageCashMap.containsKey(indent)) {
             return alligatorMouthAverageCashMap.get(indent);
         }
         return null;
     }
 
-    private synchronized void addAlligatorMouthAverageToCache(
-            String figi,
-            AAlligatorStrategy strategy,
-            OffsetDateTime currentDateTime,
-            AlligatorMouthAverage v
-    ) {
-        String indent;
-        String indent2;
-        if (strategy.isShort()) {
-            indent = figi + strategy.getInterval() + "Short" + printDateTime(currentDateTime);
-            indent2 = figi + strategy.getInterval() + "" + printDateTime(currentDateTime);
-        } else {
-            indent = figi + strategy.getInterval() + "" + printDateTime(currentDateTime);
-            indent2 = figi + strategy.getInterval() + "Short" + printDateTime(currentDateTime);
-        }
+    private synchronized void addAlligatorMouthAverageToCache(String indent, AlligatorMouthAverage v)
+    {
         alligatorMouthAverageCashMap.put(indent, v);
-        var v2 = v.clone();
-        v2.setPrice(candleHistoryReverseForShortService.preparePrice(BigDecimal.valueOf(v.getPrice())).doubleValue());
-        alligatorMouthAverageCashMap.put(indent2, v2);
     }
 
     private AlligatorMouthAverage getAlligatorLengthAverage(
@@ -664,24 +627,28 @@ public class AlligatorService implements
         var skipped = 0;
         String annotation = "";
         var mouthCur = getAlligatorMouth(figi, currentDateTime, strategy);
+        var keyCur = strategy.getExtName() + printDateTime(currentDateTime);
         annotation += " size=" + alligatorMouthAverageCashMap.size();
-        var v = getAlligatorMouthAverageFromCache(figi, strategy, currentDateTime);
+        annotation += " keyCur=" + keyCur;
+        var v = getAlligatorMouthAverageFromCache(keyCur);
         if (v != null) {
             return v;
         }
         var candleList = getCandlesByFigiByLength(figi, currentDateTime, 1, strategy.getInterval());
         if (candleList != null && mouthCur.size > 1) {
             // можно в кеше поискать предыдущее значение
-            v = getAlligatorMouthAverageFromCache(figi, strategy, candleList.get(0).getDateTime());
+            var keyPrev = strategy.getExtName() + printDateTime(candleList.get(0).getDateTime());
+            annotation += " keyPrev=" + keyPrev;
+            v = getAlligatorMouthAverageFromCache(keyPrev);
             if (v != null) {
-                v.setAnnotation("from Cache " + v.getAnnotation());
-                addAlligatorMouthAverageToCache(figi, strategy, currentDateTime, v);
+                v.setAnnotation("from Cache " + keyPrev + " " + v.getAnnotation());
+                addAlligatorMouthAverageToCache(keyCur, v);
                 return v;
             }
         }
-        var loopDateTime = mouthCur.candleBegin.getDateTime();
+        currentDateTime = mouthCur.candleBegin.getDateTime();
         for(var i = 0; i < strategy.getMaxDeepAlligatorMouth() + skipped; i++) {
-            var mouth = getAlligatorMouth(figi, loopDateTime, strategy);
+            var mouth = getAlligatorMouth(figi, currentDateTime, strategy);
             annotation += " i=" + i;
             annotation += " size=" + mouth.size;
             annotation += " begin=" + printDateTime(mouth.getCandleBegin().getDateTime());
@@ -703,7 +670,7 @@ public class AlligatorService implements
             } else if (ret.size() > 0) {
                 break;
             }
-            loopDateTime = mouth.candleBegin.getDateTime();
+            currentDateTime = mouth.candleBegin.getDateTime();
         }
         var average = ret.stream().mapToDouble(a -> a).average().orElse(0);
         v = AlligatorMouthAverage.builder()
@@ -712,7 +679,7 @@ public class AlligatorService implements
                 .annotation(annotation)
                 .build();
         v.setAnnotation("orig " + v.getAnnotation());
-        addAlligatorMouthAverageToCache(figi, strategy, currentDateTime, v);
+        addAlligatorMouthAverageToCache(keyCur, v);
         return v;
         //var dispersia = Math.sqrt(ret.stream().mapToDouble(a -> (a - average) * (a - average)).sum() / ret.size());
         //var retFiltered = ret.stream().filter(a -> a >= average - dispersia && a <= average + dispersia);
@@ -862,13 +829,14 @@ public class AlligatorService implements
             OffsetDateTime currentDateTime,
             AAlligatorStrategy strategy
     ) {
-        var ret = getCashedAlligatorDouble(figi, "Blue", currentDateTime, strategy);
+        String key = "Blue" + strategy.getExtName() + figi + currentDateTime;
+        var ret = getCashedValueDouble(key);
         if (ret != null) {
             return ret;
         }
         List<Double> list = getSmma(figi, currentDateTime, strategy.getSmaBlueLength(), strategy.getInterval(), CandleDomainEntity::getMedianPrice, strategy.getSmaBlueOffset());
         var v = list == null ? null : list.get(0);
-        addCashedAlligatorDouble(figi, "Blue", currentDateTime, strategy, v);
+        addCashedValueDouble(key, v);
         return v;
     }
 
@@ -877,13 +845,14 @@ public class AlligatorService implements
             OffsetDateTime currentDateTime,
             AAlligatorStrategy strategy
     ) {
-        var ret = getCashedAlligatorDouble(figi, "Red", currentDateTime, strategy);
+        String key = "Red" + strategy.getExtName() + figi + currentDateTime;
+        var ret = getCashedValueDouble(key);
         if (ret != null) {
             return ret;
         }
         List<Double> list = getSmma(figi, currentDateTime, strategy.getSmaRedLength(), strategy.getInterval(), CandleDomainEntity::getMedianPrice, strategy.getSmaRedOffset());
         var v = list == null ? null : list.get(0);
-        addCashedAlligatorDouble(figi, "Red", currentDateTime, strategy, v);
+        addCashedValueDouble(key, v);
         return v;
     }
 
@@ -892,13 +861,14 @@ public class AlligatorService implements
             OffsetDateTime currentDateTime,
             AAlligatorStrategy strategy
     ) {
-        var ret = getCashedAlligatorDouble(figi, "Green", currentDateTime, strategy);
+        String key = "Green" + strategy.getExtName() + figi + currentDateTime;
+        var ret = getCashedValueDouble(key);
         if (ret != null) {
             return ret;
         }
         List<Double> list = getSmma(figi, currentDateTime, strategy.getSmaGreenLength(), strategy.getInterval(), CandleDomainEntity::getMedianPrice, strategy.getSmaGreenOffset());
         var v = list == null ? null : list.get(0);
-        addCashedAlligatorDouble(figi, "Green", currentDateTime, strategy, v);
+        addCashedValueDouble(key, v);
         return v;
     }
 
@@ -1116,40 +1086,5 @@ public class AlligatorService implements
     private synchronized void addCashedValueDouble(String indent, Double v)
     {
         doubleCashMap.put(indent, v);
-    }
-
-    private Double getCashedAlligatorDouble(
-            String figi,
-            String name,
-            OffsetDateTime currentDateTime,
-            AAlligatorStrategy strategy
-    ) {
-        String key;
-        if (strategy.isShort()) {
-            key = name + figi + "Short" + printDateTime(currentDateTime);
-        } else {
-            key = name + figi + "" + printDateTime(currentDateTime);
-        }
-        return getCashedValueDouble(key);
-    }
-
-    private void addCashedAlligatorDouble(
-            String figi,
-            String name,
-            OffsetDateTime currentDateTime,
-            AAlligatorStrategy strategy,
-            Double v
-    ) {
-        String key;
-        String key2;
-        if (strategy.isShort()) {
-            key = name + figi + "Short" + printDateTime(currentDateTime);
-            key2 = name + figi + "" + printDateTime(currentDateTime);
-        } else {
-            key = name + figi + "" + printDateTime(currentDateTime);
-            key2 = name + figi + "Short" + printDateTime(currentDateTime);
-        }
-        addCashedValueDouble(key, v);
-        addCashedValueDouble(key2, candleHistoryReverseForShortService.preparePrice(BigDecimal.valueOf(v)).doubleValue());
     }
 }
