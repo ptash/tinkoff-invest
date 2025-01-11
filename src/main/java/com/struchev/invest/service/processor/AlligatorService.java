@@ -282,8 +282,12 @@ public class AlligatorService implements
                 setOrderBigDecimalData(strategy, candle, "limitPercent", BigDecimal.valueOf(newLimitPercent));
             }
 
-            if (strategy.getDayTimeEndTrading() != null) {
-                var lengthToDayEnd = getLengthToDayEnd(candle.getFigi(), candle.getDateTime(), strategy.getDayTimeEndTrading(), strategy.getInterval());
+            var timeEndBuy = strategy.getDayTimeEndBuy();
+            if (timeEndBuy == null) {
+                timeEndBuy = strategy.getDayTimeEndTrading();
+            }
+            if (timeEndBuy != null) {
+                var lengthToDayEnd = getLengthToDayEnd(candle.getFigi(), candle.getDateTime(), timeEndBuy, strategy.getInterval());
                 annotation += " lengthToDayEnd=" + lengthToDayEnd;
                 if (
                         lengthToDayEnd != null
@@ -1089,7 +1093,7 @@ public class AlligatorService implements
     private Map<String, Double> doubleCashMap = new LinkedHashMap<>() {
         @Override
         protected boolean removeEldestEntry(final Map.Entry eldest) {
-            return size() > 5000;
+            return size() > 500 * 2 * 3;
         }
     };
 
@@ -1097,9 +1101,6 @@ public class AlligatorService implements
     {
         if (doubleCashMap.containsKey(indent)) {
             return doubleCashMap.get(indent);
-        }
-        if (doubleCashMap.size() > 4000) {
-            doubleCashMap.clear();
         }
         return null;
     }

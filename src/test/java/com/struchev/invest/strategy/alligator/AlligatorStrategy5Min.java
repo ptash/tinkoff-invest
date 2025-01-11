@@ -20,6 +20,7 @@ public class AlligatorStrategy5Min extends AlligatorStrategy {
     }
 
     public OffsetDateTime getDayTimeEndTrading() { return OffsetDateTime.parse("2000-01-01T23:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME); }
+    public OffsetDateTime getDayTimeEndBuy() { return OffsetDateTime.parse("2000-01-01T23:05:30+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME); }
 
     //public Double getLimitPercentByCandle() { return -1.; }
 }

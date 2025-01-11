@@ -81,6 +81,7 @@ public abstract class AAlligatorStrategy extends AStrategy implements Cloneable,
     public Double getLimitPercentByCandle() { return 0.375 / 1.4; }
 
     public OffsetDateTime getDayTimeEndTrading() { return null; }
+    public OffsetDateTime getDayTimeEndBuy() { return null; }
 
     private SellLimitCriteria sellLimit;
     private Map<String, SellLimitCriteria> sellLimitMap = new HashMap<>();
