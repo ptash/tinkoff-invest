@@ -7,6 +7,7 @@ import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public abstract class AAlligatorStrategy extends AStrategy implements Cloneable, IStrategyShort {
     @Override
@@ -27,16 +28,26 @@ public abstract class AAlligatorStrategy extends AStrategy implements Cloneable,
         return Duration.ofDays(100);
     }
 
-    String extName;
+    String nameSuffix;
 
     @Override
     public String getExtName() {
-        return extName == null ? super.getName() : extName;
+        if (nameSuffix != null) {
+            return super.getName() + nameSuffix;
+        }
+        return super.getName();
     }
 
-    public void setExtName(String name) {
-        this.extName = name;
+    public void setShort() {
+        this.nameSuffix = "Short";
     }
+    public Boolean isShort() { return Objects.equals(this.nameSuffix, "Short"); }
+    public String getNameSuffix() {
+        if (nameSuffix != null) {
+            return nameSuffix;
+        }
+        return "";
+    };
 
     public IStrategyShort clone() {
         try {
