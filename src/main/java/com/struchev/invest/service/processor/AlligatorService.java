@@ -271,20 +271,29 @@ public class AlligatorService implements
                         * limitPercentByCandle;
             }
             annotation += " limitPercent=" + printPrice(limitPercent);
-            Double limitPrice = startPrice.doubleValue()
-                    + Math.abs((startPrice.doubleValue() / 100.) * limitPercent)
-                    - delta.doubleValue();
+            Double profitLimit = Math.abs((startPrice.doubleValue() / 100.) * limitPercent) - delta.doubleValue();
+            Double limitPrice = startPrice.doubleValue() + profitLimit;
 
             Float newLimitPercent = (float) ((100.f * (limitPrice.floatValue() - purchaseRate.floatValue()) / Math.abs(purchaseRate.floatValue())));
             annotation += " limitPrice=" + printPrice(limitPrice);
             annotation += " newLimitPercent=" + printPrice(newLimitPercent);
             if (newLimitPercent < 0) {
-                limitPrice = limitPrice
-                        + Math.abs((startPrice.doubleValue() / 100.) * limitPercent)
-                        - delta.doubleValue();
+                limitPrice = startPrice.doubleValue() + profitLimit * 1.618;
                 newLimitPercent = (float) ((100.f * (limitPrice.floatValue() - purchaseRate.floatValue()) / Math.abs(purchaseRate.floatValue())));
                 annotation += " limitPrice=" + printPrice(limitPrice);
-                annotation += " newLimitPercent=" + printPrice(newLimitPercent);
+                annotation += " 1.618 NEW newLimitPercent=" + printPrice(newLimitPercent);
+            }
+            if (newLimitPercent < 0) {
+                limitPrice = startPrice.doubleValue() + profitLimit * 2.618;
+                newLimitPercent = (float) ((100.f * (limitPrice.floatValue() - purchaseRate.floatValue()) / Math.abs(purchaseRate.floatValue())));
+                annotation += " limitPrice=" + printPrice(limitPrice);
+                annotation += " 2.618 NEW newLimitPercent=" + printPrice(newLimitPercent);
+            }
+            if (newLimitPercent < 0) {
+                limitPrice = startPrice.doubleValue() + profitLimit * 4.236;
+                newLimitPercent = (float) ((100.f * (limitPrice.floatValue() - purchaseRate.floatValue()) / Math.abs(purchaseRate.floatValue())));
+                annotation += " limitPrice=" + printPrice(limitPrice);
+                annotation += " 4.236 NEW newLimitPercent=" + printPrice(newLimitPercent);
             }
             //Float newLimitPercentAverage = (float) (newLimitPercent / average);
 
