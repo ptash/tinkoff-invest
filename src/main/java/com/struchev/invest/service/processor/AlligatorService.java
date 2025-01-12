@@ -222,7 +222,7 @@ public class AlligatorService implements
                 annotation += " skip by buy percent>" + strategy.getMinGreenPercent();
                 resBuy = false;
             }
-            if (!resBuyMax && newGreenPercentAverage > strategy.getMaxGreenPercent()) {
+            if (null != strategy.getMaxGreenPercent() && !resBuyMax && newGreenPercentAverage > strategy.getMaxGreenPercent()) {
                 annotation += " skip by percent>" + strategy.getMaxGreenPercent();
                 resBuy = false;
             }
@@ -370,8 +370,8 @@ public class AlligatorService implements
                     candle.getClosingPrice(),
                     "",
                     "",
-                    "",
                     limitPrice == null ? "" : printPrice(limitPrice),
+                    "",
                     annotation,
                     blue == null ? "" : blue,
                     red == null ? "" : red,

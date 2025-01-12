@@ -24,4 +24,6 @@ public class AlligatorStrategy5Min extends AlligatorStrategy {
 
     public Integer getFMaxCandleCountFromEnd() { return 3; }
     //public Double getLimitPercentByCandle() { return -1.; }
+
+    public Double getMaxGreenPercent() { return null; }
 }
