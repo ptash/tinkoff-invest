@@ -268,6 +268,7 @@ public class AlligatorService implements
             }
         }
         var isDayEnd = false;
+        Double limitPrice = null;
         if (resBuy) {
             var alligatorAverage = getAlligatorLengthAverage(candle.getFigi(), candle.getDateTime(), strategy);
             var orderAlligatorMouth = curAlligatorMouth;
@@ -293,7 +294,7 @@ public class AlligatorService implements
             annotation += " limitPercent=" + printPrice(limitPercent);
             Double profitLimit = Math.abs((startPrice.doubleValue() / 100.) * limitPercent);
             profitLimit -= delta.doubleValue() / 2;
-            Double limitPrice = startPrice.doubleValue() + profitLimit;
+            limitPrice = startPrice.doubleValue() + profitLimit;
 
             Float newLimitPercent = (float) ((100.f * (limitPrice.floatValue() - purchaseRate.floatValue()) / Math.abs(purchaseRate.floatValue())));
             annotation += " limitPrice=" + printPrice(limitPrice);
@@ -360,7 +361,7 @@ public class AlligatorService implements
                     candle,
                     "Date|open|high|low|close|ema2|profit|loss|limitPrice|lossAvg|deadLineTop|investBottom|investTop|smaTube|strategy"
                             + "|emaBlue1|emaRed|emaGreen|emaBlue|max|min|zs|waitMax|maxBuy|stopLoss|waitMax2|isDayEnd",
-                    "{} | {} | {} | {} | {} | | {} | {} | | {} | ||||by {}"
+                    "{} | {} | {} | {} | {} | | {} | {} | {} | {} | ||||by {}"
                             + "| {} | {} | {} | {} | {} | {} | {} | {} | {} || {} | {}",
                     printDateTime(candle.getDateTime()),
                     candle.getOpenPrice(),
@@ -370,6 +371,7 @@ public class AlligatorService implements
                     "",
                     "",
                     "",
+                    limitPrice == null ? "" : printPrice(limitPrice),
                     annotation,
                     blue == null ? "" : blue,
                     red == null ? "" : red,
