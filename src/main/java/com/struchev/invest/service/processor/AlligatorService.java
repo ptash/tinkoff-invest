@@ -98,9 +98,22 @@ public class AlligatorService implements
         var isMax = maxCandle == middleCandle;
         var isMin = minCandle == middleCandle;
 
-        var lastFMaxCandle = getLastFMaxCandle(candle.getFigi(), candle.getDateTime(), strategy, strategy.getFMaxCandleCountFromEnd());
-        if (null != lastFMaxCandle) {
-            annotation += " lastFMaxCandle=" + printDateTime(lastFMaxCandle.getDateTime());
+        CandleDomainEntity lastFMaxCandle;
+        var lastFMaxCandleData = getLastFMaxCandle(candle.getFigi(), candle.getDateTime(), strategy, strategy.getFMaxCandleCountFromEnd());
+        if (null != lastFMaxCandleData) {
+            lastFMaxCandle = lastFMaxCandleData.getFMaxCandle();
+            /*annotation += " lastFMaxCandle=" + printDateTime(lastFMaxCandle.getDateTime());
+            annotation += " ann=" + lastFMaxCandleData.getAnnotation();
+            for (var i = 0; i < lastFMaxCandleData.getMaxMaxCandleList().size(); i++) {
+                annotation += " i=" + i;
+                annotation += " maxFMax=" + printDateTime(lastFMaxCandleData.getMaxMaxCandleList().get(i).getDateTime());
+            }
+            for (var i = 0; i < lastFMaxCandleData.getMaxCandleList().size(); i++) {
+                annotation += " ii=" + i;
+                annotation += " fMax=" + printDateTime(lastFMaxCandleData.getMaxCandleList().get(i).getDateTime());
+            }*/
+        } else {
+            lastFMaxCandle = null;
         }
         BigDecimal waitMax = null;
         BigDecimal waitMax2 = null;
@@ -133,6 +146,7 @@ public class AlligatorService implements
                     annotation += " newGreenPercentAverageMax=" + printPrice(newGreenPercentAverage);
                     delta = delta.max(BigDecimal.valueOf(Math.abs(greenMax - blueMax) / newGreenPercentAverage));
                 }
+                annotation += " delta=" + printPrice(delta);
                 waitMax2 = waitMax.add(delta);
                 var isMax2 = maxIntervalCandle.getHighestPrice().compareTo(waitMax2) > 0;
                 var isUp = currentPrice.doubleValue() > blue
@@ -218,17 +232,19 @@ public class AlligatorService implements
             }
         }
         AlligatorMouth curAlligatorMouth = null;
+        AlligatorMouth curAlligatorMouthOrig = null;
         var alligatorMouthSizeOffset = 0;
         if (resBuy) {
             var alligatorAverage = getAlligatorLengthAverage(candle.getFigi(), candle.getDateTime(), strategy);
-            var lastFMaxCandleFirst = getLastFMaxCandle(candle.getFigi(), candle.getDateTime(), strategy, null);
+            var lastFMaxCandleFirst = getLastFMaxCandle(candle.getFigi(), candle.getDateTime(), strategy, null).getFMaxCandle();
             annotation += " lastFMaxCandleFirst=" + printDateTime(lastFMaxCandleFirst.getDateTime());
             if (lastFMaxCandleFirst.getDateTime().equals(lastFMaxCandle.getDateTime())) {
-                curAlligatorMouth = getAlligatorMouth(candle.getFigi(), candle.getDateTime(), strategy, null);
+                curAlligatorMouthOrig = curAlligatorMouth = getAlligatorMouth(candle.getFigi(), candle.getDateTime(), strategy, null);
             } else {
-                var lastFMaxCandlePrev = getLastFMaxCandle(candle.getFigi(), candle.getDateTime(), strategy, strategy.getFMaxCandleCountFromEnd() + 1);
+                var lastFMaxCandlePrev = getLastFMaxCandle(candle.getFigi(), candle.getDateTime(), strategy, strategy.getFMaxCandleCountFromEnd() + 1).getFMaxCandle();
                 annotation += " lastFMaxCandlePrev=" + printDateTime(lastFMaxCandlePrev.getDateTime());
-                var curAlligatorMouthOrig = getAlligatorMouth(candle.getFigi(), candle.getDateTime(), strategy, null);
+                curAlligatorMouthOrig = getAlligatorMouth(candle.getFigi(), candle.getDateTime(), strategy, null);
+                annotation += " MonthBeginOrig=" + printDateTime(curAlligatorMouthOrig.getCandleBegin().getDateTime());
                 curAlligatorMouth = getAlligatorMouth(candle.getFigi(), candle.getDateTime(), strategy, lastFMaxCandle.getDateTime());
                 alligatorMouthSizeOffset = curAlligatorMouthOrig.getSize() - curAlligatorMouth.getSize();
                 setOrderBigDecimalData(strategy, candle, "lastFMaxCandleEpochSecond", BigDecimal.valueOf(
@@ -254,9 +270,10 @@ public class AlligatorService implements
         var isDayEnd = false;
         if (resBuy) {
             var alligatorAverage = getAlligatorLengthAverage(candle.getFigi(), candle.getDateTime(), strategy);
-            var orderAlligatorMouth = curAlligatorMouth;
+            var orderAlligatorMouth = curAlligatorMouthOrig;
             var greenMonthBegin = getAlligatorGreen(candle.getFigi(), orderAlligatorMouth.getCandleBegin().getDateTime(), strategy);
             var startPrice = greenMonthBegin;
+            annotation += " startPrice=" + printPrice(startPrice);
             var purchaseRate = candle.getClosingPrice();
             Double limitPercent;
             if (strategy.getLimitPercentByCandle() > 0) {
@@ -264,14 +281,15 @@ public class AlligatorService implements
                 limitPercent = Math.max(1, (alligatorAverage.getSize()))
                         * strategy.getLimitPercentByCandle() * average;
             } else {
-                var limitPercentByCandle = Math.abs(100. * alligatorAverage.getPrice() / alligatorAverage.getSize() / purchaseRate.doubleValue());
+                var limitPercentByCandle = Math.abs(100. * alligatorAverage.getPrice() / alligatorAverage.getSize() / startPrice);
                 annotation += " alligatorAveragePrice=" + printPrice(alligatorAverage.getPrice());
                 annotation += " limitPercentByCandle=" + printPrice(limitPercentByCandle);
                 limitPercent = Math.max(1, (alligatorAverage.getSize()))
                         * limitPercentByCandle;
             }
             annotation += " limitPercent=" + printPrice(limitPercent);
-            Double profitLimit = Math.abs((startPrice.doubleValue() / 100.) * limitPercent) - delta.doubleValue();
+            Double profitLimit = Math.abs((startPrice.doubleValue() / 100.) * limitPercent);
+            profitLimit -= delta.doubleValue() / 2;
             Double limitPrice = startPrice.doubleValue() + profitLimit;
 
             Float newLimitPercent = (float) ((100.f * (limitPrice.floatValue() - purchaseRate.floatValue()) / Math.abs(purchaseRate.floatValue())));
@@ -832,7 +850,16 @@ public class AlligatorService implements
         return average;
     }
 
-    private CandleDomainEntity getLastFMaxCandle(
+    @Builder
+    @Data
+    public static class AlligatorMouthFMax {
+        CandleDomainEntity fMaxCandle;
+        List<CandleDomainEntity> maxCandleList;
+        List<CandleDomainEntity> maxMaxCandleList;
+        String annotation;
+    }
+
+    private AlligatorMouthFMax getLastFMaxCandle(
             String figi,
             OffsetDateTime currentDateTime,
             AAlligatorStrategy strategy,
@@ -843,6 +870,8 @@ public class AlligatorService implements
             return null;
         }
         List<CandleDomainEntity> maxCandleList = new ArrayList<>();
+        List<CandleDomainEntity> maxMaxCandleList = new ArrayList<>();
+        var annotation = "";
         for (var i = candleList.size() - 1 - 2; i >= 2; i--) {
             var curCandleList = candleList.subList(i - 2, i + 3);
             var middleCandle = curCandleList.get(2);
@@ -869,11 +898,12 @@ public class AlligatorService implements
                 maxCandleList.add(middleCandle);
             }
         }
+
+        CandleDomainEntity fMaxCandle = null;
         if (
                 null != countFromEnd
                 && maxCandleList.size() >= countFromEnd
         ) {
-            List<CandleDomainEntity> maxMaxCandleList = new ArrayList<>();
             var curMaxCandleList = maxCandleList;
             for(var i = 0; i < maxCandleList.size() && curMaxCandleList.size() > 0; i++) {
                 var maxCandle = curMaxCandleList.stream().reduce((first, second) ->
@@ -881,17 +911,28 @@ public class AlligatorService implements
                 ).orElse(null);
                 maxMaxCandleList.add(maxCandle);
                 var maxIndex = curMaxCandleList.indexOf(maxCandle);
+                annotation += " i=" + i;
+                annotation += " maxIndex=" + maxIndex;
+                annotation += " size=" + curMaxCandleList.size();
                 if (maxIndex == curMaxCandleList.size() - 1) {
                     break;
                 }
-                curMaxCandleList = curMaxCandleList.subList(maxIndex + 1, curMaxCandleList.size() - 1);
+                curMaxCandleList = curMaxCandleList.subList(maxIndex + 1, curMaxCandleList.size());
             }
             if (maxMaxCandleList.size() >= countFromEnd) {
-                return maxMaxCandleList.get(countFromEnd - 1);
+                fMaxCandle = maxMaxCandleList.get(countFromEnd - 1);
             }
         }
-        if (maxCandleList.size() > 0) {
-            return maxCandleList.get(maxCandleList.size() - 1);
+        if (null == fMaxCandle && maxCandleList.size() > 0) {
+            fMaxCandle = maxCandleList.get(maxCandleList.size() - 1);
+        }
+        if (null != fMaxCandle) {
+            return AlligatorMouthFMax.builder()
+                    .fMaxCandle(fMaxCandle)
+                    .maxMaxCandleList(maxMaxCandleList)
+                    .maxCandleList(maxCandleList)
+                    .annotation(annotation)
+                    .build();
         }
         return null;
     }
