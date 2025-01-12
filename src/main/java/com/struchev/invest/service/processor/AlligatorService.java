@@ -285,15 +285,23 @@ public class AlligatorService implements
                 limitPercent = Math.max(1, (alligatorAverage.getSize()))
                         * strategy.getLimitPercentByCandle() * average;
             } else {
-                var limitPercentByCandle = Math.abs(100. * alligatorAverage.getPrice() / alligatorAverage.getSize() / startPrice);
-                annotation += " alligatorAveragePrice=" + printPrice(alligatorAverage.getPrice());
+                var alligatorPrice = alligatorAverage.getPrice();
+                if (strategy.isLimitPercentByPriceAlligator()) {
+                    alligatorPrice = alligatorAverage.getPriceAlligator();
+                }
+                var limitPercentByCandle = Math.abs(100. * alligatorPrice / alligatorAverage.getSize() / startPrice);
+                annotation += " alligatorAveragePrice=" + printPrice(alligatorPrice);
                 annotation += " limitPercentByCandle=" + printPrice(limitPercentByCandle);
                 limitPercent = Math.max(1, (alligatorAverage.getSize()))
                         * limitPercentByCandle;
             }
             annotation += " limitPercent=" + printPrice(limitPercent);
             Double profitLimit = Math.abs((startPrice.doubleValue() / 100.) * limitPercent);
-            profitLimit -= delta.doubleValue() / 2;
+            if (strategy.getLimitPercentByCandle() > 0) {
+                profitLimit -= delta.doubleValue();
+            } else {
+                profitLimit -= delta.doubleValue() / 2;
+            }
             limitPrice = startPrice.doubleValue() + profitLimit;
 
             Float newLimitPercent = (float) ((100.f * (limitPrice.floatValue() - purchaseRate.floatValue()) / Math.abs(purchaseRate.floatValue())));
@@ -656,6 +664,7 @@ public class AlligatorService implements
         Integer size;
         String annotation;
         Double price;
+        Double priceAlligator;
     }
 
     private Map<String, AlligatorMouthAverage> alligatorMouthAverageCashMap = new LinkedHashMap<>() {
@@ -685,6 +694,7 @@ public class AlligatorService implements
     ) {
         List<Double> ret = new ArrayList<Double>();
         List<Double> retPrice = new ArrayList<Double>();
+        List<Double> retPriceAlligator = new ArrayList<Double>();
         var skipped = 0;
         String annotation = "";
         var mouthCur = getAlligatorMouth(figi, currentDateTime, strategy, null);
@@ -729,6 +739,16 @@ public class AlligatorService implements
                 } else if (mouth.size > strategy.getAlligatorMouthAverageMinSize()) {
                     ret.add(Double.valueOf(mouth.size));
                     retPrice.add(Math.abs(mouth.candleMax.getHighestPrice().doubleValue() - mouth.candleMin.getLowestPrice().doubleValue()));
+                    var greenBegin = getAlligatorGreen(figi, mouth.candleBegin.getDateTime(), strategy);
+                    var blueBegin = getAlligatorBlue(figi, mouth.candleBegin.getDateTime(), strategy);
+                    var greenEnd = getAlligatorGreen(figi, mouth.candleEnd.getDateTime(), strategy);
+                    var blueEnd = getAlligatorBlue(figi, mouth.candleEnd.getDateTime(), strategy);
+                    if (null != greenBegin && null != greenEnd && null != blueBegin && null != blueEnd) {
+                        retPriceAlligator.add(
+                                Math.max(Math.max(Math.max(greenBegin, blueBegin), greenEnd), blueEnd)
+                                - Math.min(Math.min(Math.min(greenBegin, blueBegin), greenEnd), blueEnd)
+                        );
+                    }
                 } else {
                     skipped++;
                 }
@@ -741,6 +761,7 @@ public class AlligatorService implements
         v = AlligatorMouthAverage.builder()
                 .size((int) Math.round(Math.ceil(average)))
                 .price(retPrice.stream().mapToDouble(a -> a).average().orElse(0))
+                .priceAlligator(retPriceAlligator.stream().mapToDouble(a -> a).average().orElse(0))
                 .annotation(annotation)
                 .build();
         v.setAnnotation("orig " + v.getAnnotation());
