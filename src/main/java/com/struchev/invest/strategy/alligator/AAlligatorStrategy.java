@@ -74,6 +74,8 @@ public abstract class AAlligatorStrategy extends AStrategy implements Cloneable,
 
     public Integer getFMaxCandleCountFromEnd() { return null; }
 
+    public Boolean isLimitPriceFromMouthOrig() { return false; }
+
     private SellLimitCriteria sellLimit;
     private Map<String, SellLimitCriteria> sellLimitMap = new HashMap<>();
 

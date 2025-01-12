@@ -270,7 +270,10 @@ public class AlligatorService implements
         var isDayEnd = false;
         if (resBuy) {
             var alligatorAverage = getAlligatorLengthAverage(candle.getFigi(), candle.getDateTime(), strategy);
-            var orderAlligatorMouth = curAlligatorMouthOrig;
+            var orderAlligatorMouth = curAlligatorMouth;
+            if (strategy.isLimitPriceFromMouthOrig()) {
+                orderAlligatorMouth = curAlligatorMouthOrig;
+            }
             var greenMonthBegin = getAlligatorGreen(candle.getFigi(), orderAlligatorMouth.getCandleBegin().getDateTime(), strategy);
             var startPrice = greenMonthBegin;
             annotation += " startPrice=" + printPrice(startPrice);
