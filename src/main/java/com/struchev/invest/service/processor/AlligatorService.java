@@ -298,11 +298,7 @@ public class AlligatorService implements
             }
             annotation += " limitPercent=" + printPrice(limitPercent);
             Double profitLimit = Math.abs((startPrice.doubleValue() / 100.) * limitPercent);
-            if (strategy.getLimitPercentByCandle() > 0) {
-                profitLimit -= delta.doubleValue();
-            } else {
-                profitLimit -= delta.doubleValue() / 2;
-            }
+            profitLimit -= delta.doubleValue() * strategy.getLimitDeltaK();
             limitPrice = startPrice.doubleValue() + profitLimit;
 
             Float newLimitPercent = (float) ((100.f * (limitPrice.floatValue() - purchaseRate.floatValue()) / Math.abs(purchaseRate.floatValue())));

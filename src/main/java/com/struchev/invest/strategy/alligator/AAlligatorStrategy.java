@@ -68,6 +68,7 @@ public abstract class AAlligatorStrategy extends AStrategy implements Cloneable,
     public Double getSellSkipCurAlligatorLengthDivider() { return 3.0; }
 
     public Double getLimitPercentByCandle() { return 0.375 / 1.4; }
+    public Double getLimitDeltaK() { return 0.5; }
     public Boolean isLimitPercentByPriceAlligator() { return false; }
 
     public OffsetDateTime getDayTimeEndTrading() { return null; }

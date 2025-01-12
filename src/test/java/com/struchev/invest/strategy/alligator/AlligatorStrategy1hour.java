@@ -6,5 +6,5 @@ import org.springframework.stereotype.Component;
 public class AlligatorStrategy1hour extends AlligatorStrategy {
     public String getInterval() { return "1hour"; }
 
-    public boolean isEnabled() { return false; }
+    public boolean isEnabled() { return true; }
 }
