@@ -8,5 +8,5 @@ import java.time.format.DateTimeFormatter;
 @Component
 public class AlligatorStrategy5MinALimit extends AlligatorStrategy5Min {
     public Double getLimitPercentByCandle() { return -1.; }
-    public Boolean isLimitPercentByPriceAlligator() { return true; }
+    //public Boolean isLimitPercentByPriceAlligator() { return true; }
 }

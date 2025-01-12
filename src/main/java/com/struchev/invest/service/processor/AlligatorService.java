@@ -286,11 +286,12 @@ public class AlligatorService implements
                         * strategy.getLimitPercentByCandle() * average;
             } else {
                 var alligatorPrice = alligatorAverage.getPrice();
+                annotation += " alligatorAveragePrice=" + printPrice(alligatorPrice);
                 if (strategy.isLimitPercentByPriceAlligator()) {
                     alligatorPrice = alligatorAverage.getPriceAlligator();
+                    annotation += " alligatorAveragePrice=" + printPrice(alligatorPrice);
                 }
                 var limitPercentByCandle = Math.abs(100. * alligatorPrice / alligatorAverage.getSize() / startPrice);
-                annotation += " alligatorAveragePrice=" + printPrice(alligatorPrice);
                 annotation += " limitPercentByCandle=" + printPrice(limitPercentByCandle);
                 limitPercent = Math.max(1, (alligatorAverage.getSize()))
                         * limitPercentByCandle;
