@@ -102,4 +102,7 @@ public abstract class AAlligatorStrategy extends AStrategy implements Cloneable,
     public void setSellLimitCriteria(String figi, SellLimitCriteria sellLimit) {
         this.sellLimitMap.put(figi, sellLimit);
     }
+
+    public Double getLimitPriceByTrySell() { return null; }
+    public Double getSellLimitPriceByTrySell() { return null; }
 }

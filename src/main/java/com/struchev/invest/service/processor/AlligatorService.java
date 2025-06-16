@@ -499,18 +499,29 @@ public class AlligatorService implements
             //Float newLimitPercent = (float) ((100.f * (limitPrice.floatValue() - purchaseRate.floatValue()) / Math.abs(purchaseRate.floatValue())));
             //Float newLimitPercentAverage = (float) (newLimitPercent / average);
 
-            annotation += " limitPrice=" + printPrice(limitPrice);
-            annotation += " newLimitPercent=" + printPrice(newLimitPercent);
+            var lastNewSellLimitBySell = order.getDetails().getCurrentPrices().getOrDefault("newSellLimitBySell", null);
+
+            if (lastNewSellLimitBySell != null) {
+                limitPrice = lastNewSellLimitBySell.doubleValue();
+                newLimitPercent = (float) ((100.f * (limitPrice.floatValue() - purchaseRate.floatValue()) / Math.abs(purchaseRate.floatValue())));
+                annotation += " new limitPrice=lastBySell" + printPrice(limitPrice);
+                annotation += " new newLimitPercent=" + printPrice(newLimitPercent);
+            } else {
+                annotation += " limitPrice=" + printPrice(limitPrice);
+                annotation += " newLimitPercent=" + printPrice(newLimitPercent);
+            }
             //annotation += " newLimitPercentAverage=" + printPrice(newLimitPercentAverage);
             annotation += " newGreenPercent=" + printPrice(newGreenPercent);
             annotation += " newGreenPercentAverage=" + printPrice(newGreenPercentAverage);
             annotation += " origProfitPercent=" + strategy.getSellLimitCriteriaOrig().getExitProfitPercent();
+
             if (newLimitPercent < strategy.getSellLimitCriteriaOrig().getExitProfitPercent()) {
                 newLimitPercent = strategy.getSellLimitCriteriaOrig().getExitProfitPercent();
                 limitPrice = (double) (purchaseRate.floatValue() + Math.abs(purchaseRate.floatValue() * newLimitPercent / 100.f));
                 annotation += " new limitPrice=" + printPrice(limitPrice);
                 annotation += " new newLimitPercent=" + printPrice(newLimitPercent);
             }
+
             if (
                     true
                     //&& newLimitPercent > strategy.getSellLimitCriteriaOrig().getExitProfitPercent()
@@ -522,13 +533,21 @@ public class AlligatorService implements
                 limitPrice = null;
             }
         }
+        var isStopLoss = false;
+        var lastNewStopLossBySell = order.getDetails().getCurrentPrices().getOrDefault("newStopLossBySell", null);
+        if (null != lastNewStopLossBySell) {
+            stopLoss = lastNewStopLossBySell.doubleValue();
+            annotation += " newStopLoss=lastBySell=" + printPrice(stopLoss);
+        }
         if (null != stopLoss) {
             if (!isStopLossForce && candle.getClosingPrice().doubleValue() < stopLoss) {
                 annotation += " stop lost OK";
                 res = true;
+                isStopLoss = true;
             } else if (isStopLossForce && candle.getHighestPrice().doubleValue() < stopLoss) {
                 annotation += " stop lost force OK";
                 res = true;
+                isStopLoss = true;
             }
         }
 
@@ -536,6 +555,24 @@ public class AlligatorService implements
             if (isShouldBuyInternal(strategy, candle, false)) {
                 annotation += " skip by buy";
                 res = false;
+            }
+        }
+
+        if (
+                res
+                && isStopLoss
+                && strategy.getSellLimitPriceByTrySell() != null
+                && green != null && blue != null
+                && null == lastNewStopLossBySell
+        ) {
+            var stopLossDelta = Math.max(green, blue) - Math.min(candle.getClosingPrice().doubleValue(), Math.min(green, blue));
+            var newStopLossBySell = Math.max(green, blue) - stopLossDelta * strategy.getSellLimitPriceByTrySell();
+            annotation += " newStopLossBySell=" + printPrice(newStopLossBySell);
+            setOrderBigDecimalData(strategy, candle, "newStopLossBySell", BigDecimal.valueOf(newStopLossBySell));
+            if (strategy.getSellLimitPriceByTrySell() != null) {
+                var newSellLimitBySell = Math.max(green, blue) + stopLossDelta * strategy.getSellLimitPriceByTrySell();
+                annotation += " newSellLimitBySell=" + printPrice(newSellLimitBySell);
+                setOrderBigDecimalData(strategy, candle, "newSellLimitBySell", BigDecimal.valueOf(newSellLimitBySell));
             }
         }
 
