@@ -151,7 +151,7 @@ public class CalculatorFacade {
     {
         var stopLossPrice = order.getDetails().getCurrentPrices().getOrDefault("stopLossPrice", BigDecimal.ZERO);
         if (stopLossPrice.equals(BigDecimal.ZERO)) {
-            return true;
+            return false;
         }
         var orderPrice = order.getPurchasePrice();
         if (order.isShort()) {
