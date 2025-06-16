@@ -202,7 +202,7 @@ public class OrderService implements IOrderService {
             return order;
         }
         var orderFresh = findActiveOrderDomainByFigiAndStrategy(order.getFigi(), strategy);
-        if (orderFresh.getId() != order.getId()) {
+        if (null == orderFresh || orderFresh.getId() != order.getId()) {
             return order;
         }
         order = orderFresh;

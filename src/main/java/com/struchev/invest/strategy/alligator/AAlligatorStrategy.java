@@ -103,6 +103,7 @@ public abstract class AAlligatorStrategy extends AStrategy implements Cloneable,
         this.sellLimitMap.put(figi, sellLimit);
     }
 
+    public Double getSkipProfitByTrySell() { return 0.; }
     public Double getLimitPriceByTrySell() { return null; }
     public Double getSellLimitPriceByTrySell() { return null; }
 }
