@@ -571,6 +571,19 @@ public class AlligatorService implements
         ) {
             var startPoint = Math.max(green, blue);
             var stopLossDelta = startPoint - Math.min(candle.getClosingPrice().doubleValue(), Math.min(green, blue));
+            var stopLossDeltaPercent = (double) ((100.f * (stopLossDelta) / Math.abs(startPoint)));
+            annotation += " stopLossDeltaPercent=" + printPrice(stopLossDeltaPercent);
+            if (stopLossDeltaPercent < strategy.getMinPercentDeltaByTrySell()) {
+                stopLossDeltaPercent = strategy.getMinPercentDeltaByTrySell();
+                stopLossDelta = Math.abs(startPoint) * stopLossDeltaPercent / 100.;
+                annotation += " new min stopLossDelta=" + printPrice(stopLossDelta);
+            }
+            if (stopLossDeltaPercent > strategy.getMaxPercentDeltaByTrySell()) {
+                stopLossDeltaPercent = strategy.getMaxPercentDeltaByTrySell();
+                stopLossDelta = Math.abs(startPoint) * stopLossDeltaPercent / 100.;
+                annotation += " new max stopLossDelta=" + printPrice(stopLossDelta);
+            }
+
             var newStopLossBySell = startPoint - stopLossDelta * strategy.getSellLimitPriceByTrySell();
             annotation += " startPoint=" + printPrice(startPoint);
             annotation += " stopLossDelta=" + printPrice(stopLossDelta);
@@ -608,6 +621,8 @@ public class AlligatorService implements
                 }
             }
         }
+
+        annotation = "res = " + res + " " + annotation;
 
         notificationService.reportStrategyExt(
                 res,
