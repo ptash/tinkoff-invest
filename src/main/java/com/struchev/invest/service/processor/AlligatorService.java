@@ -358,6 +358,14 @@ public class AlligatorService implements
                 }
             }
         }
+        if (
+                resBuy
+                && null != strategy.getSellLimitCriteria(candle.getFigi())
+        ) {
+            var sellLimitCriteria = strategy.getSellLimitCriteria(candle.getFigi());
+            sellLimitCriteria.setExitProfitPercent(strategy.getSellLimitCriteriaOrig().getExitProfitPercent());
+            strategy.setSellLimitCriteria(candle.getFigi(), sellLimitCriteria);
+        }
 
         if (isReport) {
             notificationService.reportStrategyExt(
