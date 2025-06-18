@@ -325,12 +325,15 @@ public class AlligatorService implements
             //Float newLimitPercentAverage = (float) (newLimitPercent / average);
 
             annotation += " origProfitPercent=" + strategy.getSellLimitCriteriaOrig().getExitProfitPercent();
-            if (newLimitPercent < strategy.getSellLimitCriteriaOrig().getExitProfitPercent()) {
+            var realLimitPercent = newLimitPercent * strategy.getLimitCorrectionK();
+            var realLimitPrice = (realLimitPercent * Math.abs(purchaseRate.floatValue()))/ 100. + purchaseRate.floatValue();
+            annotation += " realLimitPercent=" + printPrice(realLimitPercent);
+            if (realLimitPercent < strategy.getSellLimitCriteriaOrig().getExitProfitPercent()) {
                 annotation += " SKIP ProfitPercent";
                 resBuy = false;
             } else {
-                setOrderBigDecimalData(strategy, candle, "limitPrice", BigDecimal.valueOf(limitPrice));
-                setOrderBigDecimalData(strategy, candle, "limitPercent", BigDecimal.valueOf(newLimitPercent));
+                setOrderBigDecimalData(strategy, candle, "limitPrice", BigDecimal.valueOf(realLimitPrice));
+                setOrderBigDecimalData(strategy, candle, "limitPercent", BigDecimal.valueOf(realLimitPercent));
             }
 
             if (null != strategy.getDayTimeEndBuy()) {
