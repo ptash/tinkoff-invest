@@ -78,6 +78,9 @@ public abstract class AAlligatorStrategy extends AStrategy implements Cloneable,
 
     public Boolean isLimitPriceFromMouthOrig() { return false; }
 
+    public Double getBuyWaitMaxDeltaK() {return 1.0; }
+    public Double getBuyWaitMaxBuyDeltaK() {return 1.0; }
+
     private SellLimitCriteria sellLimit;
     private Map<String, SellLimitCriteria> sellLimitMap = new HashMap<>();
 

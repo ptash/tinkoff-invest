@@ -9,8 +9,8 @@ import java.util.Map;
 public class AlligatorStrategy extends AAlligatorStrategy {
     private static final Map FIGIES = new HashMap<String, Integer>();
     static {
-        FIGIES.put("FUTNG1224000", 1); // NG-12.24 Природный газ
-        //FIGIES.put("FUTNG0125000", 1); // NG-01.25 Природный газ
+        //FIGIES.put("FUTNG1224000", 1); // NG-12.24 Природный газ
+        FIGIES.put("FUTNG0125000", 1); // NG-01.25 Природный газ
         //FIGIES.put("FUTNG0625000", 1); // NG-06.25 Природный газ
         //FIGIES.put("FUTGLDRUBF00", 1); // GLDRUBF Золото (rub)
         //FIGIES.put("FUTUSDRUBF00", 1); // USDRUBF USDRUBF Доллар - Рубль

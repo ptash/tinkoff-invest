@@ -147,12 +147,12 @@ public class AlligatorService implements
                     delta = delta.max(BigDecimal.valueOf(Math.abs(greenMax - blueMax) / newGreenPercentAverage));
                 }
                 annotation += " delta=" + printPrice(delta);
-                waitMax2 = waitMax.add(delta);
+                waitMax2 = waitMax.add(delta.multiply(BigDecimal.valueOf(strategy.getBuyWaitMaxDeltaK())));
                 var isMax2 = maxIntervalCandle.getHighestPrice().compareTo(waitMax2) > 0;
                 var isUp = currentPrice.doubleValue() > blue
                         && green > red
                         && red > blue;
-                waitMaxBuy = waitMax.subtract(delta);
+                waitMaxBuy = waitMax.subtract(delta.multiply(BigDecimal.valueOf(strategy.getBuyWaitMaxBuyDeltaK())));;
                 if (
                         isMax2
                         && isUp
