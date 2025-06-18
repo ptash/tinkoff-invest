@@ -95,12 +95,12 @@ class StrategiesByCandleHistoryTests {
     //private OffsetDateTime dateBefore = OffsetDateTime.parse("2024-12-03T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
     //private OffsetDateTime dateBefore = OffsetDateTime.parse("2024-12-15T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
     //private OffsetDateTime dateBefore = OffsetDateTime.parse("2024-12-22T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
-    private OffsetDateTime dateBefore = OffsetDateTime.parse("2024-12-29T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+    //private OffsetDateTime dateBefore = OffsetDateTime.parse("2024-12-29T01:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
     //private OffsetDateTime dateBefore = OffsetDateTime.parse("2025-01-09T19:00:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
 
     //private OffsetDateTime dateBefore = OffsetDateTime.parse("2025-01-11T00:00:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
 
-    //private OffsetDateTime dateBefore = OffsetDateTime.parse("2025-06-15T00:00:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+    private OffsetDateTime dateBefore = OffsetDateTime.parse("2025-06-15T00:00:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
 
 
     @Value("${tinkoff.emulator}")
