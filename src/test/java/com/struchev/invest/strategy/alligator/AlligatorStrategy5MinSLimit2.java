@@ -13,6 +13,9 @@ public class AlligatorStrategy5MinSLimit2 extends AlligatorStrategy5MinSLimit {
     public SellLimitCriteria getSellLimitCriteriaOrig() {
         return SellLimitCriteria.builder().exitProfitPercent(0.6f).build();
     }
+
+    public Double getLimitPercentByCandle() { return 0.8 * 0.375 / 1.4; }
+
     public Double getLimitPriceByTrySell() { return 1.8; }
 
     public boolean isEnabled() { return true; }
