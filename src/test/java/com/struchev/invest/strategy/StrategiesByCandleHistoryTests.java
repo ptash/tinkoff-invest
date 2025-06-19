@@ -100,7 +100,9 @@ class StrategiesByCandleHistoryTests {
 
     //private OffsetDateTime dateBefore = OffsetDateTime.parse("2025-01-11T00:00:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
 
-    private OffsetDateTime dateBefore = OffsetDateTime.parse("2025-06-15T00:00:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+    //private OffsetDateTime dateBefore = OffsetDateTime.parse("2025-06-15T00:00:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+
+    private OffsetDateTime dateBefore = OffsetDateTime.parse("2025-06-19T00:00:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
 
 
     @Value("${tinkoff.emulator}")

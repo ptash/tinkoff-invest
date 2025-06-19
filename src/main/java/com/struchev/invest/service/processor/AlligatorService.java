@@ -547,6 +547,7 @@ public class AlligatorService implements
         }
         var isStopLoss = false;
         var lastNewStopLossBySell = order.getDetails().getCurrentPrices().getOrDefault("newStopLossBySell", null);
+        var lastDateTimeBySell = order.getDetails().getDateTimes().getOrDefault("dateTimeBySell", null);
         if (null != lastNewStopLossBySell) {
             stopLoss = lastNewStopLossBySell.doubleValue();
             annotation += " newStopLoss=lastBySell=" + printPrice(stopLoss);
@@ -577,7 +578,7 @@ public class AlligatorService implements
                 && isStopLoss
                 && strategy.getSellLimitPriceByTrySell() != null
                 && green != null && blue != null
-                && null == lastNewStopLossBySell
+                && (null == lastNewStopLossBySell || lastDateTimeBySell.equals(candle.getDateTime()))
                 && profit < strategy.getSkipProfitByTrySell()
         ) {
             var startPoint = Math.max(green, blue);
@@ -604,6 +605,7 @@ public class AlligatorService implements
                 annotation += " newSellLimitBySell=" + printPrice(newSellLimitBySell);
                 order.getDetails().getCurrentPrices().put("newSellLimitBySell", BigDecimal.valueOf(newSellLimitBySell));
             }
+            order.getDetails().getDateTimes().put("dateTimeBySell", candle.getDateTime());
             orderService.updateDetailsCurrentPrice(order, "newStopLossBySell", BigDecimal.valueOf(newStopLossBySell));
             res = false;
         }
