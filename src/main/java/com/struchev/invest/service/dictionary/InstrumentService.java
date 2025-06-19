@@ -140,6 +140,7 @@ public class InstrumentService {
     public void printInstrumentInfo(Instrument instrument) {
         if (instrument == null) {
             log.info("instrument null...");
+            return;
         }
         if (instrument.getType() == null) {
             log.info("instrument type null...: {}", instrument);
