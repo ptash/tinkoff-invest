@@ -218,6 +218,7 @@ public class OrderService implements IOrderService {
         BigDecimal limitPrice;
         if (order.isShort()) {
             limitPrice = order.getSellPrice().multiply(BigDecimal.valueOf((100. - strategy.getSellLimitCriteria(candle.getFigi()).getExitProfitPercent())/100.));
+            //log.info("limitPrice {} = {} * (100 - {})/100", limitPrice, order.getSellPrice(), strategy.getSellLimitCriteria(candle.getFigi()).getExitProfitPercent());
         } else {
             limitPrice = order.getPurchasePrice().multiply(BigDecimal.valueOf((strategy.getSellLimitCriteria(candle.getFigi()).getExitProfitPercent() + 100.)/100.));
         }

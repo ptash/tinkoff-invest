@@ -411,6 +411,7 @@ public class AlligatorService implements
         if (
                 resBuy
                 && null != strategy.getSellLimitCriteria(candle.getFigi())
+                && null == orderService.findActiveByFigiAndStrategy(candle.getFigi(), strategy)
         ) {
             var sellLimitCriteria = strategy.getSellLimitCriteria(candle.getFigi());
             sellLimitCriteria.setExitProfitPercent(strategy.getSellLimitCriteriaOrig().getExitProfitPercent());
