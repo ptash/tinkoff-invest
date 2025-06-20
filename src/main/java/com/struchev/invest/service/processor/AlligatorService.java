@@ -361,6 +361,50 @@ public class AlligatorService implements
                 }
             }
         }
+
+        Double smaUp = null;
+        Double smaDown = null;
+        var isTrendUp = true;
+        if (strategy.isMoveStopLossByTrySellByTrend()) {
+            var smaList = getSma(candle.getFigi(), candle.getDateTime(), strategy.getSmaLength(), strategy.getInterval(), CandleDomainEntity::getMedianPrice, 2);
+            var sma = smaList != null && smaList.size() > 1 ? smaList.get(1) : null;
+            var smaPrev = smaList != null && smaList.size() > 0 ? smaList.get(0) : null;
+            if (sma != null && smaPrev != null) {
+                isTrendUp = smaPrev <= sma;
+                if (isTrendUp) {
+                    smaUp = sma;
+                } else {
+                    smaDown = sma;
+                }
+            }
+            if (
+                    strategy.isSkipBySmaNearGreenBlue()
+                    && sma != null
+            ) {
+                var trendDelta = Math.abs(green - blue);
+                var trendDeltaPercent = 100. * trendDelta / candle.getClosingPrice().abs().doubleValue();
+                annotation += " trendDelta=" + printPrice(trendDelta);
+                annotation += " trendDeltaPercent=" + printPrice(trendDeltaPercent);
+                if (average != null && trendDeltaPercent < average) {
+                    trendDeltaPercent = average;
+                    trendDelta = trendDeltaPercent * candle.getClosingPrice().abs().doubleValue() / 100.;
+                    annotation += " new trendDelta=" + printPrice(trendDelta);
+                    annotation += " new trendDeltaPercent=" + printPrice(trendDeltaPercent);
+                }
+                annotation += " sma " + printPrice(sma) + " near greenBlue "
+                        + printPrice((Math.min(green, blue) - trendDelta)) + ":"
+                        + printPrice((Math.max(green, blue) + trendDelta));
+
+                if (
+                        sma >= (Math.min(green, blue) - trendDelta)
+                        && sma <= (Math.max(green, blue) + trendDelta)
+                ) {
+                    annotation += " SKIP by SMA near greenBlue";
+                    resBuy = false;
+                }
+            }
+        }
+
         if (
                 resBuy
                 && null != strategy.getSellLimitCriteria(candle.getFigi())
@@ -371,22 +415,6 @@ public class AlligatorService implements
         }
 
         if (isReport) {
-            Double smaUp = null;
-            Double smaDown = null;
-            var isTrendUp = true;
-            if (strategy.isMoveStopLossByTrySellByTrend()) {
-                var smaList = getSma(candle.getFigi(), candle.getDateTime(), strategy.getSmaLength(), strategy.getInterval(), CandleDomainEntity::getMedianPrice, 2);
-                var sma = smaList != null && smaList.size() > 1 ? smaList.get(1) : null;
-                var smaPrev = smaList != null && smaList.size() > 0 ? smaList.get(0) : null;
-                if (sma != null && smaPrev != null) {
-                    isTrendUp = smaPrev <= sma;
-                    if (isTrendUp) {
-                        smaUp = sma;
-                    } else {
-                        smaDown = sma;
-                    }
-                }
-            }
             annotation = "res = " + resBuy + " " + annotation;
             notificationService.reportStrategyExt(
                     resBuy,
@@ -466,11 +494,12 @@ public class AlligatorService implements
             );
             annotation += " lastFMaxCandleDateTime=" + printDateTime(lastFMaxCandleDateTime);
         }
+        Double average = null;
         if (green != null && blue != null) {
             var stopLossForce = blue - Math.abs(red - blue);
             var sellLimitCriteria = strategy.getSellLimitCriteria(candle.getFigi());
             Float newGreenPercent = (float) ((100.f * (zs - green) / Math.abs(green)));
-            var average = getAveragePercent(candle.getFigi(), candle.getDateTime(), strategy);
+            average = getAveragePercent(candle.getFigi(), candle.getDateTime(), strategy);
             annotation += " average=" + printPrice(average);
             Float newGreenPercentAverage = (float) (newGreenPercent / average);
 
@@ -604,6 +633,28 @@ public class AlligatorService implements
                     smaUp = sma;
                 } else {
                     smaDown = sma;
+                }
+            }
+            if (isTrendUp && strategy.isSmaNearGreenBlueIsTrendDown() && sma != null) {
+                var trendDelta = Math.abs(green - blue);
+                var trendDeltaPercent = 100. * trendDelta / candle.getClosingPrice().abs().doubleValue();
+                annotation += " trendDelta=" + printPrice(trendDelta);
+                annotation += " trendDeltaPercent=" + printPrice(trendDeltaPercent);
+                if (average != null && trendDeltaPercent < average) {
+                    trendDeltaPercent = average;
+                    trendDelta = trendDeltaPercent * candle.getClosingPrice().abs().doubleValue() / 100.;
+                    annotation += " new trendDelta=" + printPrice(trendDelta);
+                    annotation += " new trendDeltaPercent=" + printPrice(trendDeltaPercent);
+                }
+                annotation += " sma " + printPrice(sma) + " near greenBlue "
+                        + printPrice((Math.min(green, blue) - trendDelta)) + ":" + printPrice((Math.max(green, blue) + trendDelta));
+
+                if (
+                        sma >= (Math.min(green, blue) - trendDelta)
+                        && sma <= (Math.max(green, blue) + trendDelta)
+                ) {
+                    isTrendUp = false;
+                    annotation += " isTrendUp=false by near greenBlue";
                 }
             }
         }
