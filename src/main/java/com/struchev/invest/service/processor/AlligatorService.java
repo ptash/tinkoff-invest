@@ -371,14 +371,31 @@ public class AlligatorService implements
         }
 
         if (isReport) {
+            Double smaUp = null;
+            Double smaDown = null;
+            var isTrendUp = true;
+            if (strategy.isMoveStopLossByTrySellByTrend()) {
+                var smaList = getSma(candle.getFigi(), candle.getDateTime(), strategy.getSmaLength(), strategy.getInterval(), CandleDomainEntity::getMedianPrice, 2);
+                var sma = smaList != null && smaList.size() > 1 ? smaList.get(1) : null;
+                var smaPrev = smaList != null && smaList.size() > 0 ? smaList.get(0) : null;
+                if (sma != null && smaPrev != null) {
+                    isTrendUp = smaPrev <= sma;
+                    if (isTrendUp) {
+                        smaUp = sma;
+                    } else {
+                        smaDown = sma;
+                    }
+                }
+            }
+            annotation = "res = " + resBuy + " " + annotation;
             notificationService.reportStrategyExt(
                     resBuy,
                     strategy,
                     candle,
                     "Date|open|high|low|close|ema2|profit|loss|limitPrice|lossAvg|deadLineTop|investBottom|investTop|smaTube|strategy"
-                            + "|emaBlue1|emaRed|emaGreen|emaBlue|max|min|zs|waitMax|maxBuy|stopLoss|waitMax2|isDayEnd",
+                            + "|emaBlue1|emaRed|emaGreen|emaBlue|max|min|zs|waitMax|maxBuy|stopLoss|waitMax2|isDayEnd|smaUp|smaDown",
                     "{} | {} | {} | {} | {} | | {} | {} | {} | {} | ||||by {}"
-                            + "| {} | {} | {} | {} | {} | {} | {} | {} | {} || {} | {}",
+                            + "| {} | {} | {} | {} | {} | {} | {} | {} | {} || {} | {} | {} | {}",
                     printDateTime(candle.getDateTime()),
                     candle.getOpenPrice(),
                     candle.getHighestPrice(),
@@ -399,7 +416,9 @@ public class AlligatorService implements
                     waitMax == null ? "" : waitMax,
                     waitMaxBuy == null ? "" : waitMaxBuy,
                     waitMax2 == null ? "" : waitMax2,
-                    isDayEnd ? candle.getLowestPrice().subtract(candle.getLowestPrice().abs().multiply(BigDecimal.valueOf(0.01))) : ""
+                    isDayEnd ? candle.getLowestPrice().subtract(candle.getLowestPrice().abs().multiply(BigDecimal.valueOf(0.01))) : "",
+                    smaUp != null ? smaUp : "",
+                    smaDown != null ? smaDown : ""
             );
         }
         return resBuy;
@@ -571,6 +590,23 @@ public class AlligatorService implements
             }
         }
 
+        Double smaUp = null;
+        Double smaDown = null;
+        var isTrendUp = true;
+        if (strategy.isMoveStopLossByTrySellByTrend()) {
+            var smaList = getSma(candle.getFigi(), candle.getDateTime(), strategy.getSmaLength(), strategy.getInterval(), CandleDomainEntity::getMedianPrice, 2);
+            var sma = smaList != null && smaList.size() > 1 ? smaList.get(1) : null;
+            var smaPrev = smaList != null && smaList.size() > 0 ? smaList.get(0) : null;
+            if (sma != null && smaPrev != null) {
+                isTrendUp = smaPrev <= sma;
+                annotation += " isTrendUp=" + isTrendUp;
+                if (isTrendUp) {
+                    smaUp = sma;
+                } else {
+                    smaDown = sma;
+                }
+            }
+        }
         var profit = (float) ((100.f * (candle.getClosingPrice().floatValue() - purchaseRate.floatValue()) / Math.abs(purchaseRate.floatValue())));
         annotation += " profit=" + printPrice(profit);
         if (
@@ -580,6 +616,7 @@ public class AlligatorService implements
                 && green != null && blue != null
                 && (null == lastNewStopLossBySell || lastDateTimeBySell.equals(candle.getDateTime()))
                 && profit < strategy.getSkipProfitByTrySell()
+                && isTrendUp
         ) {
             var startPoint = Math.max(green, blue);
             var stopLossDelta = startPoint - Math.min(candle.getClosingPrice().doubleValue(), Math.min(green, blue));
@@ -651,9 +688,9 @@ public class AlligatorService implements
                 strategy,
                 candle,
                 "Date|open|high|low|close|ema2|profit|loss|limitPrice|lossAvg|deadLineTop|investBottom|investTop|smaTube|strategy"
-                        + "|emaBlue1|emaRed|emaGreen|emaBlue|max|min|zs|waitMax|maxBuy|stopLoss|waitMax2|isDayEnd",
+                        + "|emaBlue1|emaRed|emaGreen|emaBlue|max|min|zs|waitMax|maxBuy|stopLoss|waitMax2|isDayEnd|smaUp|smaDown",
                 "{} | {} | {} | {} | {} | | {} | {} | {} | {} | ||||sell {}"
-                        + "| {} | {} | {} | {} | {} | {} | {} ||| {}|| {}",
+                        + "| {} | {} | {} | {} | {} | {} | {} ||| {}|| {}| {} | {}",
                 printDateTime(candle.getDateTime()),
                 candle.getOpenPrice(),
                 candle.getHighestPrice(),
@@ -672,7 +709,9 @@ public class AlligatorService implements
                 isMin ? middleCandle.getLowestPrice() : "",
                 zs == null ? "" : zs,
                 stopLoss == null ? "" : printPrice(stopLoss),
-                isDayEnd ? candle.getLowestPrice().subtract(candle.getLowestPrice().abs().multiply(BigDecimal.valueOf(0.01))) : ""
+                isDayEnd ? candle.getLowestPrice().subtract(candle.getLowestPrice().abs().multiply(BigDecimal.valueOf(0.01))) : "",
+                smaUp != null ? smaUp : "",
+                smaDown != null ? smaDown : ""
         );
         return res;
     }

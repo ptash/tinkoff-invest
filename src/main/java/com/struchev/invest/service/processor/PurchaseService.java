@@ -66,6 +66,7 @@ public class PurchaseService {
                 // Для стратегии instrumentByInstrument нужен ордер по любому инструменту (торгуется вся стратегия целиком)
                 var figiSuitableForOrder = strategy.getType() == AStrategy.Type.instrumentByInstrument ? null : candleDomainEntity.getFigi();
                 var order = orderService.findAnyActiveOrderDomainByFigiAndStrategy(figiSuitableForOrder, strategy);
+                //log.info("observeNewCandle {} {} order={} isArchive={}", strategy.getName(), candleDomainEntity.getDateTime(), order == null ? "null": "exist", strategy.isArchive());
 
                 if (order == null && strategy.isArchive()) {
                     return;
@@ -77,10 +78,11 @@ public class PurchaseService {
 
                 // Нет активного ордера, возможно можем купить, если нет ограничений по задержке после stop loss
                 if (order == null) {
-
+                    //log.info("observeNewCandle order=null {} {}", strategy.getName(), candleDomainEntity.getDateTime());
                     var isShouldBuy = calculator.isShouldBuy(strategy, candleDomainEntity);
                     var isShouldBuyShort = calculator.isShouldBuyShort(strategy, candleDomainEntity);
                     var isTrendBuyShort = calculator.isTrendBuyShort(strategy, candleDomainEntity);
+                    //log.info("observeNewCandle order=null {} {}: isShouldBuy = {} isShouldBuyShort = {} isTrendBuyShort = {}", strategy.getName(), candleDomainEntity.getDateTime(), isShouldBuy, isShouldBuyShort, isTrendBuyShort);
                     if (isShouldBuy && !isShouldBuyShort && !isTrendBuyShort) {
                         OrderDomainEntity lastOrder = null;
                         var finishedOrders = orderService.findClosedByFigiAndStrategy(candleDomainEntity.getFigi(), strategy);
