@@ -365,7 +365,10 @@ public class AlligatorService implements
         Double smaUp = null;
         Double smaDown = null;
         var isTrendUp = true;
-        if (strategy.isMoveStopLossByTrySellByTrend()) {
+        if (
+                strategy.isMoveStopLossByTrySellByTrend()
+                || strategy.isSkipBySmaNearGreenBlue()
+        ) {
             var smaList = getSma(candle.getFigi(), candle.getDateTime(), strategy.getSmaLength(), strategy.getInterval(), CandleDomainEntity::getMedianPrice, 2);
             var sma = smaList != null && smaList.size() > 1 ? smaList.get(1) : null;
             var smaPrev = smaList != null && smaList.size() > 0 ? smaList.get(0) : null;
