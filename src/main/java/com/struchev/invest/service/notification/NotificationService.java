@@ -123,9 +123,8 @@ public class NotificationService implements INotificationService{
         log.info(
                 getOfferReportLogMarker(strategy, candle.getFigi()),
                 "{} | S | {}",
-                formatDateTime(order.getSellDateTime()),
-                order.getSellPrice(),
-                order.getSellPrice()
+                formatDateTime(order.isShort() ? order.getPurchaseDateTime() : order.getSellDateTime()),
+                order.isShort() ? order.getPurchasePrice() : order.getSellPrice()
         );
         var msg = String.format("Sell bid limit success %s (%s), %s (%s), %s, %s. Wanted: %s", candle.getFigi(), order.getFigiTitle(),
                 order.getSellPrice(), order.getSellProfit(), order.getSellDateTime(), order.getStrategy(), order.getSellPriceLimitWanted());

@@ -198,10 +198,12 @@ public class OrderService implements IOrderService {
 
     @Transactional
     public synchronized OrderDomainEntity openLimitOrder(OrderDomainEntity order, AStrategy strategy, CandleDomainEntity candle) {
+        OrderDomainEntity orderFresh;
         if (order.isShort()) {
-            return order;
+            orderFresh = findActiveOrderDomainShortByFigiAndStrategy(order.getFigi(), strategy);
+        } else {
+            orderFresh = findActiveOrderDomainByFigiAndStrategy(order.getFigi(), strategy);
         }
-        var orderFresh = findActiveOrderDomainByFigiAndStrategy(order.getFigi(), strategy);
         if (null == orderFresh || orderFresh.getId() != order.getId()) {
             return order;
         }
@@ -210,18 +212,31 @@ public class OrderService implements IOrderService {
             return order;
         }
         if (strategy.getSellLimitCriteria(candle.getFigi()).getExitProfitPercent() == null || strategy.getSellLimitCriteria(candle.getFigi()).getExitProfitPercent() <= 0) {
-            return order;
+            return order; //?
         }
         var instrument = instrumentService.getInstrument(order.getFigi());
-        var limitPrice = order.getPurchasePrice().multiply(BigDecimal.valueOf((strategy.getSellLimitCriteria(candle.getFigi()).getExitProfitPercent() + 100.)/100.));
+        BigDecimal limitPrice;
+        if (order.isShort()) {
+            limitPrice = order.getSellPrice().multiply(BigDecimal.valueOf((100. - strategy.getSellLimitCriteria(candle.getFigi()).getExitProfitPercent())/100.));
+        } else {
+            limitPrice = order.getPurchasePrice().multiply(BigDecimal.valueOf((strategy.getSellLimitCriteria(candle.getFigi()).getExitProfitPercent() + 100.)/100.));
+        }
+        //log.info("Increment {}", instrument.getMinPriceIncrement());
         if (!instrument.getMinPriceIncrement().equals(BigDecimal.ZERO) && instrument.getMinPriceIncrement().compareTo(BigDecimal.valueOf(0.00000001f)) > 0) {
             try {
-                limitPrice = limitPrice.divide(instrument.getMinPriceIncrement(), 0, RoundingMode.HALF_UP).multiply(instrument.getMinPriceIncrement());
+                //log.info("Increment {} before {}", instrument.getMinPriceIncrement(), limitPrice);
+                limitPrice = limitPrice.divide(instrument.getMinPriceIncrement(), 0, order.isShort() ? RoundingMode.HALF_DOWN : RoundingMode.HALF_UP).multiply(instrument.getMinPriceIncrement());
+                //log.info("Increment {} after {}", instrument.getMinPriceIncrement(), limitPrice);
             } catch (ArithmeticException $e) {
                 log.error("An error in limitPrice " + limitPrice + " to MinPriceIncrement " + instrument.getMinPriceIncrement(), $e);
             }
         }
-        var limitProfitPercent = limitPrice.divide(candle.getClosingPrice(), 8, RoundingMode.HALF_DOWN).subtract(BigDecimal.ONE).multiply(BigDecimal.valueOf(100));
+        BigDecimal limitProfitPercent;
+        if (order.isShort()) {
+            limitProfitPercent = candle.getClosingPrice().divide(limitPrice, 8, RoundingMode.HALF_DOWN).subtract(BigDecimal.ONE).multiply(BigDecimal.valueOf(100));
+        } else {
+            limitProfitPercent = limitPrice.divide(candle.getClosingPrice(), 8, RoundingMode.HALF_DOWN).subtract(BigDecimal.ONE).multiply(BigDecimal.valueOf(100));
+        }
         if (limitProfitPercent.compareTo(BigDecimal.valueOf(10)) > 0) {
             log.info("Skip limit figi {} price {}: {}% > 10%", candle.getFigi(), limitPrice, limitProfitPercent);
             return order;
@@ -230,7 +245,12 @@ public class OrderService implements IOrderService {
         if (order.getCellLots() != null) {
             lots -= order.getCellLots().intValue();
         }
-        var result = tinkoffOrderAPI.sellLimit(instrument, limitPrice, lots, order.getSellLimitOrderUuid(), order.getSellLimitOrderId(), candle);
+        ITinkoffOrderAPI.OrderResult result;
+        if (order.isShort()) {
+            result = tinkoffOrderAPI.sellLimitShort(instrument, limitPrice, lots, order.getSellLimitOrderUuid(), order.getSellLimitOrderId(), candle);
+        } else {
+            result = tinkoffOrderAPI.sellLimit(instrument, limitPrice, lots, order.getSellLimitOrderUuid(), order.getSellLimitOrderId(), candle);
+        }
         var needSave = false;
         if (null != result.getOrderUuid() && (null == order.getSellLimitOrderUuid() || !result.getOrderUuid().equals(order.getSellLimitOrderUuid()))) {
             order.setSellLimitOrderUuid(result.getOrderUuid());
@@ -248,8 +268,13 @@ public class OrderService implements IOrderService {
             order = saveOrder(order);
         }
         if (null != result.getLots() && result.getLots() > 0 && result.getIsExecuted()) {
-            order.setSellDateTime(candle.getDateTime());
-            order = setOrderInfoSell(order, result);
+            if (order.isShort()) {
+                order.setPurchaseDateTime(candle.getDateTime());
+                order = setOrderInfoBuy(order, result);
+            } else {
+                order.setSellDateTime(candle.getDateTime());
+                order = setOrderInfoSell(order, result);
+            }
         }
         return order;
     }

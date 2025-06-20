@@ -176,7 +176,11 @@ public class PurchaseService {
                     }
                     if (null != order) {
                         //order = orderService.openLimitOrder(order, strategy);
-                        notificationService.sendSellLimitInfo(strategy, order, candleDomainEntity);
+                        if (order.isShort()) {
+                            notificationForShortService.sendSellLimitInfo(strategy, order, candleDomainEntity);
+                        } else {
+                            notificationService.sendSellLimitInfo(strategy, order, candleDomainEntity);
+                        }
                     }
                     return;
                 }
@@ -241,7 +245,11 @@ public class PurchaseService {
                     var orderId = order.getSellOrderId();
                     order = orderService.openLimitOrder(order, strategy, candleDomainEntity);
                     if (orderId != order.getSellOrderId() || order.getSellDateTime() != null) {
-                        notificationService.sendSellLimitInfo(strategy, order, candleDomainEntity);
+                        if (order.isShort()) {
+                            notificationForShortService.sendSellLimitInfo(strategy, order, candleDomainEntity);
+                        } else {
+                            notificationService.sendSellLimitInfo(strategy, order, candleDomainEntity);
+                        }
                     }
                 }
             } catch (RuntimeException e) {

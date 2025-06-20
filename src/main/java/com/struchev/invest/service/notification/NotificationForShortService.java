@@ -41,4 +41,7 @@ public class NotificationForShortService implements INotificationService
     public void sendSellInfo(AStrategy strategy, OrderDomainEntity order, CandleDomainEntity candle) {
         notificationService.sendSellInfo(getStrategy(strategy), order, candle);
     }
+    public void sendSellLimitInfo(AStrategy strategy, OrderDomainEntity order, CandleDomainEntity candle) {
+        notificationService.sendSellLimitInfo(getStrategy(strategy), order, candle);
+    }
 }

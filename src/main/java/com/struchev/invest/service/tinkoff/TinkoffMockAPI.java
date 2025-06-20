@@ -65,7 +65,25 @@ public class TinkoffMockAPI extends ATinkoffAPI {
     }
 
     public OrderResult sellLimit(InstrumentService.Instrument instrument, BigDecimal price, Integer count, String uuid, String orderId, CandleDomainEntity candle) {
+        log.info("sellLimit: Sell limit for {} with price {} and limit {}", instrument.getFigi(), candle.getHighestPrice(), price);
         if (candle.getHighestPrice().compareTo(price) >= 0) {
+            return OrderResult.builder()
+                    .orderUuid(UUID.randomUUID().toString())
+                    .orderId(UUID.randomUUID().toString())
+                    .commission(calculateCommission(price, count, instrument))
+                    .lots(count.longValue())
+                    .orderPrice(price.multiply(BigDecimal.valueOf(count)))
+                    .price(price)
+                    .pricePt(price)
+                    .isExecuted(true)
+                    .build();
+        }
+        return OrderResult.builder().build();
+    }
+
+    public OrderResult sellLimitShort(InstrumentService.Instrument instrument, BigDecimal price, Integer count, String uuid, String orderId, CandleDomainEntity candle) {
+        log.info("sellLimitShort: Sell limit for {} with price {} and limit {}", instrument.getFigi(), candle.getHighestPrice(), price);
+        if (candle.getLowestPrice().compareTo(price) <= 0) {
             return OrderResult.builder()
                     .orderUuid(UUID.randomUUID().toString())
                     .orderId(UUID.randomUUID().toString())
