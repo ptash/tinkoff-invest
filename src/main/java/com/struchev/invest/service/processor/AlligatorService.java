@@ -616,7 +616,6 @@ public class AlligatorService implements
                 && green != null && blue != null
                 && (null == lastNewStopLossBySell || lastDateTimeBySell.equals(candle.getDateTime()))
                 && profit < strategy.getSkipProfitByTrySell()
-                && isTrendUp
         ) {
             var startPoint = Math.max(green, blue);
             var stopLossDelta = startPoint - Math.min(candle.getClosingPrice().doubleValue(), Math.min(green, blue));
@@ -636,7 +635,7 @@ public class AlligatorService implements
             var newStopLossBySell = startPoint - stopLossDelta * strategy.getSellLimitPriceByTrySell();
             var newPercentStopLossBySell = (double) ((100.f * (purchaseRate.doubleValue() - newStopLossBySell) / Math.abs(purchaseRate.doubleValue())));
             annotation += " newPercentStopLossBySell=" + printPrice(newPercentStopLossBySell);
-            if (newPercentStopLossBySell > strategy.getMaxPercentStopLossByTrySell()) {
+            if (!isTrendUp && newPercentStopLossBySell > strategy.getMaxPercentStopLossByTrySell()) {
                 newPercentStopLossBySell = strategy.getMaxPercentStopLossByTrySell();
                 newStopLossBySell = purchaseRate.doubleValue() - newPercentStopLossBySell * Math.abs(purchaseRate.doubleValue()) / 100.f;
                 stopLossDelta = (startPoint - newStopLossBySell) / strategy.getSellLimitPriceByTrySell();
