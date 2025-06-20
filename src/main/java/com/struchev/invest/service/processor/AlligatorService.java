@@ -647,7 +647,14 @@ public class AlligatorService implements
             annotation += " newStopLossBySell=" + printPrice(newStopLossBySell);
             if (strategy.getSellLimitPriceByTrySell() != null) {
                 var newSellLimitBySell = startPoint + stopLossDelta * strategy.getLimitPriceByTrySell();
+                var newPercentSellLimitBySell = (double) ((100.f * (newSellLimitBySell - purchaseRate.doubleValue()) / Math.abs(purchaseRate.doubleValue())));
+                annotation += " newPercentSellLimitBySell=" + printPrice(newPercentSellLimitBySell);
                 annotation += " newSellLimitBySell=" + printPrice(newSellLimitBySell);
+                if (!isTrendUp && newPercentSellLimitBySell > strategy.getMaxPercentLimitPriceByTrySell()) {
+                    newPercentSellLimitBySell = strategy.getMaxPercentLimitPriceByTrySell();
+                    newSellLimitBySell = purchaseRate.doubleValue() + newPercentSellLimitBySell * Math.abs(purchaseRate.doubleValue()) / 100.f;
+                    annotation += " new newSellLimitBySell=" + printPrice(newSellLimitBySell);
+                }
                 order.getDetails().getCurrentPrices().put("newSellLimitBySell", BigDecimal.valueOf(newSellLimitBySell));
             }
             order.getDetails().getDateTimes().put("dateTimeBySell", candle.getDateTime());
