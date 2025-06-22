@@ -4,6 +4,9 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class AlligatorStrategy5MinSLimitT extends AlligatorStrategy5MinSLimit {
-    public Double getMaxPercentStopLossByTrySell() { return 2.0; } // чуть менее рисковано stop loss
-    public boolean isMoveStopLossByTrySellByTrend() { return true; }
+    public Double getMaxPercentStopLossByTrySell() { return 0.5; } // чуть менее рисковано stop loss
+    public Double getMaxPercentLimitPriceByTrySell() { return 0.1; }
+    public boolean isMoveStopLossByTrySellByTrend() { return false; }
+    public boolean isSmaNearGreenBlueIsTrendDown() { return true; }
+    public boolean isSkipBySmaNearGreenBlue() { return true; }
 }
