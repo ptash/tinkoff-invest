@@ -53,6 +53,9 @@ public class StrategySelector {
             var instrument = instrumentService.getInstrument(figi);
             //log.info("Figi {} currency {}. Target currency {}", figi, instrument.getCurrency(), config.getCurrencies());
             instrumentService.printInstrumentInfo(instrument);
+            if (instrument == null || instrument.getCurrency() == null) {
+                return false;
+            }
             return config.getCurrencies().contains(instrument.getCurrency().toUpperCase());
         });
     }

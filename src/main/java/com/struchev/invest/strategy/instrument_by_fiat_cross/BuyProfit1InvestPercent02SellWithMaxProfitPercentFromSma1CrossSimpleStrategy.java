@@ -8,7 +8,7 @@ import java.util.Map;
 public class BuyProfit1InvestPercent02SellWithMaxProfitPercentFromSma1CrossSimpleStrategy extends BuyProfit1InvestPercent02SellWithMaxProfitPercentFromSma1CrossStrategy {
 
     private Map FIGIES = Map.of(
-            "BBG000LWVHN8", 20000 // Дагестанская энергосбытовая компания
+            //"BBG000LWVHN8", 20000 // Дагестанская энергосбытовая компания
     );
     public Map<String, Integer> getFigies() {
         return FIGIES;
