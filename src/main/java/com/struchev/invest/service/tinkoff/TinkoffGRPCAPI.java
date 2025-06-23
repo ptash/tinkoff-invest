@@ -339,7 +339,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                     }
                 }
             } else {
-                checkInstrumentAvailableToSell(instrument, count);
+                checkInstrumentAvailableToSell(instrument, direction == OrderDirection.ORDER_DIRECTION_SELL ? count : -count);
                 var result = getApi().getOrdersService().postOrderSync(instrument.getFigi(), quantity, quotation,
                         direction, getAccountIdByFigi(instrument), OrderType.ORDER_TYPE_LIMIT, uuid);
                 orderResultBuilder
