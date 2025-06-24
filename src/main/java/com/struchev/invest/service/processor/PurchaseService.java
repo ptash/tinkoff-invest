@@ -244,7 +244,11 @@ public class PurchaseService {
                 if (!isSell) {
                     var orderId = order.getSellOrderId();
                     order = orderService.openLimitOrder(order, strategy, candleDomainEntity);
-                    if (orderId != order.getSellOrderId() || order.getSellDateTime() != null) {
+                    if (
+                            orderId != order.getSellOrderId()
+                            || (!order.isShort() && order.getSellDateTime() != null)
+                            || (order.isShort() && order.getPurchaseDateTime() != null)
+                    ) {
                         if (order.isShort()) {
                             notificationForShortService.sendSellLimitInfo(strategy, order, candleDomainEntity);
                         } else {
