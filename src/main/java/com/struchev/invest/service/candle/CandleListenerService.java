@@ -9,6 +9,7 @@ import com.struchev.invest.service.tinkoff.ITinkoffCommonAPI;
 import com.struchev.invest.strategy.StrategySelector;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.data.domain.PageRequest;
@@ -39,6 +40,9 @@ public class CandleListenerService {
     private final ITinkoffCommonAPI tinkoffCommonAPI;
     private final NotificationService notificationService;
     private final CandleRepository candleRepository;
+
+    @Value("${invest.streamNumber:2}")
+    private Integer streamNumber;
 
     private void startToListen(int number) {
         startToListen(number, "1min");
@@ -225,17 +229,27 @@ public class CandleListenerService {
 
     private void observeCandles(String interval) {
         var figies = strategySelector.getFigiesForActiveStrategies(interval);
-        figies.parallelStream().forEach(figi -> {
+        if (figies.size() < 1) {
+            return;
+        }
+        log.info("Starting observe {} candles {} in parallel {} streams", interval, figies, streamNumber);
+        List<Integer> streams = new ArrayList<>();
+        for (int i = 0; i < streamNumber; i++) {
+            streams.add(i);
+        }
+        streams.parallelStream().forEach(i -> {
             while (true) {
-                try {
-                    var candle = getCurrentCandle(figi, interval);
-                    if (null != candle) {
-                        log.info("Observe candle {} {} version {}", candle.getFigi(), candle.getDateTime(), candle.getVersion());
-                        observeNewCandle(candle);
+                figies.forEach(figi -> {
+                    try {
+                        var candle = getCurrentCandle(figi, interval);
+                        if (null != candle) {
+                            log.info("Observe candle {} {} version {}", candle.getFigi(), candle.getDateTime(), candle.getVersion());
+                            observeNewCandle(candle);
+                        }
+                    } catch (Throwable th) {
+                        log.error("An error '" + th.getMessage() + "' in observe", th);
                     }
-                } catch (Throwable th) {
-                    log.error("An error '" + th.getMessage() + "' in observe", th);
-                }
+                });
             }
         });
     }
@@ -257,7 +271,7 @@ public class CandleListenerService {
         var byFigi = currentCandleByFigiAndInterval.get(candle.getFigi());
         var candlePrev = byFigi.getOrDefault(candle.getInterval(), null);
         if (null != candlePrev) {
-            log.warn("Skip observe candle {} {} version {}", candle.getFigi(), candle.getDateTime(), candle.getVersion());
+            log.warn("Skip observe candle {} {} version {}. New candle {} version {}", candle.getFigi(), candlePrev.getDateTime(), candlePrev.getVersion(), candle.getDateTime(), candle.getVersion());
         }
         byFigi.put(candle.getInterval(), candle);
     }
