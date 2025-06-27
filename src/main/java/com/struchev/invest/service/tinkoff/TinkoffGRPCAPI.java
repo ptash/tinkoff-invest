@@ -52,6 +52,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
             checkInstrumentAvailableToBuy(instrument, price, count);
             var result = getApi().getOrdersService().postOrderSync(instrument.getFigi(), quantity, quotation,
                     OrderDirection.ORDER_DIRECTION_BUY, getAccountIdByFigi(instrument), OrderType.ORDER_TYPE_MARKET, uuid);
+            log.info("postOrder result: {}", result);
             var priceExecuted = toBigDecimal(result.getExecutedOrderPrice(), 8, price);
             return OrderResult.builder()
                     .orderId(result.getOrderId())
@@ -79,6 +80,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
         if (getIsSandboxMode()) {
             var result = getApi().getSandboxService().postOrderSync(instrument.getFigi(), quantity, quotation,
                     OrderDirection.ORDER_DIRECTION_SELL, getAccountIdByFigi(instrument), OrderType.ORDER_TYPE_MARKET, uuid);
+            log.info("postOrder result: {}", result);
             var priceExecuted = toBigDecimal(result.getExecutedOrderPrice(), 8, price);
             return OrderResult.builder()
                     .orderId(result.getOrderId())
@@ -275,7 +277,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
         return sellLimitDirection(OrderDirection.ORDER_DIRECTION_BUY, instrument, price, count, uuid, orderId, candle);
     }
     private OrderResult sellLimitDirection(OrderDirection direction, InstrumentService.Instrument instrument, BigDecimal price, Integer count, String uuid, String orderId, CandleDomainEntity candle) {
-            var orderResultBuilder = OrderResult.builder();
+        var orderResultBuilder = OrderResult.builder();
         orderResultBuilder.isExecuted(false);
         if (orderId != null) {
             var res = checkSellLimit(instrument, orderId);

@@ -600,6 +600,12 @@ public class AlligatorService implements
         var isStopLoss = false;
         var lastNewStopLossBySell = order.getDetails().getCurrentPrices().getOrDefault("newStopLossBySell", null);
         var lastDateTimeBySell = order.getDetails().getDateTimes().getOrDefault("dateTimeBySell", null);
+        if (null != lastNewStopLossBySell && lastDateTimeBySell.equals(candle.getDateTime())) {
+            lastNewStopLossBySell = null; // свеча еще не закрыта
+            lastDateTimeBySell = null;
+            order.getDetails().getCurrentPrices().put("newSellLimitBySell", null);
+            orderService.updateDetailsCurrentPrice(order, "newStopLossBySell", null);
+        }
         if (null != lastNewStopLossBySell) {
             stopLoss = lastNewStopLossBySell.doubleValue();
             annotation += " newStopLoss=lastBySell=" + printPrice(stopLoss);
@@ -669,12 +675,12 @@ public class AlligatorService implements
                 && isStopLoss
                 && strategy.getSellLimitPriceByTrySell() != null
                 && green != null && blue != null
-                && (null == lastNewStopLossBySell || lastDateTimeBySell.equals(candle.getDateTime()))
                 && profit < strategy.getSkipProfitByTrySell()
         ) {
             var startPoint = Math.max(green, blue);
             var stopLossDelta = startPoint - Math.min(candle.getClosingPrice().doubleValue(), Math.min(green, blue));
             var stopLossDeltaPercent = (double) ((100.f * (stopLossDelta) / Math.abs(startPoint)));
+            annotation += " stopLossDelta=" + printPrice(stopLossDelta);
             annotation += " stopLossDeltaPercent=" + printPrice(stopLossDeltaPercent);
             if (stopLossDeltaPercent < strategy.getMinPercentDeltaByTrySell()) {
                 stopLossDeltaPercent = strategy.getMinPercentDeltaByTrySell();
