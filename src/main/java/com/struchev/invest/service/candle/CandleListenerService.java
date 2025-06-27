@@ -137,10 +137,18 @@ public class CandleListenerService {
                                     lastCandleObservedEnd.get() != null
                                     && candleDomainEntity != null
                                     && lastCandleObservedEnd.get().getDateTime().equals(candleDomainEntity.getDateTime())
-                                    && lastCandleObservedStart.get().getVersion() != lastCandleObservedEnd.get().getVersion()
                             ) {
-                                log.warn("Skip candle {} {} version {}. Start Observed Version {} != end {}", item.getCandle().getFigi(), candleDomainEntity.getDateTime(), candleDomainEntity.getVersion(), lastCandleObservedStart.get().getVersion(), lastCandleObservedEnd.get().getVersion());
-                                candleDomainEntity = null;
+                                if (lastCandleObservedStart.get().getVersion() != lastCandleObservedEnd.get().getVersion()) {
+                                    log.warn("Skip candle {} {} version {}. Start Observed Version {} != end {}", item.getCandle().getFigi(), candleDomainEntity.getDateTime(), candleDomainEntity.getVersion(), lastCandleObservedStart.get().getVersion(), lastCandleObservedEnd.get().getVersion());
+                                    candleDomainEntity = null;
+                                }
+                                if (
+                                        null != candleDomainEntity
+                                        && (lastCandleObservedStart.get().getVersion()) > candleDomainEntity.getVersion()
+                                ) {
+                                    log.warn("Skip candle {} {} version {} < start observed Version {}", item.getCandle().getFigi(), candleDomainEntity.getDateTime(), candleDomainEntity.getVersion(), lastCandleObservedEnd.get().getVersion());
+                                    candleDomainEntity = null;
+                                }
                             }
                         }
 
@@ -215,12 +223,12 @@ public class CandleListenerService {
                             }
                         }
                     }, e -> {
-                        log.error("An error in candles_stream " + interval + " , listener will be restarted", e);
+                        log.error("An error '" + e.getMessage() + "' in candles_stream " + interval + " , listener will be restarted", e);
                         startToListen(number + 1);
                     })
                     .subscribeCandles(new ArrayList<>(figies), subscriptionInterval);
         } catch (Throwable th) {
-            log.error("An error in subscriber, listener " + interval + " will be restarted", th);
+            log.error("An error '" + th.getMessage() + "' in subscriber, listener " + interval + " will be restarted", th);
             startToListen(number + 1);
             throw th;
         }
