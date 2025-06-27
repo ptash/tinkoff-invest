@@ -21,6 +21,7 @@ import ru.tinkoff.piapi.contract.v1.SubscriptionInterval;
 import javax.annotation.PostConstruct;
 import java.time.OffsetDateTime;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -82,8 +83,6 @@ public class CandleListenerService {
         }
 
         notificationService.sendMessageAndLog("Listening candle " + interval + " events... " + number);
-        AtomicReference<CandleDomainEntity> lastCandleObservedStart = new AtomicReference<CandleDomainEntity>();
-        AtomicReference<CandleDomainEntity> lastCandleObservedEnd = new AtomicReference<CandleDomainEntity>();
         try {
             tinkoffCommonAPI.getApi().getMarketDataStreamService()
                     .newStream("candles_stream", item -> {
@@ -104,6 +103,7 @@ public class CandleListenerService {
                                 isNewCandle = true;
                             }
 
+                            /*
                             var now = OffsetDateTime.now();
                             var mod = (now.getMinute() % minInInterval);
                             if (mod > 0) {
@@ -118,42 +118,11 @@ public class CandleListenerService {
                             ) {
                                 log.warn("Skip candle {} {}. Now {}", item.getCandle().getFigi(), curCandleMinute, curCandleMinuteExpectString);
                                 candleDomainEntity = null;
-                            }
-                            if (
-                                    lastCandleObservedStart.get() != null
-                                    && lastCandleObservedEnd.get() != null
-                                    && lastCandleObservedEnd.get().getDateTime().equals(candleDomainEntity.getDateTime())
-                            ) {
-                                log.info(
-                                        "Current candle {} {} version {}. Observed start in {} end {}",
-                                        candleDomainEntity.getFigi(),
-                                        candleDomainEntity.getDateTime(),
-                                        candleDomainEntity.getVersion(),
-                                        lastCandleObservedStart.get().getVersion(),
-                                        lastCandleObservedEnd.get().getVersion()
-                                );
-                            }
-                            if (
-                                    lastCandleObservedEnd.get() != null
-                                    && candleDomainEntity != null
-                                    && lastCandleObservedEnd.get().getDateTime().equals(candleDomainEntity.getDateTime())
-                            ) {
-                                if (lastCandleObservedStart.get().getVersion() != lastCandleObservedEnd.get().getVersion()) {
-                                    log.warn("Skip candle {} {} version {}. Start Observed Version {} != end {}", item.getCandle().getFigi(), candleDomainEntity.getDateTime(), candleDomainEntity.getVersion(), lastCandleObservedStart.get().getVersion(), lastCandleObservedEnd.get().getVersion());
-                                    candleDomainEntity = null;
-                                }
-                                if (
-                                        null != candleDomainEntity
-                                        && (lastCandleObservedStart.get().getVersion()) > candleDomainEntity.getVersion()
-                                ) {
-                                    log.warn("Skip candle {} {} version {} < start observed Version {}", item.getCandle().getFigi(), candleDomainEntity.getDateTime(), candleDomainEntity.getVersion(), lastCandleObservedEnd.get().getVersion());
-                                    candleDomainEntity = null;
-                                }
-                            }
+                            }*/
                         }
 
                         if (null != candleDomainEntity) {
-                            lastCandleObservedStart.set(candleDomainEntity);
+                            //lastCandleObservedStartMap.put(candleDomainEntity.getFigi(), candleDomainEntity);
                             CandleDomainEntity candleDomainEntity5Min = null;
                             CandleDomainEntity candleDomainEntity1Hour = null;
                             if (isNewCandle) {
@@ -212,15 +181,18 @@ public class CandleListenerService {
                                     }
                                 }
                             }
-                            purchaseService.observeNewCandleNoThrow(candleDomainEntity);
-                            lastCandleObservedEnd.set(candleDomainEntity);
-                            log.info("lastCandleObserved {} {} version {}", candleDomainEntity.getFigi(), candleDomainEntity.getDateTime(), candleDomainEntity.getVersion());
+                            setCurrentCandle(candleDomainEntity);
+                            //purchaseService.observeNewCandleNoThrow(candleDomainEntity);
                             if (candleDomainEntity5Min != null) {
-                                purchaseService.observeNewCandleNoThrow(candleDomainEntity5Min);
+                                setCurrentCandle(candleDomainEntity5Min);
+                                //purchaseService.observeNewCandleNoThrow(candleDomainEntity5Min);
                             }
                             if (candleDomainEntity1Hour != null) {
-                                purchaseService.observeNewCandleNoThrow(candleDomainEntity1Hour);
+                                setCurrentCandle(candleDomainEntity1Hour);
+                                //purchaseService.observeNewCandleNoThrow(candleDomainEntity1Hour);
                             }
+                            //lastCandleObservedEndMap.put(candleDomainEntity.getFigi(), candleDomainEntity);
+                            //log.info("lastCandleObserved {} {} version {}", candleDomainEntity.getFigi(), candleDomainEntity.getDateTime(), candleDomainEntity.getVersion());
                         }
                     }, e -> {
                         log.error("An error '" + e.getMessage() + "' in candles_stream " + interval + " , listener will be restarted", e);
@@ -241,10 +213,63 @@ public class CandleListenerService {
         }
     };
 
+    private void observeNewCandle(CandleDomainEntity candle) {
+        purchaseService.observeNewCandleNoThrow(candle);
+    }
+
+    private void observeCandles() {
+        observeCandles("1min");
+        observeCandles("5min");
+        observeCandles("1hour");
+    }
+
+    private void observeCandles(String interval) {
+        var figies = strategySelector.getFigiesForActiveStrategies(interval);
+        figies.parallelStream().forEach(figi -> {
+            while (true) {
+                try {
+                    var candle = getCurrentCandle(figi, interval);
+                    if (null != candle) {
+                        log.info("Observe candle {} {} version {}", candle.getFigi(), candle.getDateTime(), candle.getVersion());
+                        observeNewCandle(candle);
+                    }
+                } catch (Throwable th) {
+                    log.error("An error '" + th.getMessage() + "' in observe", th);
+                }
+            }
+        });
+    }
+
+    private synchronized CandleDomainEntity getCurrentCandle(String figi, String interval) {
+        if (!currentCandleByFigiAndInterval.containsKey(figi)) {
+            return null;
+        }
+        var byFigi = currentCandleByFigiAndInterval.get(figi);
+        var candle = byFigi.getOrDefault(interval, null);
+        byFigi.put(interval, null);
+        return candle;
+    }
+
+    private synchronized void setCurrentCandle(CandleDomainEntity candle) {
+        if (!currentCandleByFigiAndInterval.containsKey(candle.getFigi())) {
+            currentCandleByFigiAndInterval.put(candle.getFigi(), new HashMap<>());
+        }
+        var byFigi = currentCandleByFigiAndInterval.get(candle.getFigi());
+        var candlePrev = byFigi.getOrDefault(candle.getInterval(), null);
+        if (null != candlePrev) {
+            log.warn("Skip observe candle {} {} version {}", candle.getFigi(), candle.getDateTime(), candle.getVersion());
+        }
+        byFigi.put(candle.getInterval(), candle);
+    }
+
+    private Map<String, Map<String, CandleDomainEntity>> currentCandleByFigiAndInterval = new HashMap<>();
+
     @PostConstruct
     void init() {
         new Thread(() -> {
             startToListen(1);
         }, "event-listener").start();
+
+        new Thread(this::observeCandles, "candle-observe").start();
     }
 }
