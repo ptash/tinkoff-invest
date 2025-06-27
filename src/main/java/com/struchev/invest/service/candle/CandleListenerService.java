@@ -4,17 +4,16 @@ import com.struchev.invest.entity.CandleDomainEntity;
 import com.struchev.invest.expression.Date;
 import com.struchev.invest.repository.CandleRepository;
 import com.struchev.invest.service.notification.NotificationService;
-import com.struchev.invest.service.processor.FactorialInstrumentByFiatService;
 import com.struchev.invest.service.processor.PurchaseService;
 import com.struchev.invest.service.tinkoff.ITinkoffCommonAPI;
 import com.struchev.invest.strategy.StrategySelector;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import ru.tinkoff.piapi.contract.v1.Candle;
 import ru.tinkoff.piapi.contract.v1.CandleInterval;
 import ru.tinkoff.piapi.contract.v1.HistoricCandle;
 import ru.tinkoff.piapi.contract.v1.SubscriptionInterval;
@@ -22,6 +21,7 @@ import ru.tinkoff.piapi.contract.v1.SubscriptionInterval;
 import javax.annotation.PostConstruct;
 import java.time.OffsetDateTime;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Service to observe candles
@@ -82,6 +82,8 @@ public class CandleListenerService {
         }
 
         notificationService.sendMessageAndLog("Listening candle " + interval + " events... " + number);
+        AtomicReference<CandleDomainEntity> lastCandleObservedStart = new AtomicReference<CandleDomainEntity>();
+        AtomicReference<CandleDomainEntity> lastCandleObservedEnd = new AtomicReference<CandleDomainEntity>();
         try {
             tinkoffCommonAPI.getApi().getMarketDataStreamService()
                     .newStream("candles_stream", item -> {
@@ -110,13 +112,40 @@ public class CandleListenerService {
                             var curCandleMinuteExpectString = Date.formatDateTimeToMinute(now);
                             var curCandleMinuteExpectPrevString = Date.formatDateTimeToMinute(now.minusMinutes(minInInterval));
                             var curCandleMinute = Date.formatDateTimeToMinute(candleDomainEntity.getDateTime());
-                            if (!(curCandleMinute.equals(curCandleMinuteExpectString) || curCandleMinuteExpectString.equals(curCandleMinuteExpectPrevString))) {
+                            if (
+                                    !(curCandleMinute.equals(curCandleMinuteExpectString)
+                                    || curCandleMinuteExpectString.equals(curCandleMinuteExpectPrevString))
+                            ) {
                                 log.warn("Skip candle {} {}. Now {}", item.getCandle().getFigi(), curCandleMinute, curCandleMinuteExpectString);
+                                candleDomainEntity = null;
+                            }
+                            if (
+                                    lastCandleObservedStart.get() != null
+                                    && lastCandleObservedEnd.get() != null
+                                    && lastCandleObservedEnd.get().getDateTime().equals(candleDomainEntity.getDateTime())
+                            ) {
+                                log.info(
+                                        "Current candle {} {} version {}. Observed start in {} end {}",
+                                        candleDomainEntity.getFigi(),
+                                        candleDomainEntity.getDateTime(),
+                                        candleDomainEntity.getVersion(),
+                                        lastCandleObservedStart.get().getVersion(),
+                                        lastCandleObservedEnd.get().getVersion()
+                                );
+                            }
+                            if (
+                                    lastCandleObservedEnd.get() != null
+                                    && candleDomainEntity != null
+                                    && lastCandleObservedEnd.get().getDateTime().equals(candleDomainEntity.getDateTime())
+                                    && lastCandleObservedStart.get().getVersion() != lastCandleObservedEnd.get().getVersion()
+                            ) {
+                                log.warn("Skip candle {} {} version {}. Start Observed Version {} != end {}", item.getCandle().getFigi(), candleDomainEntity.getDateTime(), candleDomainEntity.getVersion(), lastCandleObservedStart.get().getVersion(), lastCandleObservedEnd.get().getVersion());
                                 candleDomainEntity = null;
                             }
                         }
 
                         if (null != candleDomainEntity) {
+                            lastCandleObservedStart.set(candleDomainEntity);
                             CandleDomainEntity candleDomainEntity5Min = null;
                             CandleDomainEntity candleDomainEntity1Hour = null;
                             if (isNewCandle) {
@@ -176,6 +205,8 @@ public class CandleListenerService {
                                 }
                             }
                             purchaseService.observeNewCandleNoThrow(candleDomainEntity);
+                            lastCandleObservedEnd.set(candleDomainEntity);
+                            log.info("lastCandleObserved {} {} version {}", candleDomainEntity.getFigi(), candleDomainEntity.getDateTime(), candleDomainEntity.getVersion());
                             if (candleDomainEntity5Min != null) {
                                 purchaseService.observeNewCandleNoThrow(candleDomainEntity5Min);
                             }
