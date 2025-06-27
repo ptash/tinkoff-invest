@@ -21,10 +21,7 @@ import ru.tinkoff.piapi.contract.v1.SubscriptionInterval;
 
 import javax.annotation.PostConstruct;
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Service to observe candles
@@ -43,28 +40,48 @@ public class CandleListenerService {
     private final CandleRepository candleRepository;
 
     private void startToListen(int number) {
-        var figies = strategySelector.getFigiesForActiveStrategies();
-        var interval = "1min";
+        startToListen(number, "1min");
+        startToListen(number, "5min");
+        startToListen(number, "1hour");
+    }
+
+    private void startToListen(int number, String interval) {
+        var figies = strategySelector.getFigiesForActiveStrategies(interval);
+        if (figies.size() < 1) {
+            log.info("There are no any strategy for interval {}", interval);
+            return;
+        }
+        var candleInterval = interval.equals("1min") ? CandleInterval.CANDLE_INTERVAL_1_MIN :
+                interval.equals("5min") ? CandleInterval.CANDLE_INTERVAL_5_MIN :
+                CandleInterval.CANDLE_INTERVAL_HOUR;
+        var minInInterval = interval.equals("1min") ? 1 :
+                interval.equals("5min") ? 5 :
+                60;
+
+        var subscriptionInterval = interval.equals("1min") ? SubscriptionInterval.SUBSCRIPTION_INTERVAL_ONE_MINUTE :
+                SubscriptionInterval.SUBSCRIPTION_INTERVAL_FIVE_MINUTES;
         var strategies = strategySelector.getFigiesForActiveStrategies();
         OffsetDateTime dateBefore = OffsetDateTime.now();
 
         log.info("Init first candle for {} strategies", strategies.size());
 
-        strategies.stream()
-                .flatMap(figi -> {
-                    var candles = candleRepository.findByFigiAndIntervalAndBeforeDateTimeLimit(figi,
-                            interval, dateBefore, PageRequest.of(0, 1));
-                    if (candles == null || candles.size() == 0) {
-                        log.info("Init first candle cancel for {}: getCandlesByFigiByLength return {}", figi, candles);
-                        return new ArrayList<CandleDomainEntity>().stream();
-                    }
-                    log.info("Init first candle starting for {}: getCandlesByFigiByLength return {} ({})", figi, candles.get(0).getDateTime(), candles.size());
-                    return candles.stream();
-                })
-                .sorted(Comparator.comparing(CandleDomainEntity::getDateTime))
-                .forEach(c -> purchaseService.observeNewCandleNoThrow(c));
+        if (Objects.equals(interval, "1min")) {
+            strategies.stream()
+                    .flatMap(figi -> {
+                        var candles = candleRepository.findByFigiAndIntervalAndBeforeDateTimeLimit(figi,
+                                interval, dateBefore, PageRequest.of(0, 1));
+                        if (candles == null || candles.size() == 0) {
+                            log.info("Init first candle cancel for {}: getCandlesByFigiByLength return {}", figi, candles);
+                            return new ArrayList<CandleDomainEntity>().stream();
+                        }
+                        log.info("Init first candle starting for {}: getCandlesByFigiByLength return {} ({})", figi, candles.get(0).getDateTime(), candles.size());
+                        return candles.stream();
+                    })
+                    .sorted(Comparator.comparing(CandleDomainEntity::getDateTime))
+                    .forEach(c -> purchaseService.observeNewCandleNoThrow(c));
+        }
 
-        notificationService.sendMessageAndLog("Listening candle events... " + number);
+        notificationService.sendMessageAndLog("Listening candle " + interval + " events... " + number);
         try {
             tinkoffCommonAPI.getApi().getMarketDataStreamService()
                     .newStream("candles_stream", item -> {
@@ -86,11 +103,15 @@ public class CandleListenerService {
                             }
 
                             var now = OffsetDateTime.now();
-                            var curCandleMinuteExpect = Date.formatDateTimeToMinute(now);
-                            var curCandleMinuteExpect2 = Date.formatDateTimeToMinute(now.minusMinutes(1));
+                            var mod = (now.getMinute() % minInInterval);
+                            if (mod > 0) {
+                                now = now.minusMinutes(mod);
+                            }
+                            var curCandleMinuteExpectString = Date.formatDateTimeToMinute(now);
+                            var curCandleMinuteExpectPrevString = Date.formatDateTimeToMinute(now.minusMinutes(minInInterval));
                             var curCandleMinute = Date.formatDateTimeToMinute(candleDomainEntity.getDateTime());
-                            if (!(curCandleMinute.equals(curCandleMinuteExpect) || curCandleMinuteExpect.equals(curCandleMinuteExpect2))) {
-                                log.warn("Skip candle {} {}. Now {}", item.getCandle().getFigi(), curCandleMinute, curCandleMinuteExpect);
+                            if (!(curCandleMinute.equals(curCandleMinuteExpectString) || curCandleMinuteExpectString.equals(curCandleMinuteExpectPrevString))) {
+                                log.warn("Skip candle {} {}. Now {}", item.getCandle().getFigi(), curCandleMinute, curCandleMinuteExpectString);
                                 candleDomainEntity = null;
                             }
                         }
@@ -99,52 +120,59 @@ public class CandleListenerService {
                             CandleDomainEntity candleDomainEntity5Min = null;
                             CandleDomainEntity candleDomainEntity1Hour = null;
                             if (isNewCandle) {
-                                log.info("Need refresh 1min candles {}", candleDomainEntity.getFigi());
-                                candleHistoryService.loadCandlesHistory(candleDomainEntity.getFigi(), 1L, CandleInterval.CANDLE_INTERVAL_1_MIN, OffsetDateTime.now());
-                                log.info("Need refresh 5min candles {}", candleDomainEntity.getFigi());
-                                candleHistoryService.loadCandlesHistory(candleDomainEntity.getFigi(), 1L, CandleInterval.CANDLE_INTERVAL_5_MIN, OffsetDateTime.now());
-                                log.info("Need refresh 1hour candles {}", candleDomainEntity.getFigi());
-                                candleHistoryService.loadCandlesHistory(candleDomainEntity.getFigi(), 1L, CandleInterval.CANDLE_INTERVAL_HOUR, OffsetDateTime.now());
+                                if (interval.equals("1min")) {
+                                    log.info("Need refresh 1min candles {}", candleDomainEntity.getFigi());
+                                    candleHistoryService.loadCandlesHistory(candleDomainEntity.getFigi(), 1L, CandleInterval.CANDLE_INTERVAL_1_MIN, OffsetDateTime.now());
+                                    log.info("Need refresh 5min candles {}", candleDomainEntity.getFigi());
+                                    candleHistoryService.loadCandlesHistory(candleDomainEntity.getFigi(), 1L, CandleInterval.CANDLE_INTERVAL_5_MIN, OffsetDateTime.now());
+                                    log.info("Need refresh 1hour candles {}", candleDomainEntity.getFigi());
+                                    candleHistoryService.loadCandlesHistory(candleDomainEntity.getFigi(), 1L, CandleInterval.CANDLE_INTERVAL_HOUR, OffsetDateTime.now());
 
-                                var candle5MinList = candleHistoryService.getAllCandlesByFigiByLength(
-                                        candleDomainEntity.getFigi(),
-                                        candleDomainEntity.getDateTime(),
-                                        1,
-                                        "5min"
-                                );
-                                if (candle5MinList.size() > 0) {
-                                    candleDomainEntity5Min = candle5MinList.get(0);
-                                }
-                                var candle1HourList = candleHistoryService.getAllCandlesByFigiByLength(
-                                        candleDomainEntity.getFigi(),
-                                        candleDomainEntity.getDateTime(),
-                                        1,
-                                        "1hour"
-                                );
-                                if (candle1HourList.size() > 0) {
-                                    candleDomainEntity1Hour = candle1HourList.get(0);
+                                    var candle5MinList = candleHistoryService.getAllCandlesByFigiByLength(
+                                            candleDomainEntity.getFigi(),
+                                            candleDomainEntity.getDateTime(),
+                                            1,
+                                            "5min"
+                                    );
+                                    if (candle5MinList.size() > 0) {
+                                        candleDomainEntity5Min = candle5MinList.get(0);
+                                    }
+                                    var candle1HourList = candleHistoryService.getAllCandlesByFigiByLength(
+                                            candleDomainEntity.getFigi(),
+                                            candleDomainEntity.getDateTime(),
+                                            1,
+                                            "1hour"
+                                    );
+                                    if (candle1HourList.size() > 0) {
+                                        candleDomainEntity1Hour = candle1HourList.get(0);
+                                    }
+                                } else {
+                                    log.info("Need refresh {} candles {}", interval, candleDomainEntity.getFigi());
+                                    candleHistoryService.loadCandlesHistory(candleDomainEntity.getFigi(), 1L, candleInterval, OffsetDateTime.now());
                                 }
                             }
-                            var candleHour = candleHistoryService.getAllCandlesByFigiByLength(
-                                    candleDomainEntity.getFigi(),
-                                    candleDomainEntity.getDateTime(),
-                                    2,
-                                    "1hour"
-                            );
-                            var maxCandleHourDate = Date.formatDateTimeToHour(candleHour.get(1).getDateTime());
-                            var curCandleHourExpect = Date.formatDateTimeToHour(candleDomainEntity.getDateTime());
-                            if (!maxCandleHourDate.equals(curCandleHourExpect) || !candleHour.get(0).getIsComplete()) {
-                                String key = candleDomainEntity.getFigi() + curCandleHourExpect;
-                                Integer keyValue = 0;
-                                synchronized (loadCandlesHistory) {
-                                    keyValue = loadCandlesHistory.getOrDefault(key, 0) + 1;
-                                    loadCandlesHistory.put(key, keyValue);
-                                }
-                                if (keyValue < 100) {
-                                    log.info("Need 1hour candle {} != {}: {} = {}", maxCandleHourDate, curCandleHourExpect, key, keyValue);
-                                    candleHistoryService.loadCandlesHistory(candleDomainEntity.getFigi(), 1L, CandleInterval.CANDLE_INTERVAL_HOUR, OffsetDateTime.now());
-                                } else {
-                                    log.info("No Need 1hour candle {} != {}: {} = {}", maxCandleHourDate, curCandleHourExpect, key, keyValue);
+                            if (interval.equals("1hour")) {
+                                var candleHour = candleHistoryService.getAllCandlesByFigiByLength(
+                                        candleDomainEntity.getFigi(),
+                                        candleDomainEntity.getDateTime(),
+                                        2,
+                                        "1hour"
+                                );
+                                var maxCandleHourDate = Date.formatDateTimeToHour(candleHour.get(1).getDateTime());
+                                var curCandleHourExpect = Date.formatDateTimeToHour(candleDomainEntity.getDateTime());
+                                if (!maxCandleHourDate.equals(curCandleHourExpect) || !candleHour.get(0).getIsComplete()) {
+                                    String key = candleDomainEntity.getFigi() + curCandleHourExpect;
+                                    Integer keyValue = 0;
+                                    synchronized (loadCandlesHistory) {
+                                        keyValue = loadCandlesHistory.getOrDefault(key, 0) + 1;
+                                        loadCandlesHistory.put(key, keyValue);
+                                    }
+                                    if (keyValue < 100) {
+                                        log.info("Need 1hour candle {} != {}: {} = {}", maxCandleHourDate, curCandleHourExpect, key, keyValue);
+                                        candleHistoryService.loadCandlesHistory(candleDomainEntity.getFigi(), 1L, CandleInterval.CANDLE_INTERVAL_HOUR, OffsetDateTime.now());
+                                    } else {
+                                        log.info("No Need 1hour candle {} != {}: {} = {}", maxCandleHourDate, curCandleHourExpect, key, keyValue);
+                                    }
                                 }
                             }
                             purchaseService.observeNewCandleNoThrow(candleDomainEntity);
@@ -159,7 +187,7 @@ public class CandleListenerService {
                         log.error("An error in candles_stream " + interval + " , listener will be restarted", e);
                         startToListen(number + 1);
                     })
-                    .subscribeCandles(new ArrayList<>(figies), SubscriptionInterval.SUBSCRIPTION_INTERVAL_ONE_MINUTE);
+                    .subscribeCandles(new ArrayList<>(figies), subscriptionInterval);
         } catch (Throwable th) {
             log.error("An error in subscriber, listener " + interval + " will be restarted", th);
             startToListen(number + 1);

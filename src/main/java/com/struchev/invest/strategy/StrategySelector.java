@@ -40,8 +40,19 @@ public class StrategySelector {
         return activeStrategies;
     }
 
+    public List<AStrategy> getActiveStrategies(String interval) {
+        return activeStrategies.stream()
+                .filter(AStrategy::isEnabled)
+                .filter(s -> interval == null || s.getInterval().equals(interval))
+                .collect(Collectors.toList());
+    }
+
     public Set<String> getFigiesForActiveStrategies() {
         return getActiveStrategies().stream().flatMap(s -> filterByCurrency(s.getFigies())).collect(Collectors.toSet());
+    }
+
+    public Set<String> getFigiesForActiveStrategies(String interval) {
+        return getActiveStrategies(interval).stream().flatMap(s -> filterByCurrency(s.getFigies())).collect(Collectors.toSet());
     }
 
     public Set<InstrumentService.Instrument> getInstrumentsForActiveStrategies() {
