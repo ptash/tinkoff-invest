@@ -232,14 +232,27 @@ public class CandleListenerService {
         if (figies.size() < 1) {
             return;
         }
-        log.info("Starting observe {} candles {} in parallel {} streams", interval, figies, streamNumber);
-        List<Integer> streams = new ArrayList<>();
-        for (int i = 0; i < streamNumber; i++) {
-            streams.add(i);
+        var figiesNumberInStream = figies.size() / streamNumber;
+        if ((figies.size() % streamNumber) > 0) {
+            figiesNumberInStream++;
         }
-        streams.parallelStream().forEach(i -> {
+        log.info("Starting observe {} candles {} in parallel {} streams with {}...", interval, figies, streamNumber, figiesNumberInStream);
+        List<List<String>> streams = new ArrayList<>();
+        for (int i = 0; i < streamNumber; i++) {
+            if (figies.size() < 1) {
+                break;
+            }
+            streams.add(new ArrayList<>());
+            for (int j = 0; j < figiesNumberInStream && figies.size() > 0; j++) {
+                var figi = figies.iterator().next();
+                streams.get(i).add(figi);
+                figies.remove(figi);
+            }
+        }
+        streams.parallelStream().forEach(streamFigies -> {
+            notificationService.sendMessageAndLog("Starting observe " + interval + " candles " + streamFigies + " in one parallel stream...");
             while (true) {
-                figies.forEach(figi -> {
+                streamFigies.forEach(figi -> {
                     try {
                         var candle = getCurrentCandle(figi, interval);
                         if (null != candle) {
