@@ -25,6 +25,7 @@ public interface ITinkoffOrderAPI {
         Boolean active;
         Boolean isExecuted;
         Exception exception;
+        Boolean isDirtyOrderLimits;
     }
 
     OrderResult buy(InstrumentService.Instrument instrument, BigDecimal price, Integer count);
@@ -38,6 +39,7 @@ public interface ITinkoffOrderAPI {
 
 
     public OrderResult closeSellLimit(InstrumentService.Instrument instrument, String orderId);
+    public OrderResult closeAllSellLimit(InstrumentService.Instrument instrument);
 
     public Boolean checkGoodSell(InstrumentService.Instrument instrument, BigDecimal price, Integer count, BigDecimal priceError);
 

@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 @Service
@@ -170,10 +171,83 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
             if (order != null && !order.getOrderId().equals(orderId)) {
                 return closeSellLimit(instrument, order.getOrderId());
             }
-            orderResultBuilder.exception(e);
+            var res = checkSellLimit(instrument, orderId);
+            res.setException(e);
+            return res;
         }
-        return OrderResult.builder().orderId(orderId).build();
     }
+
+    public OrderResult closeAllSellLimit(InstrumentService.Instrument instrument) {
+        AtomicReference<OrderResult> result = new AtomicReference<>(OrderResult.builder().build());
+        result.get().setIsExecuted(false);
+        result.get().setLots(0L);
+        List<OrderState> orders;
+        if (getIsSandboxMode()) {
+            orders = getApi().getSandboxService().getOrdersSync(getAccountIdByFigi(instrument));
+        } else {
+            orders = getApi().getOrdersService().getOrdersSync(getAccountIdByFigi(instrument));
+        }
+        orders = orders.stream().filter(o -> o.getFigi().equals(instrument.getFigi())).collect(Collectors.toList());
+        orders.forEach(orderState -> {
+            var resultOrder = buildOrderResultByOrderState(instrument, orderState);
+            if (resultOrder.getActive() && !resultOrder.getIsExecuted()) {
+                var closeResult = closeSellLimit(instrument, orderState.getOrderId());
+                if (null != closeResult.getLots() && closeResult.getLots() > 0 && closeResult.getIsExecuted()) {
+                    var lots = result.get().getLots();
+                    result.set(closeResult);
+                    result.get().setLots(lots + resultOrder.getLots());
+                }
+            } else {
+                if (null != resultOrder.getLots() && resultOrder.getLots() > 0 && resultOrder.getIsExecuted()) {
+                    var lots = result.get().getLots();
+                    result.set(resultOrder);
+                    result.get().setLots(lots + resultOrder.getLots());
+                }
+            }
+        });
+        return result.get();
+    }
+
+    private OrderResult buildOrderResultByOrderState(InstrumentService.Instrument instrument, OrderState result) {
+        var orderResultBuilder = OrderResult.builder();
+        orderResultBuilder.active(true);
+        orderResultBuilder.isExecuted(false);
+        orderResultBuilder.orderId(result.getOrderId());
+        if (result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_FILL_VALUE
+                || result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_PARTIALLYFILL_VALUE
+        ) {
+            if (result.hasExecutedOrderPrice() && !isZero(result.getExecutedOrderPrice())) {
+                var priceOrder = toBigDecimal(result.getExecutedOrderPrice(), 8);
+                var lots = result.getLotsExecuted() * instrument.getLot();
+                var price = priceOrder.divide(BigDecimal.valueOf(lots), 8, RoundingMode.HALF_DOWN);
+                orderResultBuilder.commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
+                        .commission(getExecutedCommission(result, instrument))
+                        .lots(lots)
+                        .price(price)
+                        .pricePt(getPricePt(instrument, price))
+                        .orderPricePt(getPricePt(instrument, priceOrder))
+                        .orderPrice(priceOrder);
+                orderResultBuilder.isExecuted(true);
+            }
+        } else if (result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_REJECTED_VALUE
+                || result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_CANCELLED_VALUE
+        ) {
+            orderResultBuilder.active(false);
+        } else if (result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_NEW_VALUE) {
+            var priceOrder = toBigDecimal(result.getInitialOrderPrice(), 8);
+            var lots = result.getLotsRequested() * instrument.getLot();
+            var price = priceOrder.divide(BigDecimal.valueOf(lots), 8, RoundingMode.HALF_DOWN);
+            orderResultBuilder.commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
+                    .commission(toBigDecimal(result.getInitialCommission(), 8))
+                    .lots(lots)
+                    .price(price)
+                    .pricePt(getPricePt(instrument, price))
+                    .orderPricePt(getPricePt(instrument, priceOrder))
+                    .orderPrice(priceOrder);
+        }
+        return orderResultBuilder.build();
+    }
+
 
     private OrderResult checkSellLimit(InstrumentService.Instrument instrument, String orderId) {
         var orderResultBuilder = OrderResult.builder();
@@ -186,82 +260,35 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
         try {
             orderResultBuilder.active(true);
             orderResultBuilder.isExecuted(false);
+            List<OrderState> allOrders;
             if (getIsSandboxMode()) {
-                var result = getApi().getSandboxService().getOrderStateSync(getAccountIdByFigi(instrument), orderId);
-                orderResultBuilder
-                        .orderId(result.getOrderId());
-                if (result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_FILL_VALUE
-                        || result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_PARTIALLYFILL_VALUE
-                ) {
-                    if (result.hasExecutedOrderPrice() && !isZero(result.getExecutedOrderPrice())) {
-                        var priceOrder = toBigDecimal(result.getExecutedOrderPrice(), 8);
-                        var lots = result.getLotsExecuted() * instrument.getLot();
-                        var price = priceOrder.divide(BigDecimal.valueOf(lots), 8, RoundingMode.HALF_DOWN);
-                        orderResultBuilder.commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
-                                .commission(toBigDecimal(result.getInitialCommission(), 8))
-                                .lots(lots)
-                                .price(price)
-                                .pricePt(getPricePt(instrument, priceOrder))
-                                .orderPricePt(getPricePt(instrument, priceOrder))
-                                .orderPrice(priceOrder);
-                        orderResultBuilder.isExecuted(true);
-                    }
-                } else if (result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_REJECTED_VALUE
-                        || result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_CANCELLED_VALUE
-                ) {
-                    orderResultBuilder.active(false);
-                } else if (result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_NEW_VALUE) {
-                    var priceOrder = toBigDecimal(result.getInitialOrderPrice(), 8);
-                    var lots = result.getLotsRequested() * instrument.getLot();
-                    var price = priceOrder.divide(BigDecimal.valueOf(lots), 8, RoundingMode.HALF_DOWN);
-                    orderResultBuilder.commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
-                            .commission(toBigDecimal(result.getInitialCommission(), 8))
-                            .lots(lots)
-                            .price(price)
-                            .pricePt(getPricePt(instrument, price))
-                            .orderPricePt(getPricePt(instrument, priceOrder))
-                            .orderPrice(priceOrder);
-                }
+                allOrders = getApi().getSandboxService().getOrdersSync(getAccountIdByFigi(instrument));
             } else {
-                var result = getApi().getOrdersService().getOrderStateSync(getAccountIdByFigi(instrument), orderId);
-                orderResultBuilder
-                        .orderId(result.getOrderId());
-                log.info("checkSellLimit result: {}", result);
-                result.getInitialOrderPrice();
-                result.getLotsRequested();
-                if (result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_FILL_VALUE
-                        || result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_PARTIALLYFILL_VALUE
-                ) {
-                    if (result.hasExecutedOrderPrice() && !isZero(result.getExecutedOrderPrice())) {
-                        var priceOrder = toBigDecimal(result.getExecutedOrderPrice(), 8);
-                        var lots = result.getLotsExecuted() * instrument.getLot();
-                        var price = priceOrder.divide(BigDecimal.valueOf(lots), 8, RoundingMode.HALF_DOWN);
-                        orderResultBuilder.commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
-                                .commission(getExecutedCommission(result, instrument))
-                                .lots(lots)
-                                .price(price)
-                                .pricePt(getPricePt(instrument, price))
-                                .orderPricePt(getPricePt(instrument, priceOrder))
-                                .orderPrice(priceOrder);
-                        orderResultBuilder.isExecuted(true);
-                    }
-                } else if (result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_REJECTED_VALUE
-                        || result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_CANCELLED_VALUE
-                ) {
-                    orderResultBuilder.active(false);
-                } else if (result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_NEW_VALUE) {
-                    var priceOrder = toBigDecimal(result.getInitialOrderPrice(), 8);
-                    var lots = result.getLotsRequested() * instrument.getLot();
-                    var price = priceOrder.divide(BigDecimal.valueOf(lots), 8, RoundingMode.HALF_DOWN);
-                    orderResultBuilder.commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
-                            .commission(toBigDecimal(result.getInitialCommission(), 8))
-                            .lots(lots)
-                            .price(price)
-                            .pricePt(getPricePt(instrument, price))
-                            .orderPricePt(getPricePt(instrument, priceOrder))
-                            .orderPrice(priceOrder);
+                allOrders = getApi().getOrdersService().getOrdersSync(getAccountIdByFigi(instrument));
+            }
+            allOrders = allOrders.stream().filter(o -> o.getFigi().equals(instrument.getFigi())).collect(Collectors.toList());
+
+            OrderState resultFormAll = allOrders.stream().filter(o -> o.getOrderId().equals(orderId)).findFirst().orElse(null);
+            OrderState result = resultFormAll;
+            if (result == null) {
+                if (getIsSandboxMode()) {
+                    result = getApi().getSandboxService().getOrderStateSync(getAccountIdByFigi(instrument), orderId);
+                } else {
+                    result = getApi().getOrdersService().getOrderStateSync(getAccountIdByFigi(instrument), orderId);
                 }
             }
+            log.info("checkSellLimit result: {}", result);
+            var res = buildOrderResultByOrderState(instrument, result);
+            if (
+                    allOrders.size() > 1
+                    || (resultFormAll == null && allOrders.size() == 1)
+            ) {
+                // какие-то левые заявки...
+                log.warn("Sell limits are dirty for {}. All orders: {}", instrument.getFigi(), allOrders);
+                res.setIsDirtyOrderLimits(true);
+                res.setActive(true);
+            }
+            return res;
         } catch (Exception e) {
             log.warn("Error in check sellLimit {}", instrument.getFigi(), e);
             orderResultBuilder.exception(e);
@@ -286,12 +313,18 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                 if (instrument.getType() == InstrumentService.Type.future) {
                     curPrice = res.getPricePt();
                 }
-                if (curPrice == null || curPrice.compareTo(price) == 0) {
+                if (res.getIsDirtyOrderLimits()) {
+                    log.info("Sell limits are dirty for {}. Close all", instrument.getFigi());
+                    res = this.closeAllSellLimit(instrument);
+                    if (res.getOrderId() != null) {
+                        orderId = res.getOrderId();
+                    }
+                } else if (curPrice == null || curPrice.compareTo(price) == 0) {
                     log.info("Sell limit for {} with price {}. No need to change to {}", instrument.getFigi(), curPrice, price);
                     return res;
                 } else {
                     log.info("Sell limit for {} changed from {} to {}", instrument.getFigi(), curPrice, price);
-                    res = this.closeSellLimit(instrument, orderId);
+                    res = this.closeAllSellLimit(instrument);
                     if (res.getOrderId() != null) {
                         orderId = res.getOrderId();
                     }
