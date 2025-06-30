@@ -676,6 +676,7 @@ public class AlligatorService implements
                 && strategy.getSellLimitPriceByTrySell() != null
                 && green != null && blue != null
                 && profit < strategy.getSkipProfitByTrySell()
+                && null == lastNewStopLossBySell
         ) {
             var startPoint = Math.max(green, blue);
             var stopLossDelta = startPoint - Math.min(candle.getClosingPrice().doubleValue(), Math.min(green, blue));
