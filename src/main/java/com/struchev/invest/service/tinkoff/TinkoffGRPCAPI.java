@@ -167,6 +167,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
             } else {
                 orders = getApi().getOrdersService().getOrdersSync(getAccountIdByFigi(instrument));
             }
+            log.info("closeSellLimit: get orders result {}", orders);
             var order = orders.stream().filter(o -> o.getFigi().equals(instrument.getFigi())).findFirst().orElse(null);
             if (order != null && !order.getOrderId().equals(orderId)) {
                 return closeSellLimit(instrument, order.getOrderId());
@@ -187,6 +188,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
         } else {
             orders = getApi().getOrdersService().getOrdersSync(getAccountIdByFigi(instrument));
         }
+        log.info("closeAllSellLimit: get orders result {}", orders);
         orders = orders.stream().filter(o -> o.getFigi().equals(instrument.getFigi())).collect(Collectors.toList());
         orders.forEach(orderState -> {
             var resultOrder = buildOrderResultByOrderState(instrument, orderState);
@@ -499,6 +501,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
 
     private void checkInstrumentCountAvailable(InstrumentService.Instrument instrument, Integer count) {
         var positionsResult = getApi().getOperationsService().getPositionsSync(getAccountIdByFigi(instrument));
+        log.info("checkInstrumentCountAvailable: get positions result: {}", positionsResult);
         long balanceCount = 0;
         var annotate = "";
         if (instrument.getType() == InstrumentService.Type.share) {

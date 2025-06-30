@@ -281,7 +281,7 @@ public class OrderService implements IOrderService {
     }
 
     @Transactional
-    public synchronized OrderDomainEntity closeOrderShort(CandleDomainEntity candle, AStrategy strategy) {
+    public synchronized OrderDomainEntity closeOrderShort(CandleDomainEntity candle, AStrategy strategy) throws Exception {
         var instrument = instrumentService.getInstrument(candle.getFigi());
         var order = findActiveOrderDomainShortByFigiAndStrategy(candle.getFigi(), strategy);
 
@@ -293,21 +293,8 @@ public class OrderService implements IOrderService {
             throw new RuntimeException("checkGoodBuy return false for figi " + instrument.getFigi());
         }
 
-        var lots = order.getLots();
-        if (order.getCellLots() != null) {
-            lots -= order.getCellLots().intValue();
-        }
-        if (order.getSellLimitOrderId() != null) {
-            var closeResult = tinkoffOrderAPI.closeAllSellLimit(instrument);
-            if (null != closeResult.getLots() && closeResult.getLots() > 0 && closeResult.getIsExecuted()) {
-                order.setPurchaseDateTime(OffsetDateTime.now());
-                order = setOrderInfoBuy(order, closeResult);
-                lots -= closeResult.getLots().intValue();
-            }
-            if (closeResult.getOrderId() != null && closeResult.getOrderId().equals(order.getSellLimitOrderId())) {
-                order.setSellLimitOrderId(closeResult.getOrderId());
-            }
-        }
+        var lots = closeSellLimit(order, instrument);
+
         if (lots > 0) {
             var result = tinkoffOrderAPI.sellShort(instrument, candle.getClosingPrice(), lots);
 
@@ -319,7 +306,7 @@ public class OrderService implements IOrderService {
     }
 
     @Transactional
-    public synchronized OrderDomainEntity closeOrder(CandleDomainEntity candle, AStrategy strategy) {
+    public synchronized OrderDomainEntity closeOrder(CandleDomainEntity candle, AStrategy strategy) throws Exception {
         var instrument = instrumentService.getInstrument(candle.getFigi());
         var order = findActiveOrderDomainByFigiAndStrategy(candle.getFigi(), strategy);
 
@@ -331,21 +318,7 @@ public class OrderService implements IOrderService {
             throw new RuntimeException("checkGoodSell return false for figi " + instrument.getFigi());
         }
 
-        var lots = order.getLots();
-        if (order.getCellLots() != null) {
-            lots -= order.getCellLots().intValue();
-        }
-        if (order.getSellLimitOrderId() != null) {
-            var closeResult = tinkoffOrderAPI.closeAllSellLimit(instrument);
-            if (null != closeResult.getLots() && closeResult.getLots() > 0 && closeResult.getIsExecuted()) {
-                order.setSellDateTime(OffsetDateTime.now());
-                order = setOrderInfoSell(order, closeResult);
-                lots -= closeResult.getLots().intValue();
-            }
-            if (closeResult.getOrderId() != null && closeResult.getOrderId().equals(order.getSellLimitOrderId())) {
-                order.setSellLimitOrderId(closeResult.getOrderId());
-            }
-        }
+        var lots = closeSellLimit(order, instrument);
         if (lots > 0) {
             var result = tinkoffOrderAPI.sell(instrument, candle.getClosingPrice(), lots);
 
@@ -354,6 +327,33 @@ public class OrderService implements IOrderService {
         }
 
         return order;
+    }
+
+    private Integer closeSellLimit(OrderDomainEntity order, InstrumentService.Instrument instrument) throws Exception {
+        var lots = order.getLots();
+        if (order.getCellLots() != null) {
+            lots -= order.getCellLots().intValue();
+        }
+        var closeResult = tinkoffOrderAPI.closeSellLimit(instrument, order.getSellLimitOrderId());
+        if (null != closeResult.getLots() && closeResult.getLots() > 0 && closeResult.getIsExecuted()) {
+            order.setPurchaseDateTime(OffsetDateTime.now());
+            order = setOrderInfoBuy(order, closeResult);
+            lots -= closeResult.getLots().intValue();
+        } else {
+            closeResult = tinkoffOrderAPI.closeAllSellLimit(instrument);
+            if (null != closeResult.getLots() && closeResult.getLots() > 0 && closeResult.getIsExecuted()) {
+                order.setPurchaseDateTime(OffsetDateTime.now());
+                order = setOrderInfoBuy(order, closeResult);
+                lots -= closeResult.getLots().intValue();
+            }
+        }
+        if (closeResult.getOrderId() != null && closeResult.getOrderId().equals(order.getSellLimitOrderId())) {
+            order.setSellLimitOrderId(closeResult.getOrderId());
+        }
+        if (closeResult.getException() != null && (closeResult.getActive() || !closeResult.getIsExecuted())) {
+            throw closeResult.getException();
+        }
+        return lots;
     }
 
     @Transactional

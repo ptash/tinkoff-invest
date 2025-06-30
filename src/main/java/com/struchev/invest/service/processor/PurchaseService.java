@@ -242,7 +242,7 @@ public class PurchaseService {
                             }
                         }
                     }
-                } catch (RuntimeException e) {
+                } catch (Exception e) {
                     log.info("Error in sell observeNewCandle " + strategy.getName(), e);
                     if (null == order.getSellOrderId()) {
                         throw e;
@@ -265,9 +265,13 @@ public class PurchaseService {
                         }
                     }
                 }
-            } catch (RuntimeException e) {
+            } catch (Exception e) {
                 log.info("error in observeNewCandle " + strategy.getName(), e);
-                throw e;
+                try {
+                    throw e;
+                } catch (Exception ex) {
+                    throw new RuntimeException(ex);
+                }
             }
         });
     }
