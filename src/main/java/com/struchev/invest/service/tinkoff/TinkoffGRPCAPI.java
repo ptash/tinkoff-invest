@@ -313,7 +313,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                 if (instrument.getType() == InstrumentService.Type.future) {
                     curPrice = res.getPricePt();
                 }
-                if (res.getIsDirtyOrderLimits()) {
+                if (null != res.getIsDirtyOrderLimits() && res.getIsDirtyOrderLimits()) {
                     log.info("Sell limits are dirty for {}. Close all", instrument.getFigi());
                     res = this.closeAllSellLimit(instrument);
                     if (res.getOrderId() != null) {
