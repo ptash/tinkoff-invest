@@ -173,6 +173,9 @@ public class AlligatorService implements
                     if (
                             purchaseRate.compareTo(waitMax) < 0
                             && purchaseRate.compareTo(waitMaxBuy) > 0
+                            && purchaseRate.doubleValue() < green
+                            && waitMax.doubleValue() < green
+                            && waitMax2.doubleValue() > green
                     ) {
                         annotation += " SELL OK by waitMax";
                         resBuy = true;
@@ -586,6 +589,12 @@ public class AlligatorService implements
             annotation += " lastFMaxCandleDateTime=" + printDateTime(lastFMaxCandleDateTime);
         }
         Double average = null;
+        if (green != null && blue != null) {
+            alligatorAverage = getAlligatorLengthAverage(candle.getFigi(), candle.getDateTime(), strategy);
+            curAlligatorMouth = getAlligatorMouth(candle.getFigi(), candle.getDateTime(), strategy, lastFMaxCandleDateTime);
+            annotation += " MonthBegin=" + printDateTime(curAlligatorMouth.getCandleBegin().getDateTime());
+            annotation += " MonthEnd=" + printDateTime(curAlligatorMouth.getCandleEnd().getDateTime());
+        }
         if (green != null && blue != null && !strategy.isReverse()) {
             var stopLossForce = blue - Math.abs(red - blue);
             Float newGreenPercent = (float) ((100.f * (zs - green) / Math.abs(green)));
@@ -593,10 +602,6 @@ public class AlligatorService implements
             annotation += " average=" + printPrice(average);
             Float newGreenPercentAverage = (float) (newGreenPercent / average);
 
-            alligatorAverage = getAlligatorLengthAverage(candle.getFigi(), candle.getDateTime(), strategy);
-            curAlligatorMouth = getAlligatorMouth(candle.getFigi(), candle.getDateTime(), strategy, lastFMaxCandleDateTime);
-            annotation += " MonthBegin=" + printDateTime(curAlligatorMouth.getCandleBegin().getDateTime());
-            annotation += " MonthEnd=" + printDateTime(curAlligatorMouth.getCandleEnd().getDateTime());
             var curAlligatorLength = curAlligatorMouth.getSize();
             annotation += " alligatorLengthAverage=" + alligatorAverage.getSize();
             //annotation += " Average=" + alligatorAverage.getAnnotation();
