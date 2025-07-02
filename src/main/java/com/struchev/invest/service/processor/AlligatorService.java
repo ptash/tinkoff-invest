@@ -811,7 +811,11 @@ public class AlligatorService implements
             var newStopLossBySell = startPoint - stopLossDelta * strategy.getSellLimitPriceByTrySell();
             var newPercentStopLossBySell = (double) ((100.f * (purchaseRate.doubleValue() - newStopLossBySell) / Math.abs(purchaseRate.doubleValue())));
             annotation += " newPercentStopLossBySell=" + printPrice(newPercentStopLossBySell);
-            if (!isTrendUp && newPercentStopLossBySell > strategy.getMaxPercentStopLossByTrySell()) {
+            if (
+                    !isTrendUp
+                    && strategy.isMoveStopLossByTrySellByTrend()
+                    && newPercentStopLossBySell > strategy.getMaxPercentStopLossByTrySell()
+            ) {
                 newPercentStopLossBySell = strategy.getMaxPercentStopLossByTrySell();
                 newStopLossBySell = purchaseRate.doubleValue() - newPercentStopLossBySell * Math.abs(purchaseRate.doubleValue()) / 100.f;
                 stopLossDelta = (startPoint - newStopLossBySell) / strategy.getSellLimitPriceByTrySell();
