@@ -111,6 +111,7 @@ public abstract class AAlligatorStrategy extends AStrategy implements Cloneable,
     public boolean isSmaNearGreenBlueIsTrendDown() { return false; }
     public boolean isSkipBySmaNearGreenBlue() { return false; }
     public boolean isSkipBySmaFarGreenBlue() { return false; }
+    public boolean isSkipSellSmaNearGreenBlue() { return false; }
 
     public boolean isReverse() { return false; }
     public Float getBuyMinProfitPercent() { return null; }
