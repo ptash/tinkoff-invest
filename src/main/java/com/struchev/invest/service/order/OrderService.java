@@ -336,14 +336,24 @@ public class OrderService implements IOrderService {
         }
         var closeResult = tinkoffOrderAPI.closeSellLimit(instrument, order.getSellLimitOrderId());
         if (null != closeResult.getLots() && closeResult.getLots() > 0 && closeResult.getIsExecuted()) {
-            order.setPurchaseDateTime(OffsetDateTime.now());
-            order = setOrderInfoBuy(order, closeResult);
+            if (order.isShort()) {
+                order.setPurchaseDateTime(OffsetDateTime.now());
+                order = setOrderInfoBuy(order, closeResult);
+            } else {
+                order.setSellDateTime(OffsetDateTime.now());
+                order = setOrderInfoSell(order, closeResult);
+            }
             lots -= closeResult.getLots().intValue();
         } else {
             closeResult = tinkoffOrderAPI.closeAllSellLimit(instrument);
             if (null != closeResult.getLots() && closeResult.getLots() > 0 && closeResult.getIsExecuted()) {
-                order.setPurchaseDateTime(OffsetDateTime.now());
-                order = setOrderInfoBuy(order, closeResult);
+                if (order.isShort()) {
+                    order.setPurchaseDateTime(OffsetDateTime.now());
+                    order = setOrderInfoBuy(order, closeResult);
+                } else {
+                    order.setSellDateTime(OffsetDateTime.now());
+                    order = setOrderInfoSell(order, closeResult);
+                }
                 lots -= closeResult.getLots().intValue();
             }
         }
