@@ -174,8 +174,8 @@ public class AlligatorService implements
                             purchaseRate.compareTo(waitMax) < 0
                             && purchaseRate.compareTo(waitMaxBuy) > 0
                             && purchaseRate.doubleValue() < green
-                            && waitMax.doubleValue() < green
-                            && waitMax2.doubleValue() > green
+                            && waitMax.doubleValue() < greenMax
+                            && waitMax2.doubleValue() > greenMax
                     ) {
                         annotation += " SELL OK by waitMax";
                         resBuy = true;
