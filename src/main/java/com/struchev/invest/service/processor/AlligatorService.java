@@ -349,6 +349,10 @@ public class AlligatorService implements
                 resBuy = false;
             }
         }
+        if (resBuy && strategy.isBuyMaxOnlySmaUp() && !isTrendUp) {
+            annotation += " SKIP max by trend down";
+            resBuy = false;
+        }
         AlligatorMouth curAlligatorMouth = null;
         AlligatorMouth curAlligatorMouthOrig = null;
         var alligatorMouthSizeOffset = 0;
