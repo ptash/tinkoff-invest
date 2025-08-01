@@ -99,9 +99,26 @@ public class AlligatorService implements
         var isMax = maxCandle == middleCandle;
         var isMin = minCandle == middleCandle;
 
+        Double smaUp = null;
+        Double smaDown = null;
+        var isTrendUp = true;
+        Double sma = null;
+
+        var smaList = getSma(candle.getFigi(), candle.getDateTime(), strategy.getSmaLength(), strategy.getInterval(), CandleDomainEntity::getMedianPrice, 2);
+        sma = smaList != null && smaList.size() > 1 ? smaList.get(1) : null;
+        var smaPrev = smaList != null && smaList.size() > 0 ? smaList.get(0) : null;
+        if (sma != null && smaPrev != null) {
+            isTrendUp = smaPrev <= sma;
+            if (isTrendUp) {
+                smaUp = sma;
+            } else {
+                smaDown = sma;
+            }
+        }
+
         CandleDomainEntity lastFMaxCandle;
         CandleDomainEntity beginMonthCandle = null;
-        var isUpPrev = false;
+        var isIgnoreSkip = false;
         var lastFMaxCandleData = getLastFMaxCandle(candle.getFigi(), candle.getDateTime(), strategy, strategy.getFMaxCandleCountFromEnd());
         if (null != lastFMaxCandleData) {
             //annotation += " lastFMaxCandle " + lastFMaxCandleData.getAnnotation();
@@ -109,8 +126,8 @@ public class AlligatorService implements
         if (null != lastFMaxCandleData && null != lastFMaxCandleData.getFMaxCandle()) {
             lastFMaxCandle = lastFMaxCandleData.getFMaxCandle();
             beginMonthCandle = lastFMaxCandleData.getBeginCandle();
-            isUpPrev = lastFMaxCandleData.getIsUpPrev();
-            annotation += " isUpPrev=" + isUpPrev;
+            isIgnoreSkip = lastFMaxCandleData.getIsUpPrev() && isTrendUp;
+            annotation += " isUpPrev=" + isIgnoreSkip;
             /*annotation += " lastFMaxCandle=" + printDateTime(lastFMaxCandle.getDateTime());
             annotation += " ann=" + lastFMaxCandleData.getAnnotation();
             for (var i = 0; i < lastFMaxCandleData.getMaxMaxCandleList().size(); i++) {
@@ -193,10 +210,10 @@ public class AlligatorService implements
                         annotation += " realLimitPercent=" + printPrice(realLimitPercent);
                         annotation += " realLimitPrice=" + printPrice(realLimitPrice);
                         annotation += " stopLoss=" + printPrice(stopLoss);
-                        if (!isUpPrev && realLimitPercent < strategy.getBuyMinProfitPercent()) {
+                        if (!isIgnoreSkip && realLimitPercent < strategy.getBuyMinProfitPercent()) {
                             annotation += " SKIP ProfitPercent=" + strategy.getBuyMinProfitPercent();
                             resBuy = false;
-                        } else if (!isUpPrev && newGreenPercentAverage > strategy.getMaxGreenPercent()) {
+                        } else if (!isIgnoreSkip && newGreenPercentAverage > strategy.getMaxGreenPercent()) {
                             annotation += " SKIP GreenPercentAverage=" + strategy.getMaxGreenPercent();
                             resBuy = false;
                         } else {
@@ -246,7 +263,7 @@ public class AlligatorService implements
                 waitMaxBuy = waitMax.subtract(delta.multiply(BigDecimal.valueOf(strategy.getBuyWaitMaxBuyDeltaK())));
                 if (
                         isMax2
-                        && (isUp || isUpPrev)
+                        && (isUp || isIgnoreSkip)
                 ) {
                     if (
                             currentPrice.compareTo(waitMaxBuy) < 0
@@ -271,6 +288,7 @@ public class AlligatorService implements
                         setOrderBigDecimalData(strategy, candle, "priceWanted", currentPrice.max(lastFMaxCandle.getClosingPrice().max(lastFMaxCandle.getOpenPrice())));
                         annotation += " OK by DOWN";
                         resBuyMin = true;
+                        isIgnoreSkip = false;
                     }
                 }
             }
@@ -299,7 +317,7 @@ public class AlligatorService implements
                 annotation += " OK by DOWN percent>" + strategy.getMinGreenPercent();
                 resBuy = true;
             }
-            if (!isUpPrev && !resBuyMax && currentPrice.doubleValue() > green && newGreenPercentAverage < strategy.getMinGreenPercent()) {
+            if (!isIgnoreSkip && !resBuyMax && currentPrice.doubleValue() > green && newGreenPercentAverage < strategy.getMinGreenPercent()) {
                 annotation += " skip by percent<" + strategy.getMinGreenPercent();
                 resBuy = false;
             }
@@ -308,7 +326,7 @@ public class AlligatorService implements
                     currentPrice.doubleValue() < green
                     && (maxBuyPercentAverage != null && maxBuyPercentAverage > strategy.getMinGreenPercent())
                     && !resBuyMax
-                    && !isUpPrev
+                    && !isIgnoreSkip
             ) {
                 annotation += " skip by buy percent>" + strategy.getMinGreenPercent();
                 resBuy = false;
@@ -317,7 +335,7 @@ public class AlligatorService implements
                     null != strategy.getMaxGreenPercent()
                     && !resBuyMax
                     && newGreenPercentAverage > strategy.getMaxGreenPercent()
-                    && !isUpPrev
+                    && !isIgnoreSkip
             ) {
                 annotation += " skip by percent>" + strategy.getMaxGreenPercent();
                 resBuy = false;
@@ -325,7 +343,7 @@ public class AlligatorService implements
             if (
                     resBuyMax
                     && newGreenPercentAverage < strategy.getMinGreenPercent()
-                    && !isUpPrev
+                    && !isIgnoreSkip
             ) {
                 annotation += " skip max by percent<" + strategy.getMinGreenPercent();
                 resBuy = false;
@@ -461,26 +479,12 @@ public class AlligatorService implements
             }
         }
 
-        Double smaUp = null;
-        Double smaDown = null;
-        var isTrendUp = true;
         if (
                 strategy.isMoveStopLossByTrySellByTrend()
                 || strategy.isSkipBySmaNearGreenBlue()
                 || strategy.isSkipBySmaFarGreenBlue()
                 || strategy.isReverse()
         ) {
-            var smaList = getSma(candle.getFigi(), candle.getDateTime(), strategy.getSmaLength(), strategy.getInterval(), CandleDomainEntity::getMedianPrice, 2);
-            var sma = smaList != null && smaList.size() > 1 ? smaList.get(1) : null;
-            var smaPrev = smaList != null && smaList.size() > 0 ? smaList.get(0) : null;
-            if (sma != null && smaPrev != null) {
-                isTrendUp = smaPrev <= sma;
-                if (isTrendUp) {
-                    smaUp = sma;
-                } else {
-                    smaDown = sma;
-                }
-            }
             if (
                     strategy.isSkipBySmaNearGreenBlue() || strategy.isSkipBySmaFarGreenBlue()
                     && sma != null
@@ -503,7 +507,7 @@ public class AlligatorService implements
                         strategy.isSkipBySmaNearGreenBlue()
                         && sma >= (Math.min(green, blue) - trendDelta)
                         && sma <= (Math.max(green, blue) + trendDelta)
-                        && !isUpPrev
+                        && !isIgnoreSkip
                 ) {
                     annotation += " SKIP by SMA near greenBlue";
                     resBuy = false;
@@ -512,7 +516,7 @@ public class AlligatorService implements
                         strategy.isSkipBySmaFarGreenBlue()
                         && (sma < (Math.min(green, blue) - trendDelta)
                         || sma > (Math.max(green, blue) + trendDelta))
-                        && !isUpPrev
+                        && !isIgnoreSkip
                 ) {
                     annotation += " SKIP by SMA far greenBlue";
                     resBuy = false;
