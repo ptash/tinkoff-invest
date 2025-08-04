@@ -6,4 +6,5 @@ import org.springframework.stereotype.Component;
 public class AlligatorStrategy5MinSLimitTSma extends AlligatorStrategy5MinSLimitT {
     public boolean isSkipSellSmaNearGreenBlue() { return true; }
     public boolean isMoveStopLossByTrySellByTrend() { return true; }
+    public boolean isBuyMaxOnlySmaUp() { return true; }
 }

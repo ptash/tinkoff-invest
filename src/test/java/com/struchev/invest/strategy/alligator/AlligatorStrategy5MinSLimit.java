@@ -8,7 +8,7 @@ public class AlligatorStrategy5MinSLimit extends AlligatorStrategy5Min {
     public Double getLimitPriceByTrySell() { return 1.; }
     public Double getSellLimitPriceByTrySell() { return 3.0; }
     //public boolean isBuyOnlyAfterMax2() { return true; }
-    public boolean isBuyMaxOnlySmaUp() { return true; }
+    //public boolean isBuyMaxOnlySmaUp() { return true; }
 
     public boolean isEnabled() { return true; }
 }
