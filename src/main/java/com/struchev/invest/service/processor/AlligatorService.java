@@ -710,6 +710,21 @@ public class AlligatorService implements
 
         if (lastNewSellLimitBySell != null) {
             limitPrice = lastNewSellLimitBySell.doubleValue();
+
+            var sellLimitBySellDayEnd = order.getDetails().getCurrentPrices().getOrDefault("newSellLimitBySellDayEnd", null);
+            if (null != sellLimitBySellDayEnd && null != strategy.getDayTimeEndLimitPriceByTrySell()) {
+                var dayEndDateTime = strategy.getDayTimeEndLimitPriceByTrySell();
+                var curDayEnd = candle.getDateTime()
+                        .withHour(dayEndDateTime.getHour())
+                        .withMinute(dayEndDateTime.getMinute())
+                        .withSecond(dayEndDateTime.getSecond());
+                annotation += " curDayEnd=" + printDateTime(curDayEnd);
+                if (candle.getDateTime().compareTo(curDayEnd) >= 0) {
+                    annotation += " TRY SELL day end";
+                    limitPrice = sellLimitBySellDayEnd.doubleValue();
+                }
+            }
+
             newLimitPercent = (float) ((100.f * (limitPrice.floatValue() - purchaseRate.floatValue()) / Math.abs(purchaseRate.floatValue())));
             annotation += " new limitPrice=lastBySell=" + printPrice(limitPrice);
             annotation += " new newLimitPercent=" + printPrice(newLimitPercent);
@@ -867,6 +882,18 @@ public class AlligatorService implements
             annotation += " stopLossDelta=" + printPrice(stopLossDelta);
             annotation += " newStopLossBySell=" + printPrice(newStopLossBySell);
             var isSellNow = false;
+            if (null != strategy.getDayTimeEndLimitPriceByTrySell()) {
+                var dayEndDateTime = strategy.getDayTimeEndLimitPriceByTrySell();
+                var curDayEnd = candle.getDateTime()
+                        .withHour(dayEndDateTime.getHour())
+                        .withMinute(dayEndDateTime.getMinute())
+                        .withSecond(dayEndDateTime.getSecond());
+                annotation += " curDayEnd=" + printDateTime(curDayEnd);
+                if (candle.getDateTime().compareTo(curDayEnd) >= 0) {
+                    annotation += " SKIP by day end";
+                    isSellNow = true;
+                }
+            }
             if (strategy.getSellLimitPriceByTrySell() != null) {
                 var newSellLimitBySell = startPoint + stopLossDelta * strategy.getLimitPriceByTrySell();
                 var newPercentSellLimitBySell = (double) ((100.f * (newSellLimitBySell - purchaseRate.doubleValue()) / Math.abs(purchaseRate.doubleValue())));
@@ -923,6 +950,7 @@ public class AlligatorService implements
                 }
                 if (!isSellNow) {
                     order.getDetails().getCurrentPrices().put("newSellLimitBySell", BigDecimal.valueOf(newSellLimitBySell));
+                    order.getDetails().getCurrentPrices().put("newSellLimitBySellDayEnd", BigDecimal.valueOf(stopLoss));
                 }
             }
             if (!isSellNow) {

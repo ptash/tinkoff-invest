@@ -129,6 +129,7 @@ public abstract class AAlligatorStrategy extends AStrategy implements Cloneable,
     public Double getMaxPercentLimitPriceByTrySell() { return 5.0; } // этого значения не достигнем
     public Integer getAvgMaxCountLimitPriceByTrySell() {return 0; }
     public Integer getAvgMaxCountStopLossByTrySell() {return 0; }
+    public OffsetDateTime getDayTimeEndLimitPriceByTrySell() { return null; }
     public boolean isSkipSellByTrySell() {return false; }
     public Double getLimitPriceByTrySell() { return null; }
     public Double getSellLimitPriceByTrySell() { return null; }
