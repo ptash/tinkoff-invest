@@ -891,7 +891,7 @@ public class AlligatorService implements
                             annotation += " i=" + i;
                             annotation += " date=" + printDateTime(lastFMaxCandleData.getMaxCandleList().get(i).getDateTime());
                         }
-                        annotation += " averageMax " + printPrice(averageMax);
+                        annotation += " averageMaxPrev " + printPrice(averageMax);
                         if (
                                 averageMax > stopLoss
                                 && strategy.isSkipSellByTrySell()
@@ -902,14 +902,13 @@ public class AlligatorService implements
                         } else {
                             if (averageMax < stopLoss) {
                                 averageMax = (limitPrice + averageMax) / 2.;
-                                annotation += " averageMaxMax=" + printPrice(averageMax);
+                                annotation += " averageMaxMaxPrev=" + printPrice(averageMax);
                             }
-                            if (averageMax < stopLoss) {
-                                var averageMaxMax = lastFMaxCandleData.getMaxCandleList().stream().mapToDouble(c -> c.getHighestPrice().doubleValue()).max().orElse(0);
 
-                                averageMax = (averageMaxMax + averageMax) / 2.;
-                                annotation += " averageMaxMax=" + printPrice(averageMax);
-                            }
+                            var averageMaxMax = lastFMaxCandleData.getMaxCandleList().stream().mapToDouble(c -> c.getHighestPrice().doubleValue()).max().orElse(0);
+                            averageMax = (averageMaxMax + averageMax) / 2.;
+                            annotation += " averageMax=" + printPrice(averageMax);
+
                             if (averageMax < stopLoss) {
                                 averageMax = (newSellLimitBySell + averageMax) / 2.;
                                 annotation += " averageMaxMax=" + printPrice(averageMax);
@@ -1441,7 +1440,7 @@ public class AlligatorService implements
                         continue;
                     } else if (
                             null != fMaxCandle
-                            && countMaxCandle == 0
+                            //&& countMaxCandle == 0
                     ) {
                         break;
                     }
@@ -1577,6 +1576,7 @@ public class AlligatorService implements
         }
         if (strategy.isRevMax() || countMaxCandle > 0) {
             var isUp = true;
+            var upCount = 1;
             for (var i = iFindMax - 1; i >= 2; i--) {
                 var curCandleList = candleList.subList(i - 2, i + 3);
                 var middleCandle = curCandleList.get(2);
@@ -1594,11 +1594,16 @@ public class AlligatorService implements
                 } else {
                     if (isUp) {
                         continue;
-                    } else if (
+                    } else {
+                        isUp = true;
+                        upCount++;
+                        if (
                             null != fMaxCandle
-                            && countMaxCandle == 0
-                    ) {
-                        break;
+                            && (countMaxCandle == 0 || upCount > 3)
+                        ) {
+                            break;
+                        }
+
                     }
                 }
                 var curMinCandle = curCandleList.stream().reduce((first, second) ->
