@@ -67,6 +67,7 @@ public class TinkoffMockAPI extends ATinkoffAPI {
     public OrderResult sellLimit(InstrumentService.Instrument instrument, BigDecimal price, Integer count, String uuid, String orderId, CandleDomainEntity candle) {
         log.info("sellLimit: Sell limit for {} with price {} and limit {}", instrument.getFigi(), candle.getHighestPrice(), price);
         if (candle.getHighestPrice().compareTo(price) >= 0) {
+            log.info("sellLimit: OK");
             return OrderResult.builder()
                     .orderUuid(UUID.randomUUID().toString())
                     .orderId(UUID.randomUUID().toString())

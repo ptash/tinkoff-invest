@@ -205,13 +205,19 @@ public class OrderService implements IOrderService {
             orderFresh = findActiveOrderDomainByFigiAndStrategy(order.getFigi(), strategy);
         }
         if (null == orderFresh || orderFresh.getId() != order.getId()) {
+            log.info("Skip limit figi {}: {} != {}", candle.getFigi(), (null == orderFresh ? null : orderFresh.getId()), order.getId());
             return order;
         }
         order = orderFresh;
         if (strategy.getSellLimitCriteria(candle.getFigi()) == null) {
+            log.info("Skip limit figi {}: getSellLimitCriteria = null", candle.getFigi());
             return order;
         }
-        if (strategy.getSellLimitCriteria(candle.getFigi()).getExitProfitPercent() == null || strategy.getSellLimitCriteria(candle.getFigi()).getExitProfitPercent() <= 0) {
+        if (
+                strategy.getSellLimitCriteria(candle.getFigi()).getExitProfitPercent() == null
+                //|| strategy.getSellLimitCriteria(candle.getFigi()).getExitProfitPercent() <= 0
+        ) {
+            log.info("Skip limit figi {}: getExitProfitPercent = {}", candle.getFigi(), strategy.getSellLimitCriteria(candle.getFigi()).getExitProfitPercent());
             return order; //?
         }
         var instrument = instrumentService.getInstrument(order.getFigi());
