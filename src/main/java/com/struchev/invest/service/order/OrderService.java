@@ -10,6 +10,7 @@ import com.struchev.invest.service.tinkoff.ITinkoffOrderAPI;
 import com.struchev.invest.strategy.AStrategy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
@@ -67,6 +68,12 @@ public class OrderService implements IOrderService {
                 .filter(o -> figi == null || o.getFigi().equals(figi))
                 .filter(o -> o.getPurchaseDateTime() == null)
                 .filter(o -> o.getStrategy().equals(strategy.getName()))
+                .findFirst().orElse(null);
+    }
+
+    public OrderDomainEntity findById(Long id) {
+        return orders.stream()
+                .filter(o -> o.getId() != null && o.getId().equals(id))
                 .findFirst().orElse(null);
     }
 
@@ -373,10 +380,12 @@ public class OrderService implements IOrderService {
     }
 
     @Transactional
-    public synchronized OrderDomainEntity updateDetailsCurrentPrice(Order order, String key, BigDecimal price) {
-        order.getOrderDomainEntity().setDetails(order.getDetails());
-        order.getOrderDomainEntity().getDetails().getCurrentPrices().put(key, price);
-        return saveOrder(order.getOrderDomainEntity());
+    public synchronized void updateDetailsCurrentPrice(Order order, String key, BigDecimal price) {
+        OrderDomainEntity orderFresh = findById(order.getOrderDomainEntity().getId());
+        orderFresh.setDetails(order.getDetails());
+        orderFresh.getDetails().getCurrentPrices().put(key, price);
+        var newOrderDomainEntity = saveOrder(orderFresh);
+        order.setOrderDomainEntity(newOrderDomainEntity);
     }
 
     private OrderDomainEntity setOrderInfoBuy(OrderDomainEntity order, ITinkoffOrderAPI.OrderResult result) {
@@ -438,6 +447,9 @@ public class OrderService implements IOrderService {
     @PostConstruct
     public void loadOrdersFromDB() {
         orders = new CopyOnWriteArrayList();
-        orders.addAll(orderRepository.findAll(Sort.by("id")));
+        var loaded = orderRepository.findAll(Sort.by("id"))
+                .stream().limit(200).collect(Collectors.toList());
+        log.info("Load orders from DB count {}", loaded.size());
+        orders.addAll(loaded);
     }
 }

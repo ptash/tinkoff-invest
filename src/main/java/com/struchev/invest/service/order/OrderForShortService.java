@@ -47,8 +47,7 @@ public class OrderForShortService implements IOrderService
     }
 
     @Override
-    public OrderDomainEntity updateDetailsCurrentPrice(Order order, String key, BigDecimal price) {
-        var o = orderService.updateDetailsCurrentPrice(order, key, price);
-        return o;
+    public void updateDetailsCurrentPrice(Order order, String key, BigDecimal price) {
+        orderService.updateDetailsCurrentPrice(order, key, price);
     }
 }

@@ -8,5 +8,5 @@ import java.math.BigDecimal;
 public interface IOrderService {
     Order findLastByFigiAndStrategy(String figi, AStrategy strategy);
     Order findActiveByFigiAndStrategy(String figi, AStrategy strategy);
-    OrderDomainEntity updateDetailsCurrentPrice(Order order, String key, BigDecimal price);
+    void updateDetailsCurrentPrice(Order order, String key, BigDecimal price);
 }
