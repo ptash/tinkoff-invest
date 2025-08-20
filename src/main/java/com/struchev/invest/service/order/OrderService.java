@@ -447,7 +447,7 @@ public class OrderService implements IOrderService {
     @PostConstruct
     public void loadOrdersFromDB() {
         orders = new CopyOnWriteArrayList();
-        var loaded = orderRepository.findAll(Sort.by("id"))
+        var loaded = orderRepository.findAll(Sort.by(Sort.Direction.DESC,"id"))
                 .stream().limit(200).collect(Collectors.toList());
         log.info("Load orders from DB count {}", loaded.size());
         orders.addAll(loaded);
