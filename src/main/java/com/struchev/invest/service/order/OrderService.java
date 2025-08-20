@@ -423,7 +423,9 @@ public class OrderService implements IOrderService {
         return saveOrder(order);
     }
 
+    @Transactional
     private OrderDomainEntity saveOrder(OrderDomainEntity order) {
+        log.info("Save order {}", order);
         order = orderRepository.save(order);
 
         var orderId = order.getId();
