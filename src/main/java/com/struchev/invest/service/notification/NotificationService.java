@@ -258,14 +258,21 @@ public class NotificationService implements INotificationService{
     public void reportStrategyExt(Boolean res, AStrategy strategy, CandleDomainEntity candle, String headerLine, String format, Object... arguments) {
         var key = strategy.getName() + candle.getFigi();
         var reportData = getReportData(key);
+        var isNew = false;
+        var isLog = false;
         if (
             null != reportData
             && !formatDateTime(reportData.getCandle().getDateTime()).equals(formatDateTime(candle.getDateTime()))
         ) {
             log.info(getStrategyReportLogMarker(strategy, candle.getFigi(), reportData.getHeaderLine()), reportData.getFormat(), reportData.getArguments());
+            isNew = true;
         }
         if (res) {
             log.info(getStrategyReportLogMarker(strategy, candle.getFigi(), headerLine), format, arguments);
+            isLog = true;
+        }
+        if (!isLog) {
+            log.info(getStrategyReportLastCandleLogMarker(strategy, candle.getFigi(), headerLine, isNew), format, arguments);
         }
         addReportData(key, ReportData.builder()
             .candle(candle)
@@ -273,6 +280,27 @@ public class NotificationService implements INotificationService{
             .format(format)
             .arguments(arguments)
             .build());
+    }
+
+    private Marker getStrategyReportLastCandleLogMarker(AStrategy strategy, String figi, String headerLine, Boolean isNew)
+    {
+        String instanceName = strategy.getName() + figi + "Strategy-9999";
+        synchronized (reportStrategyLoggerMap) {
+            if (isNew && reportStrategyLoggerMap.containsKey(instanceName)) {
+                log.info("Log detach {}", instanceName);
+                Logger logger = (Logger) log;
+                FileAppender fileAppender = (FileAppender) logger.getAppender(instanceName);
+                logger.detachAppender(fileAppender);
+                reportStrategyLoggerMap.remove(instanceName);
+            }
+            if (!reportStrategyLoggerMap.containsKey(instanceName)) {
+                reportStrategyLoggerMap.put(instanceName, this.createReportLastCandleLogMarker(
+                        instanceName,
+                        headerLine
+                ));
+            }
+        }
+        return reportStrategyLoggerMap.get(instanceName);
     }
 
     private Marker getStrategyReportLogMarker(AStrategy strategy, String figi, String headerLine)
@@ -295,6 +323,61 @@ public class NotificationService implements INotificationService{
         LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
         String fileName = loggingPath + "/" + instanceName + "-" + dateTime.toString().replace(":", "_") + ".csv";
         log.info("Create log file {}", fileName);
+        FileAppender fileAppender = new FileAppender();
+        fileAppender.setContext(loggerContext);
+        fileAppender.setName(instanceName);
+        fileAppender.setFile(fileName);
+
+        PatternLayoutEncoder encoder = new PatternLayoutEncoder();
+        encoder.setContext(loggerContext);
+        encoder.setPattern("%m%n");
+        encoder.start();
+
+        Filter filter = new Filter() {
+            @Override
+            public FilterReply decide(Object obj) {
+                if (!isStarted()) {
+                    return FilterReply.NEUTRAL;
+                }
+                LoggingEvent event = (LoggingEvent) obj;
+                if (event.getMarker().getName().equals(instanceName)) {
+                    return FilterReply.NEUTRAL;
+                } else {
+                    return FilterReply.DENY;
+                }
+            }
+
+        };
+        filter.start();
+        fileAppender.addFilter(filter);
+        fileAppender.setEncoder(encoder);
+
+        fileAppender.start();
+
+        Logger logger = (Logger) log;
+        logger.addAppender(fileAppender);
+        log.info(marker, headerLine);
+        return marker;
+    }
+
+    private Marker createReportLastCandleLogMarker(String instanceName, String headerLine) {
+        Marker marker = MarkerFactory.getMarker(instanceName);
+        LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+        var dateTimeNow = OffsetDateTime.now();
+        String fileName = loggingPath + "/" + instanceName + "-" + dateTimeNow.toString().replace(":", "_") + ".csv";
+        log.info("Create log file for last candle {}", fileName);
+
+        File[] fileList = new File(loggingPath).listFiles((dir, name) -> {
+            return name.contains(instanceName);
+        });
+        for (int i = 0; i < fileList.length; i++) {
+            File file = fileList[i];
+            if (file.delete()) {
+                log.info("Log file deleted {}", file.getAbsolutePath());
+            } else {
+                log.error("Log file not deleted {}", file.getAbsolutePath());
+            }
+        }
         FileAppender fileAppender = new FileAppender();
         fileAppender.setContext(loggerContext);
         fileAppender.setName(instanceName);

@@ -52,7 +52,7 @@ public class MainController {
     }
 
     @GetMapping(path = {"/strategy_dygraphs_by_fiat"})
-    public ModelAndView strategyDygraphsByFiat(@RequestParam String strategy, @RequestParam String figi, @RequestParam(defaultValue = "2") Integer size) {
+    public ModelAndView strategyDygraphsByFiat(@RequestParam String strategy, @RequestParam String figi, @RequestParam(defaultValue = "4") Integer size) {
         return new ModelAndView("dygraphs", Map.of(
                 "strategy", strategy,
                 "figi", figi,
