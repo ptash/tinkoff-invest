@@ -66,7 +66,7 @@ public class PurchaseService {
                 // Для стратегии instrumentByInstrument нужен ордер по любому инструменту (торгуется вся стратегия целиком)
                 var figiSuitableForOrder = strategy.getType() == AStrategy.Type.instrumentByInstrument ? null : candleDomainEntity.getFigi();
                 var order = orderService.findAnyActiveOrderDomainByFigiAndStrategy(figiSuitableForOrder, strategy);
-                //log.info("observeNewCandle {} {} order={} isArchive={}", strategy.getName(), candleDomainEntity.getDateTime(), order == null ? "null": "exist", strategy.isArchive());
+                log.trace("observeNewCandle {} {} order={} isArchive={}", strategy.getName(), candleDomainEntity.getDateTime(), order == null ? "null": "exist", strategy.isArchive());
 
                 if (order == null && strategy.isArchive()) {
                     return;
@@ -78,11 +78,13 @@ public class PurchaseService {
 
                 // Нет активного ордера, возможно можем купить, если нет ограничений по задержке после stop loss
                 if (order == null) {
-                    //log.info("observeNewCandle order=null {} {}", strategy.getName(), candleDomainEntity.getDateTime());
+                    log.trace("observeNewCandle order=null {} {} isShouldBuy begin", strategy.getName(), candleDomainEntity.getDateTime());
                     var isShouldBuy = calculator.isShouldBuy(strategy, candleDomainEntity);
+                    log.trace("observeNewCandle order=null {} {} isShouldBuyShort begin", strategy.getName(), candleDomainEntity.getDateTime());
                     var isShouldBuyShort = calculator.isShouldBuyShort(strategy, candleDomainEntity);
+                    log.trace("observeNewCandle order=null {} {} isTrendBuyShort begin", strategy.getName(), candleDomainEntity.getDateTime());
                     var isTrendBuyShort = calculator.isTrendBuyShort(strategy, candleDomainEntity);
-                    //log.info("observeNewCandle order=null {} {}: isShouldBuy = {} isShouldBuyShort = {} isTrendBuyShort = {}", strategy.getName(), candleDomainEntity.getDateTime(), isShouldBuy, isShouldBuyShort, isTrendBuyShort);
+                    log.trace("observeNewCandle order=null {} {}: isShouldBuy = {} isShouldBuyShort = {} isTrendBuyShort = {}", strategy.getName(), candleDomainEntity.getDateTime(), isShouldBuy, isShouldBuyShort, isTrendBuyShort);
                     if (isShouldBuy && !isShouldBuyShort && !isTrendBuyShort) {
                         OrderDomainEntity lastOrder = null;
                         var finishedOrders = orderService.findClosedByFigiAndStrategy(candleDomainEntity.getFigi(), strategy);
@@ -182,6 +184,7 @@ public class PurchaseService {
                             notificationService.sendSellLimitInfo(strategy, order, candleDomainEntity);
                         }
                     }
+                    log.trace("observeNewCandle order=null {} {} return", strategy.getName(), candleDomainEntity.getDateTime());
                     return;
                 }
 
@@ -200,8 +203,11 @@ public class PurchaseService {
                 var isSell = false;
                 try {
                     if (!order.isShort()) {
+                        log.trace("observeNewCandle order=long {} {} isShouldBuy begin", strategy.getName(), candleDomainEntity.getDateTime());
                         var isShouldSell = calculator.isShouldSell(strategy, candleDomainEntity, order.getPurchasePrice());
+                        log.trace("observeNewCandle order=long {} {} isShouldBuyShort begin", strategy.getName(), candleDomainEntity.getDateTime());
                         var isShouldBuyShort = calculator.isShouldBuyShort(strategy, candleDomainEntity);
+                        log.trace("observeNewCandle order=long {} {}: isShouldSell = {} isShouldBuyShort = {}", strategy.getName(), candleDomainEntity.getDateTime(), isShouldSell, isShouldBuyShort);
                         if (
                                 isShouldSell
                                         || ((((isShouldBuyShort || calculator.isTrendBuyShort(strategy, candleDomainEntity))
@@ -211,6 +217,7 @@ public class PurchaseService {
                                 )
                                         && !calculator.isTrendBuy(strategy, candleDomainEntity))
                         ) {
+                            log.trace("observeNewCandle order=long {} {} closeOrder begin", strategy.getName(), candleDomainEntity.getDateTime());
                             order = orderService.closeOrder(candleDomainEntity, strategy);
                             notificationService.sendSellInfo(strategy, order, candleDomainEntity);
                             isSell = true;
@@ -219,10 +226,14 @@ public class PurchaseService {
                                 notificationForShortService.sendSellInfo(strategy, order, candleDomainEntity);
                                 isSell = false;
                             }
+                            log.trace("observeNewCandle order=long {} {} closeOrder end", strategy.getName(), candleDomainEntity.getDateTime());
                         }
                     } else if (order.isShort()) {
+                        log.trace("observeNewCandle order=short {} {} isShouldSellShort begin", strategy.getName(), candleDomainEntity.getDateTime());
                         var isShouldSellShort = calculator.isShouldSellShort(strategy, candleDomainEntity, order.getSellPrice());
+                        log.trace("observeNewCandle order=short {} {} isShouldBuy begin", strategy.getName(), candleDomainEntity.getDateTime());
                         var isShouldBuy = calculator.isShouldBuy(strategy, candleDomainEntity);
+                        log.trace("observeNewCandle order=short {} {}: isShouldSellShort = {} isShouldBuy = {}", strategy.getName(), candleDomainEntity.getDateTime(), isShouldSellShort, isShouldBuy);
                         if (
                                 isShouldSellShort
                                         || ((((isShouldBuy || calculator.isTrendBuy(strategy, candleDomainEntity))
@@ -232,6 +243,7 @@ public class PurchaseService {
                                 )
                                         && !calculator.isTrendBuyShort(strategy, candleDomainEntity))
                         ) {
+                            log.trace("observeNewCandle order=short {} {} closeOrder begin", strategy.getName(), candleDomainEntity.getDateTime());
                             order = orderService.closeOrderShort(candleDomainEntity, strategy);
                             notificationForShortService.sendBuyInfo(strategy, order, candleDomainEntity);
                             isSell = true;
@@ -240,6 +252,7 @@ public class PurchaseService {
                                 notificationService.sendBuyInfo(strategy, order, candleDomainEntity);
                                 isSell = false;
                             }
+                            log.trace("observeNewCandle order=short {} {} closeOrder end", strategy.getName(), candleDomainEntity.getDateTime());
                         }
                     }
                 } catch (Exception e) {
@@ -251,8 +264,10 @@ public class PurchaseService {
                     }
                 }
                 if (!isSell) {
+                    log.trace("observeNewCandle !isSell {} {} begin", strategy.getName(), candleDomainEntity.getDateTime());
                     var orderId = order.getSellOrderId();
                     order = orderService.openLimitOrder(order, strategy, candleDomainEntity);
+                    log.trace("observeNewCandle openLimitOrder {} {} end", strategy.getName(), candleDomainEntity.getDateTime());
                     if (
                             orderId != order.getSellOrderId()
                             || (!order.isShort() && order.getSellDateTime() != null)
@@ -263,8 +278,11 @@ public class PurchaseService {
                         } else {
                             notificationService.sendSellLimitInfo(strategy, order, candleDomainEntity);
                         }
+                        log.trace("observeNewCandle sendSellLimitInfo {} {} end", strategy.getName(), candleDomainEntity.getDateTime());
                     }
+                    log.trace("observeNewCandle !isSell {} {} end", strategy.getName(), candleDomainEntity.getDateTime());
                 }
+                log.trace("observeNewCandle order=order {} {} return", strategy.getName(), candleDomainEntity.getDateTime());
             } catch (Exception e) {
                 log.info("error in observeNewCandle " + strategy.getName(), e);
                 try {
