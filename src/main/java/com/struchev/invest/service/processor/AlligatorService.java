@@ -1344,18 +1344,52 @@ public class AlligatorService implements
             OffsetDateTime currentDateTime,
             AAlligatorStrategy strategy
     ) {
-        var candleList = getCandlesByFigiByLength(figi, currentDateTime, strategy.getMaxDeep(), strategy.getInterval());
+        var candleList = getCandlesByFigiByLength(figi, currentDateTime, strategy.getMaxDeep() + 1, strategy.getInterval());
         Double average = 0.0;
         var size = strategy.getMaxDeep();
-        for (var i = 0; i < candleList.size(); i++) {
-            var blue = getAlligatorBlue(figi, candleList.get(i).getDateTime(), strategy);
-            var green = getAlligatorGreen(figi, candleList.get(i).getDateTime(), strategy);
-            if (blue == null || green == null) {
-                size--;
-                continue;
-            }
-            average += 100 * Math.abs(blue - green) / Math.abs(green) / size;
+
+        String key = "Average" + strategy.getName() + figi + currentDateTime;
+        var ret = getCashedValueDouble(key);
+        if (ret != null) {
+            log.trace("Average value {} from cash by key {}", printPrice(ret), key);
+            return ret;
         }
+
+        var prevDateTime = candleList.get(candleList.size() - 1).getDateTime();
+        String keyPrev = "Average" + strategy.getName() + figi + prevDateTime;
+        var retPrev = getCashedValueDouble(keyPrev);
+        log.trace("Average keys {} = {}, {} = {}", key, (ret != null ? printPrice(ret) : null), keyPrev, (retPrev != null ? printPrice(retPrev) : null));
+        if (retPrev != null) {
+            var iFirst = 0;
+            var blue = getAlligatorBlue(figi, candleList.get(iFirst).getDateTime(), strategy);
+            var green = getAlligatorGreen(figi, candleList.get(iFirst).getDateTime(), strategy);
+            Double prevFirst = 0.0;
+            if (blue != null && green != null) {
+                prevFirst = 100 * Math.abs(blue - green) / Math.abs(green) / size;
+            }
+            var iLast = candleList.size() - 1;
+            blue = getAlligatorBlue(figi, candleList.get(iLast).getDateTime(), strategy);
+            green = getAlligatorGreen(figi, candleList.get(iLast).getDateTime(), strategy);
+            Double itemLast = 0.0;
+            if (blue != null && green != null) {
+                itemLast = 100 * Math.abs(blue - green) / Math.abs(green) / size;
+            }
+            average = retPrev - prevFirst + itemLast;
+            log.trace("Average value {} = {} - {} + {} from cash by prev key {}", printPrice(average), printPrice(retPrev), printPrice(prevFirst), printPrice(itemLast), keyPrev);
+        } else {
+            for (var i = 1; i < candleList.size(); i++) {
+                var blue = getAlligatorBlue(figi, candleList.get(i).getDateTime(), strategy);
+                var green = getAlligatorGreen(figi, candleList.get(i).getDateTime(), strategy);
+                if (blue == null || green == null) {
+                    size--;
+                    continue;
+                }
+                var item = 100 * Math.abs(blue - green) / Math.abs(green) / size;
+                average += item;
+            }
+        }
+        addCashedValueDouble(key, average);
+        log.trace("Average value saved {} = {}", key, printPrice(average));
         return average;
     }
 
@@ -1956,7 +1990,7 @@ public class AlligatorService implements
     private Map<String, Double> doubleCashMap = new LinkedHashMap<>() {
         @Override
         protected boolean removeEldestEntry(final Map.Entry eldest) {
-            return size() > 500 * 2 * 3;
+            return size() > 500 * 2 * 3 * 20;
         }
     };
 
