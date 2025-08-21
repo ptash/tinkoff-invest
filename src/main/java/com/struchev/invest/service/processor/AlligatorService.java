@@ -1933,14 +1933,61 @@ public class AlligatorService implements
 
     private List<CandleDomainEntity> getCandlesByFigiByLength(String figi, OffsetDateTime currentDateTime, Integer length, String interval)
     {
+        var minInInterval = 0;
         if (interval.equals("5min")) {
-            currentDateTime = currentDateTime.minusMinutes(1);
+            minInInterval = 5;
         }
         if (interval.equals("15min")) {
-            currentDateTime = currentDateTime.minusMinutes(1);
+            minInInterval = 15;
         }
-        return candleHistoryService.getCandlesByFigiByLength(figi,
-                currentDateTime, length, interval);
+        if (minInInterval > 0) {
+            var minusS = currentDateTime.getMinute() % minInInterval;
+            minusS += minInInterval;
+            var currentDateTimeNew = currentDateTime
+                    .minusMinutes(minusS)
+                    .minusSeconds(currentDateTime.getSecond())
+                    .minusNanos(currentDateTime.getNano())
+            ;
+            //log.trace("getCandlesByFigiByLength: currentDateTime from {} to {}", printDateTime(currentDateTime), printDateTime(currentDateTimeNew));
+            currentDateTime = currentDateTimeNew;
+        }
+
+        String key = "len" + figi + "-" + printDateTime(currentDateTime) + "-" + interval;
+        var res = getCashedValueCandleList(key);
+        if (res != null) {
+            log.trace("getCandlesByFigiByLength: find value in cash by key {} size {}. Need {}", key, res.size(), length);
+            if (res.size() == length) {
+                return res;
+            }
+            if (res.size() > length) {
+                return res.subList(res.size() - length, res.size());
+            }
+        }
+
+        res = candleHistoryService.getCandlesByFigiByLength(figi, currentDateTime, length, interval);
+        addCashedValueCandleList(key, res);
+        log.trace("getCandlesByFigiByLength: add value to cash with key {} size {}", key, length);
+        return res;
+    }
+
+    private Map<String, List<CandleDomainEntity>> candleListCashMap = new LinkedHashMap<>() {
+        @Override
+        protected boolean removeEldestEntry(final Map.Entry eldest) {
+            return size() > 4 * 20;
+        }
+    };
+
+    private synchronized List<CandleDomainEntity> getCashedValueCandleList(String indent)
+    {
+        if (candleListCashMap.containsKey(indent)) {
+            return candleListCashMap.get(indent);
+        }
+        return null;
+    }
+
+    private synchronized void addCashedValueCandleList(String indent, List<CandleDomainEntity> v)
+    {
+        candleListCashMap.put(indent, v);
     }
 
     private String printPrice(BigDecimal s)
