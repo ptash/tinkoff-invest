@@ -1,6 +1,7 @@
 package com.struchev.invest.service.processor;
 
 import com.struchev.invest.entity.CandleDomainEntity;
+import com.struchev.invest.expression.Date;
 import com.struchev.invest.service.candle.ICandleHistoryService;
 import com.struchev.invest.service.notification.INotificationService;
 import com.struchev.invest.service.order.IOrderService;
@@ -16,6 +17,8 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
@@ -476,20 +479,21 @@ public class AlligatorService implements
                 setOrderBigDecimalData(strategy, candle, "limitPercent", BigDecimal.valueOf(realLimitPercent));
             }
 
-            if (null != strategy.getDayTimeEndBuy()) {
-                var dayEndDateTime = strategy.getDayTimeEndBuy();
-                var curDayEnd = candle.getDateTime()
+            if (null != strategy.getDayTimeEndBuy(candle.getDateTime())) {
+                var dayEndDateTime = Date.getDateTimeInZone(strategy.getDayTimeEndBuy(candle.getDateTime()));
+                var candleDateTime = Date.getDateTimeInZone(candle.getDateTime());
+                var curDayEnd = candleDateTime
                         .withHour(dayEndDateTime.getHour())
                         .withMinute(dayEndDateTime.getMinute())
                         .withSecond(dayEndDateTime.getSecond());
-                annotation += " curDayEnd=" + printDateTime(curDayEnd);
-                if (candle.getDateTime().compareTo(curDayEnd) > 0) {
+                annotation += " " + printDateTime(candleDateTime) + ">curDayEnd=" + printDateTime(curDayEnd);
+                if (candleDateTime.compareTo(curDayEnd) > 0) {
                     annotation += " SKIP by day end";
                     resBuy = false;
                     isDayEnd = true;
                 }
-            } else if (null != strategy.getDayTimeEndTrading()) {
-                var lengthToDayEnd = getLengthToDayEnd(candle.getFigi(), candle.getDateTime(), strategy.getDayTimeEndTrading(), strategy.getInterval());
+            } else if (null != strategy.getDayTimeEndTrading(candle.getDateTime())) {
+                var lengthToDayEnd = getLengthToDayEnd(candle.getFigi(), candle.getDateTime(), strategy.getDayTimeEndTrading(candle.getDateTime()), strategy.getInterval());
                 annotation += " lengthToDayEnd=" + lengthToDayEnd;
                 if (
                         lengthToDayEnd != null
@@ -1028,8 +1032,8 @@ public class AlligatorService implements
 
         var isDayEnd = false;
         if (!res && alligatorAverage != null && curAlligatorMouth != null) {
-            if (strategy.getDayTimeEndTrading() != null) {
-                var dayEndDateTime = strategy.getDayTimeEndTrading();
+            if (strategy.getDayTimeEndTrading(candle.getDateTime()) != null) {
+                var dayEndDateTime = strategy.getDayTimeEndTrading(candle.getDateTime());
                 var curDayEnd = candle.getDateTime()
                         .withHour(dayEndDateTime.getHour())
                         .withMinute(dayEndDateTime.getMinute())
@@ -2022,6 +2026,11 @@ public class AlligatorService implements
     private String printDateTime(OffsetDateTime dt)
     {
         return notificationService.formatDateTime(dt);
+    }
+
+    private String printDateTime(ZonedDateTime dt)
+    {
+        return dt.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
     }
 
     private String getMethodKey(Function<? super CandleDomainEntity, ? extends BigDecimal> keyExtractor)

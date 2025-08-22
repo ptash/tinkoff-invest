@@ -4,6 +4,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
 @Component
@@ -30,5 +31,9 @@ public interface Date {
         var dateInZone = date.atZoneSameInstant(ZoneId.systemDefault());
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
         return dateInZone.format(formatter);
+    }
+
+    static ZonedDateTime getDateTimeInZone(OffsetDateTime date) {
+        return date.atZoneSameInstant(ZoneId.systemDefault());
     }
 }

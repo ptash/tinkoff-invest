@@ -72,8 +72,8 @@ public abstract class AAlligatorStrategy extends AStrategy implements Cloneable,
     public Double getLimitDeltaK() { return 0.5; }
     public Boolean isLimitPercentByPriceAlligator() { return false; }
 
-    public OffsetDateTime getDayTimeEndTrading() { return null; }
-    public OffsetDateTime getDayTimeEndBuy() { return null; }
+    public OffsetDateTime getDayTimeEndTrading(OffsetDateTime dateTime) { return null; }
+    public OffsetDateTime getDayTimeEndBuy(OffsetDateTime dateTime) { return null; }
 
     public Integer getFMaxCandleCountFromEnd() { return null; }
 
