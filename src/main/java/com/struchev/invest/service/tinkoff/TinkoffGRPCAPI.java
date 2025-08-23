@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import ru.tinkoff.piapi.contract.v1.*;
 
 import java.math.BigDecimal;
+import java.math.MathContext;
 import java.math.RoundingMode;
 import java.util.HashMap;
 import java.util.List;
@@ -58,7 +59,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
             return OrderResult.builder()
                     .orderId(result.getOrderId())
                     .commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
-                    .commission(getExecutedCommission(result, instrument))
+                    .commission(getExecutedCommission(result, instrument, priceExecuted.multiply(BigDecimal.valueOf(count))))
                     .price(priceExecuted)
                     .pricePt(getPricePt(instrument, priceExecuted))
                     .lots(result.getLotsRequested() * instrument.getLot())
@@ -100,7 +101,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
             return OrderResult.builder()
                     .orderId(result.getOrderId())
                     .commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
-                    .commission(getExecutedCommission(result, instrument))
+                    .commission(getExecutedCommission(result, instrument, priceExecuted.multiply(BigDecimal.valueOf(count))))
                     .price(priceExecuted)
                     .pricePt(getPricePt(instrument, priceExecuted))
                     .lots(result.getLotsRequested() * instrument.getLot())
@@ -223,7 +224,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                 var lots = result.getLotsExecuted() * instrument.getLot();
                 var price = priceOrder.divide(BigDecimal.valueOf(lots), 8, RoundingMode.HALF_DOWN);
                 orderResultBuilder.commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
-                        .commission(getExecutedCommission(result, instrument))
+                        .commission(getExecutedCommission(result, instrument, price.multiply(BigDecimal.valueOf(lots))))
                         .lots(lots)
                         .price(price)
                         .pricePt(getPricePt(instrument, price))
@@ -387,7 +388,11 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                     if (result.hasExecutedOrderPrice() && !isZero(result.getExecutedOrderPrice())) {
                         var priceExecutedOrder = toBigDecimal(result.getExecutedOrderPrice(), 8);
                         orderResultBuilder.commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
-                                .commission(getExecutedCommission(result, instrument))
+                                .commission(getExecutedCommission(
+                                        result,
+                                        instrument,
+                                        priceExecutedOrder.multiply(BigDecimal.valueOf(result.getLotsExecuted() * instrument.getLot()))
+                                ))
                                 .lots(result.getLotsExecuted() * instrument.getLot())
                                 .orderPricePt(getPricePt(instrument, priceExecutedOrder))
                                 .isExecuted(true)
@@ -445,7 +450,11 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
             return OrderResult.builder()
                     .orderId(result.getOrderId())
                     .commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
-                    .commission(getExecutedCommission(result, instrument))
+                    .commission(getExecutedCommission(
+                            result,
+                            instrument,
+                            priceExecuted.multiply(BigDecimal.valueOf(result.getLotsRequested() * instrument.getLot()))
+                    ))
                     .price(priceExecuted)
                     .pricePt(getPricePt(instrument, priceExecuted))
                     .lots(result.getLotsRequested() * instrument.getLot())
@@ -486,7 +495,11 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
             return OrderResult.builder()
                     .orderId(result.getOrderId())
                     .commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
-                    .commission(getExecutedCommission(result, instrument))
+                    .commission(getExecutedCommission(
+                            result,
+                            instrument,
+                            priceExecuted.multiply(BigDecimal.valueOf(result.getLotsRequested() * instrument.getLot()))
+                    ))
                     .price(priceExecuted)
                     .pricePt(getPricePt(instrument, priceExecuted))
                     .lots(result.getLotsRequested() * instrument.getLot())
@@ -645,14 +658,14 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
         return money.getNano() == 0 && money.getUnits() == 0;
     }
 
-    private BigDecimal getExecutedCommission(OrderState orderState, InstrumentService.Instrument instrument) {
-        return getExecutedCommission(instrument, orderState.getOrderId(), orderState.getInitialCommission(), orderState.getExecutedCommission());
+    private BigDecimal getExecutedCommission(OrderState orderState, InstrumentService.Instrument instrument, BigDecimal priceMoney) {
+        return getExecutedCommission(instrument, orderState.getOrderId(), orderState.getInitialCommission(), orderState.getExecutedCommission(), priceMoney);
     }
-    private BigDecimal getExecutedCommission(PostOrderResponse postOrderResponse, InstrumentService.Instrument instrument) {
-        return getExecutedCommission(instrument, postOrderResponse.getOrderId(), postOrderResponse.getInitialCommission(), postOrderResponse.getExecutedCommission());
+    private BigDecimal getExecutedCommission(PostOrderResponse postOrderResponse, InstrumentService.Instrument instrument, BigDecimal priceMoney) {
+        return getExecutedCommission(instrument, postOrderResponse.getOrderId(), postOrderResponse.getInitialCommission(), postOrderResponse.getExecutedCommission(), priceMoney);
     }
 
-    private BigDecimal getExecutedCommission(InstrumentService.Instrument instrument, String orderId, MoneyValue initialCommission, MoneyValue executedCommission) {
+    private BigDecimal getExecutedCommission(InstrumentService.Instrument instrument, String orderId, MoneyValue initialCommission, MoneyValue executedCommission, BigDecimal priceMoney) {
         var figi = instrument.getFigi();
         if (null != executedCommission) {
             if (!isZero(executedCommission) || isZero(initialCommission)) {
@@ -661,7 +674,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                 return commission;
             }
         }
-        for (var i = 0; i < 10; i++) {
+        for (var i = 0; i < 2; i++) {
             try {
                 log.info("Try number {} to request commission for order {} figi {}", i + 1, orderId, figi);
                 var orderState = getApi().getOrdersService().getOrderStateSync(getAccountIdByFigi(instrument), orderId);
@@ -679,10 +692,21 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
             }
         }
         var commission = BigDecimal.ZERO;
-        if (null != initialCommission) {
+        if (null != initialCommission && !isZero(initialCommission)) {
             commission = toBigDecimal(initialCommission, 8);
+            log.info("Failed to receive commission for order {} figi {}. Set initial commission {}", orderId, figi, commission);
+        } else {
+            var percent = new BigDecimal("0.0004");
+            if (instrument.getType() == InstrumentService.Type.future) {
+                if (instrument.getFigi().startsWith("FUTIBIT") || instrument.getFigi().startsWith("FUTETHA")) {
+                    percent = new BigDecimal("0.0006");
+                } else {
+                    percent = new BigDecimal("0.00025");
+                }
+            }
+            commission = priceMoney.multiply(percent, new MathContext(2, RoundingMode.HALF_UP));
+            log.info("Failed to receive commission for order {} figi {}. Set manual commission {} = {} * {}", orderId, figi, commission, priceMoney, percent);
         }
-        log.info("Failed to receive commission {} for order {} figi {}. Set zero commission {}", commission, orderId, figi, initialCommission);
         return commission;
     }
 
