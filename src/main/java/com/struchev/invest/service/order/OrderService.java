@@ -203,7 +203,7 @@ public class OrderService implements IOrderService {
         return order;
     }
 
-    @Transactional
+    //@Transactional
     public synchronized OrderDomainEntity openLimitOrder(OrderDomainEntity order, AStrategy strategy, CandleDomainEntity candle) {
         OrderDomainEntity orderFresh;
         if (order.isShort()) {
@@ -293,7 +293,7 @@ public class OrderService implements IOrderService {
         return order;
     }
 
-    @Transactional
+    //@Transactional
     public synchronized OrderDomainEntity closeOrderShort(CandleDomainEntity candle, AStrategy strategy) throws Exception {
         var instrument = instrumentService.getInstrument(candle.getFigi());
         var order = findActiveOrderDomainShortByFigiAndStrategy(candle.getFigi(), strategy);
@@ -306,7 +306,11 @@ public class OrderService implements IOrderService {
             throw new RuntimeException("checkGoodBuy return false for figi " + instrument.getFigi());
         }
 
-        var lots = closeSellLimit(order, instrument);
+        order = closeSellLimit(order, instrument);
+        var lots = order.getLots();
+        if (order.getCellLots() != null) {
+            lots -= order.getCellLots().intValue();
+        }
 
         if (lots > 0) {
             var result = tinkoffOrderAPI.sellShort(instrument, candle.getClosingPrice(), lots);
@@ -318,7 +322,7 @@ public class OrderService implements IOrderService {
         return order;
     }
 
-    @Transactional
+    //@Transactional
     public synchronized OrderDomainEntity closeOrder(CandleDomainEntity candle, AStrategy strategy) throws Exception {
         var instrument = instrumentService.getInstrument(candle.getFigi());
         var order = findActiveOrderDomainByFigiAndStrategy(candle.getFigi(), strategy);
@@ -331,7 +335,11 @@ public class OrderService implements IOrderService {
             throw new RuntimeException("checkGoodSell return false for figi " + instrument.getFigi());
         }
 
-        var lots = closeSellLimit(order, instrument);
+        order = closeSellLimit(order, instrument);
+        var lots = order.getLots();
+        if (order.getCellLots() != null) {
+            lots -= order.getCellLots().intValue();
+        }
         if (lots > 0) {
             var result = tinkoffOrderAPI.sell(instrument, candle.getClosingPrice(), lots);
 
@@ -342,11 +350,7 @@ public class OrderService implements IOrderService {
         return order;
     }
 
-    private Integer closeSellLimit(OrderDomainEntity order, InstrumentService.Instrument instrument) throws Exception {
-        var lots = order.getLots();
-        if (order.getCellLots() != null) {
-            lots -= order.getCellLots().intValue();
-        }
+    private OrderDomainEntity closeSellLimit(OrderDomainEntity order, InstrumentService.Instrument instrument) throws Exception {
         var closeResult = tinkoffOrderAPI.closeSellLimit(instrument, order.getSellLimitOrderId());
         if (null != closeResult.getLots() && closeResult.getLots() > 0 && closeResult.getIsExecuted()) {
             if (order.isShort()) {
@@ -356,7 +360,6 @@ public class OrderService implements IOrderService {
                 order.setSellDateTime(OffsetDateTime.now());
                 order = setOrderInfoSell(order, closeResult);
             }
-            lots -= closeResult.getLots().intValue();
         } else {
             closeResult = tinkoffOrderAPI.closeAllSellLimit(instrument);
             if (null != closeResult.getLots() && closeResult.getLots() > 0 && closeResult.getIsExecuted()) {
@@ -367,19 +370,26 @@ public class OrderService implements IOrderService {
                     order.setSellDateTime(OffsetDateTime.now());
                     order = setOrderInfoSell(order, closeResult);
                 }
-                lots -= closeResult.getLots().intValue();
             }
         }
-        if (closeResult.getOrderId() != null && closeResult.getOrderId().equals(order.getSellLimitOrderId())) {
+        if (
+                closeResult.getOrderId() != null
+                && closeResult.getOrderId().equals(order.getSellLimitOrderId())
+        ) {
             order.setSellLimitOrderId(closeResult.getOrderId());
+            order = saveOrder(order);
         }
-        if (closeResult.getException() != null && (closeResult.getActive() || !closeResult.getIsExecuted())) {
+        if (
+                closeResult.getException() != null
+                && closeResult.getActive()
+                && !closeResult.getIsExecuted()
+        ) {
             throw closeResult.getException();
         }
-        return lots;
+        return order;
     }
 
-    @Transactional
+    //@Transactional
     public synchronized void updateDetailsCurrentPrice(Order order, String key, BigDecimal price) {
         OrderDomainEntity orderFresh = findById(order.getOrderDomainEntity().getId());
         orderFresh.setDetails(order.getDetails());
@@ -432,8 +442,7 @@ public class OrderService implements IOrderService {
         return saveOrder(order);
     }
 
-    @Transactional
-    private OrderDomainEntity saveOrder(OrderDomainEntity order) {
+    private synchronized OrderDomainEntity saveOrder(OrderDomainEntity order) {
         log.info("Save order {}", order);
         order = orderRepository.save(order);
 

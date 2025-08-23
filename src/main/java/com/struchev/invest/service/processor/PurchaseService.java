@@ -257,7 +257,9 @@ public class PurchaseService {
                     }
                 } catch (Exception e) {
                     log.info("Error in sell observeNewCandle " + strategy.getName(), e);
-                    if (null == order.getSellOrderId()) {
+                    // refresh
+                    order = orderService.findById(order.getId());
+                    if (null == order.getSellOrderId() || null == order.getPurchaseOrderId()) {
                         throw e;
                     } else {
                         notificationService.sendMessageAndLog("Error in sell observeNewCandle " + strategy.getName() + ": " + e.getMessage());
