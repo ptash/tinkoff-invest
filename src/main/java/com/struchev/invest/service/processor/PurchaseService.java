@@ -267,11 +267,11 @@ public class PurchaseService {
                 }
                 if (!isSell) {
                     log.trace("observeNewCandle !isSell {} {} begin", strategy.getName(), candleDomainEntity.getDateTime());
-                    var orderId = order.getSellOrderId();
+                    var sellLimitOrderId = order.getSellLimitOrderId();
                     order = orderService.openLimitOrder(order, strategy, candleDomainEntity);
                     log.trace("observeNewCandle openLimitOrder {} {} end", strategy.getName(), candleDomainEntity.getDateTime());
                     if (
-                            orderId != order.getSellOrderId()
+                            sellLimitOrderId != order.getSellLimitOrderId()
                             || (!order.isShort() && order.getSellDateTime() != null)
                             || (order.isShort() && order.getPurchaseDateTime() != null)
                     ) {
