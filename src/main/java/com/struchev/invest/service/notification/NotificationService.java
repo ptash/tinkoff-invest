@@ -92,8 +92,8 @@ public class NotificationService implements INotificationService{
                 order.isShort() ? "S" : "B",
                 order.getPurchasePrice()
         );
-        var msg = String.format("Buy %s %s (%s), %s, %s, %s. Wanted %s", order.getFigi(), order.isShort() ? "short" : "long", order.getFigiTitle(),
-                order.getPurchasePrice(), order.getPurchaseDateTime(), order.getStrategy(), candle.getClosingPrice());
+        var msg = String.format("Buy %s %s (%s), %s (%s), %s, %s. Wanted %s", order.getFigi(), order.isShort() ? "short" : "long", order.getFigiTitle(),
+                order.getPurchasePrice(), order.getSellProfit(), order.getPurchaseDateTime(), order.getStrategy(), candle.getClosingPrice());
         this.sendMessageAndLog(msg);
     }
 
