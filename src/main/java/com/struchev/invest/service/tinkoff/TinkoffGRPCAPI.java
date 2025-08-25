@@ -561,8 +561,12 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
         if (instrument.getType() == InstrumentService.Type.future) {
             var featureData = getFeatureData(instrument);
             addFeatureDataCashed(instrument, featureData);
-            annotate += " initialMargin: " + featureData.initialMargin;
-            price = featureData.initialMargin.multiply(BigDecimal.valueOf(getFeatureMultiply()));
+            price = featureData.initialMargin
+                    .multiply(BigDecimal.valueOf(getFeatureMultiply()))
+                    //.divide(BigDecimal.valueOf(instrument.getLot()), 8, RoundingMode.HALF_UP)
+            ;
+            //count = count / instrument.getLot();
+            annotate += " initialMargin: " + featureData.initialMargin + " lot: " + instrument.getLot();
         }
         var total = price.multiply(BigDecimal.valueOf(count));
         log.info("Checking buy of figi {}: {} > {}", instrument.getFigi(), money, total);
