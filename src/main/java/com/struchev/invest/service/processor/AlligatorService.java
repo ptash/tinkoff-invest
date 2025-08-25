@@ -1185,7 +1185,7 @@ public class AlligatorService implements
         var skipped = 0;
         String annotation = "";
         var mouthCur = getAlligatorMouth(figi, currentDateTime, strategy, null);
-        var keyCur = strategy.getExtName() + printDateTime(currentDateTime);
+        var keyCur = strategy.getExtName() + figi + printDateTime(currentDateTime);
         annotation += " size=" + alligatorMouthAverageCashMap.size();
         annotation += " keyCur=" + keyCur;
         var v = getAlligatorMouthAverageFromCache(keyCur);
@@ -1195,7 +1195,7 @@ public class AlligatorService implements
         var candleList = getCandlesByFigiByLength(figi, currentDateTime, 1, strategy.getInterval());
         if (candleList != null && mouthCur.size > 1) {
             // можно в кеше поискать предыдущее значение
-            var keyPrev = strategy.getExtName() + printDateTime(candleList.get(0).getDateTime());
+            var keyPrev = strategy.getExtName() + figi + printDateTime(candleList.get(0).getDateTime());
             annotation += " keyPrev=" + keyPrev;
             v = getAlligatorMouthAverageFromCache(keyPrev);
             if (v != null) {
