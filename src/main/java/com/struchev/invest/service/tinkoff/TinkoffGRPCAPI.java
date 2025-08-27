@@ -97,6 +97,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
             checkInstrumentAvailableToBuyShort(instrument, price, count);
             var result = getApi().getOrdersService().postOrderSync(instrument.getFigi(), quantity, quotation,
                     OrderDirection.ORDER_DIRECTION_SELL, getAccountIdByFigi(instrument), OrderType.ORDER_TYPE_MARKET, uuid);
+            log.info("postOrder result: {}", result);
             var priceExecuted = toBigDecimal(result.getExecutedOrderPrice(), 8, price);
             return OrderResult.builder()
                     .orderId(result.getOrderId())
@@ -435,6 +436,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
         if (getIsSandboxMode()) {
             var result = getApi().getSandboxService().postOrderSync(instrument.getFigi(), quantity, quotation,
                     OrderDirection.ORDER_DIRECTION_SELL, getAccountIdByFigi(instrument), OrderType.ORDER_TYPE_MARKET, uuid);
+            log.info("postOrder result: {}", result);
             var priceExecuted = toBigDecimal(result.getExecutedOrderPrice(), 8, price);
             return OrderResult.builder()
                     .orderId(result.getOrderId())
@@ -449,6 +451,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
             checkInstrumentAvailableToSell(instrument, count);
             var result = getApi().getOrdersService().postOrderSync(instrument.getFigi(), quantity, quotation,
                     OrderDirection.ORDER_DIRECTION_SELL, getAccountIdByFigi(instrument), OrderType.ORDER_TYPE_MARKET, uuid);
+            log.info("postOrder result: {}", result);
             var priceExecuted = toBigDecimal(result.getExecutedOrderPrice(), 8, price);
             return OrderResult.builder()
                     .orderId(result.getOrderId())
@@ -480,6 +483,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
         if (getIsSandboxMode()) {
             var result = getApi().getSandboxService().postOrderSync(instrument.getFigi(), quantity, quotation,
                     OrderDirection.ORDER_DIRECTION_BUY, getAccountIdByFigi(instrument), OrderType.ORDER_TYPE_MARKET, uuid);
+            log.info("postOrder result: {}", result);
             var priceExecuted = toBigDecimal(result.getExecutedOrderPrice(), 8, price);
             return OrderResult.builder()
                     .orderId(result.getOrderId())
@@ -494,6 +498,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
             checkInstrumentAvailableToSellShort(instrument, count);
             var result = getApi().getOrdersService().postOrderSync(instrument.getFigi(), quantity, quotation,
                     OrderDirection.ORDER_DIRECTION_BUY, getAccountIdByFigi(instrument), OrderType.ORDER_TYPE_MARKET, uuid);
+            log.info("postOrder result: {}", result);
             var priceExecuted = toBigDecimal(result.getExecutedOrderPrice(), 8, price);
             return OrderResult.builder()
                     .orderId(result.getOrderId())
@@ -675,9 +680,12 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
     private BigDecimal getExecutedCommission(InstrumentService.Instrument instrument, String orderId, MoneyValue initialCommission, MoneyValue executedCommission, BigDecimal priceMoney) {
         var figi = instrument.getFigi();
         if (null != executedCommission) {
-            if (!isZero(executedCommission) || isZero(initialCommission)) {
+            if (
+                    !isZero(executedCommission)
+                    //|| isZero(initialCommission)
+            ) {
                 var commission = toBigDecimal(executedCommission, 8);
-                log.info("Receive commission {} for order {} figi {} from postOrderResponse {}", commission, orderId, figi, executedCommission);
+                log.info("Receive commission {} for order {} figi {} from postOrderResponse {} ({})", commission, orderId, figi, executedCommission, initialCommission);
                 return commission;
             }
         }
@@ -686,9 +694,12 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                 log.info("Try number {} to request commission for order {} figi {}", i + 1, orderId, figi);
                 var orderState = getApi().getOrdersService().getOrderStateSync(getAccountIdByFigi(instrument), orderId);
                 if (orderState.hasExecutedCommission()) {
-                    if (!isZero(orderState.getExecutedCommission()) || isZero(orderState.getInitialCommission())) {
+                    if (
+                            !isZero(orderState.getExecutedCommission())
+                            //|| isZero(orderState.getInitialCommission())
+                    ) {
                         var commission = toBigDecimal(orderState.getExecutedCommission(), 8);
-                        log.info("Receive commission {} for order {} figi {} from postOrderState {}", commission, orderId, figi, orderState.getExecutedCommission());
+                        log.info("Receive commission {} for order {} figi {} from postOrderState {} ({})", commission, orderId, figi, orderState.getExecutedCommission(), orderState.getInitialCommission());
                         return commission;
                     }
                 }
