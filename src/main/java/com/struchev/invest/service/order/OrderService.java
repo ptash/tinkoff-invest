@@ -379,6 +379,7 @@ public class OrderService implements IOrderService {
             order.setSellLimitOrderId(closeResult.getOrderId());
             order = saveOrder(order);
         }
+        log.info("closeResult for {} {}", instrument.getFigi(), closeResult);
         if (
                 closeResult.getException() != null
                 && closeResult.getActive()

@@ -195,7 +195,10 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
             var resultOrder = buildOrderResultByOrderState(instrument, orderState);
             if (resultOrder.getActive() && !resultOrder.getIsExecuted()) {
                 var closeResult = closeSellLimit(instrument, orderState.getOrderId());
-                if (null != closeResult.getLots() && closeResult.getLots() > 0 && closeResult.getIsExecuted()) {
+                if (
+                        (null != closeResult.getLots() && closeResult.getLots() > 0 && closeResult.getIsExecuted())
+                        || closeResult.getException() != null
+                ) {
                     var lots = result.get().getLots();
                     result.set(closeResult);
                     result.get().setLots(lots + resultOrder.getLots());
@@ -236,7 +239,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                 || result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_CANCELLED_VALUE
         ) {
             orderResultBuilder.active(false);
-        } else if (result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_NEW_VALUE) {
+            } else if (result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_NEW_VALUE) {
             var priceOrder = toBigDecimal(result.getInitialOrderPrice(), 8);
             var lots = result.getLotsRequested() * instrument.getLot();
             var price = priceOrder.divide(BigDecimal.valueOf(lots), 8, RoundingMode.HALF_DOWN);
