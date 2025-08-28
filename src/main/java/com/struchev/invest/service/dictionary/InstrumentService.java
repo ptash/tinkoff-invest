@@ -12,7 +12,7 @@ import ru.tinkoff.piapi.contract.v1.Quotation;
 import javax.annotation.PostConstruct;
 import java.math.BigDecimal;
 import java.nio.charset.Charset;
-import java.time.OffsetDateTime;
+import java.time.*;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -82,6 +82,33 @@ public class InstrumentService {
     private void init() {
         // загружаем все инструменты в память
         instrumentByFigi = new ConcurrentHashMap<>();
+
+        /*
+        OffsetDateTime localDateTime = OffsetDateTime.now(ZoneId.systemDefault());
+        OffsetDateTime endOfDay = localDateTime.with(LocalTime.MAX);
+        var scheduleMoex = tinkoffCommonAPI.getApi().getInstrumentsService().getTradingScheduleSync("MOEX_PLUS", localDateTime.toInstant(), endOfDay.toInstant());
+        var scheduleMoexWeekend = tinkoffCommonAPI.getApi().getInstrumentsService().getTradingScheduleSync("MOEX_WEEKEND", localDateTime.toInstant(), endOfDay.toInstant());
+        log.info("Trading Schedules MOEX_PLUS from {} to {}: {}", localDateTime, endOfDay, scheduleMoex);
+        log.info("Trading Schedules MOEX_WEEKEND from {} to {}: {}", localDateTime, endOfDay, scheduleMoexWeekend);
+        if (scheduleMoex.getDaysCount() > 0) {
+            var closeTime = scheduleMoex.getDays(0).getAllFields();
+            if (closeTime.getSeconds() > 0) {
+                log.info("Close time MOEX_PLUS {}", OffsetDateTime.ofInstant(
+                        Instant.ofEpochSecond(closeTime.getSeconds()),
+                        ZoneId.systemDefault()
+                ));
+            }
+        }
+        if (scheduleMoexWeekend.getDaysCount() > 0) {
+            var closeTime = scheduleMoexWeekend.getDays(0).getEveningEndTime();
+            if (closeTime.getSeconds() > 0) {
+                log.info("Close time MOEX_WEEKEND {}", OffsetDateTime.ofInstant(
+                        Instant.ofEpochSecond(closeTime.getSeconds()),
+                        ZoneId.systemDefault()
+                ));
+            }
+        }
+        */
 
         var shares = tinkoffCommonAPI.getApi().getInstrumentsService().getAllSharesSync();
         shares.forEach(i -> instrumentByFigi.put(i.getFigi(), new Instrument(Type.share, i.getFigi(), i.getTicker(), i.getCurrency(), i.getName(), i.getLot(), TinkoffGRPCAPI.toBigDecimal(i.getMinPriceIncrement(), 8),

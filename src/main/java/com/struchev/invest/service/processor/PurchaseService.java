@@ -36,6 +36,7 @@ public class PurchaseService {
     private final CalculatorInstrumentByInstrumentService calculatorInstrumentByInstrumentService;
     private final FactorialInstrumentByFiatService factorialInstrumentByFiatService;
     private final AlligatorService alligatorService;
+    private final SmaService smaService;
 
     private final CrossInstrumentByFiatService crossInstrumentByFiatService;
 
@@ -322,6 +323,14 @@ public class PurchaseService {
         if (strategy.getType() == AStrategy.Type.alligator) {
             booleanDataMap = alligatorService.getOrderBooleanDataMap(strategy, candleDomainEntity);
             currentPrices = alligatorService.getOrderBigDecimalDataMap(strategy, candleDomainEntity);
+        }
+        if (strategy.getType() == AStrategy.Type.instrumentFactorialByFiat) {
+            booleanDataMap = factorialInstrumentByFiatService.getOrderBooleanDataMap(strategy, candleDomainEntity);
+            currentPrices = factorialInstrumentByFiatService.getOrderBigDecimalDataMap(strategy, candleDomainEntity);
+        }
+        if (strategy.getType() == AStrategy.Type.sma) {
+            booleanDataMap = smaService.getOrderBooleanDataMap(strategy, candleDomainEntity);
+            currentPrices = smaService.getOrderBigDecimalDataMap(strategy, candleDomainEntity);
         }
         return OrderDetails.builder()
                 .currentPrices(currentPrices)

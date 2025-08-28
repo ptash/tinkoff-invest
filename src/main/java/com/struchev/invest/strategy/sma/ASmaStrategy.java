@@ -49,7 +49,7 @@ public abstract class ASmaStrategy extends AStrategy implements Cloneable, IStra
     public String getInterval() { return "5min"; }
 
     public Integer getSmaLength() { return 13 * 10; }
-    public Integer getMaxDeep() { return 100; }
+    public Integer getMaxDeep() { return 300; }
 
     private SellLimitCriteria sellLimit;
     private Map<String, SellLimitCriteria> sellLimitMap = new HashMap<>();
