@@ -1,10 +1,12 @@
 package com.struchev.invest.strategy.sma;
 
+import com.struchev.invest.expression.Date;
 import com.struchev.invest.strategy.AStrategy;
 import com.struchev.invest.strategy.IStrategyShort;
 
 import java.time.Duration;
 import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -58,9 +60,9 @@ public abstract class ASmaStrategy extends AStrategy implements Cloneable, IStra
         return SellLimitCriteria.builder().exitProfitPercent(0.6f).build();
     }
 
-    public Double getSellLimitPercentForUnderStop() {
-        return 0.3;
-    }
+    public Double getSellLimitPercentForUnderStop() { return 0.3; }
+
+    public Double getDiffFromSmaStandard() { return 1.0; }
 
     public SellLimitCriteria getSellLimitCriteria() {
         return this.sellLimit;
@@ -80,8 +82,25 @@ public abstract class ASmaStrategy extends AStrategy implements Cloneable, IStra
         this.sellLimitMap.put(figi, sellLimit);
     }
 
-    public OffsetDateTime getDayTimeEndTrading(OffsetDateTime dateTime) { return null; }
-    public OffsetDateTime getDayTimeEndBuy(OffsetDateTime dateTime) { return null; }
+    //public OffsetDateTime getDayTimeEndTrading(OffsetDateTime dateTime) { return null; }
+    //public OffsetDateTime getDayTimeEndBuy(OffsetDateTime dateTime) { return null; }
+
+    public OffsetDateTime getDayTimeEndTrading(OffsetDateTime dateTime) {
+        var dateInZone = Date.getDateTimeInZone(dateTime);;
+        if (dateInZone.getDayOfWeek().getValue() < 6) {
+            return OffsetDateTime.parse("2000-01-01T23:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+        } else {
+            return OffsetDateTime.parse("2000-01-01T18:35:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+        }
+    }
+    public OffsetDateTime getDayTimeEndBuy(OffsetDateTime dateTime) {
+        var dateInZone = Date.getDateTimeInZone(dateTime);;
+        if (dateInZone.getDayOfWeek().getValue() < 6) {
+            return OffsetDateTime.parse("2000-01-01T22:05:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+        } else {
+            return OffsetDateTime.parse("2000-01-01T18:10:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+        }
+    }
 
     /*
     public Integer getSmaBlueLength() { return 13; }

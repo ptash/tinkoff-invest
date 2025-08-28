@@ -116,6 +116,7 @@ public class SmaService implements
         Double stopLoss = null;
         Double limitPercent = null;
         Double stopPercent = null;
+        Double k = 1.0;
         var smaAverage = getOverSmaAverage(candle.getFigi(), candle.getDateTime(), strategy, CandleDomainEntity::getMedianPrice);
         if (smaAverage != null) {
             annotation += " overSma=" + printPrice(smaAverage.getOverSma());
@@ -131,6 +132,8 @@ public class SmaService implements
             annotation += " limitPrice=" + printPrice(limitPrice);
             annotation += " smaOverPrice=" + printPrice(smaOverPrice);
             annotation += " smaUnderPrice=" + printPrice(smaUnderPrice);
+            //k = (limitPercent + stopPercent) / strategy.getDiffFromSmaStandard();
+            //annotation += " k=" + printPrice(k);
         }
         if (
                 prevCandle.getHighestPrice().doubleValue() < sma
@@ -138,9 +141,11 @@ public class SmaService implements
                 && !isTrendUp
                 && smaAverage != null
         ) {
+            annotation += " expProfitPer=" + printPrice(strategy.getSellLimitCriteriaOrig().getExitProfitPercent() * k);
             //if (smaAverage.getOverSma() > smaAverage.getUnderSma()) {
-                if (limitPercent > strategy.getSellLimitCriteriaOrig().getExitProfitPercent()) {
+                if (limitPercent > strategy.getSellLimitCriteriaOrig().getExitProfitPercent() * k) {
                     resBuy = true;
+                    //limitPercent = strategy.getSellLimitCriteriaOrig().getExitProfitPercent() * k;
                     annotation += " OK BY DOWN";
                 }
             //}
@@ -149,17 +154,19 @@ public class SmaService implements
         if (    !resBuy
                 && prevCandle.getHighestPrice().doubleValue() < sma
                 && candle.getHighestPrice().doubleValue() < sma
-                //&& !isTrendUp
+                && !isTrendUp
                 && smaAverage != null
         ) {
+            annotation += " expProfitPerUnder=" + printPrice(strategy.getSellLimitPercentForUnderStop() * k);
             if (
-                    limitPercent > strategy.getSellLimitPercentForUnderStop()
+                    limitPercent > strategy.getSellLimitPercentForUnderStop() * k
                     && prevCandle.getHighestPrice().doubleValue() < smaUnderPrice
                     && candle.getHighestPrice().doubleValue() < smaUnderPrice
                     && limitPrice > sma
             ) {
                 resBuy = true;
                 stopLoss = purchaseRate.doubleValue() - smaAverage.getOverSma();
+                //limitPercent = strategy.getSellLimitPercentForUnderStop() * k;
                 annotation += " OK BY UNDER STOP";
             }
         }
@@ -170,6 +177,9 @@ public class SmaService implements
             }
             annotation += " stopLoss=" + printPrice(stopLoss);
 
+            limitPrice = purchaseRate.doubleValue() + (limitPercent / 100.) * purchaseRate.abs().doubleValue();
+            annotation += "new limitPrice=" + printPrice(limitPrice);
+
             setOrderBigDecimalData(strategy, candle, "limitPrice", BigDecimal.valueOf(limitPrice));
             setOrderBigDecimalData(strategy, candle, "limitPercent", BigDecimal.valueOf(limitPercent));
             setOrderBigDecimalData(strategy, candle, "stopLoss", BigDecimal.valueOf(stopLoss));
@@ -179,8 +189,8 @@ public class SmaService implements
 
         var isDayEnd = false;
         if (resBuy) {
-            if (null != strategy.getDayTimeEndTrading(candle.getDateTime())) {
-                var dayEndDateTime = Date.getDateTimeInZone(strategy.getDayTimeEndTrading(candle.getDateTime()));
+            if (null != strategy.getDayTimeEndBuy(candle.getDateTime())) {
+                var dayEndDateTime = Date.getDateTimeInZone(strategy.getDayTimeEndBuy(candle.getDateTime()));
                 var candleDateTime = Date.getDateTimeInZone(candle.getDateTime());
                 var curDayEnd = candleDateTime
                         .withHour(dayEndDateTime.getHour())
