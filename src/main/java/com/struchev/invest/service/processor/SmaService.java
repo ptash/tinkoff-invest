@@ -111,6 +111,8 @@ public class SmaService implements
         log.trace("isShouldBuy {} {} sma={}", candle.getFigi(), candle.getDateTime(), sma);
 
         Double limitPrice = null;
+        Double smaUnderPrice = null;
+        Double smaOverPrice = null;
         Double stopLoss = null;
         Double limitPercent = null;
         Double stopPercent = null;
@@ -122,6 +124,13 @@ public class SmaService implements
             annotation += " limitPercent=" + printPrice(limitPercent);
             stopPercent = ((100.f * (smaAverage.getUnderSma()) / Math.abs(purchaseRate.doubleValue())));
             annotation += " stopPercent=" + printPrice(stopPercent);
+
+            limitPrice = purchaseRate.doubleValue() + smaAverage.getOverSma();
+            smaOverPrice = sma + smaAverage.getOverSma();
+            smaUnderPrice = sma - smaAverage.getUnderSma();
+            annotation += " limitPrice=" + printPrice(limitPrice);
+            annotation += " smaOverPrice=" + printPrice(smaOverPrice);
+            annotation += " smaUnderPrice=" + printPrice(smaUnderPrice);
         }
         if (
                 prevCandle.getHighestPrice().doubleValue() < sma
@@ -130,21 +139,31 @@ public class SmaService implements
                 && smaAverage != null
         ) {
             //if (smaAverage.getOverSma() > smaAverage.getUnderSma()) {
-                limitPrice = purchaseRate.doubleValue() + smaAverage.getOverSma();
-                annotation += " limitPrice=" + printPrice(limitPrice);
-                annotation += " limitPercent=" + printPrice(limitPercent);
                 if (limitPercent > strategy.getSellLimitCriteriaOrig().getExitProfitPercent()) {
                     resBuy = true;
                     annotation += " OK BY DOWN";
+                }
 
-                    stopLoss = purchaseRate.doubleValue() - Math.max(smaAverage.getUnderSma() * 2, smaAverage.getOverSma());
-                    annotation += " stopLoss=" + printPrice(stopLoss);
-
-                    setOrderBigDecimalData(strategy, candle, "limitPrice", BigDecimal.valueOf(limitPrice));
-                    setOrderBigDecimalData(strategy, candle, "limitPercent", BigDecimal.valueOf(limitPercent));
-                    setOrderBigDecimalData(strategy, candle, "stopLoss", BigDecimal.valueOf(stopLoss));
+                if (
+                        !resBuy
+                        && limitPercent > strategy.getSellLimitPercentForUnderStop()
+                        && prevCandle.getHighestPrice().doubleValue() < smaUnderPrice
+                        && candle.getHighestPrice().doubleValue() < smaUnderPrice
+                        && limitPrice > sma
+                ) {
+                    resBuy = true;
+                    annotation += " OK BY DOWN2";
                 }
             //}
+        }
+
+        if (resBuy) {
+            stopLoss = purchaseRate.doubleValue() - Math.max(smaAverage.getUnderSma() * 2, smaAverage.getOverSma());
+            annotation += " stopLoss=" + printPrice(stopLoss);
+
+            setOrderBigDecimalData(strategy, candle, "limitPrice", BigDecimal.valueOf(limitPrice));
+            setOrderBigDecimalData(strategy, candle, "limitPercent", BigDecimal.valueOf(limitPercent));
+            setOrderBigDecimalData(strategy, candle, "stopLoss", BigDecimal.valueOf(stopLoss));
         }
 
         log.trace("isShouldBuy {} {} smaAverage resBuy={}", candle.getFigi(), candle.getDateTime(), resBuy);
@@ -204,8 +223,8 @@ public class SmaService implements
                     isDayEnd ? candle.getLowestPrice().subtract(candle.getLowestPrice().abs().multiply(BigDecimal.valueOf(0.01))) : "",
                     smaUp != null ? smaUp : "",
                     smaDown != null ? smaDown : "",
-                    smaAverage != null ? printPrice(sma + smaAverage.getOverSma()) : "",
-                    smaAverage != null ? printPrice(sma - smaAverage.getUnderSma()) : ""
+                    smaOverPrice != null ? printPrice(smaOverPrice) : "",
+                    smaUnderPrice != null ? printPrice(smaUnderPrice) : ""
             );
         }
         log.trace("isShouldBuy {} {} end resBuy={}", candle.getFigi(), candle.getDateTime(), resBuy);

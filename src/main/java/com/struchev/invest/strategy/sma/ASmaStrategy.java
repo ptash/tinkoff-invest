@@ -58,6 +58,10 @@ public abstract class ASmaStrategy extends AStrategy implements Cloneable, IStra
         return SellLimitCriteria.builder().exitProfitPercent(0.6f).build();
     }
 
+    public Double getSellLimitPercentForUnderStop() {
+        return 0.3;
+    }
+
     public SellLimitCriteria getSellLimitCriteria() {
         return this.sellLimit;
     }
