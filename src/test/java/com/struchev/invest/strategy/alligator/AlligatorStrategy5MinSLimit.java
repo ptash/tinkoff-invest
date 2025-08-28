@@ -10,5 +10,5 @@ public class AlligatorStrategy5MinSLimit extends AlligatorStrategy5Min {
     //public boolean isBuyOnlyAfterMax2() { return true; }
     //public boolean isBuyMaxOnlySmaUp() { return true; }
 
-    public boolean isEnabled() { return true; }
+    public boolean isEnabled() { return false; }
 }

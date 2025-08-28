@@ -7,5 +7,5 @@ public class AlligatorStrategy5MinSLimitTSma extends AlligatorStrategy5MinSLimit
     public boolean isSkipSellSmaNearGreenBlue() { return true; }
     public boolean isMoveStopLossByTrySellByTrend() { return true; }
     public boolean isBuyMaxOnlySmaUp() { return true; }
-    public boolean isEnabled() { return true; }
+    public boolean isEnabled() { return false; }
 }

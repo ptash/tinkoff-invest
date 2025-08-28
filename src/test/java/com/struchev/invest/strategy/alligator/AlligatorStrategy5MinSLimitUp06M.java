@@ -11,5 +11,5 @@ public class AlligatorStrategy5MinSLimitUp06M extends AlligatorStrategy5MinSLimi
     public Integer getAvgMaxCountStopLossByTrySell() {return 5; }
     public OffsetDateTime getDayTimeEndLimitPriceByTrySell() { return OffsetDateTime.parse("2000-01-01T19:00:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME); }
 
-    public boolean isEnabled() { return true; }
+    public boolean isEnabled() { return false; }
 }

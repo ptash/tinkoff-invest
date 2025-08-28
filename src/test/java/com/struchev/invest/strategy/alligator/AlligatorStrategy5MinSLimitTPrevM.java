@@ -8,5 +8,5 @@ public class AlligatorStrategy5MinSLimitTPrevM extends AlligatorStrategy5MinSLim
     public boolean isSellMonthLengthFromBegin() { return true; }
     public Double getSkipMonthLengthKByTrySell() { return 1.6; }
     public boolean isBuyMaxOnlySmaUp() { return true; }
-    public boolean isEnabled() { return true; }
+    public boolean isEnabled() { return false; }
 }

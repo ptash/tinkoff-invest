@@ -18,5 +18,5 @@ public class AlligatorStrategy5MinSLimit2 extends AlligatorStrategy5MinSLimit {
 
     public Double getLimitPriceByTrySell() { return 1.8; }
 
-    public boolean isEnabled() { return true; }
+    public boolean isEnabled() { return false; }
 }

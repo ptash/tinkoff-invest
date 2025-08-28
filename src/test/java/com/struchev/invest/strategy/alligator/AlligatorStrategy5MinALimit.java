@@ -18,5 +18,5 @@ public class AlligatorStrategy5MinALimit extends AlligatorStrategy5Min {
 
     public Double getLimitDeltaK() { return 1.0; }
 
-    public boolean isEnabled() { return true; }
+    public boolean isEnabled() { return false; }
 }

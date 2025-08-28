@@ -19,5 +19,5 @@ public class AlligatorStrategy5MinSLimitUp06 extends AlligatorStrategy5MinSLimit
     //public Integer getAvgMaxCountLimitPriceByTrySell() {return 5; }
     //public Integer getAvgMaxCountStopLossByTrySell() {return 5; }
 
-    public boolean isEnabled() { return true; }
+    public boolean isEnabled() { return false; }
 }
