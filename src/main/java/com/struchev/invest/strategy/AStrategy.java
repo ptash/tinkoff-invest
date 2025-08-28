@@ -67,7 +67,8 @@ public abstract class AStrategy {
         instrumentCrossByFiat("Инструмент с каналами за фиат"),
 
         instrumentFactorialByFiat("Инструмент с факториалами за фиат"),
-        alligator("Инструмент с аллигатором м факториалами за фиат");
+        alligator("Инструмент с аллигатором м факториалами за фиат"),
+        sma("Инструмент с sma за фиат");
 
         @Getter
         String title;
