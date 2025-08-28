@@ -136,8 +136,8 @@ public class AlligatorService implements
             beginMonthCandle = lastFMaxCandleData.getBeginCandle();
             isIgnoreSkip = lastFMaxCandleData.getIsUpPrev() && isTrendUp;
             annotation += " isUpPrev=" + isIgnoreSkip;
-            /*annotation += " lastFMaxCandle=" + printDateTime(lastFMaxCandle.getDateTime());
-            annotation += " ann=" + lastFMaxCandleData.getAnnotation();
+            annotation += " lastFMaxCandle=" + printDateTime(lastFMaxCandle.getDateTime());
+            /*annotation += " ann=" + lastFMaxCandleData.getAnnotation();
             for (var i = 0; i < lastFMaxCandleData.getMaxMaxCandleList().size(); i++) {
                 annotation += " i=" + i;
                 annotation += " maxFMax=" + printDateTime(lastFMaxCandleData.getMaxMaxCandleList().get(i).getDateTime());
@@ -379,7 +379,7 @@ public class AlligatorService implements
             var alligatorAverage = getAlligatorLengthAverage(candle.getFigi(), candle.getDateTime(), strategy);
             var lastFMaxCandleFirst = getLastFMaxCandle(candle.getFigi(), candle.getDateTime(), strategy, null).getFMaxCandle();
             annotation += " lastFMaxCandleFirst=" + printDateTime(lastFMaxCandleFirst.getDateTime());
-            if (lastFMaxCandleFirst.getDateTime().equals(lastFMaxCandle.getDateTime())) {
+            if (!strategy.isAlligatorMouthOffset() || lastFMaxCandleFirst.getDateTime().equals(lastFMaxCandle.getDateTime())) {
                 curAlligatorMouthOrig = curAlligatorMouth = getAlligatorMouth(candle.getFigi(), candle.getDateTime(), strategy, null);
             } else {
                 var lastFMaxCandlePrev = getLastFMaxCandle(candle.getFigi(), candle.getDateTime(), strategy, strategy.getFMaxCandleCountFromEnd() + 1).getFMaxCandle();
@@ -447,23 +447,29 @@ public class AlligatorService implements
             Float newLimitPercent = (float) ((100.f * (limitPrice.floatValue() - purchaseRate.floatValue()) / Math.abs(purchaseRate.floatValue())));
             annotation += " limitPrice=" + printPrice(limitPrice);
             annotation += " newLimitPercent=" + printPrice(newLimitPercent);
-            if (newLimitPercent < 0) {
-                limitPrice = startPrice.doubleValue() + profitLimit * 1.618;
-                newLimitPercent = (float) ((100.f * (limitPrice.floatValue() - purchaseRate.floatValue()) / Math.abs(purchaseRate.floatValue())));
-                annotation += " limitPrice=" + printPrice(limitPrice);
-                annotation += " 1.618 NEW newLimitPercent=" + printPrice(newLimitPercent);
+            if (strategy.getLimitPercentUp1() > 0) {
+                if (newLimitPercent < 0) {
+                    limitPrice = startPrice.doubleValue() + profitLimit * strategy.getLimitPercentUp1();
+                    newLimitPercent = (float) ((100.f * (limitPrice.floatValue() - purchaseRate.floatValue()) / Math.abs(purchaseRate.floatValue())));
+                    annotation += " limitPrice=" + printPrice(limitPrice);
+                    annotation += " NEW newLimitPercent=" + printPrice(newLimitPercent) + "(" + strategy.getLimitPercentUp1() + ")";
+                }
             }
-            if (newLimitPercent < 0) {
-                limitPrice = startPrice.doubleValue() + profitLimit * 2.618;
-                newLimitPercent = (float) ((100.f * (limitPrice.floatValue() - purchaseRate.floatValue()) / Math.abs(purchaseRate.floatValue())));
-                annotation += " limitPrice=" + printPrice(limitPrice);
-                annotation += " 2.618 NEW newLimitPercent=" + printPrice(newLimitPercent);
+            if (strategy.getLimitPercentUp2() > 0) {
+                if (newLimitPercent < 0) {
+                    limitPrice = startPrice.doubleValue() + profitLimit * strategy.getLimitPercentUp2();
+                    newLimitPercent = (float) ((100.f * (limitPrice.floatValue() - purchaseRate.floatValue()) / Math.abs(purchaseRate.floatValue())));
+                    annotation += " limitPrice=" + printPrice(limitPrice);
+                    annotation += " NEW newLimitPercent=" + printPrice(newLimitPercent) + "(" + strategy.getLimitPercentUp2() + ")";
+                }
             }
-            if (newLimitPercent < 0) {
-                limitPrice = startPrice.doubleValue() + profitLimit * 4.236;
-                newLimitPercent = (float) ((100.f * (limitPrice.floatValue() - purchaseRate.floatValue()) / Math.abs(purchaseRate.floatValue())));
-                annotation += " limitPrice=" + printPrice(limitPrice);
-                annotation += " 4.236 NEW newLimitPercent=" + printPrice(newLimitPercent);
+            if (strategy.getLimitPercentUp3() > 0) {
+                if (newLimitPercent < 0) {
+                    limitPrice = startPrice.doubleValue() + profitLimit * strategy.getLimitPercentUp3();
+                    newLimitPercent = (float) ((100.f * (limitPrice.floatValue() - purchaseRate.floatValue()) / Math.abs(purchaseRate.floatValue())));
+                    annotation += " limitPrice=" + printPrice(limitPrice);
+                    annotation += " NEW newLimitPercent=" + printPrice(newLimitPercent) + "(" + strategy.getLimitPercentUp3() + ")";
+                }
             }
             //Float newLimitPercentAverage = (float) (newLimitPercent / average);
 
