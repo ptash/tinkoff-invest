@@ -64,6 +64,10 @@ public abstract class ASmaStrategy extends AStrategy implements Cloneable, IStra
 
     public Double getDiffFromSmaStandard() { return 1.0; }
 
+    public Double getStopPercentK() { return 2.0; }
+
+    public Integer getDeepForMaxLimitPrice() { return 100; }
+
     public SellLimitCriteria getSellLimitCriteria() {
         return this.sellLimit;
     }
