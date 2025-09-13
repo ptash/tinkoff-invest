@@ -67,7 +67,7 @@ public class PurchaseService {
                 // Для стратегии instrumentByInstrument нужен ордер по любому инструменту (торгуется вся стратегия целиком)
                 var figiSuitableForOrder = strategy.getType() == AStrategy.Type.instrumentByInstrument ? null : candleDomainEntity.getFigi();
                 var order = orderService.findAnyActiveOrderDomainByFigiAndStrategy(figiSuitableForOrder, strategy);
-                log.trace("observeNewCandle {} {} order={} isArchive={}", strategy.getName(), candleDomainEntity.getDateTime(), order == null ? "null": "exist", strategy.isArchive());
+                log.trace("observeNewCandle {} {} {} order={} isArchive={}", candleDomainEntity.getFigi(), strategy.getName(), candleDomainEntity.getDateTime(), order == null ? "null": "exist", strategy.isArchive());
 
                 if (order == null && strategy.isArchive()) {
                     return;

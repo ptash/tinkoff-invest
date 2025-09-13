@@ -113,12 +113,20 @@ public class TinkoffMockAPI extends ATinkoffAPI {
 
     @Override
     public Boolean checkGoodSell(InstrumentService.Instrument instrument, BigDecimal price, Integer count, BigDecimal priceError, CandleDomainEntity candle) {
-        return candle.getLowestPrice().compareTo(price) <=0 && candle.getHighestPrice().compareTo(price) >= 0;
+        //var delta = price.multiply(priceError);
+        //delta = moneyRound(instrument, delta);
+        return candle.getHighestPrice().compareTo(price) >= 0;
     }
 
     @Override
     public Boolean checkGoodBuy(InstrumentService.Instrument instrument, BigDecimal price, Integer count, BigDecimal priceError, CandleDomainEntity candle) {
-        return candle.getLowestPrice().compareTo(price) <=0 && candle.getHighestPrice().compareTo(price) >= 0;
+        //var delta = price.multiply(priceError);
+        //delta = moneyRound(instrument, delta);
+        return candle.getLowestPrice().compareTo(price) <= 0;
+    }
+
+    private BigDecimal moneyRound(InstrumentService.Instrument instrument, BigDecimal price) {
+        return price.divide(instrument.getMinPriceIncrement(), 0, RoundingMode.HALF_UP).multiply(instrument.getMinPriceIncrement());
     }
 
     private BigDecimal calculateCommission(BigDecimal price, Integer count, InstrumentService.Instrument instrument) {

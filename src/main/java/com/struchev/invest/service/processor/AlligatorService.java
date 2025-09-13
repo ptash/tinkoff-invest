@@ -500,10 +500,13 @@ public class AlligatorService implements
                     priceWanted = prevLimitPrice;
                     annotation += " priceWanted=" + printPrice(priceWanted);
                 }
-                if (priceWanted > candleOrig.getHighestPrice().doubleValue() || priceWanted < candleOrig.getLowestPrice().doubleValue()) {
-                    annotation += " SKIP ProfitPercent";
-                    resBuy = false;
-                }
+            }
+            if (
+                    priceWanted > candleOrig.getHighestPrice().doubleValue()
+                    || priceWanted < candleOrig.getLowestPrice().doubleValue()
+            ) {
+                annotation += " SKIP by priceWanted";
+                resBuy = false;
             }
             if (resBuy) {
                 setOrderBigDecimalData(strategy, candle, "limitPrice", BigDecimal.valueOf(realLimitPrice));
