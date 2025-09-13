@@ -85,8 +85,16 @@ public class AlligatorService implements
         var resBuyMax = false;
         var resBuyMin = false;
 
+        var candleOrig = candle;
+        var candlePrevList = getCandlesByFigiByLength(candle.getFigi(), candle.getDateTime(), 1, strategy.getInterval());
+        candle = candlePrevList.get(0);
+        annotation += " origDate=" + printDateTime(candleOrig.getDateTime());
+        annotation += " date=" + printDateTime(candle.getDateTime());
+
         var currentPrice = candle.getLowestPrice();
         var purchaseRate = candle.getClosingPrice();
+        annotation += " currentPrice=" + printPrice(currentPrice);
+        annotation += " purchaseRate=" + printPrice(purchaseRate);
 
         var blue = getAlligatorBlue(candle.getFigi(), candle.getDateTime(), strategy);
         var red = getAlligatorRed(candle.getFigi(), candle.getDateTime(), strategy);
@@ -413,6 +421,7 @@ public class AlligatorService implements
 
         var isDayEnd = false;
         Double limitPrice = null;
+        Double priceWanted = null;
         if (resBuy && !strategy.isReverse()) {
             var alligatorAverage = getAlligatorLengthAverage(candle.getFigi(), candle.getDateTime(), strategy);
             var orderAlligatorMouth = curAlligatorMouth;
@@ -443,12 +452,14 @@ public class AlligatorService implements
             Double profitLimit = Math.abs((startPrice.doubleValue() / 100.) * limitPercent);
             profitLimit -= delta.doubleValue() * strategy.getLimitDeltaK();
             limitPrice = startPrice.doubleValue() + profitLimit;
+            Double prevLimitPrice = null;
 
             Float newLimitPercent = (float) ((100.f * (limitPrice.floatValue() - purchaseRate.floatValue()) / Math.abs(purchaseRate.floatValue())));
             annotation += " limitPrice=" + printPrice(limitPrice);
             annotation += " newLimitPercent=" + printPrice(newLimitPercent);
             if (strategy.getLimitPercentUp1() > 0) {
                 if (newLimitPercent < 0) {
+                    prevLimitPrice = limitPrice;
                     limitPrice = startPrice.doubleValue() + profitLimit * strategy.getLimitPercentUp1();
                     newLimitPercent = (float) ((100.f * (limitPrice.floatValue() - purchaseRate.floatValue()) / Math.abs(purchaseRate.floatValue())));
                     annotation += " limitPrice=" + printPrice(limitPrice);
@@ -457,6 +468,7 @@ public class AlligatorService implements
             }
             if (strategy.getLimitPercentUp2() > 0) {
                 if (newLimitPercent < 0) {
+                    prevLimitPrice = limitPrice;
                     limitPrice = startPrice.doubleValue() + profitLimit * strategy.getLimitPercentUp2();
                     newLimitPercent = (float) ((100.f * (limitPrice.floatValue() - purchaseRate.floatValue()) / Math.abs(purchaseRate.floatValue())));
                     annotation += " limitPrice=" + printPrice(limitPrice);
@@ -465,6 +477,7 @@ public class AlligatorService implements
             }
             if (strategy.getLimitPercentUp3() > 0) {
                 if (newLimitPercent < 0) {
+                    prevLimitPrice = limitPrice;
                     limitPrice = startPrice.doubleValue() + profitLimit * strategy.getLimitPercentUp3();
                     newLimitPercent = (float) ((100.f * (limitPrice.floatValue() - purchaseRate.floatValue()) / Math.abs(purchaseRate.floatValue())));
                     annotation += " limitPrice=" + printPrice(limitPrice);
@@ -477,12 +490,25 @@ public class AlligatorService implements
             var realLimitPercent = newLimitPercent * strategy.getLimitCorrectionK();
             var realLimitPrice = (realLimitPercent * Math.abs(purchaseRate.floatValue()))/ 100. + purchaseRate.floatValue();
             annotation += " realLimitPercent=" + printPrice(realLimitPercent);
+            priceWanted = purchaseRate.doubleValue();
             if (realLimitPercent < strategy.getSellLimitCriteriaOrig().getExitProfitPercent()) {
-                annotation += " SKIP ProfitPercent";
-                resBuy = false;
-            } else {
+                var percentDelta = strategy.getSellLimitCriteriaOrig().getExitProfitPercent() - realLimitPercent;
+                priceWanted = purchaseRate.doubleValue() - purchaseRate.abs().doubleValue() * percentDelta / 100.;
+                annotation += " percentDelta=" + printPrice(percentDelta);
+                annotation += " priceWanted=" + printPrice(priceWanted);
+                if (prevLimitPrice != null && priceWanted < prevLimitPrice) {
+                    priceWanted = prevLimitPrice;
+                    annotation += " priceWanted=" + printPrice(priceWanted);
+                }
+                if (priceWanted > candleOrig.getHighestPrice().doubleValue() || priceWanted < candleOrig.getLowestPrice().doubleValue()) {
+                    annotation += " SKIP ProfitPercent";
+                    resBuy = false;
+                }
+            }
+            if (resBuy) {
                 setOrderBigDecimalData(strategy, candle, "limitPrice", BigDecimal.valueOf(realLimitPrice));
                 setOrderBigDecimalData(strategy, candle, "limitPercent", BigDecimal.valueOf(realLimitPercent));
+                setOrderBigDecimalData(strategy, candle, "priceWanted", purchaseRate);
             }
 
             if (null != strategy.getDayTimeEndBuy(candle.getDateTime())) {
@@ -581,14 +607,14 @@ public class AlligatorService implements
                     strategy,
                     candle,
                     "Date|open|high|low|close|ema2|profit|loss|limitPrice|lossAvg|deadLineTop|investBottom|investTop|smaTube|strategy"
-                            + "|emaBlue1|emaRed|emaGreen|emaBlue|max|min|zs|waitMax|maxBuy|stopLoss|waitMax2|isDayEnd|smaUp|smaDown",
+                            + "|emaBlue1|emaRed|emaGreen|emaBlue|max|min|zs|waitMax|maxBuy|stopLoss|waitMax2|isDayEnd|smaUp|smaDown|priceWanted",
                     "{} | {} | {} | {} | {} | | {} | {} | {} | {} | ||||by {}"
-                            + "| {} | {} | {} | {} | {} | {} | {} | {} | {} || {} | {} | {} | {}",
-                    printDateTime(candle.getDateTime()),
-                    candle.getOpenPrice(),
-                    candle.getHighestPrice(),
-                    candle.getLowestPrice(),
-                    candle.getClosingPrice(),
+                            + "| {} | {} | {} | {} | {} | {} | {} | {} | {} || {} | {} | {} | {}| {}",
+                    printDateTime(candleOrig.getDateTime()),
+                    candleOrig.getOpenPrice(),
+                    candleOrig.getHighestPrice(),
+                    candleOrig.getLowestPrice(),
+                    candleOrig.getClosingPrice(),
                     "",
                     "",
                     limitPrice == null ? "" : printPrice(limitPrice),
@@ -604,9 +630,10 @@ public class AlligatorService implements
                     waitMax == null ? "" : waitMax,
                     waitMaxBuy == null ? "" : waitMaxBuy,
                     waitMax2 == null ? "" : waitMax2,
-                    isDayEnd ? candle.getLowestPrice().subtract(candle.getLowestPrice().abs().multiply(BigDecimal.valueOf(0.01))) : "",
+                    isDayEnd ? candleOrig.getLowestPrice().subtract(candleOrig.getLowestPrice().abs().multiply(BigDecimal.valueOf(0.01))) : "",
                     smaUp != null ? smaUp : "",
-                    smaDown != null ? smaDown : ""
+                    smaDown != null ? smaDown : "",
+                    priceWanted != null ? printPrice(priceWanted) : ""
             );
         }
         log.trace("isShouldBuy {} {} end resBuy={}", candle.getFigi(), candle.getDateTime(), resBuy);
@@ -1062,9 +1089,9 @@ public class AlligatorService implements
                 strategy,
                 candle,
                 "Date|open|high|low|close|ema2|profit|loss|limitPrice|lossAvg|deadLineTop|investBottom|investTop|smaTube|strategy"
-                        + "|emaBlue1|emaRed|emaGreen|emaBlue|max|min|zs|waitMax|maxBuy|stopLoss|waitMax2|isDayEnd|smaUp|smaDown",
+                        + "|emaBlue1|emaRed|emaGreen|emaBlue|max|min|zs|waitMax|maxBuy|stopLoss|waitMax2|isDayEnd|smaUp|smaDown|priceWanted",
                 "{} | {} | {} | {} | {} | | {} | {} | {} | {} | ||||sell {}"
-                        + "| {} | {} | {} | {} | {} | {} | {} ||| {}|| {}| {} | {}",
+                        + "| {} | {} | {} | {} | {} | {} | {} ||| {}|| {}| {} | {}|",
                 printDateTime(candle.getDateTime()),
                 candle.getOpenPrice(),
                 candle.getHighestPrice(),

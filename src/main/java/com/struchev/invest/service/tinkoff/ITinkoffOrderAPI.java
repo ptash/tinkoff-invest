@@ -41,7 +41,7 @@ public interface ITinkoffOrderAPI {
     public OrderResult closeSellLimit(InstrumentService.Instrument instrument, String orderId);
     public OrderResult closeAllSellLimit(InstrumentService.Instrument instrument);
 
-    public Boolean checkGoodSell(InstrumentService.Instrument instrument, BigDecimal price, Integer count, BigDecimal priceError);
+    public Boolean checkGoodSell(InstrumentService.Instrument instrument, BigDecimal price, Integer count, BigDecimal priceError, CandleDomainEntity candle);
 
-    public Boolean checkGoodBuy(InstrumentService.Instrument instrument, BigDecimal price, Integer count, BigDecimal priceError);
+    public Boolean checkGoodBuy(InstrumentService.Instrument instrument, BigDecimal price, Integer count, BigDecimal priceError, CandleDomainEntity candle);
 }

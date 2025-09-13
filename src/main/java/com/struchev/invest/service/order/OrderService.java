@@ -142,7 +142,7 @@ public class OrderService implements IOrderService {
                 .build();
 
         if (strategy.isCheckBook()
-                && !tinkoffOrderAPI.checkGoodSell(instrument, priceWanted, order.getLots(), strategy.getPriceError())) {
+                && !tinkoffOrderAPI.checkGoodSell(instrument, priceWanted, order.getLots(), strategy.getPriceError(), candle)) {
             throw new RuntimeException("checkGoodSell return false for figi " + instrument.getFigi());
         }
         var result = tinkoffOrderAPI.buyShort(instrument, priceWanted, order.getLots());
@@ -182,7 +182,7 @@ public class OrderService implements IOrderService {
                 .build();
 
         if (strategy.isCheckBook()
-                && !tinkoffOrderAPI.checkGoodBuy(instrument, priceWanted, order.getLots(), strategy.getPriceError())) {
+                && !tinkoffOrderAPI.checkGoodBuy(instrument, priceWanted, order.getLots(), strategy.getPriceError(), candle)) {
             throw new RuntimeException("checkGoodBuy return false for figi " + instrument.getFigi());
         }
         var result = tinkoffOrderAPI.buy(instrument, priceWanted, order.getLots());
@@ -302,7 +302,7 @@ public class OrderService implements IOrderService {
         order.setSellProfitWanted(order.getSellPrice().subtract(order.getPurchasePriceWanted()));
 
         if (strategy.isCheckBook() && order.getSellProfitWanted().compareTo(BigDecimal.ZERO) > 0
-                && !tinkoffOrderAPI.checkGoodBuy(instrument, candle.getClosingPrice(), order.getLots(), strategy.getPriceError())) {
+                && !tinkoffOrderAPI.checkGoodBuy(instrument, candle.getClosingPrice(), order.getLots(), strategy.getPriceError(), candle)) {
             throw new RuntimeException("checkGoodBuy return false for figi " + instrument.getFigi());
         }
 
@@ -331,7 +331,7 @@ public class OrderService implements IOrderService {
         order.setSellProfitWanted(order.getSellPriceWanted().subtract(order.getPurchasePrice()));
 
         if (strategy.isCheckBook() && order.getSellProfitWanted().compareTo(BigDecimal.ZERO) > 0
-                && !tinkoffOrderAPI.checkGoodSell(instrument, candle.getClosingPrice(), order.getLots(), strategy.getPriceError())) {
+                && !tinkoffOrderAPI.checkGoodSell(instrument, candle.getClosingPrice(), order.getLots(), strategy.getPriceError(), candle)) {
             throw new RuntimeException("checkGoodSell return false for figi " + instrument.getFigi());
         }
 

@@ -615,7 +615,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                 .build();
     }
 
-    public Boolean checkGoodSell(InstrumentService.Instrument instrument, BigDecimal price, Integer count, BigDecimal priceError) {
+    public Boolean checkGoodSell(InstrumentService.Instrument instrument, BigDecimal price, Integer count, BigDecimal priceError, CandleDomainEntity candle) {
         if (getIsSandboxMode()) {
             return true;
         }
@@ -640,7 +640,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
         return true;
     }
 
-    public Boolean checkGoodBuy(InstrumentService.Instrument instrument, BigDecimal price, Integer count, BigDecimal priceError) {
+    public Boolean checkGoodBuy(InstrumentService.Instrument instrument, BigDecimal price, Integer count, BigDecimal priceError, CandleDomainEntity candle) {
         if (getIsSandboxMode()) {
             return true;
         }
