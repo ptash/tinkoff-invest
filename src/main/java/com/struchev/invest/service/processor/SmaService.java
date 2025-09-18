@@ -156,9 +156,11 @@ public class SmaService implements
         ) {
             underMaxLine = minLine.getMin() - (smaAverage.getOverSma() + smaAverage.getUnderSma()) / 2;
             annotation += " underMaxLine=" + printPrice(underMaxLine);
+            var underMaxLine2 = minLine.getMin() - (smaAverage.getOverSma() + smaAverage.getUnderSma()) * 2 / 3;
+            annotation += " underMaxLine2=" + printPrice(underMaxLine2);
             if (
                     underMaxLine < candle.getLowestPrice().doubleValue()
-                    || candle.getHighestPrice().doubleValue() > smaUnderPrice
+                    || (candle.getHighestPrice().doubleValue() > smaUnderPrice && underMaxLine2 < candle.getLowestPrice().doubleValue())
             ) {
                 resBuy = true;
                 //limitPercent = strategy.getSellLimitCriteriaOrig().getExitProfitPercent() * k;
