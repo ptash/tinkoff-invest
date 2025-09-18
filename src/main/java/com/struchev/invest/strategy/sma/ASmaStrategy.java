@@ -51,7 +51,8 @@ public abstract class ASmaStrategy extends AStrategy implements Cloneable, IStra
     public String getInterval() { return "5min"; }
 
     public Integer getSmaLength() { return 13 * 10; }
-    public Integer getMaxDeep() { return 300; }
+    public Integer getSmaMaxDeep() { return 300; }
+    public Integer getLineMaxDeep() { return 600; }
     public Integer getMinLineStep() { return 30; }
     public Integer getMinErrStep() { return 1; }
 
