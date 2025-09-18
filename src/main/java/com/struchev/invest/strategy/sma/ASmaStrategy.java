@@ -52,6 +52,8 @@ public abstract class ASmaStrategy extends AStrategy implements Cloneable, IStra
 
     public Integer getSmaLength() { return 13 * 10; }
     public Integer getMaxDeep() { return 300; }
+    public Integer getMinLineStep() { return 30; }
+    public Integer getMinErrStep() { return 15; }
 
     private SellLimitCriteria sellLimit;
     private Map<String, SellLimitCriteria> sellLimitMap = new HashMap<>();

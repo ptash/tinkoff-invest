@@ -149,6 +149,10 @@ public class CalculatorFacade {
 
     public Boolean isOrderNeedSell(OrderDomainEntity order, CandleDomainEntity candleDomainEntity)
     {
+        var isOrderNeedSellAlways = order.getDetails().getCurrentPrices().getOrDefault("isOrderNeedSellAlways", BigDecimal.ZERO);
+        if (isOrderNeedSellAlways.compareTo(BigDecimal.ONE) >= 0) {
+            return true;
+        }
         var stopLossPrice = order.getDetails().getCurrentPrices().getOrDefault("stopLossPrice", BigDecimal.ZERO);
         if (stopLossPrice.equals(BigDecimal.ZERO)) {
             return false;

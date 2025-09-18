@@ -109,6 +109,11 @@ public class SmaService implements
         }
 
         log.trace("isShouldBuy {} {} sma={}", candle.getFigi(), candle.getDateTime(), sma);
+        var minLine = getMinLine(candle.getFigi(), candle.getDateTime(), strategy);
+
+        if (minLine != null) {
+            annotation += minLine.annotation;
+        }
 
         Double limitPrice = null;
         Double smaUnderPrice = null;
@@ -136,6 +141,17 @@ public class SmaService implements
             //annotation += " k=" + printPrice(k);
         }
         Double minLimitPercent = 0.;
+        if (
+                minLine != null
+                && candle.getHighestPrice().doubleValue() < minLine.getMin()
+                && smaOverPrice > minLine.getMin()
+        ) {
+            resBuy = true;
+            //limitPercent = strategy.getSellLimitCriteriaOrig().getExitProfitPercent() * k;
+            minLimitPercent = Double.valueOf(strategy.getSellLimitCriteriaOrig().getExitProfitPercent()) * k;
+            annotation += " OK BY MINLINE";
+        }
+        /*
         if (
                 prevCandle.getHighestPrice().doubleValue() < sma
                 && candle.getHighestPrice().doubleValue() < sma
@@ -176,10 +192,11 @@ public class SmaService implements
                 annotation += " OK BY UNDER STOP";
             }
         }
+         */
 
         if (resBuy) {
             if (stopLoss == null) {
-                stopLoss = purchaseRate.doubleValue() - Math.max(smaAverage.getUnderSma() * 2, smaAverage.getOverSma());
+                stopLoss = purchaseRate.doubleValue() - smaAverage.getOverSma();
             }
             annotation += " stopLoss=" + printPrice(stopLoss);
             var candleMaxLimitPrice = getCandlesByFigiByLength(candle.getFigi(), candle.getDateTime(), strategy.getDeepForMaxLimitPrice(), strategy.getInterval());
@@ -192,10 +209,12 @@ public class SmaService implements
                     limitPrice = maxPrice;
                     limitPercent = 100. * (maxPrice - candle.getClosingPrice().doubleValue()) / candle.getClosingPrice().abs().doubleValue();
                     annotation += " new limitPercent=" + printPrice(limitPercent);
-                    annotation += " minLimitPercent=" + printPrice(minLimitPercent);
-                    if (limitPercent < minLimitPercent) {
-                        resBuy = false;
-                        annotation += " SKIP BY new limitPrice";
+                    if (minLimitPercent != null) {
+                        annotation += " minLimitPercent=" + printPrice(minLimitPercent);
+                        if (limitPercent < minLimitPercent) {
+                            resBuy = false;
+                            annotation += " SKIP BY new limitPrice";
+                        }
                     }
                 }
             }
@@ -207,6 +226,7 @@ public class SmaService implements
                 setOrderBigDecimalData(strategy, candle, "limitPrice", BigDecimal.valueOf(limitPrice));
                 setOrderBigDecimalData(strategy, candle, "limitPercent", BigDecimal.valueOf(limitPercent));
                 setOrderBigDecimalData(strategy, candle, "stopLoss", BigDecimal.valueOf(stopLoss));
+                setOrderBigDecimalData(strategy, candle, "isOrderNeedSellAlways", BigDecimal.TEN);
             }
         }
 
@@ -250,9 +270,9 @@ public class SmaService implements
                     strategy,
                     candle,
                     "Date|open|high|low|close|ema2|profit|loss|limitPrice|lossAvg|deadLineTop|investBottom|investTop|smaTube|strategy"
-                            + "|stopLoss|isDayEnd|smaUp|smaDown|smaOver|smaUnder|stopLoss2",
+                            + "|stopLoss|isDayEnd|smaUp|smaDown|smaOver|smaUnder|stopLoss2|minLine",
                     "{} | {} | {} | {} | {} | | {} | {} | {} | {} | ||||by {}"
-                            + "| {} | {} | {} | {} | {} | {} | {}",
+                            + "| {} | {} | {} | {} | {} | {} | {}| {}",
                     printDateTime(candle.getDateTime()),
                     candle.getOpenPrice(),
                     candle.getHighestPrice(),
@@ -269,7 +289,8 @@ public class SmaService implements
                     smaDown != null ? smaDown : "",
                     smaOverPrice != null ? printPrice(smaOverPrice) : "",
                     smaUnderPrice != null ? printPrice(smaUnderPrice) : "",
-                    stopLoss == null ? "" : printPrice(stopLoss)
+                    stopLoss == null ? "" : printPrice(stopLoss),
+                    minLine != null ? printPrice(minLine.getMin()) : ""
             );
         }
         log.trace("isShouldBuy {} {} end resBuy={}", candle.getFigi(), candle.getDateTime(), resBuy);
@@ -360,15 +381,20 @@ public class SmaService implements
         annotation = "res = " + res + " " + annotation;
 
         var smaAverage = getOverSmaAverage(candle.getFigi(), candle.getDateTime(), strategy, CandleDomainEntity::getMedianPrice);
+        var minLine = getMinLine(candle.getFigi(), candle.getDateTime(), strategy);
+
+        if (minLine != null) {
+            annotation += minLine.annotation;
+        }
 
         notificationService.reportStrategyExt(
                 res,
                 strategy,
                 candle,
                 "Date|open|high|low|close|ema2|profit|loss|limitPrice|lossAvg|deadLineTop|investBottom|investTop|smaTube|strategy"
-                        + "|stopLoss|isDayEnd|smaUp|smaDown|smaOver|smaUnder|stopLoss2",
+                        + "|stopLoss|isDayEnd|smaUp|smaDown|smaOver|smaUnder|stopLoss2|minLine",
                 "{} | {} | {} | {} | {} | | {} | {} | {} | {} | ||||sell {}"
-                        + "| {} | {} | {} | {} | {} | {} | {}",
+                        + "| {} | {} | {} | {} | {} | {} | {}| {}",
                 printDateTime(candle.getDateTime()),
                 candle.getOpenPrice(),
                 candle.getHighestPrice(),
@@ -385,7 +411,8 @@ public class SmaService implements
                 smaDown != null ? smaDown : "",
                 smaAverage != null ? printPrice(sma + smaAverage.getOverSma()) : "",
                 smaAverage != null ? printPrice(sma - smaAverage.getUnderSma()) : "",
-                printPrice(stopLoss)
+                printPrice(stopLoss),
+                minLine != null ? printPrice(minLine.getMin()) : ""
         );
         log.trace("isShouldSell {} {} end res", candle.getFigi(), candle.getDateTime(), res);
         return res;
@@ -491,6 +518,216 @@ public class SmaService implements
         Boolean isUp;
         CandleDomainEntity candleMin;
         CandleDomainEntity candleMax;
+    }
+
+    @Builder
+    @Data
+    public static class MinLine {
+        Double min;
+        String annotation;
+    }
+
+    private MinLine getMinLine(
+            String figi,
+            OffsetDateTime currentDateTime,
+            ASmaStrategy strategy
+    ) {
+        var annotation = "";
+        var candleList = getCandlesByFigiByLength(figi, currentDateTime, strategy.getMaxDeep(), strategy.getInterval());
+        var smaList = getSma(figi, currentDateTime, strategy.getSmaLength(), strategy.getInterval(), CandleDomainEntity::getMedianPrice, strategy.getMaxDeep());
+        if (candleList == null || smaList == null) {
+            return null;
+        }
+        var isOver = true;
+        Integer iMin0 = null;
+        Integer iMin2 = null;
+        Integer iMin1 = null;
+        CandleDomainEntity min2 = null;
+        CandleDomainEntity min1 = null;
+        int countOver = 0;
+        for (var i = candleList.size() - 1; i >=0; i--) {
+            var c = candleList.get(i);
+            var sma = smaList.get(i);
+            if (c.getLowestPrice().doubleValue() <= sma) {
+                if (isOver && countOver > strategy.getMinErrStep()) {
+                    isOver = false;
+                    if (iMin0 == null) {
+                        iMin0 = i;
+                    } else if (min1 == null) {
+                        min1 = c;
+                        iMin1 = i;
+                    } else if (min2 == null) {
+                        min2 = c;
+                        iMin2 = i;
+                    } else {
+                        break;
+                    }
+                }
+                if (min2 == null && min1 != null && min1.getMedianPrice().doubleValue() > c.getMedianPrice().doubleValue()) {
+                    min1 = c;
+                    iMin1 = i;
+                }
+                if (min2 != null && min2.getMedianPrice().doubleValue() > c.getMedianPrice().doubleValue()) {
+                    min2 = c;
+                    iMin2 = i;
+                }
+                countOver = 0;
+            } else {
+                isOver = true;
+                iMin0 = i;
+                countOver++;
+            }
+        }
+
+        if (iMin1 == null || iMin2 == null) {
+            return null;
+        }
+
+        var totalSize = Math.abs(iMin1 - iMin2);
+        annotation += " iMin2=" + iMin2 + ":" + min2.getDateTime();
+        annotation += " min2=" + printPrice(min2.getMedianPrice());
+        annotation += " iMin1=" + iMin1 + ":" + min1.getDateTime();
+        annotation += " min1=" + printPrice(min1.getMedianPrice());
+        annotation += " totalSize=" + totalSize;
+        Integer lastIMin;
+        Double minLineDelta;
+        minLineDelta = (min1.getMedianPrice().doubleValue() - min2.getMedianPrice().doubleValue()) / totalSize;
+        lastIMin = iMin1;
+        annotation += " lastIMin=" + lastIMin;
+        var lastSteps = candleList.size() - lastIMin;
+        annotation += " lastSteps=" + lastSteps;
+        log.info("getMinLine {}: {} = {} + {} * {}",
+                currentDateTime,
+                candleList.get(lastIMin).getMedianPrice().doubleValue() + minLineDelta * lastSteps,
+                candleList.get(lastIMin),
+                minLineDelta,
+                lastSteps + strategy.getMinLineStep()
+        );
+        return MinLine.builder()
+                .min(candleList.get(lastIMin).getMedianPrice().doubleValue() + minLineDelta * lastSteps)
+                .annotation(annotation)
+                .build();
+    }
+
+    private MinLine getMinLine2(
+            String figi,
+            OffsetDateTime currentDateTime,
+            ASmaStrategy strategy
+    ) {
+        var annotation = "";
+        var candleList = getCandlesByFigiByLength(figi, currentDateTime, strategy.getMaxDeep(), strategy.getInterval());
+        if (candleList == null) {
+            return null;
+        }
+        List<CandleDomainEntity> minPrices = new ArrayList<>();
+        List<Integer> minLengths = new ArrayList<>();
+        var number = strategy.getMaxDeep()/strategy.getMinLineStep();
+        int prevMinLength = 0;
+        var totalSize = 0;
+        Integer iMax = null;
+        Integer iMin = null;
+        Double max = null;
+        Double min = null;
+        for (var i = 1; i < number; i++) {
+            var subCandleList = candleList.subList(
+                    candleList.size() - (i + 1) * strategy.getMinLineStep(),
+                    candleList.size() - i * strategy.getMinLineStep()
+            );
+            var minCandle = subCandleList.stream().reduce((first, second) ->
+                    first.getMedianPrice().compareTo(second.getMedianPrice()) < 0 ? first : second
+            ).orElse(null);
+            var minLength = subCandleList.indexOf(minCandle);
+            log.info("getMinLine {} {} size {} {} - {}: {} - {}", currentDateTime, i, subCandleList.size(), candleList.size() - (i + 1) * strategy.getMinLineStep(), candleList.size() - 1 - i * strategy.getMinLineStep(), subCandleList.get(0).getDateTime(), subCandleList.get(subCandleList.size() - 1).getDateTime());
+            log.info("getMinLine {}: {} {} {} ({})",
+                    i,
+                    minLength,
+                    minCandle.getMedianPrice(),
+                    minCandle.getDateTime(),
+                    strategy.getMinLineStep() - minLength + prevMinLength);
+            minPrices.add(minCandle);
+            minLengths.add(strategy.getMinLineStep() - minLength + prevMinLength);
+            totalSize += strategy.getMinLineStep() - minLength + prevMinLength;
+            prevMinLength = minLength;
+            annotation += " sub:" + subCandleList.get(0).getDateTime() + "-" + subCandleList.get(subCandleList.size() - 1).getDateTime();
+            annotation += " i=" + (minPrices.size() - 1) + ":" + minCandle.getDateTime() + " " + printPrice(minCandle.getMedianPrice());
+            if (min == null || min >= minCandle.getMedianPrice().doubleValue()) {
+                min = minCandle.getMedianPrice().doubleValue();
+                iMin = minPrices.size() - 1;
+            }
+        }
+        for (var i = 0; i < minPrices.size(); i++) {
+            if (
+                    i == iMin
+                    || (i + 1) == iMin
+                    || (i - 1) == iMin
+            ) {
+                continue;
+            }
+            if (max == null || max >= minPrices.get(i).getMedianPrice().doubleValue()) {
+                max = minPrices.get(i).getMedianPrice().doubleValue();
+                iMax = i;
+            }
+        }
+        //var delta = minPrices.get(0) - minPrices.get(minPrices.size() - 1);
+        var prevSize = 0;
+        Double minLineDelta = 0.;
+        totalSize -= minLengths.get(0);
+        totalSize = 0;
+        for (var i = Math.min(iMax, iMin) + 1; i <= Math.max(iMax, iMin); i++) {
+            totalSize += minLengths.get(i);
+        }
+        annotation += " iMax=" + iMax + ":" + minPrices.get(iMax).getDateTime();
+        annotation += " max=" + printPrice(minPrices.get(iMax).getMedianPrice());
+        annotation += " iMin=" + iMin + ":" + minPrices.get(iMin).getDateTime();
+        annotation += " min=" + printPrice(minPrices.get(iMin).getMedianPrice());
+        annotation += " totalSize=" + totalSize;
+        Integer lastIMin;
+        if (iMax > iMin) {
+            minLineDelta = (min - max) / totalSize;
+            lastIMin = iMin;
+        } else {
+            minLineDelta = (max - min) / totalSize;
+            lastIMin = iMax;
+        }
+        annotation += " lastIMin=" + lastIMin;
+        var lastSteps = 0;
+        for (var i = lastIMin; i >= 0; i--) {
+            lastSteps += minLengths.get(i);
+        }
+        annotation += " lastSteps=" + lastSteps;
+        /*
+        for (var i = 1; i < minPrices.size(); i++) {
+            if (
+                    (delta > 0 && (minPrices.get(i - 1) - minPrices.get(i)) > 0 && minPrices.get(i) - minPrices.get(minPrices.size() - 1) > 0)
+                    || (delta < 0 && (minPrices.get(i - 1) - minPrices.get(i)) < 0 && minPrices.get(i) - minPrices.get(minPrices.size() - 1) < 0)
+            ) {
+                log.info("getMinLine delta {}: +{} = ({} + {}) / {} = {}",
+                        i,
+                        (minPrices.get(i - 1) - minPrices.get(i)) / minLengths.get(i),
+                        minPrices.get(i - 1),
+                        minPrices.get(i),
+                        minLengths.get(i),
+                        totalSize
+                        //minLineDelta + (minPrices.get(i - 1) - minPrices.get(i)) / (minLengths.get(i) + prevSize)
+                );
+                minLineDelta += (minPrices.get(i - 1) - minPrices.get(i)) / totalSize;
+                prevSize = 0;
+            } else {
+                prevSize += minLengths.get(i);
+            }
+        }
+         */
+        log.info("getMinLine {}: {} = {} + {} * {}",
+                currentDateTime,
+                minPrices.get(lastIMin).getMedianPrice().doubleValue() + minLineDelta * (lastSteps + strategy.getMinLineStep()),
+                minPrices.get(lastIMin),
+                minLineDelta,
+                lastSteps + strategy.getMinLineStep()
+        );
+        return MinLine.builder()
+                .min(minPrices.get(lastIMin).getMedianPrice().doubleValue() + minLineDelta * (lastSteps + strategy.getMinLineStep()))
+                .annotation(annotation)
+                .build();
     }
 
     @Builder
