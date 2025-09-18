@@ -85,6 +85,12 @@ public class SmaService implements
         var resBuyMax = false;
         var resBuyMin = false;
 
+        var candleOrig = candle;
+        var candlePrevList = getCandlesByFigiByLength(candle.getFigi(), candle.getDateTime(), 1, strategy.getInterval());
+        candle = candlePrevList.get(0);
+        annotation += " origDate=" + printDateTime(candleOrig.getDateTime());
+        annotation += " date=" + printDateTime(candle.getDateTime());
+
         var currentPrice = candle.getLowestPrice();
         var purchaseRate = candle.getClosingPrice();
 
@@ -157,6 +163,7 @@ public class SmaService implements
                 resBuy = true;
                 //limitPercent = strategy.getSellLimitCriteriaOrig().getExitProfitPercent() * k;
                 minLimitPercent = Double.valueOf(strategy.getSellLimitCriteriaOrig().getExitProfitPercent()) * k;
+                annotation += " minLimitPercent=" + printPrice(minLimitPercent);
                 annotation += " OK BY MINLINE";
             }
         }
@@ -203,6 +210,8 @@ public class SmaService implements
         }
          */
 
+        Double realLimitPrice = null;
+        Double realLimitPercent = null;
         if (resBuy) {
             if (stopLoss == null) {
                 stopLoss = purchaseRate.doubleValue() - smaAverage.getOverSma();
@@ -225,6 +234,11 @@ public class SmaService implements
                             annotation += " SKIP BY new limitPrice";
                         }
                     }
+                } else if (minLimitPercent != null && limitPercent < minLimitPercent) {
+                    limitPercent = minLimitPercent;
+                    annotation += " new limitPercent=" + printPrice(limitPercent);
+                    limitPrice = purchaseRate.doubleValue() + (limitPercent / 100.) * purchaseRate.abs().doubleValue();
+                    annotation += " new limitPrice=" + printPrice(limitPrice);
                 }
             }
 
@@ -232,10 +246,12 @@ public class SmaService implements
                 limitPrice = purchaseRate.doubleValue() + (limitPercent / 100.) * purchaseRate.abs().doubleValue();
                 annotation += "new limitPrice=" + printPrice(limitPrice);
 
-                setOrderBigDecimalData(strategy, candle, "limitPrice", BigDecimal.valueOf(limitPrice));
-                setOrderBigDecimalData(strategy, candle, "limitPercent", BigDecimal.valueOf(limitPercent));
-                setOrderBigDecimalData(strategy, candle, "stopLoss", BigDecimal.valueOf(stopLoss));
-                setOrderBigDecimalData(strategy, candle, "isOrderNeedSellAlways", BigDecimal.TEN);
+                realLimitPrice = limitPrice;
+                realLimitPercent = limitPercent;
+                //setOrderBigDecimalData(strategy, candle, "limitPrice", BigDecimal.valueOf(limitPrice));
+                //setOrderBigDecimalData(strategy, candle, "limitPercent", BigDecimal.valueOf(limitPercent));
+                //setOrderBigDecimalData(strategy, candle, "stopLoss", BigDecimal.valueOf(stopLoss));
+                //setOrderBigDecimalData(strategy, candle, "isOrderNeedSellAlways", BigDecimal.TEN);
             }
         }
 
@@ -269,6 +285,31 @@ public class SmaService implements
             strategy.setSellLimitCriteria(candle.getFigi(), sellLimitCriteria);
         }
 
+        Double priceWanted = purchaseRate.doubleValue();
+        if (resBuy && realLimitPercent < strategy.getSellLimitCriteriaOrig().getExitProfitPercent()) {
+            var percentDelta = strategy.getSellLimitCriteriaOrig().getExitProfitPercent() - realLimitPercent;
+            priceWanted = purchaseRate.doubleValue() - purchaseRate.abs().doubleValue() * percentDelta / 100.;
+            annotation += " percentDelta=" + printPrice(percentDelta);
+            annotation += " priceWanted=" + printPrice(priceWanted);
+        }
+        if (
+                resBuy
+                && (priceWanted > candleOrig.getHighestPrice().doubleValue()
+                || priceWanted < candleOrig.getLowestPrice().doubleValue())
+        ) {
+            annotation += " SKIP by priceWanted";
+            resBuy = false;
+        }
+        if (resBuy) {
+            setOrderBigDecimalData(strategy, candle, "limitPrice", BigDecimal.valueOf(realLimitPrice));
+            setOrderBigDecimalData(strategy, candle, "limitPercent", BigDecimal.valueOf(realLimitPercent));
+            setOrderBigDecimalData(strategy, candle, "priceWanted", purchaseRate);
+            setOrderBigDecimalData(strategy, candle, "stopLoss", BigDecimal.valueOf(stopLoss));
+            setOrderBigDecimalData(strategy, candle, "isOrderNeedSellAlways", BigDecimal.TEN);
+        } else {
+            priceWanted = null;
+        }
+
         log.trace("isShouldBuy {} {} after setSellLimitCriteria", candle.getFigi(), candle.getDateTime());
 
         if (isReport) {
@@ -279,9 +320,9 @@ public class SmaService implements
                     strategy,
                     candle,
                     "Date|open|high|low|close|ema2|profit|loss|limitPrice|lossAvg|deadLineTop|investBottom|investTop|smaTube|strategy"
-                            + "|stopLoss|isDayEnd|smaUp|smaDown|smaOver|smaUnder|stopLoss2|minLine|underMaxLine",
+                            + "|stopLoss|isDayEnd|smaUp|smaDown|smaOver|smaUnder|stopLoss2|minLine|underMaxLine|priceWanted",
                     "{} | {} | {} | {} | {} | | {} | {} | {} | {} | ||||by {}"
-                            + "| {} | {} | {} | {} | {} | {} | {}| {}| {}",
+                            + "| {} | {} | {} | {} | {} | {} | {}| {}| {}| {}",
                     printDateTime(candle.getDateTime()),
                     candle.getOpenPrice(),
                     candle.getHighestPrice(),
@@ -300,7 +341,8 @@ public class SmaService implements
                     smaUnderPrice != null ? printPrice(smaUnderPrice) : "",
                     stopLoss == null ? "" : printPrice(stopLoss),
                     minLine != null && minLine.getMin() != null ? printPrice(minLine.getMin()) : "",
-                    underMaxLine != null ? printPrice(underMaxLine) : ""
+                    underMaxLine != null ? printPrice(underMaxLine) : "",
+                    priceWanted != null ? printPrice(priceWanted) : ""
             );
         }
         log.trace("isShouldBuy {} {} end resBuy={}", candle.getFigi(), candle.getDateTime(), resBuy);
@@ -402,9 +444,9 @@ public class SmaService implements
                 strategy,
                 candle,
                 "Date|open|high|low|close|ema2|profit|loss|limitPrice|lossAvg|deadLineTop|investBottom|investTop|smaTube|strategy"
-                        + "|stopLoss|isDayEnd|smaUp|smaDown|smaOver|smaUnder|stopLoss2|minLine|underMaxLine",
+                        + "|stopLoss|isDayEnd|smaUp|smaDown|smaOver|smaUnder|stopLoss2|minLine|underMaxLine|priceWanted",
                 "{} | {} | {} | {} | {} | | {} | {} | {} | {} | ||||sell {}"
-                        + "| {} | {} | {} | {} | {} | {} | {}| {}|",
+                        + "| {} | {} | {} | {} | {} | {} | {}| {}||",
                 printDateTime(candle.getDateTime()),
                 candle.getOpenPrice(),
                 candle.getHighestPrice(),
