@@ -322,9 +322,9 @@ public class SmaService implements
                     strategy,
                     candle,
                     "Date|open|high|low|close|ema2|profit|loss|limitPrice|lossAvg|deadLineTop|investBottom|investTop|smaTube|strategy"
-                            + "|stopLoss|isDayEnd|smaUp|smaDown|smaOver|smaUnder|stopLoss2|minLine|underMaxLine|priceWanted",
+                            + "|stopLoss|isDayEnd|smaUp|smaDown|smaOver|smaUnder|stopLoss2|minLine|underMaxLine|priceWanted|minLineDelta",
                     "{} | {} | {} | {} | {} | | {} | {} | {} | {} | ||||by {}"
-                            + "| {} | {} | {} | {} | {} | {} | {}| {}| {}| {}",
+                            + "| {} | {} | {} | {} | {} | {} | {}| {}| {}| {}| {}",
                     printDateTime(candle.getDateTime()),
                     candle.getOpenPrice(),
                     candle.getHighestPrice(),
@@ -344,7 +344,8 @@ public class SmaService implements
                     stopLoss == null ? "" : printPrice(stopLoss),
                     minLine != null && minLine.getMin() != null ? printPrice(minLine.getMin()) : "",
                     underMaxLine != null ? printPrice(underMaxLine) : "",
-                    priceWanted != null ? printPrice(priceWanted) : ""
+                    priceWanted != null ? printPrice(priceWanted) : "",
+                    minLine != null && minLine.getMin() != null ? printPrice(minLine.getMin() - minLine.getMinDelta()) : ""
             );
         }
         log.trace("isShouldBuy {} {} end resBuy={}", candle.getFigi(), candle.getDateTime(), resBuy);
@@ -446,9 +447,9 @@ public class SmaService implements
                 strategy,
                 candle,
                 "Date|open|high|low|close|ema2|profit|loss|limitPrice|lossAvg|deadLineTop|investBottom|investTop|smaTube|strategy"
-                        + "|stopLoss|isDayEnd|smaUp|smaDown|smaOver|smaUnder|stopLoss2|minLine|underMaxLine|priceWanted",
+                        + "|stopLoss|isDayEnd|smaUp|smaDown|smaOver|smaUnder|stopLoss2|minLine|underMaxLine|priceWanted|minLineDelta",
                 "{} | {} | {} | {} | {} | | {} | {} | {} | {} | ||||sell {}"
-                        + "| {} | {} | {} | {} | {} | {} | {}| {}||",
+                        + "| {} | {} | {} | {} | {} | {} | {}| {}||| {}",
                 printDateTime(candle.getDateTime()),
                 candle.getOpenPrice(),
                 candle.getHighestPrice(),
@@ -466,7 +467,8 @@ public class SmaService implements
                 smaAverage != null ? printPrice(sma + smaAverage.getOverSma()) : "",
                 smaAverage != null ? printPrice(sma - smaAverage.getUnderSma()) : "",
                 printPrice(stopLoss),
-                minLine != null && minLine.getMin() != null ? printPrice(minLine.getMin()) : ""
+                minLine != null && minLine.getMin() != null ? printPrice(minLine.getMin()) : "",
+                minLine != null && minLine.getMin() != null ? printPrice(minLine.getMin() - minLine.getMinDelta()) : ""
         );
         log.trace("isShouldSell {} {} end res", candle.getFigi(), candle.getDateTime(), res);
         return res;
@@ -578,6 +580,7 @@ public class SmaService implements
     @Data
     public static class MinLine {
         Double min;
+        Double minDelta;
         String annotation;
     }
 
@@ -637,11 +640,13 @@ public class SmaService implements
         }
         Integer totalSize = null;
         Double min = null;
+        Double minLineErrDelta = null;
 
         Integer lastIMin = null;
         Double minLineDelta = null;
         Double pricePoint = null;
         Double pricePoint2 = null;
+        Integer iMinPoint2 = null;
 
         Integer iMin1 = iMinArray.get(0);
         CandleDomainEntity min1 = minCandles.get(0);
@@ -661,7 +666,7 @@ public class SmaService implements
                     annotation += " skip UP";
                 }
             } else {
-                var stepsFromMin2 = Math.abs(iMin2 - iMin1);
+                var stepsFromMin2 = Math.abs(iMin2 - iMinPoint2);
                 Double minInMin2 = pricePoint - minLineDelta * (totalSize + stepsFromMin2);
                 annotation += " minInMin2=" + minInMin2;
                 if (min2.getMedianPrice().doubleValue() < pricePoint2) {
@@ -677,6 +682,7 @@ public class SmaService implements
                         var shift = Math.abs(min2.getMedianPrice().doubleValue() - minInMin2) / 2;
                         annotation += " shift=" + shift;
                         pricePoint -= shift;
+                        annotation += " pricePoint=" + pricePoint;
                         var lastSteps = candleList.size() - lastIMin;
                         min = pricePoint + minLineDelta * lastSteps;
                         annotation += " min=" + printPrice(min);
@@ -687,7 +693,9 @@ public class SmaService implements
                 if (lastIMin == null) {
                     lastIMin = iMin1;
                     pricePoint = candleList.get(lastIMin).getMedianPrice().doubleValue();
+                    annotation += " pricePoint=" + pricePoint;
                 }
+                var prevTotalSize = totalSize;
                 totalSize = Math.abs(lastIMin - iMin2);
                 annotation += " totalSize=" + totalSize;
                 minLineDelta = (pricePoint - min2.getMedianPrice().doubleValue()) / totalSize;
@@ -697,11 +705,45 @@ public class SmaService implements
                 annotation += " lastSteps=" + lastSteps;
                 min = pricePoint + minLineDelta * lastSteps;
                 annotation += " min=" + printPrice(min);
+
+                var pow = 0.5;
+                minLineErrDelta = Math.pow(totalSize, pow);
+                annotation += " pow=" + printPrice(minLineErrDelta);
+                minLineErrDelta *= Math.abs(minLineDelta);
+                annotation += " minLineErrDelta=" + printPrice(minLineErrDelta);
+
+                // теперь проверим, что pricePoint2 рядом
+                if (null != prevTotalSize) {
+                    var minOnPrevPoint2 = pricePoint - minLineDelta * prevTotalSize;
+                    annotation += " minOnPrevPoint2=" + printPrice(minOnPrevPoint2);
+                    if ((minOnPrevPoint2 - minLineErrDelta) > pricePoint2) {
+                        pricePoint = pricePoint2;
+                        annotation += " pricePoint=" + pricePoint2;
+                        lastIMin = iMinPoint2;
+                        totalSize = Math.abs(lastIMin - iMin2);
+                        annotation += " totalSize=" + totalSize;
+                        minLineDelta = (pricePoint - min2.getMedianPrice().doubleValue()) / totalSize;
+                        annotation += " minLineDelta=" + printPrice(minLineDelta);
+                        annotation += " lastIMin=" + lastIMin;
+                        lastSteps = candleList.size() - lastIMin;
+                        annotation += " lastSteps=" + lastSteps;
+                        min = pricePoint + minLineDelta * lastSteps;
+                        annotation += " min=" + printPrice(min);
+
+                        minLineErrDelta = Math.pow(totalSize, pow);
+                        annotation += " pow=" + printPrice(minLineErrDelta);
+                        minLineErrDelta *= Math.abs(minLineDelta);
+                        annotation += " minLineErrDelta=" + printPrice(minLineErrDelta);
+                    }
+                }
+
                 pricePoint2 = min2.getMedianPrice().doubleValue();
+                iMinPoint2 = iMin2;
             }
         }
         return MinLine.builder()
                 .min(min)
+                .minDelta(minLineErrDelta)
                 .annotation(annotation)
                 .build();
     }
