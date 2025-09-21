@@ -312,6 +312,7 @@ public class SmaService implements
             setOrderBigDecimalData(strategy, candle, "priceWanted", purchaseRate);
             setOrderBigDecimalData(strategy, candle, "stopLoss", BigDecimal.valueOf(stopLoss));
             setOrderBigDecimalData(strategy, candle, "isOrderNeedSellAlways", BigDecimal.TEN);
+            setOrderBigDecimalData(strategy, candle, "orderCanSellAfterLength", BigDecimal.valueOf(strategy.getMinLineStep()));
         } else {
             priceWanted = null;
         }
@@ -610,7 +611,11 @@ public class SmaService implements
             var c = candleList.get(i);
             var sma = smaList.get(i);
             if (c.getLowestPrice().doubleValue() <= sma) {
-                if (isOver && countOver > strategy.getMinErrStep()) {
+                if (
+                        isOver
+                        && countOver > strategy.getMinErrStep()
+                        && (iMinArray.size() > 0 || countOver > strategy.getMinLineStep())
+                ) {
                     isOver = false;
                     if (iMin0 == null) {
                         iMin0 = i;

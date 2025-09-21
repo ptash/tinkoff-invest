@@ -151,6 +151,20 @@ public class CalculatorFacade {
     {
         var isOrderNeedSellAlways = order.getDetails().getCurrentPrices().getOrDefault("isOrderNeedSellAlways", BigDecimal.ZERO);
         if (isOrderNeedSellAlways.compareTo(BigDecimal.ONE) >= 0) {
+            var orderCanSellAfterLength = order.getDetails().getCurrentPrices().getOrDefault("orderCanSellAfterLength", BigDecimal.ZERO);
+            if (isOrderNeedSellAlways.compareTo(BigDecimal.ONE) >= 0) {
+                var candles = candleHistoryService.getCandlesByFigiBetweenDateTimes(
+                        candleDomainEntity.getFigi(),
+                        order.isShort() ? order.getSellDateTime() : order.getPurchaseDateTime(),
+                        candleDomainEntity.getDateTime(),
+                        candleDomainEntity.getInterval()
+                );
+                if (candles == null || candles.size() > orderCanSellAfterLength.doubleValue()) {
+                    return true;
+                } else {
+                    return false;
+                }
+            }
             return true;
         }
         var stopLossPrice = order.getDetails().getCurrentPrices().getOrDefault("stopLossPrice", BigDecimal.ZERO);
