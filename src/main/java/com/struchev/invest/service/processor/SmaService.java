@@ -312,7 +312,7 @@ public class SmaService implements
             setOrderBigDecimalData(strategy, candle, "priceWanted", purchaseRate);
             setOrderBigDecimalData(strategy, candle, "stopLoss", BigDecimal.valueOf(stopLoss));
             setOrderBigDecimalData(strategy, candle, "isOrderNeedSellAlways", BigDecimal.TEN);
-            setOrderBigDecimalData(strategy, candle, "orderCanSellAfterLength", BigDecimal.valueOf(strategy.getMinLineStep()));
+            setOrderBigDecimalData(strategy, candle, "orderCanSellAfterLength", BigDecimal.valueOf(strategy.getOrderCanSellAfterLength()));
         } else {
             priceWanted = null;
         }
