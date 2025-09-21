@@ -704,13 +704,16 @@ public class SmaService implements
                             annotation += " skip UP";
                         }
                     } else {
+                        isRecalc = true;
+                        annotation += " skip DOWN";
+                        /*
                         var shift = Math.abs(min2.getMedianPrice().doubleValue() - minInMin2) / 2;
                         annotation += " shift=" + shift;
                         pricePoint -= shift;
                         annotation += " pricePoint=" + pricePoint;
                         var lastSteps = candleList.size() - lastIMin;
                         min = pricePoint + minLineDelta * lastSteps;
-                        annotation += " min=" + printPrice(min);
+                        annotation += " min=" + printPrice(min);*/
                     }
                 }
             }
