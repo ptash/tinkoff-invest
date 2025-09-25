@@ -54,6 +54,7 @@ public abstract class ASmaStrategy extends AStrategy implements Cloneable, IStra
     public Integer getSmaMaxDeep() { return 300; }
     public Integer getLineMaxDeep() { return 800; }
     public Integer getMinLineStep() { return 5; }
+    public Integer getMaxLineStep() { return 20; }
     public Integer getOrderCanSellAfterLength() { return 10; }
     public Integer getMinErrStep() { return 1; }
 

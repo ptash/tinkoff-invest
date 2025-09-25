@@ -168,6 +168,13 @@ public class SmaService implements
                 annotation += " minLimitPercent=" + printPrice(minLimitPercent);
                 annotation += " OK BY MINLINE";
             }
+            if (
+                minLine.getMinDown() != null
+                && candle.getClosingPrice().doubleValue() > minLine.getMinDown()
+            ) {
+                resBuy = false;
+                annotation += " SKIP BY MINDOWN";
+            }
         }
         /*
         if (
@@ -327,9 +334,9 @@ public class SmaService implements
                     strategy,
                     candle,
                     "Date|open|high|low|close|ema2|profit|loss|limitPrice|lossAvg|deadLineTop|investBottom|investTop|smaTube|strategy"
-                            + "|stopLoss|isDayEnd|smaUp|smaDown|smaOver|smaUnder|stopLoss2|minLine|underMaxLine|priceWanted|minLineDelta",
+                            + "|stopLoss|isDayEnd|smaUp|smaDown|smaOver|smaUnder|stopLoss2|minLine|underMaxLine|priceWanted|minLineDelta|minDownLine|minDownLineDelta",
                     "{} | {} | {} | {} | {} | | {} | {} | {} | {} | ||||by {}"
-                            + "| {} | {} | {} | {} | {} | {} | {}| {}| {}| {}| {}",
+                            + "| {} | {} | {} | {} | {} | {} | {}| {}| {}| {}| {}| {}| {}",
                     printDateTime(candle.getDateTime()),
                     candle.getOpenPrice(),
                     candle.getHighestPrice(),
@@ -350,7 +357,9 @@ public class SmaService implements
                     minLine != null && minLine.getMin() != null ? printPrice(minLine.getMin()) : "",
                     underMaxLine != null ? printPrice(underMaxLine) : "",
                     priceWanted != null ? printPrice(priceWanted) : "",
-                    minLine != null && minLine.getMin() != null ? printPrice(minLine.getMin() - minLine.getMinDelta()) : ""
+                    minLine != null && minLine.getMin() != null ? printPrice(minLine.getMin() - minLine.getMinDelta()) : "",
+                    minLine != null && minLine.getMinDown() != null ? printPrice(minLine.getMinDown()) : "",
+                    minLine != null && minLine.getMinDown() != null ? printPrice(minLine.getMinDown() + minLine.getMinDownDelta()) : ""
             );
         }
         log.trace("isShouldBuy {} {} end resBuy={}", candle.getFigi(), candle.getDateTime(), resBuy);
@@ -452,9 +461,9 @@ public class SmaService implements
                 strategy,
                 candle,
                 "Date|open|high|low|close|ema2|profit|loss|limitPrice|lossAvg|deadLineTop|investBottom|investTop|smaTube|strategy"
-                        + "|stopLoss|isDayEnd|smaUp|smaDown|smaOver|smaUnder|stopLoss2|minLine|underMaxLine|priceWanted|minLineDelta",
+                        + "|stopLoss|isDayEnd|smaUp|smaDown|smaOver|smaUnder|stopLoss2|minLine|underMaxLine|priceWanted|minLineDelta|minDownLine|minDownLineDelta",
                 "{} | {} | {} | {} | {} | | {} | {} | {} | {} | ||||sell {}"
-                        + "| {} | {} | {} | {} | {} | {} | {}| {}||| {}",
+                        + "| {} | {} | {} | {} | {} | {} | {}| {}||| {} | {}| {}",
                 printDateTime(candle.getDateTime()),
                 candle.getOpenPrice(),
                 candle.getHighestPrice(),
@@ -473,7 +482,9 @@ public class SmaService implements
                 smaAverage != null ? printPrice(sma - smaAverage.getUnderSma()) : "",
                 printPrice(stopLoss),
                 minLine != null && minLine.getMin() != null ? printPrice(minLine.getMin()) : "",
-                minLine != null && minLine.getMin() != null ? printPrice(minLine.getMin() - minLine.getMinDelta()) : ""
+                minLine != null && minLine.getMin() != null ? printPrice(minLine.getMin() - minLine.getMinDelta()) : "",
+                minLine != null && minLine.getMinDown() != null ? printPrice(minLine.getMinDown()) : "",
+                minLine != null && minLine.getMinDown() != null ? printPrice(minLine.getMinDown() + minLine.getMinDownDelta()) : ""
         );
         log.trace("isShouldSell {} {} end res", candle.getFigi(), candle.getDateTime(), res);
         return res;
@@ -586,6 +597,8 @@ public class SmaService implements
     public static class MinLine {
         Double min;
         Double minDelta;
+        Double minDown;
+        Double minDownDelta;
         String annotation;
     }
 
@@ -601,20 +614,26 @@ public class SmaService implements
             return null;
         }
         var maxPrice = candleList.get(candleList.size() - 1).getLowestPrice().doubleValue();
+        var minPrice = candleList.get(candleList.size() - 1).getHighestPrice().doubleValue();
         var isOver = true;
         Integer iMin = null;
         Integer iMin0 = null;
         int countOver = 0;
+        int countUnder = 0;
+        int prevCountUnder = 0;
         List<CandleDomainEntity> minCandles = new ArrayList<>();
         List<Integer> iMinArray = new ArrayList<>();
         for (var i = candleList.size() - 1; i >=0; i--) {
             var c = candleList.get(i);
             var sma = smaList.get(i);
-            if (c.getLowestPrice().doubleValue() <= sma) {
+            if (
+                    (c.getLowestPrice().doubleValue() <= sma && countUnder <= strategy.getMaxLineStep())
+                    || (c.getHighestPrice().doubleValue() <= sma && countUnder > strategy.getMaxLineStep())
+            ) {
                 if (
                         isOver
-                        && countOver > strategy.getMinErrStep()
-                        && (iMinArray.size() > 0 || countOver > strategy.getMinLineStep())
+                        && (countOver > strategy.getMinErrStep() || prevCountUnder > strategy.getMaxLineStep())
+                        && (iMinArray.size() > 0 || countOver > strategy.getMinLineStep() || prevCountUnder > strategy.getMaxLineStep())
                 ) {
                     isOver = false;
                     if (iMin0 == null) {
@@ -630,14 +649,20 @@ public class SmaService implements
                     minCandles.set(iMin, c);
                 }
                 countOver = 0;
+                countUnder++;
             } else {
                 iMin0 = i;
                 isOver = true;
                 countOver++;
+                prevCountUnder = countUnder;
+                countUnder = 0;
             }
             if (iMin == null) {
                 if (maxPrice > candleList.get(i).getLowestPrice().doubleValue()) {
                     maxPrice = candleList.get(i).getLowestPrice().doubleValue();
+                }
+                if (minPrice < candleList.get(i).getHighestPrice().doubleValue()) {
+                    minPrice = candleList.get(i).getHighestPrice().doubleValue();
                 }
             }
         }
@@ -653,6 +678,21 @@ public class SmaService implements
                     .annotation(annotation)
                     .build();
         }
+
+        annotation += " size=" + iMinArray.size();
+        var minUp = calcMinLine(true, candleList, iMinArray, minCandles, maxPrice, strategy.getPriceError().doubleValue());
+        var minDown = calcMinLine(false, candleList, iMinArray, minCandles, maxPrice, strategy.getPriceError().doubleValue());
+        return MinLine.builder()
+                .min(minUp.getMin())
+                .minDelta(minUp.getMinDelta())
+                .minDown(minDown.getMin())
+                .minDownDelta(minDown.getMinDelta())
+                .annotation(annotation + minUp.getAnnotation() + minDown.getAnnotation())
+                .build();
+    }
+
+    private MinLine calcMinLine(Boolean isUp, List<CandleDomainEntity> candleList, List<Integer> iMinArray, List<CandleDomainEntity> minCandles, Double maxPrice, Double priceError) {
+        var annotation = "";
         Integer totalSize = null;
         Double min = null;
         Double minLineErrDelta = null;
@@ -669,7 +709,15 @@ public class SmaService implements
         annotation += " maxLinePrice=" + printPrice(maxPrice);
         var curMin = 0;
         for (var i = 0; i < iMinArray.size(); i++) {
-            if (minCandles.get(i).getMedianPrice().doubleValue() > maxPrice) {
+            Integer iMin2 = iMinArray.get(i);
+            CandleDomainEntity min2 = minCandles.get(i);
+            if (
+                    (isUp && minCandles.get(i).getMedianPrice().doubleValue() > maxPrice)
+                    || (!isUp && false
+                            //&& minCandles.get(i).getMedianPrice().doubleValue() < maxPrice
+                    )
+            ) {
+                annotation += " SKIP" + i + "=" + iMin2 + ":" + min2.getDateTime() + "(" + printPrice(min2.getMedianPrice()) + ")";
                 continue;
             }
             if (null == iMin1) {
@@ -679,27 +727,45 @@ public class SmaService implements
                 annotation += " min0=" + printPrice(min1.getMedianPrice());
                 continue;
             }
-            if (minCandles.get(i).getMedianPrice().doubleValue() < minCandles.get(curMin).getMedianPrice().doubleValue()) {
+            if (
+                    (isUp && minCandles.get(i).getMedianPrice().doubleValue() < minCandles.get(curMin).getMedianPrice().doubleValue())
+                    || (!isUp && minCandles.get(i).getMedianPrice().doubleValue() > minCandles.get(curMin).getMedianPrice().doubleValue())
+            ) {
                 curMin = i;
+                annotation += " curMin=" + i;
             } else {
+                annotation += " totalSize=" + totalSize;
+                if (totalSize == null && !isUp) {
+                    iMin1 = iMinArray.get(i);
+                    min1 = minCandles.get(i);
+                    annotation += " iMin0=" + iMin1 + ":" + min1.getDateTime();
+                    annotation += " min0=" + printPrice(min1.getMedianPrice());
+                }
                 continue;
             }
-            Integer iMin2 = iMinArray.get(i);
-            CandleDomainEntity min2 = minCandles.get(i);
             annotation += " iMin" + i + "=" + iMin2 + ":" + min2.getDateTime();
             annotation += " min" + i + "=" + printPrice(min2.getMedianPrice());
             var isRecalc = false;
             if (totalSize == null) {
-                if (min1.getMedianPrice().doubleValue() > min2.getMedianPrice().doubleValue()) {
+                if (
+                        (isUp && min1.getMedianPrice().doubleValue() > min2.getMedianPrice().doubleValue())
+                        || (!isUp && min1.getMedianPrice().doubleValue() < min2.getMedianPrice().doubleValue())
+                ) {
                     isRecalc = true;
                 } else {
                     annotation += " skip UP";
+                    if (!isUp) {
+                        iMin1 = iMinArray.get(i);
+                        min1 = minCandles.get(i);
+                        annotation += " iMin0=" + iMin1 + ":" + min1.getDateTime();
+                        annotation += " min0=" + printPrice(min1.getMedianPrice());
+                    }
                 }
             } else {
                 var stepsFromMin2 = Math.abs(iMin2 - iMinPoint2);
                 Double minInMin2 = pricePoint - minLineDelta * (totalSize + stepsFromMin2);
                 annotation += " minInMin2=" + minInMin2;
-                if (min2.getMedianPrice().doubleValue() < pricePoint2) {
+                if (isUp && min2.getMedianPrice().doubleValue() < pricePoint2) {
                     if (
                             minInMin2 < min2.getMedianPrice().doubleValue()
                                     || minLineDelta < 0
@@ -711,6 +777,26 @@ public class SmaService implements
                     } else {
                         isRecalc = true;
                         annotation += " skip DOWN";
+                        /*
+                        var shift = Math.abs(min2.getMedianPrice().doubleValue() - minInMin2) / 2;
+                        annotation += " shift=" + shift;
+                        pricePoint -= shift;
+                        annotation += " pricePoint=" + pricePoint;
+                        var lastSteps = candleList.size() - lastIMin;
+                        min = pricePoint + minLineDelta * lastSteps;
+                        annotation += " min=" + printPrice(min);*/
+                    }
+                }
+                if (!isUp && min2.getMedianPrice().doubleValue() > pricePoint2) {
+                    if (
+                            minInMin2 > min2.getMedianPrice().doubleValue()
+                                    || minLineDelta > 0
+                    ) {
+                        isRecalc = true;
+                        annotation += " skip DOWN";
+                    } else {
+                        //isRecalc = true;
+                        annotation += " skip UP";
                         /*
                         var shift = Math.abs(min2.getMedianPrice().doubleValue() - minInMin2) / 2;
                         annotation += " shift=" + shift;
@@ -743,14 +829,17 @@ public class SmaService implements
                 minLineErrDelta = Math.pow(totalSize, pow);
                 annotation += " pow=" + printPrice(minLineErrDelta);
                 minLineErrDelta *= Math.abs(minLineDelta);
-                minLineErrDelta = Math.max(minLineErrDelta, pricePoint * strategy.getPriceError().doubleValue());
+                minLineErrDelta = Math.max(minLineErrDelta, pricePoint * priceError);
                 annotation += " minLineErrDelta=" + printPrice(minLineErrDelta);
 
                 // теперь проверим, что pricePoint2 рядом
                 if (null != prevTotalSize) {
                     var minOnPrevPoint2 = pricePoint - minLineDelta * prevTotalSize;
                     annotation += " minOnPrevPoint2=" + printPrice(minOnPrevPoint2);
-                    if ((minOnPrevPoint2 - minLineErrDelta) > pricePoint2) {
+                    if (
+                            (isUp && (minOnPrevPoint2 - minLineErrDelta) > pricePoint2)
+                            || (!isUp && (minOnPrevPoint2 - minLineErrDelta) > pricePoint2)
+                    ) {
                         pricePoint = pricePoint2;
                         annotation += " pricePoint=" + pricePoint2;
                         lastIMin = iMinPoint2;
@@ -767,7 +856,7 @@ public class SmaService implements
                         minLineErrDelta = Math.pow(totalSize, pow);
                         annotation += " pow=" + printPrice(minLineErrDelta);
                         minLineErrDelta *= Math.abs(minLineDelta);
-                        minLineErrDelta = Math.max(minLineErrDelta, pricePoint * strategy.getPriceError().doubleValue());
+                        minLineErrDelta = Math.max(minLineErrDelta, pricePoint * priceError);
                         annotation += " minLineErrDelta=" + printPrice(minLineErrDelta);
                     }
                 }
@@ -777,7 +866,7 @@ public class SmaService implements
             }
         }
         return MinLine.builder()
-                .min(min == null ? null : (min + minLineErrDelta))
+                .min(min == null ? null : min - minLineErrDelta)
                 .minDelta(minLineErrDelta)
                 .annotation(annotation)
                 .build();
