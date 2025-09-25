@@ -680,8 +680,46 @@ public class SmaService implements
         }
 
         annotation += " size=" + iMinArray.size();
-        var minUp = calcMinLine(true, candleList, iMinArray, minCandles, maxPrice, strategy.getPriceError().doubleValue());
-        var minDown = calcMinLine(false, candleList, iMinArray, minCandles, maxPrice, strategy.getPriceError().doubleValue());
+
+        if (iMinArray.get(iMinArray.size() - 1) > strategy.getMinLineStep()) {
+            iMinArray.add(0);
+        }
+        List<CandleDomainEntity> minCandles2 = new ArrayList<>();
+        List<Integer> iMinArray2 = new ArrayList<>();
+        var prevI = candleList.size() - 1;
+        //CandleDomainEntity prevMaxCandle = null;
+        Integer prevMaxCandleI = null;
+        for (var i = 0; i < iMinArray.size(); i++) {
+            var curMaxCandle = candleList.subList(iMinArray.get(i), prevI + 1).stream().reduce((first, second) ->
+                    first.getMedianPrice().compareTo(second.getMedianPrice()) > 0 ? first : second
+            ).orElse(null);
+            var curMaxCandleI = candleList.indexOf(curMaxCandle);
+            //log.info("i = {}: {} - {} maxCandleI = {}, maxCandle = {}", i, iMinArray.get(i), prevI, curMaxCandleI, curMaxCandle);
+            if (null != prevMaxCandleI) {
+                var minCandle = candleList.subList(curMaxCandleI, prevMaxCandleI + 1).stream().reduce((first, second) ->
+                        first.getMedianPrice().compareTo(second.getMedianPrice()) < 0 ? first : second
+                ).orElse(null);
+                //log.info("i = {}: {} - {} minCandleI = {}, maxCandle = {}", i, curMaxCandleI, prevMaxCandleI, candleList.indexOf(minCandle), minCandle);
+                if (null != minCandle) {
+                    minCandles2.add(minCandle);
+                    iMinArray2.add(candleList.indexOf(minCandle));
+                }
+            }
+
+            prevI = iMinArray.get(i);
+            //prevMaxCandle = curMaxCandle;
+            prevMaxCandleI = curMaxCandleI;
+        }
+
+        if (iMinArray2.size() < 2) {
+            return MinLine.builder()
+                    .min(null)
+                    .annotation(annotation)
+                    .build();
+        }
+
+        var minUp = calcMinLine(true, candleList, iMinArray2, minCandles2, maxPrice, strategy.getPriceError().doubleValue());
+        var minDown = calcMinLine(false, candleList, iMinArray2, minCandles2, maxPrice, strategy.getPriceError().doubleValue());
         return MinLine.builder()
                 .min(minUp.getMin())
                 .minDelta(minUp.getMinDelta())
