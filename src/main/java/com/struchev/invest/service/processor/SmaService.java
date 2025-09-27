@@ -632,8 +632,9 @@ public class SmaService implements
             ) {
                 if (
                         isOver
-                        && (countOver > strategy.getMinErrStep() || prevCountUnder > strategy.getMaxLineStep())
-                        && (iMinArray.size() > 0 || countOver > strategy.getMinLineStep() || prevCountUnder > strategy.getMaxLineStep())
+                        && (((countOver > strategy.getMinErrStep() || prevCountUnder > strategy.getMaxLineStep())
+                        && (iMinArray.size() > 0 || countOver > strategy.getMinLineStep() || prevCountUnder > strategy.getMaxLineStep()))
+                        || countUnder > strategy.getMaxLineStep())
                 ) {
                     isOver = false;
                     if (iMin0 == null) {
@@ -695,11 +696,13 @@ public class SmaService implements
             ).orElse(null);
             var curMaxCandleI = candleList.indexOf(curMaxCandle);
             //log.info("i = {}: {} - {} maxCandleI = {}, maxCandle = {}", i, iMinArray.get(i), prevI, curMaxCandleI, curMaxCandle);
+            //annotation += "i = " + i + ": " + iMinArray.get(i) + " - " + prevI + " maxCandleI = " + curMaxCandleI + ", maxCandle = " + printDateTime(curMaxCandle.getDateTime());
             if (null != prevMaxCandleI) {
                 var minCandle = candleList.subList(curMaxCandleI, prevMaxCandleI + 1).stream().reduce((first, second) ->
                         first.getMedianPrice().compareTo(second.getMedianPrice()) < 0 ? first : second
                 ).orElse(null);
                 //log.info("i = {}: {} - {} minCandleI = {}, maxCandle = {}", i, curMaxCandleI, prevMaxCandleI, candleList.indexOf(minCandle), minCandle);
+                //annotation += "i = " + i + ": " + curMaxCandleI + " - " + prevMaxCandleI + " minCandleI = " + candleList.indexOf(minCandle) + ", maxCandle = " + minCandle;
                 if (null != minCandle) {
                     minCandles2.add(minCandle);
                     iMinArray2.add(candleList.indexOf(minCandle));
@@ -766,12 +769,13 @@ public class SmaService implements
                 continue;
             }
             if (
-                    (isUp && minCandles.get(i).getMedianPrice().doubleValue() < minCandles.get(curMin).getMedianPrice().doubleValue())
-                    || (!isUp && minCandles.get(i).getMedianPrice().doubleValue() > minCandles.get(curMin).getMedianPrice().doubleValue())
+                    //(isUp && minCandles.get(i).getMedianPrice().doubleValue() < minCandles.get(curMin).getMedianPrice().doubleValue())
+                    //||
+                    (!isUp && minCandles.get(i).getMedianPrice().doubleValue() < minCandles.get(curMin).getMedianPrice().doubleValue())
             ) {
                 curMin = i;
                 annotation += " curMin=" + i;
-            } else {
+            }/* else {
                 annotation += " totalSize=" + totalSize;
                 if (totalSize == null && !isUp) {
                     iMin1 = iMinArray.get(i);
@@ -780,7 +784,7 @@ public class SmaService implements
                     annotation += " min0=" + printPrice(min1.getMedianPrice());
                 }
                 continue;
-            }
+            }*/
             annotation += " iMin" + i + "=" + iMin2 + ":" + min2.getDateTime();
             annotation += " min" + i + "=" + printPrice(min2.getMedianPrice());
             var isRecalc = false;
@@ -825,24 +829,37 @@ public class SmaService implements
                         annotation += " min=" + printPrice(min);*/
                     }
                 }
-                if (!isUp && min2.getMedianPrice().doubleValue() > pricePoint2) {
-                    if (
-                            minInMin2 > min2.getMedianPrice().doubleValue()
-                                    || minLineDelta > 0
-                    ) {
-                        isRecalc = true;
-                        annotation += " skip DOWN";
+                if (!isUp) {
+                    if (min2.getMedianPrice().doubleValue() > pricePoint2) {
+                        if (
+                                minInMin2 > min2.getMedianPrice().doubleValue()
+                                        || minLineDelta > 0
+                        ) {
+                            isRecalc = true;
+                            annotation += " recalc DOWN";
+                        } else {
+                            //isRecalc = true;
+                            annotation += " skip UP";
+                            /*
+                            var shift = Math.abs(min2.getMedianPrice().doubleValue() - minInMin2) / 2;
+                            annotation += " shift=" + shift;
+                            pricePoint -= shift;
+                            annotation += " pricePoint=" + pricePoint;
+                            var lastSteps = candleList.size() - lastIMin;
+                            min = pricePoint + minLineDelta * lastSteps;
+                            annotation += " min=" + printPrice(min);*/
+                        }
                     } else {
-                        //isRecalc = true;
-                        annotation += " skip UP";
-                        /*
-                        var shift = Math.abs(min2.getMedianPrice().doubleValue() - minInMin2) / 2;
-                        annotation += " shift=" + shift;
-                        pricePoint -= shift;
-                        annotation += " pricePoint=" + pricePoint;
-                        var lastSteps = candleList.size() - lastIMin;
-                        min = pricePoint + minLineDelta * lastSteps;
-                        annotation += " min=" + printPrice(min);*/
+                        if (min2.getMedianPrice().doubleValue() > minCandles.get(curMin).getMedianPrice().doubleValue()
+                            && iMinArray.get(curMin) != lastIMin
+                            && iMinArray.get(curMin) > (5 * candleList.size() / 6)
+                        ) {
+                            isRecalc = true;
+                            annotation += " recalc DOWN ALL";
+                            lastIMin = iMinArray.get(curMin);
+                            pricePoint = candleList.get(lastIMin).getMedianPrice().doubleValue();
+                            annotation += " pricePoint=" + printPrice(pricePoint);
+                        }
                     }
                 }
             }
