@@ -42,7 +42,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
         if (getIsSandboxMode()) {
             var result = getApi().getSandboxService().postOrderSync(instrument.getFigi(), quantity, quotation,
                     OrderDirection.ORDER_DIRECTION_BUY, getAccountIdByFigi(instrument), OrderType.ORDER_TYPE_MARKET, uuid);
-            var priceExecuted = getPriceExecuted(result, price);
+            var priceExecuted = getPriceExecuted(result);
             return OrderResult.builder()
                     .orderId(result.getOrderId())
                     .commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
@@ -57,7 +57,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
             var result = getApi().getOrdersService().postOrderSync(instrument.getFigi(), quantity, quotation,
                     OrderDirection.ORDER_DIRECTION_BUY, getAccountIdByFigi(instrument), OrderType.ORDER_TYPE_MARKET, uuid);
             log.info("postOrder result: {}", result);
-            var priceExecuted = getPriceExecuted(result, price);
+            var priceExecuted = getPriceExecuted(result);
             return OrderResult.builder()
                     .orderId(result.getOrderId())
                     .commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
@@ -85,7 +85,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
             var result = getApi().getSandboxService().postOrderSync(instrument.getFigi(), quantity, quotation,
                     OrderDirection.ORDER_DIRECTION_SELL, getAccountIdByFigi(instrument), OrderType.ORDER_TYPE_MARKET, uuid);
             log.info("postOrder result: {}", result);
-            var priceExecuted = getPriceExecuted(result, price);
+            var priceExecuted = getPriceExecuted(result);
             return OrderResult.builder()
                     .orderId(result.getOrderId())
                     .commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
@@ -100,7 +100,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
             var result = getApi().getOrdersService().postOrderSync(instrument.getFigi(), quantity, quotation,
                     OrderDirection.ORDER_DIRECTION_SELL, getAccountIdByFigi(instrument), OrderType.ORDER_TYPE_MARKET, uuid);
             log.info("postOrder result: {}", result);
-            var priceExecuted = getPriceExecuted(result, price);
+            var priceExecuted = getPriceExecuted(result);
             return OrderResult.builder()
                     .orderId(result.getOrderId())
                     .commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
@@ -114,21 +114,21 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
     }
 
     public BigDecimal getPriceExecuted(OrderState result) {
-        var initPrice = toBigDecimal(result.getInitialOrderPrice(), 8);
-        var priceExecuted = toBigDecimal(result.getTotalOrderAmount(), 8, initPrice);
-        //var priceExecuted = toBigDecimal(result.getExecutedOrderPrice(), 8, initPrice);
-        return checkPriceExecuted(result.getFigi(), priceExecuted, initPrice);
-    }
-
-    public BigDecimal getPriceExecuted(PostOrderResponse result, BigDecimal initPrice) {
-        var priceExecuted = toBigDecimal(result.getTotalOrderAmount(), 8, initPrice);
+        var initPrice = toBigDecimal(result.getInitialOrderPrice(), 8)
+                .divide(BigDecimal.valueOf(result.getLotsRequested()), 8, RoundingMode.HALF_DOWN);
+        var priceExecuted = toBigDecimal(result.getTotalOrderAmount(), 8, initPrice)
+                .divide(BigDecimal.valueOf(result.getLotsExecuted()), 8, RoundingMode.HALF_DOWN);
         //var priceExecuted = toBigDecimal(result.getExecutedOrderPrice(), 8, initPrice);
         return checkPriceExecuted(result.getFigi(), priceExecuted, initPrice);
     }
 
     public BigDecimal getPriceExecuted(PostOrderResponse result) {
-        var initPrice = toBigDecimal(result.getInitialOrderPrice(), 8);
-        return getPriceExecuted(result, initPrice);
+        var initPrice = toBigDecimal(result.getInitialOrderPrice(), 8)
+                .divide(BigDecimal.valueOf(result.getLotsExecuted()), 8, RoundingMode.HALF_DOWN);
+        var priceExecuted = toBigDecimal(result.getTotalOrderAmount(), 8, initPrice)
+                .divide(BigDecimal.valueOf(result.getLotsExecuted()), 8, RoundingMode.HALF_DOWN);
+        //var priceExecuted = toBigDecimal(result.getExecutedOrderPrice(), 8, initPrice);
+        return checkPriceExecuted(result.getFigi(), priceExecuted, initPrice);
     }
 
     public BigDecimal checkPriceExecuted(String figi, BigDecimal priceExecuted, BigDecimal initPrice) {
@@ -465,7 +465,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
             var result = getApi().getSandboxService().postOrderSync(instrument.getFigi(), quantity, quotation,
                     OrderDirection.ORDER_DIRECTION_SELL, getAccountIdByFigi(instrument), OrderType.ORDER_TYPE_MARKET, uuid);
             log.info("postOrder result: {}", result);
-            var priceExecuted = getPriceExecuted(result, price);
+            var priceExecuted = getPriceExecuted(result);
             return OrderResult.builder()
                     .orderId(result.getOrderId())
                     .commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
@@ -480,7 +480,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
             var result = getApi().getOrdersService().postOrderSync(instrument.getFigi(), quantity, quotation,
                     OrderDirection.ORDER_DIRECTION_SELL, getAccountIdByFigi(instrument), OrderType.ORDER_TYPE_MARKET, uuid);
             log.info("postOrder result: {}", result);
-            var priceExecuted = getPriceExecuted(result, price);
+            var priceExecuted = getPriceExecuted(result);
             return OrderResult.builder()
                     .orderId(result.getOrderId())
                     .commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
@@ -512,7 +512,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
             var result = getApi().getSandboxService().postOrderSync(instrument.getFigi(), quantity, quotation,
                     OrderDirection.ORDER_DIRECTION_BUY, getAccountIdByFigi(instrument), OrderType.ORDER_TYPE_MARKET, uuid);
             log.info("postOrder result: {}", result);
-            var priceExecuted = getPriceExecuted(result, price);
+            var priceExecuted = getPriceExecuted(result);
             return OrderResult.builder()
                     .orderId(result.getOrderId())
                     .commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
@@ -527,7 +527,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
             var result = getApi().getOrdersService().postOrderSync(instrument.getFigi(), quantity, quotation,
                     OrderDirection.ORDER_DIRECTION_BUY, getAccountIdByFigi(instrument), OrderType.ORDER_TYPE_MARKET, uuid);
             log.info("postOrder result: {}", result);
-            var priceExecuted = getPriceExecuted(result, price);
+            var priceExecuted = getPriceExecuted(result);
             return OrderResult.builder()
                     .orderId(result.getOrderId())
                     .commissionInitial(toBigDecimal(result.getInitialCommission(), 8))
