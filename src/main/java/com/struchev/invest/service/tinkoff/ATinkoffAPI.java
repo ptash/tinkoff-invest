@@ -32,6 +32,9 @@ public abstract class ATinkoffAPI implements ITinkoffCommonAPI, ITinkoffOrderAPI
     @Value("${tinkoff.is-token-sandbox:false}")
     private Boolean isSandboxMode;
 
+    @Value("${tinkoff.is-token-sandbox:false}")
+    protected Boolean isPriceExecutedOnTotalOrderAmount;
+
     @Value("${tinkoff.net.debug:null}")
     private String netDebug;
 

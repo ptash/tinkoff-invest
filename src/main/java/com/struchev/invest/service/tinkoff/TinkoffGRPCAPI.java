@@ -116,18 +116,26 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
     public BigDecimal getPriceExecuted(OrderState result) {
         var initPrice = toBigDecimal(result.getInitialOrderPrice(), 8)
                 .divide(BigDecimal.valueOf(result.getLotsRequested()), 8, RoundingMode.HALF_DOWN);
-        var priceExecuted = toBigDecimal(result.getTotalOrderAmount(), 8, initPrice)
-                .divide(BigDecimal.valueOf(result.getLotsExecuted()), 8, RoundingMode.HALF_DOWN);
-        //var priceExecuted = toBigDecimal(result.getExecutedOrderPrice(), 8, initPrice);
+        BigDecimal priceExecuted;
+        if (isPriceExecutedOnTotalOrderAmount) {
+            priceExecuted = toBigDecimal(result.getTotalOrderAmount(), 8, initPrice)
+                    .divide(BigDecimal.valueOf(result.getLotsExecuted()), 8, RoundingMode.HALF_DOWN);
+        } else {
+            priceExecuted = toBigDecimal(result.getExecutedOrderPrice(), 8, initPrice);
+        }
         return checkPriceExecuted(result.getFigi(), priceExecuted, initPrice);
     }
 
     public BigDecimal getPriceExecuted(PostOrderResponse result) {
         var initPrice = toBigDecimal(result.getInitialOrderPrice(), 8)
                 .divide(BigDecimal.valueOf(result.getLotsExecuted()), 8, RoundingMode.HALF_DOWN);
-        var priceExecuted = toBigDecimal(result.getTotalOrderAmount(), 8, initPrice)
-                .divide(BigDecimal.valueOf(result.getLotsExecuted()), 8, RoundingMode.HALF_DOWN);
-        //var priceExecuted = toBigDecimal(result.getExecutedOrderPrice(), 8, initPrice);
+        BigDecimal priceExecuted;
+        if (isPriceExecutedOnTotalOrderAmount) {
+            priceExecuted = toBigDecimal(result.getTotalOrderAmount(), 8, initPrice)
+                    .divide(BigDecimal.valueOf(result.getLotsExecuted()), 8, RoundingMode.HALF_DOWN);
+        } else {
+            priceExecuted = toBigDecimal(result.getExecutedOrderPrice(), 8, initPrice);
+        }
         return checkPriceExecuted(result.getFigi(), priceExecuted, initPrice);
     }
 
