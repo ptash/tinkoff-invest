@@ -14,5 +14,5 @@ public class AlligatorStrategy5MinRev extends AlligatorStrategy5Min {
     public SellLimitCriteria getSellLimitCriteriaOrig() {
         return SellLimitCriteria.builder().exitProfitPercent(2.0f).build();
     }
-    public boolean isEnabled() { return false; }
+    public boolean isEnabled() { return true; }
 }

@@ -422,6 +422,24 @@ public class AlligatorService implements
         var isDayEnd = false;
         Double limitPrice = null;
         Double priceWanted = null;
+
+        if (resBuy) {
+            if (null != strategy.getDayTimeEndBuy(candle.getDateTime())) {
+                var dayEndDateTime = Date.getDateTimeInZone(strategy.getDayTimeEndBuy(candle.getDateTime()));
+                var candleDateTime = Date.getDateTimeInZone(candle.getDateTime());
+                var curDayEnd = candleDateTime
+                        .withHour(dayEndDateTime.getHour())
+                        .withMinute(dayEndDateTime.getMinute())
+                        .withSecond(dayEndDateTime.getSecond());
+                annotation += " " + printDateTime(candleDateTime) + ">curDayEnd=" + printDateTime(curDayEnd);
+                if (candleDateTime.compareTo(curDayEnd) > 0) {
+                    annotation += " SKIP by day end";
+                    resBuy = false;
+                    isDayEnd = true;
+                }
+            }
+        }
+
         if (resBuy && !strategy.isReverse()) {
             var alligatorAverage = getAlligatorLengthAverage(candle.getFigi(), candle.getDateTime(), strategy);
             var orderAlligatorMouth = curAlligatorMouth;
@@ -488,7 +506,7 @@ public class AlligatorService implements
 
             annotation += " origProfitPercent=" + strategy.getSellLimitCriteriaOrig().getExitProfitPercent();
             var realLimitPercent = newLimitPercent * strategy.getLimitCorrectionK();
-            var realLimitPrice = (realLimitPercent * Math.abs(purchaseRate.floatValue()))/ 100. + purchaseRate.floatValue();
+            var realLimitPrice = (realLimitPercent * Math.abs(purchaseRate.floatValue())) / 100. + purchaseRate.floatValue();
             annotation += " realLimitPercent=" + printPrice(realLimitPercent);
             priceWanted = purchaseRate.doubleValue();
             if (realLimitPercent < strategy.getSellLimitCriteriaOrig().getExitProfitPercent()) {
@@ -514,20 +532,7 @@ public class AlligatorService implements
                 setOrderBigDecimalData(strategy, candle, "priceWanted", purchaseRate);
             }
 
-            if (null != strategy.getDayTimeEndBuy(candle.getDateTime())) {
-                var dayEndDateTime = Date.getDateTimeInZone(strategy.getDayTimeEndBuy(candle.getDateTime()));
-                var candleDateTime = Date.getDateTimeInZone(candle.getDateTime());
-                var curDayEnd = candleDateTime
-                        .withHour(dayEndDateTime.getHour())
-                        .withMinute(dayEndDateTime.getMinute())
-                        .withSecond(dayEndDateTime.getSecond());
-                annotation += " " + printDateTime(candleDateTime) + ">curDayEnd=" + printDateTime(curDayEnd);
-                if (candleDateTime.compareTo(curDayEnd) > 0) {
-                    annotation += " SKIP by day end";
-                    resBuy = false;
-                    isDayEnd = true;
-                }
-            } else if (null != strategy.getDayTimeEndTrading(candle.getDateTime())) {
+            if (null != strategy.getDayTimeEndTrading(candle.getDateTime())) {
                 var lengthToDayEnd = getLengthToDayEnd(candle.getFigi(), candle.getDateTime(), strategy.getDayTimeEndTrading(candle.getDateTime()), strategy.getInterval());
                 annotation += " lengthToDayEnd=" + lengthToDayEnd;
                 if (
