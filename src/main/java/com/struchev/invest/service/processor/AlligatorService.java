@@ -125,6 +125,17 @@ public class AlligatorService implements
             isTrendUp = smaPrev <= sma;
             if (isTrendUp) {
                 smaUp = sma;
+                if (strategy.getTrendUpLength() > 1) {
+                    annotation += " TrendUpLength=" + strategy.getTrendUpLength();
+                    var smaListPrev = getSma(candle.getFigi(), candle.getDateTime(), strategy.getSmaLength(), strategy.getInterval(), CandleDomainEntity::getMedianPrice, strategy.getTrendUpLength());
+                    for (var iSma = 1; iSma < smaListPrev.size(); iSma++) {
+                        var isTrendUpPrev = smaListPrev.get(iSma - 1) <= smaListPrev.get(iSma);
+                        if (!isTrendUpPrev) {
+                            annotation += " isTrendUp=false iSma=" + iSma;
+                            isTrendUp = false;
+                        }
+                    }
+                }
             } else {
                 smaDown = sma;
             }
