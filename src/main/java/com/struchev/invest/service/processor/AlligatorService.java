@@ -187,16 +187,28 @@ public class AlligatorService implements
                 var minFirstIntervalCandle = candleListMin.stream().filter(v ->
                         v.getLowestPrice().compareTo(lastFMinCandle.getLowestPrice()) < 0
                 ).findFirst().orElse(null);
+                Float newGreenPercentAverage = null;
+                Double blueMax = null;
+                Double greenMax = null;
+                Boolean isMax2 = false;
+                CandleDomainEntity maxAverageCandle = null;
                 if (
                         minIntervalCandle != lastFMinCandle
                         && minFirstIntervalCandle != null
                         && minIntervalCandle.getLowestPrice().compareTo(lastFMinCandle.getLowestPrice()) < 0
                 ) {
-                    var blueMax = getAlligatorBlue(candle.getFigi(), minFirstIntervalCandle.getDateTime(), strategy);
-                    var greenMax = getAlligatorGreen(candle.getFigi(), minFirstIntervalCandle.getDateTime(), strategy);
-                    Float newGreenPercentAverage = null;
+                    maxAverageCandle = minFirstIntervalCandle;
+                    isMax2 = true;
+                } else if (strategy.getReverseMaxLength() > 0) {
+                    maxAverageCandle = lastFMinCandle;
+                }
+
+                if (null != maxAverageCandle) {
+                    blueMax = getAlligatorBlue(candle.getFigi(), maxAverageCandle.getDateTime(), strategy);
+                    greenMax = getAlligatorGreen(candle.getFigi(), maxAverageCandle.getDateTime(), strategy);
+                    annotation += " greenMax=" + printPrice(greenMax);
                     if (blueMax != null && greenMax != null) {
-                        var averageMax = getAveragePercent(candle.getFigi(), minFirstIntervalCandle.getDateTime(), strategy);
+                        var averageMax = getAveragePercent(candle.getFigi(), maxAverageCandle.getDateTime(), strategy);
                         var zsMax = greenMax + (blueMax - greenMax);
                         Float newGreenPercentMax = (float) ((100.f * (zsMax - greenMax) / Math.abs(greenMax)));
                         annotation += " averageMax=" + printPrice(averageMax);
@@ -214,33 +226,64 @@ public class AlligatorService implements
                     annotation += " delta=" + printPrice(delta);
                     waitMax2 = waitMax.add(delta.multiply(BigDecimal.valueOf(strategy.getBuyWaitMaxDeltaK())));
                     waitMaxBuy = waitMax.subtract(delta.multiply(BigDecimal.valueOf(strategy.getBuyWaitMaxBuyDeltaK())));
+                }
+
+                if (strategy.getReverseMaxLength() > 0) {
+                    annotation += " minLength=" + candleListMin.size();
+                    if (
+                            candleListMin.size() < strategy.getReverseMaxLength()
+                            && purchaseRate.compareTo(waitMaxBuy) < 0
+                    ) {
+                        annotation += " SELL OK by ReverseLength=" + strategy.getReverseMaxLength();
+                        resBuy = true;
+                    }
 
                     if (
+                            !resBuy
+                            && strategy.getReverseUpMinLength() > 0
+                            && candleListMin.size() < strategy.getReverseMaxLength()
+                            && candleListMin.size() > strategy.getReverseUpMinLength()
+                            && null != waitMax2
+                            && purchaseRate.compareTo(waitMax2) < 0
+                    ) {
+                        annotation += " SELL OK by ReverseLength=" + strategy.getReverseMaxLength();
+                        resBuy = true;
+                    }
+                } else if (isMax2){
+                    if (
                             purchaseRate.compareTo(waitMax) < 0
-                            && purchaseRate.compareTo(waitMaxBuy) > 0
-                            && purchaseRate.doubleValue() < green
-                            && waitMax.doubleValue() < greenMax
-                            && waitMax2.doubleValue() > greenMax
+                                    && purchaseRate.compareTo(waitMaxBuy) > 0
+                                    && purchaseRate.doubleValue() < green
+                                    && waitMax.doubleValue() < greenMax
+                                    && waitMax2.doubleValue() > greenMax
                     ) {
                         annotation += " SELL OK by waitMax";
                         resBuy = true;
-                        var realLimitPercent = waitMax2.subtract(waitMax).abs().doubleValue() * strategy.getReverseStopLossK() * 100. / waitMax.abs().doubleValue();
-                        var realLimitPrice = waitMax.doubleValue() + realLimitPercent * purchaseRate.abs().doubleValue() / 100.;
-                        var stopLoss = purchaseRate.doubleValue() - waitMaxBuy.subtract(waitMax).abs().doubleValue();
-                        annotation += " realLimitPercent=" + printPrice(realLimitPercent);
-                        annotation += " realLimitPrice=" + printPrice(realLimitPrice);
-                        annotation += " stopLoss=" + printPrice(stopLoss);
-                        if (!isIgnoreSkip && realLimitPercent < strategy.getBuyMinProfitPercent()) {
-                            annotation += " SKIP ProfitPercent=" + strategy.getBuyMinProfitPercent();
-                            resBuy = false;
-                        } else if (!isIgnoreSkip && newGreenPercentAverage > strategy.getMaxGreenPercent()) {
-                            annotation += " SKIP GreenPercentAverage=" + strategy.getMaxGreenPercent();
-                            resBuy = false;
-                        } else {
-                            setOrderBigDecimalData(strategy, candle, "limitPrice", BigDecimal.valueOf(realLimitPrice));
-                            setOrderBigDecimalData(strategy, candle, "limitPercent", BigDecimal.valueOf(realLimitPercent));
-                            setOrderBigDecimalData(strategy, candle, "stopLoss", BigDecimal.valueOf(stopLoss));
-                        }
+                    }
+                }
+
+                if (resBuy && strategy.isBuyMaxOnlySmaUp() && !isTrendUp) {
+                    resBuy = true;
+                    annotation += " SKIP by trend DOWN";
+                }
+
+                if (resBuy) {
+                    var realLimitPercent = waitMax2.subtract(waitMax).abs().doubleValue() * strategy.getReverseStopLossK() * 100. / waitMax.abs().doubleValue();
+                    var realLimitPrice = waitMax.doubleValue() + realLimitPercent * purchaseRate.abs().doubleValue() / 100.;
+                    var stopLoss = purchaseRate.doubleValue() - waitMaxBuy.subtract(waitMax).abs().doubleValue();
+                    annotation += " realLimitPercent=" + printPrice(realLimitPercent);
+                    annotation += " realLimitPrice=" + printPrice(realLimitPrice);
+                    annotation += " stopLoss=" + printPrice(stopLoss);
+                    if (!isIgnoreSkip && realLimitPercent < strategy.getBuyMinProfitPercent()) {
+                        annotation += " SKIP ProfitPercent=" + strategy.getBuyMinProfitPercent();
+                        resBuy = false;
+                    } else if (!isIgnoreSkip && newGreenPercentAverage != null && newGreenPercentAverage > strategy.getMaxGreenPercent()) {
+                        annotation += " SKIP GreenPercentAverage=" + strategy.getMaxGreenPercent();
+                        resBuy = false;
+                    } else {
+                        setOrderBigDecimalData(strategy, candle, "limitPrice", BigDecimal.valueOf(realLimitPrice));
+                        setOrderBigDecimalData(strategy, candle, "limitPercent", BigDecimal.valueOf(realLimitPercent));
+                        setOrderBigDecimalData(strategy, candle, "stopLoss", BigDecimal.valueOf(stopLoss));
                     }
                 }
             }

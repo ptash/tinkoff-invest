@@ -9,6 +9,11 @@ import java.time.format.DateTimeFormatter;
 @Component
 public class AlligatorStrategy5MinRev2 extends AlligatorStrategy5MinRev {
 
+    public boolean isBuyMaxOnlySmaUp() { return true; }
+    public Integer getReverseMaxLength() { return 15; }
+    public Integer getReverseUpMinLength() { return 10; }
+    public Double getReverseStopLossK() { return 1.0; }
+
     public OffsetDateTime getDayTimeEndTrading(OffsetDateTime dateTime) {
         var dateInZone = Date.getDateTimeInZone(dateTime);;
         if (dateInZone.getDayOfWeek().getValue() < 6) {
