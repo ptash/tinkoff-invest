@@ -123,6 +123,7 @@ public class AlligatorService implements
         var smaPrev = smaList != null && smaList.size() > 0 ? smaList.get(0) : null;
         if (sma != null && smaPrev != null) {
             isTrendUp = smaPrev <= sma;
+            annotation += " isTrendUp=" + isTrendUp + " " + printPrice(smaPrev) + "<" + printPrice(sma);
             if (isTrendUp) {
                 smaUp = sma;
                 if (strategy.getTrendUpLength() > 1) {
@@ -131,7 +132,7 @@ public class AlligatorService implements
                     for (var iSma = 1; iSma < smaListPrev.size(); iSma++) {
                         var isTrendUpPrev = smaListPrev.get(iSma - 1) <= smaListPrev.get(iSma);
                         if (!isTrendUpPrev) {
-                            annotation += " isTrendUp=false iSma=" + iSma;
+                            annotation += " isTrendUp=false iSma=" + iSma + " " + printPrice(smaListPrev.get(iSma - 1)) + "<" + printPrice(smaListPrev.get(iSma));
                             isTrendUp = false;
                         }
                     }
