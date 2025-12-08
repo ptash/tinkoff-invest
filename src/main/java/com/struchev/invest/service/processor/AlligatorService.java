@@ -296,6 +296,7 @@ public class AlligatorService implements
                         setOrderBigDecimalData(strategy, candle, "limitPrice", BigDecimal.valueOf(realLimitPrice));
                         setOrderBigDecimalData(strategy, candle, "limitPercent", BigDecimal.valueOf(realLimitPercent));
                         setOrderBigDecimalData(strategy, candle, "stopLoss", BigDecimal.valueOf(stopLoss));
+                        setOrderBigDecimalData(strategy, candle, "priceWanted", purchaseRate);
                         if (strategy.isBuyMaxOnlySmaUp()) {
                             var stopLossUp = stopLoss - waitMaxBuy.subtract(waitMax).abs().doubleValue();
                             annotation += " stopLossUp=" + printPrice(stopLossUp);
@@ -825,12 +826,22 @@ public class AlligatorService implements
         var sma = smaList != null && smaList.size() > 1 ? smaList.get(1) : null;
         var smaPrev = smaList != null && smaList.size() > 0 ? smaList.get(0) : null;
         if (sma != null && smaPrev != null) {
-            isTrendUp = smaPrev <= sma;
-            annotation += " isTrendUp=" + isTrendUp;
+            annotation += " isTrendUp=" + isTrendUp + " " + printPrice(smaPrev) + "<" + printPrice(sma);
             if (isTrendUp) {
                 smaUp = sma;
             } else {
                 smaDown = sma;
+                if (strategy.getTrendUpLength() > 1) {
+                    annotation += " TrendUpLength=" + strategy.getTrendUpLength();
+                    var smaListPrev = getSma(candle.getFigi(), candle.getDateTime(), strategy.getSmaLength(), strategy.getInterval(), CandleDomainEntity::getMedianPrice, strategy.getTrendUpLength());
+                    for (var iSma = 1; iSma < smaListPrev.size(); iSma++) {
+                        var isTrendUpPrev = smaListPrev.get(iSma - 1) <= smaListPrev.get(iSma);
+                        if (isTrendUpPrev) {
+                            annotation += " isTrendUp=true iSma=" + iSma + " " + printPrice(smaListPrev.get(iSma - 1)) + "<=" + printPrice(smaListPrev.get(iSma));
+                            isTrendUp = true;
+                        }
+                    }
+                }
             }
         }
 
