@@ -252,6 +252,7 @@ public class AlligatorService implements
 
                     if (
                             !resBuy
+                            && !isMax2
                             && strategy.getReverseUpMinLength() > 0
                             && candleListMin.size() < strategy.getReverseMaxLength()
                             && candleListMin.size() > strategy.getReverseUpMinLength()
