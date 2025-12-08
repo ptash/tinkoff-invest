@@ -123,8 +123,28 @@ public class OrderDomainEntity {
     @Column(name = "created", nullable = false)
     private LocalDateTime created;
 
+    @Column(name = "is_short", nullable = true)
+    private Boolean isShort;
+
+    public void setPurchaseDateTime(OffsetDateTime date) {
+        purchaseDateTime = date;
+        if (isShort == null && sellDateTime == null) {
+            isShort = false;
+        }
+    }
+
+    public void setSellDateTime(OffsetDateTime date) {
+        sellDateTime = date;
+        if (isShort == null && purchaseDateTime == null) {
+            isShort = true;
+        }
+    }
+
     public Boolean isShort()
     {
+        if (null != isShort) {
+            return isShort;
+        }
         return (getPurchaseDateTime() == null && getSellDateTime() != null)
                 || (getPurchaseDateTime() != null && getSellDateTime() != null && getSellDateTime().isBefore(getPurchaseDateTime()));
     }

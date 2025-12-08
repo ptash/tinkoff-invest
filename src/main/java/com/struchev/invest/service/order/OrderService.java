@@ -135,6 +135,7 @@ public class OrderService implements IOrderService {
                 .sellPriceWanted(priceWanted)
                 .strategy(strategy.getName())
                 .sellDateTime(candle.getDateTime())
+                .isShort(true)
                 .lots(strategy.getCount(candle.getFigi()))
                 .sellCommissionInitial(BigDecimal.ZERO)
                 .purchaseCommission(BigDecimal.ZERO)
@@ -176,6 +177,7 @@ public class OrderService implements IOrderService {
                 .purchasePriceWanted(priceWanted)
                 .strategy(strategy.getName())
                 .purchaseDateTime(candle.getDateTime())
+                .isShort(false)
                 .lots(strategy.getCount(candle.getFigi()))
                 .purchaseCommissionInitial(BigDecimal.ZERO)
                 .details(orderDetails)
@@ -228,23 +230,23 @@ public class OrderService implements IOrderService {
                 limitPercent == null
                 //|| strategy.getSellLimitCriteria(candle.getFigi()).getExitProfitPercent() <= 0
         ) {
-            log.info("Skip limit figi {}: getExitProfitPercent = {}", candle.getFigi(), limitPercent);
+            //log.info("Skip limit figi {}: getExitProfitPercent = {}", candle.getFigi(), limitPercent);
             return order; //?
         }
         var instrument = instrumentService.getInstrument(order.getFigi());
         BigDecimal limitPrice;
         if (order.isShort()) {
             limitPrice = order.getSellPrice().multiply(BigDecimal.valueOf((100. - limitPercent.doubleValue())/100.));
-            log.info("limitPrice {} = {} * (100 - {})/100", limitPrice, order.getSellPrice(), limitPercent);
+            //log.info("limitPrice {} = {} * (100 - {})/100", limitPrice, order.getSellPrice(), limitPercent);
         } else {
             limitPrice = order.getPurchasePrice().multiply(BigDecimal.valueOf((limitPercent.doubleValue() + 100.)/100.));
         }
-        log.info("Increment {}", instrument.getMinPriceIncrement());
+        //log.info("Increment {}", instrument.getMinPriceIncrement());
         if (!instrument.getMinPriceIncrement().equals(BigDecimal.ZERO) && instrument.getMinPriceIncrement().compareTo(BigDecimal.valueOf(0.00000001f)) > 0) {
             try {
-                log.info("Increment {} before {}", instrument.getMinPriceIncrement(), limitPrice);
+                //log.info("Increment {} before {}", instrument.getMinPriceIncrement(), limitPrice);
                 limitPrice = limitPrice.divide(instrument.getMinPriceIncrement(), 0, order.isShort() ? RoundingMode.HALF_DOWN : RoundingMode.HALF_UP).multiply(instrument.getMinPriceIncrement());
-                log.info("Increment {} after {}", instrument.getMinPriceIncrement(), limitPrice);
+                //log.info("Increment {} after {}", instrument.getMinPriceIncrement(), limitPrice);
             } catch (ArithmeticException $e) {
                 log.error("An error in limitPrice " + limitPrice + " to MinPriceIncrement " + instrument.getMinPriceIncrement(), $e);
             }
