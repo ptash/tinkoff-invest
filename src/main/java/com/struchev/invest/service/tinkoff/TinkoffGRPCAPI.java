@@ -183,7 +183,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
         return price.divide(instrument.getMinPriceIncrement(), 0, RoundingMode.HALF_UP).multiply(instrument.getMinPriceIncrement());
     }
 
-    public OrderResult closeSellLimit(InstrumentService.Instrument instrument, String orderId) {
+    public OrderResult closeSellLimit(InstrumentService.Instrument instrument, String orderId, CandleDomainEntity candle) {
         var orderResultBuilder = OrderResult.builder();
         if (null == orderId) {
             orderResultBuilder.build();
@@ -208,7 +208,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
             log.info("closeSellLimit: get orders result {}", orders);
             var order = orders.stream().filter(o -> o.getFigi().equals(instrument.getFigi())).findFirst().orElse(null);
             if (order != null && !order.getOrderId().equals(orderId)) {
-                return closeSellLimit(instrument, order.getOrderId());
+                return closeSellLimit(instrument, order.getOrderId(), candle);
             }
             var res = checkSellLimit(instrument, orderId);
             res.setException(e);
@@ -216,7 +216,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
         }
     }
 
-    public OrderResult closeAllSellLimit(InstrumentService.Instrument instrument) {
+    public OrderResult closeAllSellLimit(InstrumentService.Instrument instrument, CandleDomainEntity candle) {
         AtomicReference<OrderResult> result = new AtomicReference<>(OrderResult.builder().build());
         result.get().setIsExecuted(false);
         result.get().setLots(0L);
@@ -231,7 +231,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
         orders.forEach(orderState -> {
             var resultOrder = buildOrderResultByOrderState(instrument, orderState);
             if (resultOrder.getActive() && !resultOrder.getIsExecuted()) {
-                var closeResult = closeSellLimit(instrument, orderState.getOrderId());
+                var closeResult = closeSellLimit(instrument, orderState.getOrderId(), candle);
                 if (
                         (null != closeResult.getLots() && closeResult.getLots() > 0 && closeResult.getIsExecuted())
                         || closeResult.getException() != null
@@ -358,7 +358,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                 }
                 if (null != res.getIsDirtyOrderLimits() && res.getIsDirtyOrderLimits()) {
                     log.info("Sell limits are dirty for {}. Close all", instrument.getFigi());
-                    res = this.closeAllSellLimit(instrument);
+                    res = this.closeAllSellLimit(instrument, candle);
                     if (res.getOrderId() != null) {
                         orderId = res.getOrderId();
                     }
@@ -367,7 +367,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                     return res;
                 } else {
                     log.info("Sell limit for {} changed from {} to {}", instrument.getFigi(), curPrice, price);
-                    res = this.closeAllSellLimit(instrument);
+                    res = this.closeAllSellLimit(instrument, candle);
                     if (res.getOrderId() != null) {
                         orderId = res.getOrderId();
                     }
@@ -450,7 +450,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
             }
             var order = orders.stream().filter(o -> o.getFigi().equals(instrument.getFigi())).findFirst().orElse(null);
             if (order != null && !order.getOrderId().equals(orderId)) {
-                var res = closeSellLimit(instrument, order.getOrderId());
+                var res = closeSellLimit(instrument, order.getOrderId(), candle);
                 orderResultBuilder.orderId(res.getOrderId());
             } else {
                 orderResultBuilder.exception(e);

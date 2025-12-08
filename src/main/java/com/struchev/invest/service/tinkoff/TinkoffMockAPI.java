@@ -2,6 +2,8 @@ package com.struchev.invest.service.tinkoff;
 
 import com.struchev.invest.entity.CandleDomainEntity;
 import com.struchev.invest.service.dictionary.InstrumentService;
+import lombok.Builder;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -9,6 +11,9 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -82,30 +87,70 @@ public class TinkoffMockAPI extends ATinkoffAPI {
         return OrderResult.builder().build();
     }
 
+    @Builder
+    @Data
+    public static class OrderLimit {
+        CandleDomainEntity orderId;
+        BigDecimal price;
+        OrderResult orderResult;
+    }
+
+    private Map<String, OrderResult> orderLimitArray = new LinkedHashMap<>() {
+        @Override
+        protected boolean removeEldestEntry(final Map.Entry eldest) {
+            return size() > 50;
+        }
+    };
+
+    private synchronized void addOrderResult(InstrumentService.Instrument instrument, OrderResult order)
+    {
+        var indent = instrument.getFigi();
+        orderLimitArray.put(indent, order);
+    }
+
+    private synchronized OrderResult getOrderResult(String figi)
+    {
+        if (orderLimitArray.containsKey(figi)) {
+            return orderLimitArray.get(figi);
+        }
+        return null;
+    }
+
     public OrderResult sellLimitShort(InstrumentService.Instrument instrument, BigDecimal price, Integer count, String uuid, String orderId, CandleDomainEntity candle) {
-        log.info("sellLimitShort: Sell limit for {} with price {} and limit {}", instrument.getFigi(), candle.getLowestPrice(), price);
+        log.info("sellLimitShort: Sell limit for {} with price {} and limit {} date {}", instrument.getFigi(), candle.getLowestPrice(), price, candle.getDateTime());
+        var order = OrderResult.builder()
+                .orderUuid(UUID.randomUUID().toString())
+                .orderId(UUID.randomUUID().toString())
+                .commission(calculateCommission(price, count, instrument))
+                .lots(count.longValue())
+                .orderPrice(price.multiply(BigDecimal.valueOf(count)))
+                .price(price)
+                .pricePt(price)
+                .isExecuted(true)
+                .build();
         if (candle.getLowestPrice().compareTo(price) <= 0) {
-            return OrderResult.builder()
-                    .orderUuid(UUID.randomUUID().toString())
-                    .orderId(UUID.randomUUID().toString())
-                    .commission(calculateCommission(price, count, instrument))
-                    .lots(count.longValue())
-                    .orderPrice(price.multiply(BigDecimal.valueOf(count)))
-                    .price(price)
-                    .pricePt(price)
-                    .isExecuted(true)
-                    .build();
+            return order;
+        } else {
+            addOrderResult(instrument, order);
         }
         return OrderResult.builder().build();
     }
 
-    public OrderResult closeSellLimit(InstrumentService.Instrument instrument, String orderId) {
+    public OrderResult closeSellLimit(InstrumentService.Instrument instrument, String orderId, CandleDomainEntity candle) {
+        var order = getOrderResult(candle.getFigi());
+        if (order != null) {
+            var price = order.getPrice();
+            log.info("sellLimitShort: Sell limit for {} with price {} and limit {} date {}", instrument.getFigi(), candle.getLowestPrice(), price, candle.getDateTime());
+            if (candle.getLowestPrice().compareTo(price) <= 0) {
+                return order;
+            }
+        }
         return OrderResult.builder()
                 .isExecuted(false)
                 .build();
     }
 
-    public OrderResult closeAllSellLimit(InstrumentService.Instrument instrument) {
+    public OrderResult closeAllSellLimit(InstrumentService.Instrument instrument, CandleDomainEntity candle) {
         return OrderResult.builder()
                 .isExecuted(false)
                 .build();
@@ -115,7 +160,12 @@ public class TinkoffMockAPI extends ATinkoffAPI {
     public Boolean checkGoodSell(InstrumentService.Instrument instrument, BigDecimal price, Integer count, BigDecimal priceError, CandleDomainEntity candle) {
         //var delta = price.multiply(priceError);
         //delta = moneyRound(instrument, delta);
-        return candle.getHighestPrice().compareTo(price) >= 0;
+        if (candle.getHighestPrice().compareTo(price) >= 0) {
+            return true;
+        } else {
+            log.info("checkGoodSell: false = {} >= {}", candle.getHighestPrice(), price);
+            return false;
+        }
     }
 
     @Override

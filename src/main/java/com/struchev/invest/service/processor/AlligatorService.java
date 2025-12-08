@@ -281,7 +281,7 @@ public class AlligatorService implements
 
                 if (resBuy) {
                     var realLimitPercent = waitMax2.subtract(waitMax).abs().doubleValue() * strategy.getReverseStopLossK() * 100. / waitMax.abs().doubleValue();
-                    var realLimitPrice = waitMax.doubleValue() + realLimitPercent * purchaseRate.abs().doubleValue() / 100.;
+                    var realLimitPrice = purchaseRate.doubleValue() + realLimitPercent * purchaseRate.abs().doubleValue() / 100.;
                     var stopLoss = purchaseRate.doubleValue() - waitMaxBuy.subtract(waitMax).abs().doubleValue();
                     annotation += " realLimitPercent=" + printPrice(realLimitPercent);
                     annotation += " realLimitPrice=" + printPrice(realLimitPrice);
@@ -292,7 +292,16 @@ public class AlligatorService implements
                     } else if (!isIgnoreSkip && newGreenPercentAverage != null && newGreenPercentAverage > strategy.getMaxGreenPercent()) {
                         annotation += " SKIP GreenPercentAverage=" + strategy.getMaxGreenPercent();
                         resBuy = false;
-                    } else {
+                    }
+                    var priceWanted = purchaseRate.doubleValue();
+                    if (
+                            priceWanted > candleOrig.getHighestPrice().doubleValue()
+                            || priceWanted < candleOrig.getLowestPrice().doubleValue()
+                    ) {
+                        annotation += " SKIP by priceWanted";
+                        resBuy = false;
+                    }
+                    if (resBuy) {
                         setOrderBigDecimalData(strategy, candle, "limitPrice", BigDecimal.valueOf(realLimitPrice));
                         setOrderBigDecimalData(strategy, candle, "limitPercent", BigDecimal.valueOf(realLimitPercent));
                         setOrderBigDecimalData(strategy, candle, "stopLoss", BigDecimal.valueOf(stopLoss));
@@ -674,7 +683,7 @@ public class AlligatorService implements
             notificationService.reportStrategyExt(
                     resBuy,
                     strategy,
-                    candle,
+                    candleOrig,
                     "Date|open|high|low|close|ema2|profit|loss|limitPrice|lossAvg|deadLineTop|investBottom|investTop|smaTube|strategy"
                             + "|emaBlue1|emaRed|emaGreen|emaBlue|max|min|zs|waitMax|maxBuy|stopLoss|waitMax2|isDayEnd|smaUp|smaDown|priceWanted",
                     "{} | {} | {} | {} | {} | | {} | {} | {} | {} | ||||by {}"
@@ -715,6 +724,9 @@ public class AlligatorService implements
         var annotation = "";
         var res = false;
 
+        var candlePrevList = getCandlesByFigiByLength(candle.getFigi(), candle.getDateTime(), 1, strategy.getInterval());
+        var candlePrev = candlePrevList.get(0);
+
         var blue = getAlligatorBlue(candle.getFigi(), candle.getDateTime(), strategy);
         var red = getAlligatorRed(candle.getFigi(), candle.getDateTime(), strategy);
         var green = getAlligatorGreen(candle.getFigi(), candle.getDateTime(), strategy);
@@ -732,7 +744,7 @@ public class AlligatorService implements
 
         Double zs = null;
         Double stopLoss = null;
-        Boolean isStopLossForce = false;
+        Boolean isStopLossForce = strategy.isStopLossForce();
         if (green != null) {
             stopLoss = red;
             zs = green + (green - blue) * 1.618;
@@ -849,7 +861,6 @@ public class AlligatorService implements
 
         if (strategy.isReverse()) {
             stopLoss = order.getDetails().getCurrentPrices().getOrDefault("stopLoss", BigDecimal.ZERO).doubleValue();
-            isStopLossForce = true;
             if (isTrendUp) {
                 var stopLossUp = order.getDetails().getCurrentPrices().getOrDefault("stopLossUp", null);
                 if (null != stopLossUp) {
@@ -859,8 +870,10 @@ public class AlligatorService implements
         }
 
         var sellLimitCriteria = strategy.getSellLimitCriteria(candle.getFigi());
-        limitPrice = order.getDetails().getCurrentPrices().getOrDefault("limitPrice", BigDecimal.ZERO).doubleValue();
-        Float newLimitPercent = order.getDetails().getCurrentPrices().getOrDefault("limitPercent", BigDecimal.ZERO).floatValue();
+        //limitPrice = order.getDetails().getCurrentPrices().getOrDefault("limitPrice", BigDecimal.ZERO).doubleValue();
+        var limitPercent = order.getDetails().getCurrentPrices().getOrDefault("limitPercent", BigDecimal.ZERO);
+        Float newLimitPercent = limitPercent.floatValue();
+        limitPrice = (double) (purchaseRate.floatValue() + Math.abs(purchaseRate.floatValue() * newLimitPercent / 100.f));
 
         //Float newLimitPercent = (float) ((100.f * (limitPrice.floatValue() - purchaseRate.floatValue()) / Math.abs(purchaseRate.floatValue())));
         //Float newLimitPercentAverage = (float) (newLimitPercent / average);
@@ -896,6 +909,7 @@ public class AlligatorService implements
             }
 
             newLimitPercent = (float) ((100.f * (limitPrice.floatValue() - purchaseRate.floatValue()) / Math.abs(purchaseRate.floatValue())));
+            limitPercent = BigDecimal.valueOf(newLimitPercent);
             annotation += " new limitPrice=lastBySell=" + printPrice(limitPrice);
             annotation += " new newLimitPercent=" + printPrice(newLimitPercent);
         } else {
@@ -909,6 +923,7 @@ public class AlligatorService implements
                     newLimitPercent < minProfitPercent
             ) {
                 newLimitPercent = strategy.getSellLimitCriteriaOrig().getExitProfitPercent();
+                limitPercent = BigDecimal.valueOf(newLimitPercent);
                 limitPrice = (double) (purchaseRate.floatValue() + Math.abs(purchaseRate.floatValue() * newLimitPercent / 100.f));
                 annotation += " new limitPrice=" + printPrice(limitPrice);
                 annotation += " new newLimitPercent=" + printPrice(newLimitPercent);
@@ -922,6 +937,10 @@ public class AlligatorService implements
         ) {
             sellLimitCriteria.setExitProfitPercent(newLimitPercent);
             strategy.setSellLimitCriteria(candle.getFigi(), sellLimitCriteria);
+            var prevLimitPercent = order.getDetails().getCurrentPrices().getOrDefault("limitPercent", null);
+            if (prevLimitPercent == null || !prevLimitPercent.equals(limitPercent)) {
+                orderService.updateDetailsCurrentPrice(order, "limitPercent", limitPercent);
+            }
         } else {
             limitPrice = null;
         }
@@ -939,8 +958,15 @@ public class AlligatorService implements
                 isStopLoss = true;
             } else if (isStopLossForce && candle.getHighestPrice().doubleValue() < stopLoss) {
                 annotation += " stop lost force OK";
-                res = true;
-                isStopLoss = true;
+                if (
+                        strategy.isStopLossForcePrev()
+                        && candlePrev.getHighestPrice().doubleValue() >= stopLoss
+                ) {
+                    annotation += " SKIP by prev";
+                } else {
+                    res = true;
+                    isStopLoss = true;
+                }
             }
         }
 

@@ -38,8 +38,8 @@ public interface ITinkoffOrderAPI {
     public OrderResult sellLimitShort(InstrumentService.Instrument instrument, BigDecimal price, Integer count, String uuid, String orderId, CandleDomainEntity candle);
 
 
-    public OrderResult closeSellLimit(InstrumentService.Instrument instrument, String orderId);
-    public OrderResult closeAllSellLimit(InstrumentService.Instrument instrument);
+    public OrderResult closeSellLimit(InstrumentService.Instrument instrument, String orderId, CandleDomainEntity candle);
+    public OrderResult closeAllSellLimit(InstrumentService.Instrument instrument, CandleDomainEntity candle);
 
     public Boolean checkGoodSell(InstrumentService.Instrument instrument, BigDecimal price, Integer count, BigDecimal priceError, CandleDomainEntity candle);
 

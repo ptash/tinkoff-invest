@@ -13,7 +13,9 @@ public class AlligatorStrategy5MinRev2 extends AlligatorStrategy5MinRev {
     public Integer getReverseMaxLength() { return 15; }
     public Integer getReverseUpMinLength() { return 10; }
     public Integer getTrendUpLength() { return 5; }
-    public boolean isSmaNearGreenBlueIsTrendDown() { return true; }
+    public boolean isStopLossForce() { return true; }
+    public boolean isStopLossForcePrev() { return true; }
+    //public boolean isSmaNearGreenBlueIsTrendDown() { return true; }
     public Double getReverseStopLossK() { return 1.0; }
 
     public OffsetDateTime getDayTimeEndTrading(OffsetDateTime dateTime) {

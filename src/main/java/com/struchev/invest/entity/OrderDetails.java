@@ -22,6 +22,7 @@ public class OrderDetails {
     Map<String, String> annotations;
 
     BigDecimal priceWanted;
+    BigDecimal limitPercent;
 
     public Map<String, BigDecimal> getCurrentPrices() {
         if (currentPrices == null) {
@@ -53,5 +54,8 @@ public class OrderDetails {
 
     public BigDecimal getPriceWanted() {
         return getCurrentPrices().getOrDefault("priceWanted", null);
+    }
+    public BigDecimal getLimitPercent() {
+        return getCurrentPrices().getOrDefault("limitPercent", null);
     }
 }

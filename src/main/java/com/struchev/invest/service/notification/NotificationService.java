@@ -63,6 +63,9 @@ public class NotificationService implements INotificationService{
     @Value("${logging.file.path}")
     private String loggingPath;
 
+    @Value("${logging.is-report-last-candle:true}")
+    private Boolean isReportLastCandle;
+
     private TelegramBot bot;
 
     private Map<String, Marker> reportStrategyLoggerMap = new HashMap<>();
@@ -271,9 +274,14 @@ public class NotificationService implements INotificationService{
             log.info(getStrategyReportLogMarker(strategy, candle.getFigi(), headerLine), format, arguments);
             isLog = true;
         }
-        if (!isLog) {
+        if (!isLog && isReportLastCandle) {
             log.info(getStrategyReportLastCandleLogMarker(strategy, candle.getFigi(), headerLine, isNew), format, arguments);
         }
+        //if (null != reportData) {
+        //    log.info("reportStrategyExt: key = {}; isNew = {}; isLog = {}; date = {}; reportDate = {}", key, isNew, isLog, formatDateTime(candle.getDateTime()), formatDateTime(reportData.getCandle().getDateTime()));
+        //} else {
+        //    log.info("reportStrategyExt: key = {}; isNew = {}; isLog = {}; date = {}", key, isNew, isLog, formatDateTime(candle.getDateTime()));
+        //}
         addReportData(key, ReportData.builder()
             .candle(candle)
             .headerLine(headerLine)
