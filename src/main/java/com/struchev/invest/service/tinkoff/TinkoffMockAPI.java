@@ -98,20 +98,21 @@ public class TinkoffMockAPI extends ATinkoffAPI {
     private Map<String, OrderResult> orderLimitArray = new LinkedHashMap<>() {
         @Override
         protected boolean removeEldestEntry(final Map.Entry eldest) {
-            return size() > 50;
+            return size() > 100;
         }
     };
 
     private synchronized void addOrderResult(InstrumentService.Instrument instrument, OrderResult order)
     {
-        var indent = instrument.getFigi();
+        var indent = instrument.getFigi() + order.getOrderId();
         orderLimitArray.put(indent, order);
     }
 
-    private synchronized OrderResult getOrderResult(String figi)
+    private synchronized OrderResult getOrderResult(String figi, String orderId)
     {
-        if (orderLimitArray.containsKey(figi)) {
-            return orderLimitArray.get(figi);
+        var indent = figi + orderId;
+        if (orderLimitArray.containsKey(indent)) {
+            return orderLimitArray.get(indent);
         }
         return null;
     }
@@ -137,7 +138,7 @@ public class TinkoffMockAPI extends ATinkoffAPI {
     }
 
     public OrderResult closeSellLimit(InstrumentService.Instrument instrument, String orderId, CandleDomainEntity candle) {
-        var order = getOrderResult(candle.getFigi());
+        var order = getOrderResult(candle.getFigi(), orderId);
         if (order != null) {
             var price = order.getPrice();
             log.info("sellLimitShort: Sell limit for {} with price {} and limit {} date {}", instrument.getFigi(), candle.getLowestPrice(), price, candle.getDateTime());
