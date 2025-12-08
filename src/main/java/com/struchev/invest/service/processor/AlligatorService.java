@@ -258,7 +258,7 @@ public class AlligatorService implements
                             && null != waitMax2
                             && purchaseRate.compareTo(waitMax2) < 0
                     ) {
-                        annotation += " SELL OK by ReverseLength=" + strategy.getReverseMaxLength();
+                        annotation += " SELL OK by ReverseMinLength=" + strategy.getReverseUpMinLength();
                         resBuy = true;
                     }
                 } else if (isMax2){
@@ -296,6 +296,11 @@ public class AlligatorService implements
                         setOrderBigDecimalData(strategy, candle, "limitPrice", BigDecimal.valueOf(realLimitPrice));
                         setOrderBigDecimalData(strategy, candle, "limitPercent", BigDecimal.valueOf(realLimitPercent));
                         setOrderBigDecimalData(strategy, candle, "stopLoss", BigDecimal.valueOf(stopLoss));
+                        if (strategy.isBuyMaxOnlySmaUp()) {
+                            var stopLossUp = stopLoss - waitMaxBuy.subtract(waitMax).abs().doubleValue();
+                            annotation += " stopLossUp=" + printPrice(stopLossUp);
+                            setOrderBigDecimalData(strategy, candle, "stopLossUp", BigDecimal.valueOf(stopLossUp));
+                        }
                     }
                 }
             }
@@ -813,11 +818,33 @@ public class AlligatorService implements
             annotation += " newGreenPercentAverage=" + printPrice(newGreenPercentAverage);
         }
 
+        Double smaUp = null;
+        Double smaDown = null;
+        var isTrendUp = true;
+        var smaList = getSma(candle.getFigi(), candle.getDateTime(), strategy.getSmaLength(), strategy.getInterval(), CandleDomainEntity::getMedianPrice, 2);
+        var sma = smaList != null && smaList.size() > 1 ? smaList.get(1) : null;
+        var smaPrev = smaList != null && smaList.size() > 0 ? smaList.get(0) : null;
+        if (sma != null && smaPrev != null) {
+            isTrendUp = smaPrev <= sma;
+            annotation += " isTrendUp=" + isTrendUp;
+            if (isTrendUp) {
+                smaUp = sma;
+            } else {
+                smaDown = sma;
+            }
+        }
+
         log.trace("isShouldSell {} {} after average average={}", candle.getFigi(), candle.getDateTime(), res);
 
         if (strategy.isReverse()) {
             stopLoss = order.getDetails().getCurrentPrices().getOrDefault("stopLoss", BigDecimal.ZERO).doubleValue();
             isStopLossForce = true;
+            if (isTrendUp) {
+                var stopLossUp = order.getDetails().getCurrentPrices().getOrDefault("stopLossUp", null);
+                if (null != stopLossUp) {
+                    stopLoss = stopLossUp.doubleValue();
+                }
+            }
         }
 
         var sellLimitCriteria = strategy.getSellLimitCriteria(candle.getFigi());
@@ -915,27 +942,12 @@ public class AlligatorService implements
 
         log.trace("isShouldSell {} {} before sma res={}", candle.getFigi(), candle.getDateTime(), res);
 
-        Double smaUp = null;
-        Double smaDown = null;
-        var isTrendUp = true;
         if (
                 strategy.isMoveStopLossByTrySellByTrend()
                 || strategy.isSkipSellSmaNearGreenBlue()
                 || strategy.isReverse()
                 || true
         ) {
-            var smaList = getSma(candle.getFigi(), candle.getDateTime(), strategy.getSmaLength(), strategy.getInterval(), CandleDomainEntity::getMedianPrice, 2);
-            var sma = smaList != null && smaList.size() > 1 ? smaList.get(1) : null;
-            var smaPrev = smaList != null && smaList.size() > 0 ? smaList.get(0) : null;
-            if (sma != null && smaPrev != null) {
-                isTrendUp = smaPrev <= sma;
-                annotation += " isTrendUp=" + isTrendUp;
-                if (isTrendUp) {
-                    smaUp = sma;
-                } else {
-                    smaDown = sma;
-                }
-            }
             if (
                     (isTrendUp && strategy.isSmaNearGreenBlueIsTrendDown()
                     || strategy.isSkipSellSmaNearGreenBlue())
