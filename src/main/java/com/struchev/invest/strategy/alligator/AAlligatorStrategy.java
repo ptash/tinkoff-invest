@@ -123,6 +123,7 @@ public abstract class AAlligatorStrategy extends AStrategy implements Cloneable,
     public boolean isReverse() { return false; }
     public Integer getReverseMaxLength() { return 0; }
     public Integer getReverseUpMinLength() { return 0; }
+    public boolean isPriceWantedAsMaxPrice() { return false; }
     public Integer getTrendUpLength() { return 1; }
     public boolean isStopLossForce() { return false; }
     public boolean isStopLossForcePrev() { return false; }

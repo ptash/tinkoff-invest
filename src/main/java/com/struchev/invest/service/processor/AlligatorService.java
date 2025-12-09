@@ -182,7 +182,7 @@ public class AlligatorService implements
 
         if (green != null && blue != null && strategy.isReverse()) {
             CandleDomainEntity lastFMinCandle;
-            var lastFMinCandleData = getLastFMinCandle(candle.getFigi(), candle.getDateTime(), strategy, strategy.getFMaxCandleCountFromEnd());
+            var lastFMinCandleData = getLastFMinCandle(candle.getFigi(), candleOrig.getDateTime(), strategy, strategy.getFMaxCandleCountFromEnd());
             if (null != lastFMinCandleData) {
                 lastFMinCandle = lastFMinCandleData.getFMaxCandle();
             } else {
@@ -192,7 +192,7 @@ public class AlligatorService implements
                 waitMax = lastFMinCandle.getLowestPrice();
                 delta = lastFMinCandle.getLowestPrice().subtract(lastFMinCandle.getClosingPrice()).abs()
                         .min(lastFMinCandle.getLowestPrice().subtract(lastFMinCandle.getOpenPrice()).abs());
-                var candleListMin = candleHistoryService.getCandlesByFigiBetweenDateTimes(candle.getFigi(), lastFMinCandle.getDateTime(), candle.getDateTime(), strategy.getInterval());
+                var candleListMin = candleHistoryService.getCandlesByFigiBetweenDateTimes(candle.getFigi(), lastFMinCandle.getDateTime(), candleOrig.getDateTime(), strategy.getInterval());
                 var minIntervalCandle = candleListMin.stream().reduce((first, second) ->
                         first.getLowestPrice().compareTo(second.getLowestPrice()) < 0 ? first : second
                 ).orElse(null);
@@ -240,28 +240,51 @@ public class AlligatorService implements
                     waitMaxBuy = waitMax.subtract(delta.multiply(BigDecimal.valueOf(strategy.getBuyWaitMaxBuyDeltaK())));
                 }
 
+                BigDecimal maxPrice = null;
+                BigDecimal priceWanted = null;
                 if (strategy.getReverseMaxLength() > 0) {
                     annotation += " minLength=" + candleListMin.size();
                     if (
                             candleListMin.size() < strategy.getReverseMaxLength()
-                            && purchaseRate.compareTo(waitMaxBuy) < 0
+                            //&& purchaseRate.compareTo(waitMaxBuy) < 0
                     ) {
-                        annotation += " SELL OK by ReverseLength=" + strategy.getReverseMaxLength();
-                        resBuy = true;
+                        maxPrice = waitMaxBuy;
+                        annotation += " maxPrice=" + printPrice(maxPrice) + " OK by ReverseLength=" + strategy.getReverseMaxLength();
+                        //annotation += " SELL OK by ReverseLength=" + strategy.getReverseMaxLength();
+                        //resBuy = true;
                     }
 
                     if (
-                            !resBuy
+                            //!resBuy
                             //&& !isMax2
-                            && minIntervalCandle.getLowestPrice().compareTo(waitMaxBuy) >= 0
+                            minIntervalCandle.getLowestPrice().compareTo(waitMaxBuy) >= 0
                             && strategy.getReverseUpMinLength() > 0
                             && candleListMin.size() < strategy.getReverseMaxLength()
                             && candleListMin.size() > strategy.getReverseUpMinLength()
                             && null != waitMax2
-                            && purchaseRate.compareTo(waitMax2) < 0
+                            //&& purchaseRate.compareTo(waitMax2) < 0
                     ) {
-                        annotation += " SELL OK by ReverseMinLength=" + strategy.getReverseUpMinLength();
-                        resBuy = true;
+                        maxPrice = waitMax2;
+                        annotation += " maxPrice=" + printPrice(maxPrice) + " OK by ReverseMinLength=" + strategy.getReverseUpMinLength();
+                        //annotation += " SELL OK by ReverseMinLength=" + strategy.getReverseUpMinLength();
+                        //resBuy = true;
+                    }
+
+                    if (null != maxPrice) {
+                        if (purchaseRate.compareTo(maxPrice) < 0) {
+                            annotation += " SELL OK by ReverseLength";
+                            resBuy = true;
+                            if (strategy.isPriceWantedAsMaxPrice()) {
+                                priceWanted = maxPrice;
+                            }
+                        }
+                        if (!resBuy && strategy.isPriceWantedAsMaxPrice()) {
+                            if (candleOrig.getLowestPrice().compareTo(maxPrice) < 0) {
+                                annotation += " SELL OK by Orig ReverseLength";
+                                resBuy = true;
+                                priceWanted = maxPrice;
+                            }
+                        }
                     }
                 } else if (isMax2){
                     if (
@@ -295,10 +318,12 @@ public class AlligatorService implements
                         annotation += " SKIP GreenPercentAverage=" + strategy.getMaxGreenPercent();
                         resBuy = false;
                     }
-                    var priceWanted = purchaseRate.doubleValue();
+                    if (null == priceWanted) {
+                        priceWanted = purchaseRate;
+                    }
                     if (
-                            priceWanted > candleOrig.getHighestPrice().doubleValue()
-                            || priceWanted < candleOrig.getLowestPrice().doubleValue()
+                            priceWanted.compareTo(candleOrig.getHighestPrice()) > 0
+                            || priceWanted.compareTo(candleOrig.getLowestPrice()) < 0
                     ) {
                         annotation += " SKIP by priceWanted";
                         resBuy = false;
