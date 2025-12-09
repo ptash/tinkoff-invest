@@ -182,7 +182,7 @@ public class AlligatorService implements
 
         if (green != null && blue != null && strategy.isReverse()) {
             CandleDomainEntity lastFMinCandle;
-            var lastFMinCandleData = getLastFMinCandle(candle.getFigi(), candleOrig.getDateTime(), strategy, strategy.getFMaxCandleCountFromEnd());
+            var lastFMinCandleData = getLastFMinCandle(candle.getFigi(), candle.getDateTime(), strategy, strategy.getFMaxCandleCountFromEnd());
             if (null != lastFMinCandleData) {
                 lastFMinCandle = lastFMinCandleData.getFMaxCandle();
             } else {
@@ -192,7 +192,7 @@ public class AlligatorService implements
                 waitMax = lastFMinCandle.getLowestPrice();
                 delta = lastFMinCandle.getLowestPrice().subtract(lastFMinCandle.getClosingPrice()).abs()
                         .min(lastFMinCandle.getLowestPrice().subtract(lastFMinCandle.getOpenPrice()).abs());
-                var candleListMin = candleHistoryService.getCandlesByFigiBetweenDateTimes(candle.getFigi(), lastFMinCandle.getDateTime(), candleOrig.getDateTime(), strategy.getInterval());
+                var candleListMin = candleHistoryService.getCandlesByFigiBetweenDateTimes(candle.getFigi(), lastFMinCandle.getDateTime(), candle.getDateTime(), strategy.getInterval());
                 var minIntervalCandle = candleListMin.stream().reduce((first, second) ->
                         first.getLowestPrice().compareTo(second.getLowestPrice()) < 0 ? first : second
                 ).orElse(null);
