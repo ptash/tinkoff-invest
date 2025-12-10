@@ -182,7 +182,8 @@ public class AlligatorService implements
 
         if (green != null && blue != null && strategy.isReverse()) {
             CandleDomainEntity lastFMinCandle;
-            var lastFMinCandleData = getLastFMinCandle(candle.getFigi(), candle.getDateTime(), strategy, strategy.getFMaxCandleCountFromEnd());
+            var startCandle = strategy.isCandleOrigInMinCandleList() ? candleOrig : candle;
+            var lastFMinCandleData = getLastFMinCandle(candle.getFigi(), startCandle.getDateTime(), strategy, strategy.getFMaxCandleCountFromEnd());
             if (null != lastFMinCandleData) {
                 lastFMinCandle = lastFMinCandleData.getFMaxCandle();
             } else {
@@ -192,7 +193,7 @@ public class AlligatorService implements
                 waitMax = lastFMinCandle.getLowestPrice();
                 delta = lastFMinCandle.getLowestPrice().subtract(lastFMinCandle.getClosingPrice()).abs()
                         .min(lastFMinCandle.getLowestPrice().subtract(lastFMinCandle.getOpenPrice()).abs());
-                var candleListMin = candleHistoryService.getCandlesByFigiBetweenDateTimes(candle.getFigi(), lastFMinCandle.getDateTime(), candle.getDateTime(), strategy.getInterval());
+                var candleListMin = candleHistoryService.getCandlesByFigiBetweenDateTimes(candle.getFigi(), lastFMinCandle.getDateTime(), startCandle.getDateTime(), strategy.getInterval());
                 var minIntervalCandle = candleListMin.stream().reduce((first, second) ->
                         first.getLowestPrice().compareTo(second.getLowestPrice()) < 0 ? first : second
                 ).orElse(null);
@@ -227,6 +228,13 @@ public class AlligatorService implements
                         Float newGreenPercentAverageMax = (float) (newGreenPercentMax / averageMax);
                         annotation += " newGreenPercentAverageMax=" + printPrice(newGreenPercentAverageMax);
                         delta = delta.max(BigDecimal.valueOf(Math.abs(greenMax - blueMax) / newGreenPercentAverageMax));
+
+                        if (strategy.getBuyWaitMaxFromGreenBlueK() > 0) {
+                            delta = delta.max(BigDecimal.valueOf(strategy.getBuyWaitMaxFromGreenBlueK() * Math.max(
+                                    Math.abs(greenMax - maxAverageCandle.getMedianPrice().doubleValue()),
+                                    Math.abs(blueMax - maxAverageCandle.getMedianPrice().doubleValue())
+                            )));
+                        }
 
                         zs = green + (green - blue) * 1.618;
                         Float newGreenPercent = (float) ((100.f * (zs - green) / Math.abs(green)));
@@ -332,7 +340,7 @@ public class AlligatorService implements
                         setOrderBigDecimalData(strategy, candle, "limitPrice", BigDecimal.valueOf(realLimitPrice));
                         setOrderBigDecimalData(strategy, candle, "limitPercent", BigDecimal.valueOf(realLimitPercent));
                         setOrderBigDecimalData(strategy, candle, "stopLoss", BigDecimal.valueOf(stopLoss));
-                        setOrderBigDecimalData(strategy, candle, "priceWanted", purchaseRate);
+                        setOrderBigDecimalData(strategy, candle, "priceWanted", priceWanted);
                         if (strategy.isBuyMaxOnlySmaUp()) {
                             var stopLossUp = stopLoss - waitMaxBuy.subtract(waitMax).abs().doubleValue();
                             annotation += " stopLossUp=" + printPrice(stopLossUp);

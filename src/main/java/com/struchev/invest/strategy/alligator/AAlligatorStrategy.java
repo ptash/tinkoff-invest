@@ -86,6 +86,7 @@ public abstract class AAlligatorStrategy extends AStrategy implements Cloneable,
 
     public Double getBuyWaitMaxDeltaK() {return 1.0; }
     public Double getBuyWaitMaxBuyDeltaK() {return 1.0; }
+    public Double getBuyWaitMaxFromGreenBlueK() {return -1.; }
 
     private SellLimitCriteria sellLimit;
     private Map<String, SellLimitCriteria> sellLimitMap = new HashMap<>();
@@ -124,6 +125,7 @@ public abstract class AAlligatorStrategy extends AStrategy implements Cloneable,
     public Integer getReverseMaxLength() { return 0; }
     public Integer getReverseUpMinLength() { return 0; }
     public boolean isPriceWantedAsMaxPrice() { return false; }
+    public boolean isCandleOrigInMinCandleList() { return false; }
     public Integer getTrendUpLength() { return 1; }
     public boolean isStopLossForce() { return false; }
     public boolean isStopLossForcePrev() { return false; }
