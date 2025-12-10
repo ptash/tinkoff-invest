@@ -329,10 +329,13 @@ public class AlligatorService implements
                     annotation += " stopLoss=" + printPrice(stopLoss);
                     if (!isIgnoreSkip && realLimitPercent < strategy.getBuyMinProfitPercent()) {
                         if (strategy.isUpToMinProfitPercent()) {
+                            var realLimitPriceOld = realLimitPrice;
                             realLimitPercent = strategy.getBuyMinProfitPercent();
                             realLimitPrice = priceWanted.doubleValue() + realLimitPercent * priceWanted.abs().doubleValue() / 100.;
                             annotation += " UP realLimitPercent=" + printPrice(realLimitPercent);
                             annotation += " realLimitPrice=" + printPrice(realLimitPrice);
+                            stopLoss -= Math.abs(realLimitPriceOld - realLimitPrice);
+                            annotation += " stopLoss=" + printPrice(stopLoss);
                         } else {
                             annotation += " SKIP ProfitPercent=" + strategy.getBuyMinProfitPercent();
                             resBuy = false;
