@@ -175,6 +175,7 @@ public class AlligatorService implements
         BigDecimal waitMax2 = null;
         BigDecimal waitMaxBuy = null;
         BigDecimal delta = null;
+        BigDecimal priceWanted = null;
         Double zs = null;
         var average = getAveragePercent(candle.getFigi(), candle.getDateTime(), strategy);
 
@@ -249,7 +250,7 @@ public class AlligatorService implements
                 }
 
                 BigDecimal maxPrice = null;
-                BigDecimal priceWanted = null;
+                priceWanted = null;
                 if (strategy.getReverseMaxLength() > 0) {
                     annotation += " minLength=" + candleListMin.size();
                     if (
@@ -543,7 +544,6 @@ public class AlligatorService implements
 
         var isDayEnd = false;
         Double limitPrice = null;
-        Double priceWanted = null;
 
         if (resBuy) {
             if (null != strategy.getDayTimeEndBuy(candle.getDateTime())) {
@@ -630,20 +630,20 @@ public class AlligatorService implements
             var realLimitPercent = newLimitPercent * strategy.getLimitCorrectionK();
             var realLimitPrice = (realLimitPercent * Math.abs(purchaseRate.floatValue())) / 100. + purchaseRate.floatValue();
             annotation += " realLimitPercent=" + printPrice(realLimitPercent);
-            priceWanted = purchaseRate.doubleValue();
+            priceWanted = purchaseRate;
             if (realLimitPercent < strategy.getSellLimitCriteriaOrig().getExitProfitPercent()) {
                 var percentDelta = strategy.getSellLimitCriteriaOrig().getExitProfitPercent() - realLimitPercent;
-                priceWanted = purchaseRate.doubleValue() - purchaseRate.abs().doubleValue() * percentDelta / 100.;
+                priceWanted = BigDecimal.valueOf(purchaseRate.doubleValue() - purchaseRate.abs().doubleValue() * percentDelta / 100.);
                 annotation += " percentDelta=" + printPrice(percentDelta);
                 annotation += " priceWanted=" + printPrice(priceWanted);
-                if (prevLimitPrice != null && priceWanted < prevLimitPrice) {
-                    priceWanted = prevLimitPrice;
+                if (prevLimitPrice != null && priceWanted.doubleValue() < prevLimitPrice) {
+                    priceWanted = BigDecimal.valueOf(prevLimitPrice);
                     annotation += " priceWanted=" + printPrice(priceWanted);
                 }
             }
             if (
-                    priceWanted > candleOrig.getHighestPrice().doubleValue()
-                    || priceWanted < candleOrig.getLowestPrice().doubleValue()
+                    priceWanted.compareTo(candleOrig.getHighestPrice()) > 0
+                    || priceWanted.compareTo(candleOrig.getLowestPrice()) < 0
             ) {
                 annotation += " SKIP by priceWanted";
                 resBuy = false;
