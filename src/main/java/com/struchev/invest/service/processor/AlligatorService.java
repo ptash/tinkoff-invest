@@ -273,6 +273,9 @@ public class AlligatorService implements
                             //&& purchaseRate.compareTo(waitMax2) < 0
                     ) {
                         maxPrice = waitMax2;
+                        var averagePrice = candleListMin.stream().mapToDouble(c -> c.getMedianPrice().doubleValue()).average().orElse(maxPrice.doubleValue());
+                        maxPrice = maxPrice.min(BigDecimal.valueOf(averagePrice));
+                        annotation += " averagePrice=" + printPrice(averagePrice);
                         annotation += " maxPrice=" + printPrice(maxPrice) + " OK by ReverseMinLength=" + strategy.getReverseUpMinLength();
                         //annotation += " SELL OK by ReverseMinLength=" + strategy.getReverseUpMinLength();
                         //resBuy = true;
@@ -330,8 +333,8 @@ public class AlligatorService implements
                         priceWanted = purchaseRate;
                     }
                     if (
-                            priceWanted.compareTo(candleOrig.getHighestPrice()) > 0
-                            || priceWanted.compareTo(candleOrig.getLowestPrice()) < 0
+                            priceWanted.compareTo(candleOrig.getLowestPrice()) < 0
+                            || priceWanted.compareTo(candleOrig.getHighestPrice()) > 0
                     ) {
                         annotation += " SKIP by priceWanted";
                         resBuy = false;
