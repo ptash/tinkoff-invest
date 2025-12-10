@@ -273,9 +273,11 @@ public class AlligatorService implements
                             //&& purchaseRate.compareTo(waitMax2) < 0
                     ) {
                         maxPrice = waitMax2;
-                        var averagePrice = candleListMin.stream().mapToDouble(c -> c.getMedianPrice().doubleValue()).average().orElse(maxPrice.doubleValue());
-                        maxPrice = maxPrice.min(BigDecimal.valueOf(averagePrice));
-                        annotation += " averagePrice=" + printPrice(averagePrice);
+                        if (strategy.isPriceWantedAsMaxPrice()) {
+                            var averagePrice = candleListMin.stream().mapToDouble(c -> c.getMedianPrice().doubleValue()).average().orElse(maxPrice.doubleValue());
+                            maxPrice = maxPrice.min(BigDecimal.valueOf(averagePrice));
+                            annotation += " averagePrice=" + printPrice(averagePrice);
+                        }
                         annotation += " maxPrice=" + printPrice(maxPrice) + " OK by ReverseMinLength=" + strategy.getReverseUpMinLength();
                         //annotation += " SELL OK by ReverseMinLength=" + strategy.getReverseUpMinLength();
                         //resBuy = true;
@@ -316,9 +318,12 @@ public class AlligatorService implements
                 }
 
                 if (resBuy) {
+                    if (null == priceWanted) {
+                        priceWanted = purchaseRate;
+                    }
                     var realLimitPercent = waitMax2.subtract(waitMax).abs().doubleValue() * strategy.getReverseStopLossK() * 100. / waitMax.abs().doubleValue();
-                    var realLimitPrice = purchaseRate.doubleValue() + realLimitPercent * purchaseRate.abs().doubleValue() / 100.;
-                    var stopLoss = purchaseRate.doubleValue() - waitMaxBuy.subtract(waitMax).abs().doubleValue();
+                    var realLimitPrice = priceWanted.doubleValue() + realLimitPercent * priceWanted.abs().doubleValue() / 100.;
+                    var stopLoss = priceWanted.doubleValue() - waitMaxBuy.subtract(waitMax).abs().doubleValue();
                     annotation += " realLimitPercent=" + printPrice(realLimitPercent);
                     annotation += " realLimitPrice=" + printPrice(realLimitPrice);
                     annotation += " stopLoss=" + printPrice(stopLoss);
@@ -328,9 +333,6 @@ public class AlligatorService implements
                     } else if (!isIgnoreSkip && newGreenPercentAverage != null && newGreenPercentAverage > strategy.getMaxGreenPercent()) {
                         annotation += " SKIP GreenPercentAverage=" + strategy.getMaxGreenPercent();
                         resBuy = false;
-                    }
-                    if (null == priceWanted) {
-                        priceWanted = purchaseRate;
                     }
                     if (
                             priceWanted.compareTo(candleOrig.getLowestPrice()) < 0
