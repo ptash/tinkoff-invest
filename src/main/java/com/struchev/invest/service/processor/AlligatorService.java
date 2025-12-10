@@ -176,6 +176,7 @@ public class AlligatorService implements
         BigDecimal waitMaxBuy = null;
         BigDecimal delta = null;
         BigDecimal priceWanted = null;
+        Double limitPrice = null;
         Double zs = null;
         var average = getAveragePercent(candle.getFigi(), candle.getDateTime(), strategy);
 
@@ -357,6 +358,7 @@ public class AlligatorService implements
                         annotation += " SKIP by priceWanted";
                         resBuy = false;
                     }
+                    limitPrice = realLimitPrice;
                     if (resBuy) {
                         setOrderBigDecimalData(strategy, candle, "limitPrice", BigDecimal.valueOf(realLimitPrice));
                         setOrderBigDecimalData(strategy, candle, "limitPercent", BigDecimal.valueOf(realLimitPercent));
@@ -546,7 +548,6 @@ public class AlligatorService implements
         log.trace("isShouldBuy {} {} after skip AlligatorMouth resBuy={}", candle.getFigi(), candle.getDateTime(), resBuy);
 
         var isDayEnd = false;
-        Double limitPrice = null;
 
         if (resBuy) {
             if (null != strategy.getDayTimeEndBuy(candle.getDateTime())) {
