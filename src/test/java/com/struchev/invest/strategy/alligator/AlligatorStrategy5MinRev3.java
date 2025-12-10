@@ -12,6 +12,7 @@ public class AlligatorStrategy5MinRev3 extends AlligatorStrategy5MinRev2 {
     public Double getBuyWaitMaxBuyDeltaK() { return 1.; }
     public Double getBuyWaitMaxDeltaK() { return 0.5; }
     public Double getBuyWaitMaxFromGreenBlueK() { return 0.5; }
+    public Boolean isUpToMinProfitPercent() {return true; }
 
     public boolean isEnabled() { return true; }
 }

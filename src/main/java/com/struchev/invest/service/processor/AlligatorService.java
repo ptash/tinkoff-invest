@@ -328,9 +328,18 @@ public class AlligatorService implements
                     annotation += " realLimitPrice=" + printPrice(realLimitPrice);
                     annotation += " stopLoss=" + printPrice(stopLoss);
                     if (!isIgnoreSkip && realLimitPercent < strategy.getBuyMinProfitPercent()) {
-                        annotation += " SKIP ProfitPercent=" + strategy.getBuyMinProfitPercent();
-                        resBuy = false;
-                    } else if (!isIgnoreSkip && newGreenPercentAverage != null && newGreenPercentAverage > strategy.getMaxGreenPercent()) {
+                        if (strategy.isUpToMinProfitPercent()) {
+                            realLimitPercent = strategy.getBuyMinProfitPercent();
+                            realLimitPrice = priceWanted.doubleValue() + realLimitPercent * priceWanted.abs().doubleValue() / 100.;
+                            annotation += " UP realLimitPercent=" + printPrice(realLimitPercent);
+                            annotation += " realLimitPrice=" + printPrice(realLimitPrice);
+                        } else {
+                            annotation += " SKIP ProfitPercent=" + strategy.getBuyMinProfitPercent();
+                            resBuy = false;
+                        }
+                    }
+
+                    if (resBuy && !isIgnoreSkip && newGreenPercentAverage != null && newGreenPercentAverage > strategy.getMaxGreenPercent()) {
                         annotation += " SKIP GreenPercentAverage=" + strategy.getMaxGreenPercent();
                         resBuy = false;
                     }
