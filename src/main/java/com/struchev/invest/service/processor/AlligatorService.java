@@ -777,8 +777,8 @@ public class AlligatorService implements
                     smaUp != null ? smaUp : "",
                     smaDown != null ? smaDown : "",
                     priceWanted != null ? printPrice(priceWanted) : "",
-                    trendName == "UP" ? sma + sma * 0.001 : "",
-                    trendName == "DOWN" ? sma - sma * 0.001 : ""
+                    trendName == "UP" ? sma + Math.abs(sma) * 0.001 : "",
+                    trendName == "DOWN" ? sma - Math.abs(sma) * 0.001 : ""
             );
         }
         log.trace("isShouldBuy {} {} end resBuy={}", candle.getFigi(), candle.getDateTime(), resBuy);
@@ -1800,6 +1800,22 @@ public class AlligatorService implements
         return null;
     }
 
+    private Boolean isTrendUp(CandleDomainEntity candle, AAlligatorStrategy strategy) {
+        Double smaUp = null;
+        Double smaDown = null;
+        var isTrendUp = true;
+        String trendName = "null";
+        Double sma = null;
+
+        var smaList = getSma(candle.getFigi(), candle.getDateTime(), strategy.getSmaLength(), strategy.getInterval(), CandleDomainEntity::getMedianPrice, 1);
+        sma = smaList != null && smaList.size() > 1 ? smaList.get(1) : null;
+        var smaPrev = smaList != null && smaList.size() > 0 ? smaList.get(0) : null;
+        if (sma != null && smaPrev != null) {
+            isTrendUp = smaPrev <= sma;
+        }
+        return isTrendUp;
+    }
+
     private AlligatorMouthFMax getLastFMinCandle(
             String figi,
             OffsetDateTime currentDateTime,
@@ -1824,22 +1840,33 @@ public class AlligatorService implements
         List<CandleDomainEntity> minMinCandleList = new ArrayList<>();
         var annotation = "";
         var iFindMax = 0;
+        var isTrendUp = false;
         for (var i = candleList.size() - 1 - 2; i >= 2; i--) {
             var curCandleList = candleList.subList(i - 2, i + 3);
             var middleCandle = curCandleList.get(2);
             var blue = getAlligatorBlue(figi, middleCandle.getDateTime(), strategy);
             var red = getAlligatorRed(figi, middleCandle.getDateTime(), strategy);
             var green = getAlligatorGreen(figi, middleCandle.getDateTime(), strategy);
-            if (
-                    (blue == null
-                    || !(
-                        (blue < red && red < green)
-                        || middleCandle.getLowestPrice().doubleValue() < red
-                    ))
+            if (iFindMax > 0) {
+                var isTrendUpCur = isTrendUp(middleCandle, strategy);
+                if (isTrendUpCur != isTrendUp) {
+                    break;
+                }
+            } else {
+                if (
+                        (blue == null
+                            || !(
+                            (blue < red && red < green)
+                            || middleCandle.getLowestPrice().doubleValue() < red
+                        ))
                     //&& countMaxCandle == 0
-            ) {
-                iFindMax = i;
-                break;
+                ) {
+                    isTrendUp = isTrendUp(middleCandle, strategy);
+                    iFindMax = i;
+                    if (!isTrendUp && !strategy.isMaxSameTrend()) {
+                        break;
+                    }
+                }
             }
             var curMinCandle = curCandleList.stream().reduce((first, second) ->
                     first.getLowestPrice().compareTo(second.getLowestPrice()) < 0 ? first : second
