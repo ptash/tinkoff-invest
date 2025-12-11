@@ -1853,17 +1853,30 @@ public class AlligatorService implements
                     break;
                 }
             } else {
+                Boolean isLowestPriceOk = false;
+                if (strategy.isMinLowestPriceUnderAny()) {
+                    isLowestPriceOk = middleCandle.getLowestPrice().doubleValue() < red
+                        || middleCandle.getLowestPrice().doubleValue() < blue
+                        || middleCandle.getLowestPrice().doubleValue() < green
+                    ;
+                } else {
+                    isLowestPriceOk = middleCandle.getLowestPrice().doubleValue() < red;
+                }
                 if (
                         (blue == null
                             || !(
                             (blue < red && red < green)
-                            || middleCandle.getLowestPrice().doubleValue() < red
+                            || isLowestPriceOk
                         ))
                     //&& countMaxCandle == 0
                 ) {
-                    isTrendUp = isTrendUp(middleCandle, strategy);
                     iFindMax = i;
-                    if (!isTrendUp && !strategy.isMaxSameTrend()) {
+                    if (strategy.isMaxSameTrend()) {
+                        isTrendUp = isTrendUp(middleCandle, strategy);
+                        if (!isTrendUp) {
+                            break;
+                        }
+                    } else {
                         break;
                     }
                 }
