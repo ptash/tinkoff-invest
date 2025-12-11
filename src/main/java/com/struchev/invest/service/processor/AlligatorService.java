@@ -334,6 +334,10 @@ public class AlligatorService implements
                     }
                     var realLimitPercent = waitMax2.subtract(waitMax).abs().doubleValue() * strategy.getReverseStopLossK() * 100. / waitMax.abs().doubleValue();
                     var realLimitPrice = priceWanted.doubleValue() + realLimitPercent * priceWanted.abs().doubleValue() / 100.;
+                    if (realLimitPrice < waitMax2.doubleValue()) {
+                        realLimitPrice = waitMax2.doubleValue();
+                        realLimitPercent = 100. * (realLimitPrice - priceWanted.doubleValue()) / priceWanted.abs().doubleValue();
+                    }
                     var stopLoss = priceWanted.doubleValue() - 2 * waitMaxBuy.subtract(waitMax).abs().doubleValue();
                     annotation += " realLimitPercent=" + printPrice(realLimitPercent);
                     annotation += " realLimitPrice=" + printPrice(realLimitPrice);
