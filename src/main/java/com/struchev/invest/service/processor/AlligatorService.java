@@ -334,7 +334,7 @@ public class AlligatorService implements
                     }
                     var realLimitPercent = waitMax2.subtract(waitMax).abs().doubleValue() * strategy.getReverseStopLossK() * 100. / waitMax.abs().doubleValue();
                     var realLimitPrice = priceWanted.doubleValue() + realLimitPercent * priceWanted.abs().doubleValue() / 100.;
-                    var stopLoss = priceWanted.doubleValue() - waitMaxBuy.subtract(waitMax).abs().doubleValue();
+                    var stopLoss = priceWanted.doubleValue() - 2 * waitMaxBuy.subtract(waitMax).abs().doubleValue();
                     annotation += " realLimitPercent=" + printPrice(realLimitPercent);
                     annotation += " realLimitPrice=" + printPrice(realLimitPrice);
                     annotation += " stopLoss=" + printPrice(stopLoss);
@@ -373,11 +373,11 @@ public class AlligatorService implements
                         setOrderBigDecimalData(strategy, candle, "limitPercent", BigDecimal.valueOf(realLimitPercent));
                         setOrderBigDecimalData(strategy, candle, "stopLoss", BigDecimal.valueOf(stopLoss));
                         setOrderBigDecimalData(strategy, candle, "priceWanted", priceWanted);
-                        if (strategy.isBuyMaxOnlySmaUp()) {
-                            var stopLossUp = stopLoss - waitMaxBuy.subtract(waitMax).abs().doubleValue();
-                            annotation += " stopLossUp=" + printPrice(stopLossUp);
-                            setOrderBigDecimalData(strategy, candle, "stopLossUp", BigDecimal.valueOf(stopLossUp));
-                        }
+                        //if (strategy.isBuyMaxOnlySmaUp()) {
+                        //    var stopLossUp = stopLoss - waitMaxBuy.subtract(waitMax).abs().doubleValue();
+                        //    annotation += " stopLossUp=" + printPrice(stopLossUp);
+                        //    setOrderBigDecimalData(strategy, candle, "stopLossUp", BigDecimal.valueOf(stopLossUp));
+                        //}
                     }
                 }
             }
