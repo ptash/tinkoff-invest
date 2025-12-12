@@ -1928,10 +1928,10 @@ public class AlligatorService implements
                     ;
                     if (!isLowestPriceOk) {
                         if (strategy.getMinLowestPriceUnderAnyLength() > lowestPriceNotOkCount) {
-                            var isTrendUpCur = isTrendUp(middleCandle, strategy);
-                            if (isTrendUpCur) {
+                            //var isTrendUpCur = isTrendUp(middleCandle, strategy);
+                            //if (isTrendUpCur) {
                                 isLowestPriceOk = true;
-                            }
+                            //}
                         }
                         lowestPriceNotOkCount++;
                     }
