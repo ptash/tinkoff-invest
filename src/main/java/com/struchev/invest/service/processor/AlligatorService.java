@@ -407,6 +407,11 @@ public class AlligatorService implements
                         setOrderBigDecimalData(strategy, candle, "limitPercent", BigDecimal.valueOf(realLimitPercent));
                         setOrderBigDecimalData(strategy, candle, "stopLoss", BigDecimal.valueOf(stopLoss));
                         setOrderBigDecimalData(strategy, candle, "priceWanted", priceWanted);
+                        if (strategy.isStopLossDownStepLength() > 0) {
+                            var downDelta = Math.abs(realLimitPrice - priceWanted.doubleValue()) * strategy.getStopLossDownProfitK();
+                            setOrderBigDecimalData(strategy, candle, "stopLossStepLength", BigDecimal.valueOf(strategy.isStopLossDownStepLength()));
+                            setOrderBigDecimalData(strategy, candle, "stopLossDownDelta", BigDecimal.valueOf(downDelta));
+                        }
                         //if (strategy.isBuyMaxOnlySmaUp()) {
                         //    var stopLossUp = stopLoss - waitMaxBuy.subtract(waitMax).abs().doubleValue();
                         //    annotation += " stopLossUp=" + printPrice(stopLossUp);
@@ -967,6 +972,21 @@ public class AlligatorService implements
                 var stopLossUp = order.getDetails().getCurrentPrices().getOrDefault("stopLossUp", null);
                 if (null != stopLossUp) {
                     stopLoss = stopLossUp.doubleValue();
+                }
+            }
+            var downStepLength = order.getDetails().getCurrentPrices().getOrDefault("stopLossStepLength", BigDecimal.ZERO).intValue();
+            if (downStepLength > 0) {
+                var stopLossDownDelta = order.getDetails().getCurrentPrices().getOrDefault("stopLossDownDelta", BigDecimal.ZERO).doubleValue();
+                var candleList = candleHistoryService.getCandlesByFigiBetweenDateTimes(candle.getFigi(), order.getPurchaseDateTime(), candle.getDateTime(), strategy.getInterval());
+                if (candleList != null) {
+                    var intervalNum = candleList.size() / downStepLength;
+                    if (intervalNum > 0) {
+                        stopLoss -= intervalNum * stopLossDownDelta;
+                    }
+                    annotation += " downStepLength=" + downStepLength;
+                    annotation += " stopLossDownDelta=" + printPrice(stopLossDownDelta);
+                    annotation += " intervalNum=" + intervalNum;
+                    annotation += " stopLoss=" + printPrice(stopLoss);
                 }
             }
         }
