@@ -303,10 +303,10 @@ public class AlligatorService implements
                             }
                         }
                         if (!resBuy && strategy.isPriceWantedAsMaxPrice()) {
+                            priceWanted = maxPrice;
                             if (candleOrig.getLowestPrice().compareTo(maxPrice) < 0) {
                                 annotation += " SELL OK by Orig ReverseLength";
                                 resBuy = true;
-                                priceWanted = maxPrice;
                             }
                         }
                     }
@@ -327,11 +327,10 @@ public class AlligatorService implements
                     resBuy = true;
                     annotation += " SKIP by trend DOWN";
                 }
-
+                if (null == priceWanted) {
+                    priceWanted = purchaseRate;
+                }
                 if (resBuy) {
-                    if (null == priceWanted) {
-                        priceWanted = purchaseRate;
-                    }
                     var realLimitPercent = waitMax2.subtract(waitMax).abs().doubleValue() * strategy.getReverseStopLossK() * 100. / waitMax.abs().doubleValue();
                     var realLimitPrice = priceWanted.doubleValue() + realLimitPercent * priceWanted.abs().doubleValue() / 100.;
                     var stopLoss = priceWanted.doubleValue() - 2 * waitMaxBuy.subtract(waitMax).abs().doubleValue();
@@ -346,11 +345,11 @@ public class AlligatorService implements
                                 var realLimitPrice2 = waitMax2.doubleValue();
                                 var realLimitPercent2 = 100. * (realLimitPrice2 - priceWanted.doubleValue()) / priceWanted.abs().doubleValue();
                                 annotation += " TRY realLimitPercent2=" + printPrice(realLimitPercent2);
-                                if (realLimitPercent2 > strategy.getBuyMinProfitPercent().doubleValue()) {
+                                //if (realLimitPercent2 > strategy.getBuyMinProfitPercent().doubleValue()) {
                                     annotation += " UP LIMITPERCENT";
                                     newRealLimitPercent = (float) ((realLimitPercent2 + strategy.getBuyMinProfitPercent().doubleValue()) / 2.);
                                     isDown = false;
-                                }
+                                //}
                             }
 
                             if (isDown) {
