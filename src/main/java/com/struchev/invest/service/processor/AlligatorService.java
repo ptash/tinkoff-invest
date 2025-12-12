@@ -341,7 +341,7 @@ public class AlligatorService implements
                     if (!isIgnoreSkip && realLimitPercent < strategy.getBuyMinProfitPercent()) {
                         if (strategy.isDownPriceWantedToMinProfitPercent()) {
                             var isDown = true;
-                            if (realLimitPrice < waitMax2.doubleValue()) {
+                            if (realLimitPrice < waitMax2.doubleValue() && strategy.isUpLimitPriceToMinProfitPercent()) {
                                 var realLimitPrice2 = waitMax2.doubleValue();
                                 var realLimitPercent2 = 100. * (realLimitPrice2 - priceWanted.doubleValue()) / priceWanted.abs().doubleValue();
                                 if (realLimitPercent2 > strategy.getBuyMinProfitPercent().doubleValue()) {
