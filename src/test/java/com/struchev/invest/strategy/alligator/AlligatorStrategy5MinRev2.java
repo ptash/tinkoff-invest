@@ -19,7 +19,7 @@ public class AlligatorStrategy5MinRev2 extends AlligatorStrategy5MinRev {
     public Double getReverseStopLossK() { return 1.0; }
 
     //public boolean isMaxSameTrend() { return true; }
-    public boolean isMinLowestPriceUnderAny() { return true; }
+    public Integer getMinLowestPriceUnderAnyLength() { return 0; }
 
     public OffsetDateTime getDayTimeEndTrading(OffsetDateTime dateTime) {
         var dateInZone = Date.getDateTimeInZone(dateTime);;

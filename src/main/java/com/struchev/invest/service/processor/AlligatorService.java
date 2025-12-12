@@ -1903,6 +1903,7 @@ public class AlligatorService implements
         var annotation = "";
         var iFindMax = 0;
         var isTrendUp = false;
+        var lowestPriceNotOkCount = 0;
         for (var i = candleList.size() - 1 - 2; i >= 2; i--) {
             var curCandleList = candleList.subList(i - 2, i + 3);
             var middleCandle = curCandleList.get(2);
@@ -1910,17 +1911,27 @@ public class AlligatorService implements
             var red = getAlligatorRed(figi, middleCandle.getDateTime(), strategy);
             var green = getAlligatorGreen(figi, middleCandle.getDateTime(), strategy);
             if (iFindMax > 0) {
-                var isTrendUpCur = isTrendUp(middleCandle, strategy);
-                if (isTrendUpCur != isTrendUp) {
+                if (strategy.isMaxSameTrend()) {
+                    var isTrendUpCur = isTrendUp(middleCandle, strategy);
+                    if (isTrendUpCur != isTrendUp) {
+                        break;
+                    }
+                } else {
                     break;
                 }
             } else {
                 Boolean isLowestPriceOk = false;
-                if (strategy.isMinLowestPriceUnderAny()) {
+                if (null != strategy.getMinLowestPriceUnderAnyLength()) {
                     isLowestPriceOk = middleCandle.getLowestPrice().doubleValue() < red
                         || middleCandle.getLowestPrice().doubleValue() < blue
                         || middleCandle.getLowestPrice().doubleValue() < green
                     ;
+                    if (!isLowestPriceOk) {
+                        if (strategy.getMinLowestPriceUnderAnyLength() > lowestPriceNotOkCount) {
+                            isLowestPriceOk = true;
+                        }
+                        lowestPriceNotOkCount++;
+                    }
                 } else {
                     isLowestPriceOk = middleCandle.getLowestPrice().doubleValue() < red;
                 }
