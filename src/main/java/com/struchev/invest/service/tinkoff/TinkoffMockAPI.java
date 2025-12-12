@@ -129,7 +129,7 @@ public class TinkoffMockAPI extends ATinkoffAPI {
                 .pricePt(price)
                 .isExecuted(true)
                 .build();
-        if (candle.getLowestPrice().compareTo(price) <= 0) {
+        if (candle.getLowestPrice().compareTo(price) < 0) {
             return order;
         } else {
             addOrderResult(instrument, order);
@@ -142,7 +142,7 @@ public class TinkoffMockAPI extends ATinkoffAPI {
         if (order != null) {
             var price = order.getPrice();
             log.info("sellLimitShort: Sell limit for {} with price {} and limit {} date {}", instrument.getFigi(), candle.getLowestPrice(), price, candle.getDateTime());
-            if (candle.getLowestPrice().compareTo(price) <= 0) {
+            if (candle.getLowestPrice().compareTo(price) < 0) {
                 return order;
             }
         }
