@@ -194,7 +194,13 @@ public class AlligatorService implements
         if (green != null && blue != null && strategy.isReverse()) {
             CandleDomainEntity lastFMinCandle;
             var startCandle = strategy.isCandleOrigInMinCandleList() ? candleOrig : candle;
-            var lastFMinCandleData = getLastFMinCandle(candle.getFigi(), startCandle.getDateTime(), strategy, strategy.getFMaxCandleCountFromEnd());
+            var lastFMinCandleData = getLastFMinCandle(
+                    candle.getFigi(),
+                    startCandle.getDateTime(),
+                    strategy,
+                    strategy.getFMaxCandleCountFromEnd(),
+                    strategy.getLastFMinStepMaxLength()
+            );
             if (null != lastFMinCandleData) {
                 lastFMinCandle = lastFMinCandleData.getFMaxCandle();
             } else {
@@ -327,10 +333,10 @@ public class AlligatorService implements
                     resBuy = true;
                     annotation += " SKIP by trend DOWN";
                 }
-                if (null == priceWanted) {
-                    priceWanted = purchaseRate;
-                }
                 if (resBuy) {
+                    if (null == priceWanted) {
+                        priceWanted = purchaseRate;
+                    }
                     var realLimitPercent = waitMax2.subtract(waitMax).abs().doubleValue() * strategy.getReverseStopLossK() * 100. / waitMax.abs().doubleValue();
                     var realLimitPrice = priceWanted.doubleValue() + realLimitPercent * priceWanted.abs().doubleValue() / 100.;
                     var stopLoss = priceWanted.doubleValue() - 2 * waitMaxBuy.subtract(waitMax).abs().doubleValue();
@@ -418,6 +424,7 @@ public class AlligatorService implements
                         //}
                     }
                 }
+                priceWanted = maxPrice; // для графиков
             }
         }
 
@@ -1273,7 +1280,14 @@ public class AlligatorService implements
 
             if (!isSellNow) {
                 if (strategy.getAvgMaxCountStopLossByTrySell() > 0) {
-                    var lastFMaxCandleData = getLastFMinCandle(candle.getFigi(), order.getPurchaseDateTime(), strategy, strategy.getFMaxCandleCountFromEnd(), strategy.getAvgMaxCountStopLossByTrySell());
+                    var lastFMaxCandleData = getLastFMinCandle(
+                            candle.getFigi(),
+                            order.getPurchaseDateTime(),
+                            strategy,
+                            strategy.getFMaxCandleCountFromEnd(),
+                            strategy.getAvgMaxCountStopLossByTrySell(),
+                            strategy.getLastFMinStepMaxLength()
+                    );
                     if (null != lastFMaxCandleData) {
                         var averageMin = lastFMaxCandleData.getMaxCandleList().stream().mapToDouble(c -> c.getLowestPrice().doubleValue()).average().orElse(0);
                         annotation += " averageMinCount=" + lastFMaxCandleData.getMaxCandleList().size();
@@ -1881,9 +1895,10 @@ public class AlligatorService implements
             String figi,
             OffsetDateTime currentDateTime,
             AAlligatorStrategy strategy,
-            Integer countFromEnd
+            Integer countFromEnd,
+            Integer maxDeep
     ) {
-        return getLastFMinCandle(figi, currentDateTime, strategy, countFromEnd, 0);
+        return getLastFMinCandle(figi, currentDateTime, strategy, countFromEnd, 0, maxDeep);
     }
 
     private AlligatorMouthFMax getLastFMinCandle(
@@ -1891,9 +1906,10 @@ public class AlligatorService implements
             OffsetDateTime currentDateTime,
             AAlligatorStrategy strategy,
             Integer countFromEnd,
-            Integer countMaxCandle
+            Integer countMaxCandle,
+            Integer maxDeep
     ) {
-        var candleList = getCandlesByFigiByLength(figi, currentDateTime, strategy.getMaxDeep(), strategy.getInterval());
+        var candleList = getCandlesByFigiByLength(figi, currentDateTime, maxDeep > 0 ? maxDeep : strategy.getMaxDeep(), strategy.getInterval());
         if (candleList == null) {
             return null;
         }
