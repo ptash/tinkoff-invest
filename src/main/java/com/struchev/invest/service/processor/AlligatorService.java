@@ -341,10 +341,14 @@ public class AlligatorService implements
                     if (!isIgnoreSkip && realLimitPercent < strategy.getBuyMinProfitPercent()) {
                         if (strategy.isDownPriceWantedToMinProfitPercent()) {
                             var isDown = true;
+                            var newRealLimitPercent = strategy.getBuyMinProfitPercent();
                             if (realLimitPrice < waitMax2.doubleValue() && strategy.isUpLimitPriceToMinProfitPercent()) {
                                 var realLimitPrice2 = waitMax2.doubleValue();
                                 var realLimitPercent2 = 100. * (realLimitPrice2 - priceWanted.doubleValue()) / priceWanted.abs().doubleValue();
+                                annotation += " TRY realLimitPercent2=" + printPrice(realLimitPercent2);
                                 if (realLimitPercent2 > strategy.getBuyMinProfitPercent().doubleValue()) {
+                                    annotation += " UP LIMITPERCENT";
+                                    newRealLimitPercent = (float) ((realLimitPercent2 + strategy.getBuyMinProfitPercent().doubleValue()) / 2.);
                                     isDown = false;
                                 }
                             }
@@ -354,7 +358,7 @@ public class AlligatorService implements
                                 var percentDelta = strategy.getBuyMinProfitPercent() - realLimitPercent;
                                 priceWanted = BigDecimal.valueOf(priceWanted.doubleValue() - priceWanted.abs().doubleValue() * percentDelta / 100.);
 
-                                realLimitPercent = strategy.getBuyMinProfitPercent();
+                                realLimitPercent = newRealLimitPercent;
                                 realLimitPrice = priceWanted.doubleValue() + realLimitPercent * priceWanted.abs().doubleValue() / 100.;
                                 annotation += " UP realLimitPercent=" + printPrice(realLimitPercent);
                                 annotation += " realLimitPrice=" + printPrice(realLimitPrice);
@@ -363,7 +367,7 @@ public class AlligatorService implements
                             } else {
                                 var realLimitPriceOld = realLimitPrice;
 
-                                realLimitPercent = strategy.getBuyMinProfitPercent();
+                                realLimitPercent = newRealLimitPercent;
                                 realLimitPrice = priceWanted.doubleValue() + realLimitPercent * priceWanted.abs().doubleValue() / 100.;
                                 annotation += " UP realLimitPercent=" + printPrice(realLimitPercent);
                                 annotation += " UP realLimitPrice=" + printPrice(realLimitPrice);
