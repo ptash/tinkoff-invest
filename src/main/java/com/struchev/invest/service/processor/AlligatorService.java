@@ -384,12 +384,22 @@ public class AlligatorService implements
                         annotation += " SKIP GreenPercentAverage=" + strategy.getMaxGreenPercent();
                         resBuy = false;
                     }
-                    if (
-                            priceWanted.compareTo(candleOrig.getLowestPrice()) < 0
-                            || priceWanted.compareTo(candleOrig.getHighestPrice()) > 0
-                    ) {
+                    if (priceWanted.compareTo(candleOrig.getLowestPrice()) < 0) {
                         annotation += " SKIP by priceWanted";
                         resBuy = false;
+                    }
+                    if (priceWanted.compareTo(candleOrig.getHighestPrice()) > 0) {
+                        var priceWantedDown = priceWanted.doubleValue();
+                        if (strategy.getDownFromPriceWantedK() > 0) {
+                            priceWantedDown = priceWanted.doubleValue() - delta.doubleValue() * strategy.getDownFromPriceWantedK();
+                            annotation += " priceWantedDown=" + printPrice(priceWantedDown);
+                            priceWanted = candleOrig.getHighestPrice();
+                            annotation += " priceWanted=" + printPrice(priceWanted);
+                        }
+                        if (priceWantedDown > candleOrig.getHighestPrice().doubleValue()) {
+                            annotation += " SKIP by priceWanted DOWN";
+                            resBuy = false;
+                        }
                     }
                     limitPrice = realLimitPrice;
                     if (resBuy) {
