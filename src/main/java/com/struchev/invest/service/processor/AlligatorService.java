@@ -407,10 +407,10 @@ public class AlligatorService implements
                         setOrderBigDecimalData(strategy, candle, "limitPercent", BigDecimal.valueOf(realLimitPercent));
                         setOrderBigDecimalData(strategy, candle, "stopLoss", BigDecimal.valueOf(stopLoss));
                         setOrderBigDecimalData(strategy, candle, "priceWanted", priceWanted);
-                        if (strategy.isStopLossDownStepLength() > 0) {
-                            var downDelta = Math.abs(realLimitPrice - priceWanted.doubleValue()) * strategy.getStopLossDownProfitK();
-                            setOrderBigDecimalData(strategy, candle, "stopLossStepLength", BigDecimal.valueOf(strategy.isStopLossDownStepLength()));
-                            setOrderBigDecimalData(strategy, candle, "stopLossDownDelta", BigDecimal.valueOf(downDelta));
+                        if (strategy.getLimitPriceDownStepLength() > 0) {
+                            var downDelta = Math.abs(realLimitPrice - priceWanted.doubleValue()) * strategy.getLimitPriceDownProfitK();
+                            setOrderBigDecimalData(strategy, candle, "LimitPriceStepLength", BigDecimal.valueOf(strategy.getLimitPriceDownStepLength()));
+                            setOrderBigDecimalData(strategy, candle, "LimitPriceDownDelta", BigDecimal.valueOf(downDelta));
                         }
                         //if (strategy.isBuyMaxOnlySmaUp()) {
                         //    var stopLossUp = stopLoss - waitMaxBuy.subtract(waitMax).abs().doubleValue();
@@ -974,21 +974,6 @@ public class AlligatorService implements
                     stopLoss = stopLossUp.doubleValue();
                 }
             }
-            var downStepLength = order.getDetails().getCurrentPrices().getOrDefault("stopLossStepLength", BigDecimal.ZERO).intValue();
-            if (downStepLength > 0) {
-                var stopLossDownDelta = order.getDetails().getCurrentPrices().getOrDefault("stopLossDownDelta", BigDecimal.ZERO).doubleValue();
-                var candleList = candleHistoryService.getCandlesByFigiBetweenDateTimes(candle.getFigi(), order.getPurchaseDateTime(), candle.getDateTime(), strategy.getInterval());
-                if (candleList != null) {
-                    var intervalNum = candleList.size() / downStepLength;
-                    if (intervalNum > 0) {
-                        stopLoss -= intervalNum * stopLossDownDelta;
-                    }
-                    annotation += " downStepLength=" + downStepLength;
-                    annotation += " stopLossDownDelta=" + printPrice(stopLossDownDelta);
-                    annotation += " intervalNum=" + intervalNum;
-                    annotation += " stopLoss=" + printPrice(stopLoss);
-                }
-            }
         }
 
         var sellLimitCriteria = strategy.getSellLimitCriteria(candle.getFigi());
@@ -996,6 +981,29 @@ public class AlligatorService implements
         var limitPercent = order.getDetails().getCurrentPrices().getOrDefault("limitPercent", BigDecimal.ZERO);
         Float newLimitPercent = limitPercent.floatValue();
         limitPrice = (double) (purchaseRate.floatValue() + Math.abs(purchaseRate.floatValue() * newLimitPercent / 100.f));
+        var downStepLength = order.getDetails().getCurrentPrices().getOrDefault("LimitPriceStepLength", BigDecimal.ZERO).intValue();
+        if (downStepLength > 0) {
+            var downDelta = order.getDetails().getCurrentPrices().getOrDefault("LimitPriceDownDelta", BigDecimal.ZERO).doubleValue();
+            var candleList = candleHistoryService.getCandlesByFigiBetweenDateTimes(candle.getFigi(), order.getPurchaseDateTime(), candle.getDateTime(), strategy.getInterval());
+            if (candleList != null) {
+                var intervalNum = candleList.size() / downStepLength;
+                if (intervalNum > 0) {
+                    var limitPercentInit = order.getDetails().getCurrentPrices().getOrDefault("limitPercentInit", limitPercent);
+                    annotation += " limitPercentInit=" + printPrice(limitPercentInit);
+                    var limitPriceInit = (double) (purchaseRate.floatValue() + Math.abs(purchaseRate.doubleValue() * limitPercentInit.doubleValue() / 100.));
+                    limitPrice = limitPriceInit - intervalNum * downDelta;
+                    limitPercent = BigDecimal.valueOf((limitPrice - purchaseRate.doubleValue()) * 100. / purchaseRate.abs().doubleValue());
+                    newLimitPercent = limitPercent.floatValue();
+
+                    order.getDetails().getCurrentPrices().put("limitPercentInit", limitPercentInit);
+                }
+                annotation += " downStepLength=" + downStepLength;
+                annotation += " stopLossDownDelta=" + printPrice(downDelta);
+                annotation += " intervalNum=" + intervalNum;
+                annotation += " limitPercent=" + printPrice(limitPercent);
+                annotation += " limitPrice=" + printPrice(limitPrice);
+            }
+        }
 
         //Float newLimitPercent = (float) ((100.f * (limitPrice.floatValue() - purchaseRate.floatValue()) / Math.abs(purchaseRate.floatValue())));
         //Float newLimitPercentAverage = (float) (newLimitPercent / average);
@@ -1034,7 +1042,7 @@ public class AlligatorService implements
             limitPercent = BigDecimal.valueOf(newLimitPercent);
             annotation += " new limitPrice=lastBySell=" + printPrice(limitPrice);
             annotation += " new newLimitPercent=" + printPrice(newLimitPercent);
-        } else {
+        } else if (strategy.getLimitPriceDownStepLength() < 1) {
             annotation += " limitPrice=" + printPrice(limitPrice);
             annotation += " newLimitPercent=" + printPrice(newLimitPercent);
             var minProfitPercent = strategy.getSellLimitCriteriaOrig().getExitProfitPercent();

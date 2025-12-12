@@ -38,5 +38,5 @@ public class AlligatorStrategy5MinRev2 extends AlligatorStrategy5MinRev {
         }
     }
 
-    public boolean isEnabled() { return true; }
+    public boolean isEnabled() { return false; }
 }
