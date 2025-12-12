@@ -1294,13 +1294,13 @@ public class AlligatorService implements
             }
         }
 
-        if (
-                limitPrice != null
-                && candle.getClosingPrice().doubleValue() > limitPrice
-        ) {
-            annotation += " limit OK";
-            res = true;
-        }
+        //if (
+        //        limitPrice != null
+        //        && candle.getClosingPrice().doubleValue() > limitPrice
+        //) {
+        //    annotation += " limit OK";
+        //    res = true;
+        //}
 
         log.trace("isShouldSell {} {} before DayEnd res={}", candle.getFigi(), candle.getDateTime(), res);
 

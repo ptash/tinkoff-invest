@@ -71,18 +71,21 @@ public class TinkoffMockAPI extends ATinkoffAPI {
 
     public OrderResult sellLimit(InstrumentService.Instrument instrument, BigDecimal price, Integer count, String uuid, String orderId, CandleDomainEntity candle) {
         log.info("sellLimit: Sell limit for {} with price {} and limit {}", instrument.getFigi(), candle.getHighestPrice(), price);
-        if (candle.getHighestPrice().compareTo(price) >= 0) {
+        var order = OrderResult.builder()
+                .orderUuid(UUID.randomUUID().toString())
+                .orderId(UUID.randomUUID().toString())
+                .commission(calculateCommission(price, count, instrument))
+                .lots(count.longValue())
+                .orderPrice(price.multiply(BigDecimal.valueOf(count)))
+                .price(price)
+                .pricePt(price)
+                .isExecuted(true)
+                .build();
+        if (candle.getHighestPrice().compareTo(price) > 0) {
             log.info("sellLimit: OK");
-            return OrderResult.builder()
-                    .orderUuid(UUID.randomUUID().toString())
-                    .orderId(UUID.randomUUID().toString())
-                    .commission(calculateCommission(price, count, instrument))
-                    .lots(count.longValue())
-                    .orderPrice(price.multiply(BigDecimal.valueOf(count)))
-                    .price(price)
-                    .pricePt(price)
-                    .isExecuted(true)
-                    .build();
+            return order;
+        } else {
+            addOrderResult(instrument, order);
         }
         return OrderResult.builder().build();
     }
@@ -141,7 +144,7 @@ public class TinkoffMockAPI extends ATinkoffAPI {
         var order = getOrderResult(candle.getFigi(), orderId);
         if (order != null) {
             var price = order.getPrice();
-            log.info("sellLimitShort: Sell limit for {} with price {} and limit {} date {}", instrument.getFigi(), candle.getLowestPrice(), price, candle.getDateTime());
+            log.info("closeSellLimit: Sell limit for {} with price {} and limit {} date {}", instrument.getFigi(), candle.getLowestPrice(), price, candle.getDateTime());
             if (candle.getLowestPrice().compareTo(price) < 0) {
                 return order;
             }
