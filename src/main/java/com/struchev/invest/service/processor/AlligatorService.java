@@ -2018,7 +2018,7 @@ public class AlligatorService implements
         if (strategy.getLastFMinStepMaxLength() > 0 && minMinCandleList.size() > 0) {
             annotation += " getLastFMinStepMaxLength=" + strategy.getLastFMinStepMaxLength();
             fMaxCandle = minMinCandleList.get(0);
-            Integer minCandleLengthFromCurCandlePrev = null;
+            /*Integer minCandleLengthFromCurCandlePrev = null;
             for (var i = 0; i < minMinCandleList.size(); i++) {
                 var minCandle = minMinCandleList.get(i);
                 var minCandleLengthFromCurCandle = candleList.size() - 1 - candleList.indexOf(minCandle);
@@ -2038,7 +2038,7 @@ public class AlligatorService implements
                     annotation += " break";
                     break;
                 }
-            }
+            }*/
         } else {
             if (null == fMaxCandle && minCandleList.size() > 0) {
                 fMaxCandle = minCandleList.get(minCandleList.size() - 1);
