@@ -201,7 +201,7 @@ public class AlligatorService implements
                     strategy.getFMaxCandleCountFromEnd()
             );
             if (null != lastFMinCandleData) {
-                annotation += " " + lastFMinCandleData.getAnnotation();
+                //annotation += " " + lastFMinCandleData.getAnnotation();
                 lastFMinCandle = lastFMinCandleData.getFMaxCandle();
             } else {
                 lastFMinCandle = null;
@@ -258,7 +258,7 @@ public class AlligatorService implements
                         Float newGreenPercent = (float) ((100.f * (zs - green) / Math.abs(green)));
                         annotation += " newGreenPercent=" + printPrice(newGreenPercent);
                         annotation += " average=" + printPrice(average);
-                        newGreenPercentAverage = (float) (newGreenPercent / average);
+                        newGreenPercentAverage = (float) Math.abs(newGreenPercent / average);
                         annotation += " newGreenPercentAverage=" + printPrice(newGreenPercentAverage);
                     }
                     annotation += " delta=" + printPrice(delta);
