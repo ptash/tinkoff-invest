@@ -2015,8 +2015,7 @@ public class AlligatorService implements
             }
         }
         if (strategy.getLastFMinStepMaxLength() > 0) {
-            //for (var i = 0; i < minCandleList.size(); i++) {
-            for (var i = minCandleList.size() - 1; i >= 0; i--) {
+            for (var i = 0; i < minCandleList.size(); i++) {
                 var minCandle = minCandleList.get(i);
                 fMaxCandle = minCandle;
                 var minCandleLengthFromCurCandle = candleList.size() - 1 - candleList.indexOf(minCandle);
