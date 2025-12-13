@@ -198,8 +198,7 @@ public class AlligatorService implements
                     candle.getFigi(),
                     startCandle.getDateTime(),
                     strategy,
-                    strategy.getFMaxCandleCountFromEnd(),
-                    strategy.getLastFMinStepMaxLength()
+                    strategy.getFMaxCandleCountFromEnd()
             );
             if (null != lastFMinCandleData) {
                 lastFMinCandle = lastFMinCandleData.getFMaxCandle();
@@ -207,6 +206,7 @@ public class AlligatorService implements
                 lastFMinCandle = null;
             }
             if (null != lastFMinCandle) {
+                annotation += " lastFMinCandle=" + printDateTime(lastFMinCandle.getDateTime());
                 waitMax = lastFMinCandle.getLowestPrice();
                 delta = lastFMinCandle.getLowestPrice().subtract(lastFMinCandle.getClosingPrice()).abs()
                         .min(lastFMinCandle.getLowestPrice().subtract(lastFMinCandle.getOpenPrice()).abs());
@@ -1285,8 +1285,7 @@ public class AlligatorService implements
                             order.getPurchaseDateTime(),
                             strategy,
                             strategy.getFMaxCandleCountFromEnd(),
-                            strategy.getAvgMaxCountStopLossByTrySell(),
-                            strategy.getLastFMinStepMaxLength()
+                            strategy.getAvgMaxCountStopLossByTrySell()
                     );
                     if (null != lastFMaxCandleData) {
                         var averageMin = lastFMaxCandleData.getMaxCandleList().stream().mapToDouble(c -> c.getLowestPrice().doubleValue()).average().orElse(0);
@@ -1895,10 +1894,9 @@ public class AlligatorService implements
             String figi,
             OffsetDateTime currentDateTime,
             AAlligatorStrategy strategy,
-            Integer countFromEnd,
-            Integer maxDeep
+            Integer countFromEnd
     ) {
-        return getLastFMinCandle(figi, currentDateTime, strategy, countFromEnd, 0, maxDeep);
+        return getLastFMinCandle(figi, currentDateTime, strategy, countFromEnd, 0);
     }
 
     private AlligatorMouthFMax getLastFMinCandle(
@@ -1906,10 +1904,9 @@ public class AlligatorService implements
             OffsetDateTime currentDateTime,
             AAlligatorStrategy strategy,
             Integer countFromEnd,
-            Integer countMaxCandle,
-            Integer maxDeep
+            Integer countMaxCandle
     ) {
-        var candleList = getCandlesByFigiByLength(figi, currentDateTime, maxDeep > 0 ? maxDeep : strategy.getMaxDeep(), strategy.getInterval());
+        var candleList = getCandlesByFigiByLength(figi, currentDateTime, strategy.getMaxDeep(), strategy.getInterval());
         if (candleList == null) {
             return null;
         }
@@ -2011,12 +2008,26 @@ public class AlligatorService implements
                 }
                 curMinCandleList = curMinCandleList.subList(minIndex + 1, curMinCandleList.size());
             }
-            if (minMinCandleList.size() >= countFromEnd) {
-                fMaxCandle = minMinCandleList.get(countFromEnd - 1);
+            if (strategy.getLastFMinStepMaxLength() == 0) {
+                if (minMinCandleList.size() >= countFromEnd) {
+                    fMaxCandle = minMinCandleList.get(countFromEnd - 1);
+                }
             }
         }
-        if (null == fMaxCandle && minCandleList.size() > 0) {
-            fMaxCandle = minCandleList.get(minCandleList.size() - 1);
+        if (strategy.getLastFMinStepMaxLength() > 0) {
+            //for (var i = 0; i < minCandleList.size(); i++) {
+            for (var i = minCandleList.size() - 1; i >= 0; i--) {
+                var minCandle = minCandleList.get(i);
+                fMaxCandle = minCandle;
+                var minCandleLengthFromCurCandle = candleList.size() - 1 - candleList.indexOf(minCandle);
+                if (minCandleLengthFromCurCandle < strategy.getLastFMinStepMaxLength()) {
+                    break;
+                }
+            }
+        } else {
+            if (null == fMaxCandle && minCandleList.size() > 0) {
+                fMaxCandle = minCandleList.get(minCandleList.size() - 1);
+            }
         }
         if (null != fMaxCandle
             && (countMaxCandle == 0 || minCandleList.size() >= countMaxCandle)
