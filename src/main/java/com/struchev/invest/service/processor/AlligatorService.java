@@ -2014,12 +2014,22 @@ public class AlligatorService implements
                 }
             }
         }
-        if (strategy.getLastFMinStepMaxLength() > 0) {
+        if (strategy.getLastFMinStepMaxLength() > 0 && minCandleList.size() > 0) {
+            fMaxCandle = minCandleList.get(0);
+            Integer minCandleLengthFromCurCandlePrev = null;
             for (var i = 0; i < minCandleList.size(); i++) {
                 var minCandle = minCandleList.get(i);
-                fMaxCandle = minCandle;
                 var minCandleLengthFromCurCandle = candleList.size() - 1 - candleList.indexOf(minCandle);
-                if (minCandleLengthFromCurCandle < strategy.getLastFMinStepMaxLength()) {
+                if (
+                        minCandleLengthFromCurCandle < strategy.getLastFMinStepMaxLength()
+                        || (
+                            minCandleLengthFromCurCandlePrev != null
+                            && minCandleLengthFromCurCandlePrev < minCandleLengthFromCurCandle
+                        )
+                ) {
+                    fMaxCandle = minCandle;
+                    minCandleLengthFromCurCandlePrev = minCandleLengthFromCurCandle;
+                } else {
                     break;
                 }
             }
