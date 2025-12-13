@@ -7,7 +7,9 @@ public class AlligatorStrategy5MinRev5 extends AlligatorStrategy5MinRev4 {
     public Integer getLimitPriceDownStepLength() { return 8; }
     public Double getLimitPriceDownProfitK() { return 0.13; }
     public Integer getLastFMinStepMaxLength() { return 25; }
-    //public Boolean isLimitPriceDownByMinBlue() { return true; }
+    public Boolean isLimitPriceDownByMinBlue() { return true; }
+    public Integer isLimitPriceDownStepNoChange() { return 3; }
     public Integer isLimitPriceDownMaxStep() { return 14; }
+    //public Integer getMinLowestPriceOverAnyMinLength() { return 7; }
     public boolean isEnabled() { return true; }
 }

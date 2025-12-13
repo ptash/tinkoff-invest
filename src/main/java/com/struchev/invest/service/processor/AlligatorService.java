@@ -994,7 +994,7 @@ public class AlligatorService implements
             var candleList = candleHistoryService.getCandlesByFigiBetweenDateTimes(candle.getFigi(), order.getPurchaseDateTime(), candle.getDateTime(), strategy.getInterval());
             if (candleList != null) {
                 var intervalNum = candleList.size() / downStepLength;
-                if (intervalNum > 0) {
+                if (intervalNum > strategy.isLimitPriceDownStepNoChange()) {
                     var limitPercentInit = order.getDetails().getCurrentPrices().getOrDefault("limitPercentInit", limitPercent);
                     annotation += " limitPercentInit=" + printPrice(limitPercentInit);
                     var limitPriceInit = (double) (purchaseRate.floatValue() + Math.abs(purchaseRate.doubleValue() * limitPercentInit.doubleValue() / 100.));
@@ -1941,6 +1941,7 @@ public class AlligatorService implements
         var iFindMax = 0;
         var isTrendUp = false;
         var lowestPriceNotOkCount = 0;
+        var isMinLowestPriceOverAnyMinLength = false;
         for (var i = candleList.size() - 1 - 2; i >= 2; i--) {
             var curCandleList = candleList.subList(i - 2, i + 3);
             var middleCandle = curCandleList.get(2);
@@ -1958,19 +1959,36 @@ public class AlligatorService implements
                 }
             } else {
                 Boolean isLowestPriceOk = false;
-                if (null != strategy.getMinLowestPriceUnderAnyLength()) {
+                if (
+                        null != strategy.getMinLowestPriceUnderAnyLength()
+                        || null != strategy.getMinLowestPriceOverAnyMinLength()
+                ) {
                     isLowestPriceOk = middleCandle.getLowestPrice().doubleValue() < red
                         || middleCandle.getLowestPrice().doubleValue() < blue
                         || middleCandle.getLowestPrice().doubleValue() < green
                     ;
                     if (!isLowestPriceOk) {
-                        if (strategy.getMinLowestPriceUnderAnyLength() > lowestPriceNotOkCount) {
+                        if (
+                                null != strategy.getMinLowestPriceUnderAnyLength()
+                                && strategy.getMinLowestPriceUnderAnyLength() > lowestPriceNotOkCount
+                        ) {
                             //var isTrendUpCur = isTrendUp(middleCandle, strategy);
                             //if (isTrendUpCur) {
                                 isLowestPriceOk = true;
                             //}
                         }
+                        if (
+                                null != strategy.getMinLowestPriceOverAnyMinLength()
+                        ) {
+                            if (isMinLowestPriceOverAnyMinLength) {
+                                isLowestPriceOk = true;
+                            } else {
+                                // нужно проверить интервал глубиной getMinLowestPriceOverAnyMinLength
+                            }
+                        }
                         lowestPriceNotOkCount++;
+                    } {
+                        isMinLowestPriceOverAnyMinLength = false;
                     }
                 } else {
                     isLowestPriceOk = middleCandle.getLowestPrice().doubleValue() < red;
