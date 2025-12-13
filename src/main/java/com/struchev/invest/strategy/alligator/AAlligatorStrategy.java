@@ -122,6 +122,7 @@ public abstract class AAlligatorStrategy extends AStrategy implements Cloneable,
     public boolean isSkipSellSmaNearGreenBlue() { return false; }
     public Integer getLimitPriceDownStepLength() { return 0; }
     public Double getLimitPriceDownProfitK() { return 0.25; }
+    public Boolean isLimitPriceDownByMinBlue() { return false; }
 
     public boolean isReverse() { return false; }
     public Integer getReverseMaxLength() { return 0; }

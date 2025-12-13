@@ -999,6 +999,20 @@ public class AlligatorService implements
                     annotation += " limitPercentInit=" + printPrice(limitPercentInit);
                     var limitPriceInit = (double) (purchaseRate.floatValue() + Math.abs(purchaseRate.doubleValue() * limitPercentInit.doubleValue() / 100.));
                     limitPrice = limitPriceInit - intervalNum * downDelta;
+                    annotation += " limitPrice=" + printPrice(limitPrice);
+                    if (strategy.isLimitPriceDownByMinBlue()) {
+                        var firstStepCandle = candleList.get(intervalNum * downStepLength);
+                        annotation += " firstStepCandle=" + printDateTime(firstStepCandle.getDateTime());
+                        var firstStepCandleBlue = getAlligatorBlue(candle.getFigi(), firstStepCandle.getDateTime(), strategy);
+                        if (null != firstStepCandleBlue) {
+                            annotation += " firstStepCandleBlue=" + printPrice(firstStepCandleBlue);
+                            if (limitPrice > firstStepCandleBlue) {
+                                limitPrice = firstStepCandleBlue;
+                                annotation += " new limitPrice=" + printPrice(limitPrice);
+                            }
+                        }
+                    }
+
                     limitPercent = BigDecimal.valueOf((limitPrice - purchaseRate.doubleValue()) * 100. / purchaseRate.abs().doubleValue());
                     newLimitPercent = limitPercent.floatValue();
 
