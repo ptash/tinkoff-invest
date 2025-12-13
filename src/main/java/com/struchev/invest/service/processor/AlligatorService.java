@@ -1998,14 +1998,36 @@ public class AlligatorService implements
                         if (
                                 null != strategy.getMinLowestPriceOverAnyMinLength()
                         ) {
-                            if (isMinLowestPriceOverAnyMinLength) {
-                                isLowestPriceOk = true;
-                            } else {
+                            var isLowestPriceOkCur = true;
+                            if (!isMinLowestPriceOverAnyMinLength) {
                                 // нужно проверить интервал глубиной getMinLowestPriceOverAnyMinLength
+                                for (var j = 1; j < strategy.getMinLowestPriceOverAnyMinLength(); j++) {
+                                    var candleJ = candleList.get(i - j);
+                                    var blueJ = getAlligatorBlue(figi, candleJ.getDateTime(), strategy);
+                                    var redJ = getAlligatorRed(figi, candleJ.getDateTime(), strategy);
+                                    var greenJ = getAlligatorGreen(figi, candleJ.getDateTime(), strategy);
+                                    var isCandleJLowestPriceOk = candleJ.getLowestPrice().doubleValue() < redJ
+                                            || candleJ.getLowestPrice().doubleValue() < blueJ
+                                            || candleJ.getLowestPrice().doubleValue() < greenJ
+                                    ;
+                                    annotation += " candleJ=" + printDateTime(candleJ.getDateTime());
+                                    if (isCandleJLowestPriceOk) {
+                                        annotation += " BREAK isLowestPriceOk = false";
+                                        // не достаточно длинный интервал над
+                                        isLowestPriceOkCur = false;
+                                        break;
+                                    }
+                                }
+                                if (isLowestPriceOkCur) {
+                                    isMinLowestPriceOverAnyMinLength = true;
+                                }
+                            }
+                            if (!isLowestPriceOk) {
+                                isLowestPriceOk = isLowestPriceOkCur;
                             }
                         }
                         lowestPriceNotOkCount++;
-                    } {
+                    } else {
                         isMinLowestPriceOverAnyMinLength = false;
                     }
                 } else {

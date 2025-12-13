@@ -10,6 +10,6 @@ public class AlligatorStrategy5MinRev5 extends AlligatorStrategy5MinRev4 {
     public Boolean isLimitPriceDownByMinBlue() { return true; }
     public Integer isLimitPriceDownStepNoChange() { return 3; }
     public Integer isLimitPriceDownMaxStep() { return 14; }
-    //public Integer getMinLowestPriceOverAnyMinLength() { return 7; }
+    public Integer getMinLowestPriceOverAnyMinLength() { return 7; }
     public boolean isEnabled() { return true; }
 }
