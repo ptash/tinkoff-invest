@@ -21,6 +21,8 @@ public class AlligatorStrategy5MinRev2 extends AlligatorStrategy5MinRev {
     //public boolean isMaxSameTrend() { return true; }
     public Integer getMinLowestPriceUnderAnyLength() { return 0; }
 
+    public Double getMaxGreenPercent() { return 33.0; } // игнорим MaxGreen
+
     public OffsetDateTime getDayTimeEndTrading(OffsetDateTime dateTime) {
         var dateInZone = Date.getDateTimeInZone(dateTime);;
         if (dateInZone.getDayOfWeek().getValue() < 6) {
