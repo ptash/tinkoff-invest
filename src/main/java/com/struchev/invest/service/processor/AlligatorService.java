@@ -201,6 +201,7 @@ public class AlligatorService implements
                     strategy.getFMaxCandleCountFromEnd()
             );
             if (null != lastFMinCandleData) {
+                annotation += " " + lastFMinCandleData.getAnnotation();
                 lastFMinCandle = lastFMinCandleData.getFMaxCandle();
             } else {
                 lastFMinCandle = null;
@@ -2014,22 +2015,27 @@ public class AlligatorService implements
                 }
             }
         }
-        if (strategy.getLastFMinStepMaxLength() > 0 && minCandleList.size() > 0) {
-            fMaxCandle = minCandleList.get(0);
+        if (strategy.getLastFMinStepMaxLength() > 0 && minMinCandleList.size() > 0) {
+            annotation += " getLastFMinStepMaxLength=" + strategy.getLastFMinStepMaxLength();
+            fMaxCandle = minMinCandleList.get(0);
             Integer minCandleLengthFromCurCandlePrev = null;
-            for (var i = 0; i < minCandleList.size(); i++) {
-                var minCandle = minCandleList.get(i);
+            for (var i = 0; i < minMinCandleList.size(); i++) {
+                var minCandle = minMinCandleList.get(i);
                 var minCandleLengthFromCurCandle = candleList.size() - 1 - candleList.indexOf(minCandle);
+                annotation += " i=" + i;
+                annotation += " minCandle=" + printDateTime(minCandle.getDateTime());
+                annotation += " minCandleLengthFromCurCandle=" + minCandleLengthFromCurCandle;
                 if (
                         minCandleLengthFromCurCandle < strategy.getLastFMinStepMaxLength()
                         || (
                             minCandleLengthFromCurCandlePrev != null
-                            && minCandleLengthFromCurCandlePrev < minCandleLengthFromCurCandle
+                            && minCandleLengthFromCurCandlePrev > minCandleLengthFromCurCandle
                         )
                 ) {
                     fMaxCandle = minCandle;
                     minCandleLengthFromCurCandlePrev = minCandleLengthFromCurCandle;
                 } else {
+                    annotation += " break";
                     break;
                 }
             }
@@ -2051,6 +2057,7 @@ public class AlligatorService implements
                     .build();
         }
         if (strategy.isRevMax() || countMaxCandle > 0) {
+            annotation += " countMaxCandle=" + countMaxCandle;
             var isUp = true;
             var upCount = 1;
             for (var i = iFindMax - 1; i >= 2; i--) {
