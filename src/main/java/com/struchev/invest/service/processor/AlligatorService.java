@@ -1001,7 +1001,7 @@ public class AlligatorService implements
                     limitPrice = limitPriceInit - intervalNum * downDelta;
                     annotation += " limitPrice=" + printPrice(limitPrice);
                     if (strategy.isLimitPriceDownByMinBlue()) {
-                        var firstStepCandle = candleList.get(intervalNum * downStepLength);
+                        var firstStepCandle = candleList.get(intervalNum * downStepLength - 1);
                         annotation += " firstStepCandle=" + printDateTime(firstStepCandle.getDateTime());
                         var firstStepCandleBlue = getAlligatorBlue(candle.getFigi(), firstStepCandle.getDateTime(), strategy);
                         if (null != firstStepCandleBlue) {
@@ -1010,6 +1010,16 @@ public class AlligatorService implements
                                 limitPrice = firstStepCandleBlue;
                                 annotation += " new limitPrice=" + printPrice(limitPrice);
                             }
+                        }
+                    }
+                    if (strategy.isLimitPriceDownMaxStep() > 0) {
+                        var minMaxDownDelta = (limitPriceInit - stopLoss) / strategy.isLimitPriceDownMaxStep();
+                        annotation += " minMaxDelta=" + printPrice(minMaxDownDelta);
+                        var limitPriceByMaxStep = limitPriceInit - intervalNum * minMaxDownDelta;
+                        annotation += " limitPriceByMaxStep=" + printPrice(limitPriceByMaxStep);
+                        if (limitPrice > limitPriceByMaxStep) {
+                            limitPrice = limitPriceByMaxStep;
+                            annotation += " new limitPrice=" + printPrice(limitPrice);
                         }
                     }
 
