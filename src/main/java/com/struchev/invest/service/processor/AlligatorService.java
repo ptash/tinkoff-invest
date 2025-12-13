@@ -994,39 +994,57 @@ public class AlligatorService implements
             var candleList = candleHistoryService.getCandlesByFigiBetweenDateTimes(candle.getFigi(), order.getPurchaseDateTime(), candle.getDateTime(), strategy.getInterval());
             if (candleList != null) {
                 var intervalNum = candleList.size() / downStepLength;
-                if (intervalNum > strategy.isLimitPriceDownStepNoChange()) {
+                if (intervalNum > 0) {
                     var limitPercentInit = order.getDetails().getCurrentPrices().getOrDefault("limitPercentInit", limitPercent);
                     annotation += " limitPercentInit=" + printPrice(limitPercentInit);
                     var limitPriceInit = (double) (purchaseRate.floatValue() + Math.abs(purchaseRate.doubleValue() * limitPercentInit.doubleValue() / 100.));
+                    var limitPriceOld = limitPrice;
                     limitPrice = limitPriceInit - intervalNum * downDelta;
                     annotation += " limitPrice=" + printPrice(limitPrice);
-                    if (strategy.isLimitPriceDownByMinBlue()) {
-                        var firstStepCandle = candleList.get(intervalNum * downStepLength - 1);
-                        annotation += " firstStepCandle=" + printDateTime(firstStepCandle.getDateTime());
-                        var firstStepCandleBlue = getAlligatorBlue(candle.getFigi(), firstStepCandle.getDateTime(), strategy);
-                        if (null != firstStepCandleBlue) {
-                            annotation += " firstStepCandleBlue=" + printPrice(firstStepCandleBlue);
-                            if (limitPrice > firstStepCandleBlue) {
-                                limitPrice = firstStepCandleBlue;
+                    if (intervalNum > strategy.isLimitPriceDownStepNoChange()) {
+                        if (strategy.isLimitPriceDownByMinBlue()) {
+                            var firstStepCandle = candleList.get(intervalNum * downStepLength - 1);
+                            annotation += " firstStepCandle=" + printDateTime(firstStepCandle.getDateTime());
+                            var firstStepCandleBlue = getAlligatorBlue(candle.getFigi(), firstStepCandle.getDateTime(), strategy);
+                            if (null != firstStepCandleBlue) {
+                                annotation += " firstStepCandleBlue=" + printPrice(firstStepCandleBlue);
+                                if (limitPrice > firstStepCandleBlue) {
+                                    limitPrice = firstStepCandleBlue;
+                                    annotation += " new limitPrice=" + printPrice(limitPrice);
+                                }
+                            }
+                        }
+                        if (strategy.isLimitPriceDownMaxStep() > 0) {
+                            var minMaxDownDelta = (limitPriceInit - stopLoss) / strategy.isLimitPriceDownMaxStep();
+                            annotation += " minMaxDelta=" + printPrice(minMaxDownDelta);
+                            var limitPriceByMaxStep = limitPriceInit - intervalNum * minMaxDownDelta;
+                            annotation += " limitPriceByMaxStep=" + printPrice(limitPriceByMaxStep);
+                            if (limitPrice > limitPriceByMaxStep) {
+                                limitPrice = limitPriceByMaxStep;
                                 annotation += " new limitPrice=" + printPrice(limitPrice);
                             }
                         }
                     }
-                    if (strategy.isLimitPriceDownMaxStep() > 0) {
-                        var minMaxDownDelta = (limitPriceInit - stopLoss) / strategy.isLimitPriceDownMaxStep();
-                        annotation += " minMaxDelta=" + printPrice(minMaxDownDelta);
-                        var limitPriceByMaxStep = limitPriceInit - intervalNum * minMaxDownDelta;
-                        annotation += " limitPriceByMaxStep=" + printPrice(limitPriceByMaxStep);
-                        if (limitPrice > limitPriceByMaxStep) {
-                            limitPrice = limitPriceByMaxStep;
-                            annotation += " new limitPrice=" + printPrice(limitPrice);
+
+                    var inDownLimit = true;
+                    if (intervalNum <= strategy.isLimitPriceDownStepNoChange()) {
+                        // проверим не касались ли уже лимитки пониженной
+                        candleList.remove(candleList.size() - 1);
+                        var maxPrice = candleList.stream().mapToDouble(c -> c.getHighestPrice().doubleValue()).max().orElse(purchaseRate.doubleValue());
+                        annotation += " new maxPrice=" + printPrice(maxPrice);
+                        if (maxPrice < limitPrice) {
+                            annotation += " inDownLimit=FALSE";
+                            inDownLimit = false;
                         }
                     }
+                    if (inDownLimit) {
+                        limitPercent = BigDecimal.valueOf((limitPrice - purchaseRate.doubleValue()) * 100. / purchaseRate.abs().doubleValue());
+                        newLimitPercent = limitPercent.floatValue();
 
-                    limitPercent = BigDecimal.valueOf((limitPrice - purchaseRate.doubleValue()) * 100. / purchaseRate.abs().doubleValue());
-                    newLimitPercent = limitPercent.floatValue();
-
-                    order.getDetails().getCurrentPrices().put("limitPercentInit", limitPercentInit);
+                        order.getDetails().getCurrentPrices().put("limitPercentInit", limitPercentInit);
+                    } else {
+                        limitPrice = limitPriceOld;
+                    }
                 }
                 annotation += " downStepLength=" + downStepLength;
                 annotation += " stopLossDownDelta=" + printPrice(downDelta);
