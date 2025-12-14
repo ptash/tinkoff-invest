@@ -726,6 +726,15 @@ public class AlligatorService implements
                 }
             }
         }
+        if (
+                resBuy
+                && strategy.isSkipBuyUnderSma()
+                && priceWanted != null
+                && priceWanted.doubleValue() < sma
+        ) {
+            annotation += " SKIP under sma";
+            resBuy = false;
+        }
 
         log.trace("isShouldBuy {} {} after skip DayEnd resBuy={}", candle.getFigi(), candle.getDateTime(), resBuy);
 
@@ -1149,7 +1158,7 @@ public class AlligatorService implements
             }
         }
 
-        if (res) {
+        if (res && strategy.isStopLossSkipByBuy()) {
             if (isShouldBuyInternal(strategy, candle, false)) {
                 annotation += " skip by buy";
                 res = false;

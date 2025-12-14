@@ -117,6 +117,7 @@ public abstract class AAlligatorStrategy extends AStrategy implements Cloneable,
     public boolean isSmaNearGreenBlueIsTrendDown() { return false; }
     public boolean isSkipBySmaNearGreenBlue() { return false; }
     public boolean isSkipBySmaFarGreenBlue() { return false; }
+    public boolean isSkipBuyUnderSma() { return false; }
     public boolean isBuyOnlyAfterMax2() { return false; }
     public boolean isBuyMaxOnlySmaUp() { return false; }
     public boolean isSkipSellSmaNearGreenBlue() { return false; }
@@ -134,6 +135,7 @@ public abstract class AAlligatorStrategy extends AStrategy implements Cloneable,
     public Integer getTrendUpLength() { return 1; }
     public boolean isStopLossForce() { return false; }
     public boolean isStopLossForcePrev() { return false; }
+    public boolean isStopLossSkipByBuy() { return true; }
     public Double getBuyWaitMaxFromGreenDeltaK() {return 0.4; }
     public boolean isRevMax() { return false; }
     public boolean isMaxSameTrend() { return false; }

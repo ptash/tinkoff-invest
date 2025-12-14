@@ -12,5 +12,7 @@ public class AlligatorStrategy5MinRev5 extends AlligatorStrategy5MinRev4 {
     public Integer isLimitPriceDownMaxStep() { return 14; }
     public Integer getMinLowestPriceOverAnyMinLength() { return 7; }
     public Integer getMinLowestPriceOverAnyMaxLength() { return 14; }
+    //public boolean isStopLossSkipByBuy() { return false; }
+    //public boolean isSkipBuyUnderSma() { return true; }
     public boolean isEnabled() { return true; }
 }
