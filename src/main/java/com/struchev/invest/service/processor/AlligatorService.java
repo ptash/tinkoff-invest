@@ -2038,7 +2038,11 @@ public class AlligatorService implements
                                         isLowestPriceOkCur = false;
                                         break;
                                     }
-                                    if (!isCandleJLowestPriceOk && j >= strategy.getMinLowestPriceOverAnyMaxLength()) {
+                                    if (
+                                            !isCandleJLowestPriceOk
+                                            && strategy.getMinLowestPriceOverAnyMaxLength() != null
+                                            && j >= strategy.getMinLowestPriceOverAnyMaxLength()
+                                    ) {
                                         annotation += " BREAK MAX j=" + j + ">=" + strategy.getMinLowestPriceOverAnyMaxLength();
                                         // слишком длинный интервал над
                                         isLowestPriceOkCur = false;
