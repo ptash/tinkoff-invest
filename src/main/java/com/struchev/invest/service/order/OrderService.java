@@ -267,9 +267,9 @@ public class OrderService implements IOrderService {
         }
         ITinkoffOrderAPI.OrderResult result;
         if (order.isShort()) {
-            result = tinkoffOrderAPI.sellLimitShort(instrument, limitPrice, lots, order.getSellLimitOrderUuid(), order.getSellLimitOrderId(), candle);
+            result = tinkoffOrderAPI.sellLimitShort(instrument, limitPrice, lots, order.getSellLimitOrderUuid(), order.getSellLimitOrderId(), candle, order);
         } else {
-            result = tinkoffOrderAPI.sellLimit(instrument, limitPrice, lots, order.getSellLimitOrderUuid(), order.getSellLimitOrderId(), candle);
+            result = tinkoffOrderAPI.sellLimit(instrument, limitPrice, lots, order.getSellLimitOrderUuid(), order.getSellLimitOrderId(), candle, order);
         }
         var needSave = false;
         if (null != result.getOrderUuid() && (null == order.getSellLimitOrderUuid() || !result.getOrderUuid().equals(order.getSellLimitOrderUuid()))) {

@@ -139,7 +139,7 @@ public class CandleHistoryService implements ICandleHistoryService {
                 throw new RuntimeException("Candles not found in local cache for " + figi);
             }
             var candles = candlesByFigi.stream()
-                    .filter(c -> c.getDateTime().isAfter(startDateTime))
+                    .filter(c -> c.getDateTime().isAfter(startDateTime) || c.getDateTime().isEqual(startDateTime))
                     .filter(c -> c.getDateTime().isBefore(endDateTime) || c.getDateTime().isEqual(endDateTime))
                     .collect(Collectors.toList());
             return candles;

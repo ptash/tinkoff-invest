@@ -1,6 +1,7 @@
 package com.struchev.invest.service.tinkoff;
 
 import com.struchev.invest.entity.CandleDomainEntity;
+import com.struchev.invest.entity.OrderDomainEntity;
 import com.struchev.invest.service.dictionary.InstrumentService;
 import com.struchev.invest.service.notification.NotificationService;
 import lombok.Builder;
@@ -339,11 +340,11 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
         return orderResultBuilder.build();
     }
 
-    public OrderResult sellLimit(InstrumentService.Instrument instrument, BigDecimal price, Integer count, String uuid, String orderId, CandleDomainEntity candle) {
+    public OrderResult sellLimit(InstrumentService.Instrument instrument, BigDecimal price, Integer count, String uuid, String orderId, CandleDomainEntity candle, OrderDomainEntity order) {
         return sellLimitDirection(OrderDirection.ORDER_DIRECTION_SELL, instrument, price, count, uuid, orderId, candle);
     }
 
-    public OrderResult sellLimitShort(InstrumentService.Instrument instrument, BigDecimal price, Integer count, String uuid, String orderId, CandleDomainEntity candle) {
+    public OrderResult sellLimitShort(InstrumentService.Instrument instrument, BigDecimal price, Integer count, String uuid, String orderId, CandleDomainEntity candle, OrderDomainEntity order) {
         return sellLimitDirection(OrderDirection.ORDER_DIRECTION_BUY, instrument, price, count, uuid, orderId, candle);
     }
     private OrderResult sellLimitDirection(OrderDirection direction, InstrumentService.Instrument instrument, BigDecimal price, Integer count, String uuid, String orderId, CandleDomainEntity candle) {

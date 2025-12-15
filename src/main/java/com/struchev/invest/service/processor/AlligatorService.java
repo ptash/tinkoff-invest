@@ -2102,9 +2102,10 @@ public class AlligatorService implements
 
         CandleDomainEntity beginCandle = candleList.get(iFindMax);
         CandleDomainEntity fMaxCandle = null;
+        annotation += " minCandleList.size()=" + minCandleList.size();
         if (
-                null != countFromEnd
-                        && minCandleList.size() >= countFromEnd
+                (null != countFromEnd && minCandleList.size() >= countFromEnd)
+                //|| (strategy.getLastFMinStepMaxLength() > 0 && minCandleList.size() > 0)
         ) {
             var curMinCandleList = minCandleList;
             for(var i = 0; i < minCandleList.size() && curMinCandleList.size() > 0; i++) {

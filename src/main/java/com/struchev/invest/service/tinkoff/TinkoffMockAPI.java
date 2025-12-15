@@ -1,6 +1,7 @@
 package com.struchev.invest.service.tinkoff;
 
 import com.struchev.invest.entity.CandleDomainEntity;
+import com.struchev.invest.entity.OrderDomainEntity;
 import com.struchev.invest.service.dictionary.InstrumentService;
 import lombok.Builder;
 import lombok.Data;
@@ -69,9 +70,9 @@ public class TinkoffMockAPI extends ATinkoffAPI {
                 .build();
     }
 
-    public OrderResult sellLimit(InstrumentService.Instrument instrument, BigDecimal price, Integer count, String uuid, String orderId, CandleDomainEntity candle) {
+    public OrderResult sellLimit(InstrumentService.Instrument instrument, BigDecimal price, Integer count, String uuid, String orderId, CandleDomainEntity candle, OrderDomainEntity order) {
         log.info("sellLimit: Sell limit for {} with price {} and limit {}", instrument.getFigi(), candle.getHighestPrice(), price);
-        var order = OrderResult.builder()
+        var limitOrder = OrderResult.builder()
                 .orderUuid(UUID.randomUUID().toString())
                 .orderId(UUID.randomUUID().toString())
                 .commission(calculateCommission(price, count, instrument))
@@ -81,11 +82,11 @@ public class TinkoffMockAPI extends ATinkoffAPI {
                 .pricePt(price)
                 .isExecuted(true)
                 .build();
-        if (candle.getHighestPrice().compareTo(price) > 0) {
+        if (candle.getHighestPrice().compareTo(price) > 0 && !candle.getDateTime().equals(order.getPurchaseDateTime())) {
             log.info("sellLimit: OK");
-            return order;
+            return limitOrder;
         } else {
-            addOrderResult(instrument, order);
+            addOrderResult(instrument, limitOrder);
         }
         return OrderResult.builder().build();
     }
@@ -120,9 +121,9 @@ public class TinkoffMockAPI extends ATinkoffAPI {
         return null;
     }
 
-    public OrderResult sellLimitShort(InstrumentService.Instrument instrument, BigDecimal price, Integer count, String uuid, String orderId, CandleDomainEntity candle) {
+    public OrderResult sellLimitShort(InstrumentService.Instrument instrument, BigDecimal price, Integer count, String uuid, String orderId, CandleDomainEntity candle, OrderDomainEntity order) {
         log.info("sellLimitShort: Sell limit for {} with price {} and limit {} date {}", instrument.getFigi(), candle.getLowestPrice(), price, candle.getDateTime());
-        var order = OrderResult.builder()
+        var limitOrder = OrderResult.builder()
                 .orderUuid(UUID.randomUUID().toString())
                 .orderId(UUID.randomUUID().toString())
                 .commission(calculateCommission(price, count, instrument))
@@ -132,10 +133,10 @@ public class TinkoffMockAPI extends ATinkoffAPI {
                 .pricePt(price)
                 .isExecuted(true)
                 .build();
-        if (candle.getLowestPrice().compareTo(price) < 0) {
-            return order;
+        if (candle.getLowestPrice().compareTo(price) < 0 && !candle.getDateTime().equals(order.getSellDateTime())) {
+            return limitOrder;
         } else {
-            addOrderResult(instrument, order);
+            addOrderResult(instrument, limitOrder);
         }
         return OrderResult.builder().build();
     }
