@@ -1339,7 +1339,7 @@ public class AlligatorService implements
                             strategy.getFMaxCandleCountFromEnd(),
                             strategy.getAvgMaxCountStopLossByTrySell()
                     );
-                    if (null != lastFMaxCandleData) {
+                    if (null != lastFMaxCandleData && null != lastFMaxCandleData.getMaxCandleList()) {
                         var averageMin = lastFMaxCandleData.getMaxCandleList().stream().mapToDouble(c -> c.getLowestPrice().doubleValue()).average().orElse(0);
                         annotation += " averageMinCount=" + lastFMaxCandleData.getMaxCandleList().size();
                         for (var i = 0; i < lastFMaxCandleData.getMaxCandleList().size(); i++) {
@@ -2091,6 +2091,10 @@ public class AlligatorService implements
                     && (
                             middleCandle.getHighestPrice().doubleValue() < Math.min(blue, green)
                             //|| countMaxCandle > 0
+                            || (
+                                    strategy.isMinLowestPriceUnderMinSameTrend()
+                                    && middleCandle.getLowestPrice().doubleValue() < Math.min(blue, green)
+                            )
                     )
             ) {
                 minCandleList.add(middleCandle);
@@ -2159,6 +2163,7 @@ public class AlligatorService implements
         }
         if (null != fMaxCandle
             && (countMaxCandle == 0 || minCandleList.size() >= countMaxCandle)
+            || !(strategy.isRevMax() || countMaxCandle > 0)
         ) {
             return AlligatorMouthFMax.builder()
                     .fMaxCandle(fMaxCandle)

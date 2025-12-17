@@ -82,7 +82,10 @@ public class TinkoffMockAPI extends ATinkoffAPI {
                 .pricePt(price)
                 .isExecuted(true)
                 .build();
-        if (candle.getHighestPrice().compareTo(price) > 0 && !candle.getDateTime().equals(order.getPurchaseDateTime())) {
+        if (
+                (candle.getHighestPrice().compareTo(price) > 0 && !candle.getDateTime().equals(order.getPurchaseDateTime()))
+                || (candle.getClosingPrice().compareTo(price) > 0 && candle.getDateTime().equals(order.getPurchaseDateTime()))
+        ) {
             log.info("sellLimit: OK");
             return limitOrder;
         } else {
@@ -133,7 +136,10 @@ public class TinkoffMockAPI extends ATinkoffAPI {
                 .pricePt(price)
                 .isExecuted(true)
                 .build();
-        if (candle.getLowestPrice().compareTo(price) < 0 && !candle.getDateTime().equals(order.getSellDateTime())) {
+        if (
+                (candle.getLowestPrice().compareTo(price) < 0 && !candle.getDateTime().equals(order.getSellDateTime()))
+                || (candle.getClosingPrice().compareTo(price) < 0 && candle.getDateTime().equals(order.getSellDateTime()))
+        ) {
             return limitOrder;
         } else {
             addOrderResult(instrument, limitOrder);
