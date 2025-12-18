@@ -290,15 +290,24 @@ public class AlligatorService implements
                             && null != waitMax2
                             //&& purchaseRate.compareTo(waitMax2) < 0
                     ) {
-                        maxPrice = waitMax2;
-                        if (strategy.isPriceWantedAsMaxPrice()) {
-                            var averagePrice = candleListMin.stream().mapToDouble(c -> c.getMedianPrice().doubleValue()).average().orElse(maxPrice.doubleValue());
-                            maxPrice = maxPrice.min(BigDecimal.valueOf(averagePrice));
-                            annotation += " averagePrice=" + printPrice(averagePrice);
+                        var isOk = true;
+                        if (strategy.isMinLowestPriceUnderMinSameTrend()) {
+                            var blueMin = getAlligatorBlue(candle.getFigi(), lastFMinCandle.getDateTime(), strategy);
+                            var greenMin = getAlligatorGreen(candle.getFigi(), lastFMinCandle.getDateTime(), strategy);
+                            isOk = lastFMinCandle.getHighestPrice().doubleValue() < Math.min(blueMin, greenMin);
+                            annotation += " isOK=" + isOk + " " + printPrice(lastFMinCandle.getHighestPrice()) + "<" + printPrice(Math.min(blueMin, greenMin));
                         }
-                        annotation += " maxPrice=" + printPrice(maxPrice) + " OK by ReverseMinLength=" + strategy.getReverseUpMinLength();
-                        //annotation += " SELL OK by ReverseMinLength=" + strategy.getReverseUpMinLength();
-                        //resBuy = true;
+                        if (isOk) {
+                            maxPrice = waitMax2;
+                            if (strategy.isPriceWantedAsMaxPrice()) {
+                                var averagePrice = candleListMin.stream().mapToDouble(c -> c.getMedianPrice().doubleValue()).average().orElse(maxPrice.doubleValue());
+                                maxPrice = maxPrice.min(BigDecimal.valueOf(averagePrice));
+                                annotation += " averagePrice=" + printPrice(averagePrice);
+                            }
+                            annotation += " maxPrice=" + printPrice(maxPrice) + " OK by ReverseMinLength=" + strategy.getReverseUpMinLength();
+                            //annotation += " SELL OK by ReverseMinLength=" + strategy.getReverseUpMinLength();
+                            //resBuy = true;
+                        }
                     }
 
                     if (null != maxPrice) {
@@ -337,6 +346,7 @@ public class AlligatorService implements
                 if (resBuy) {
                     if (null == priceWanted) {
                         priceWanted = purchaseRate;
+                        annotation += " by purchase priceWanted=" + printPrice(priceWanted);
                     }
                     var realLimitPercent = waitMax2.subtract(waitMax).abs().doubleValue() * strategy.getReverseStopLossK() * 100. / waitMax.abs().doubleValue();
                     var realLimitPrice = priceWanted.doubleValue() + realLimitPercent * priceWanted.abs().doubleValue() / 100.;
@@ -391,7 +401,7 @@ public class AlligatorService implements
                         resBuy = false;
                     }
                     if (priceWanted.compareTo(candleOrig.getLowestPrice()) < 0) {
-                        annotation += " SKIP by priceWanted";
+                        annotation += " SKIP by priceWanted " + printPrice(priceWanted) + "<" + printPrice(candleOrig.getLowestPrice());
                         resBuy = false;
                     }
                     if (priceWanted.compareTo(candleOrig.getHighestPrice()) > 0) {
@@ -403,7 +413,7 @@ public class AlligatorService implements
                             annotation += " priceWanted=" + printPrice(priceWanted);
                         }
                         if (priceWantedDown > candleOrig.getHighestPrice().doubleValue()) {
-                            annotation += " SKIP by priceWanted DOWN";
+                            annotation += " SKIP by priceWanted DOWN " + printPrice(priceWanted) + ">" + printPrice(candleOrig.getHighestPrice());
                             resBuy = false;
                         }
                     }
