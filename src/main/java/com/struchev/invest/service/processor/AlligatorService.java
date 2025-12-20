@@ -185,8 +185,10 @@ public class AlligatorService implements
         BigDecimal waitMaxBuy = null;
         BigDecimal delta = null;
         BigDecimal priceWanted = null;
+        BigDecimal priceWantedOrig = null;
         Double limitPrice = null;
         Double zs = null;
+        Integer stepMaxLength = null;
         var average = getAveragePercent(candle.getFigi(), candle.getDateTime(), strategy);
 
         log.trace("isShouldBuy {} {} average={}", candle.getFigi(), candle.getDateTime(), average);
@@ -234,7 +236,47 @@ public class AlligatorService implements
                     maxAverageCandle = lastFMinCandle;
                 }
 
-                if (null != maxAverageCandle) {
+                if (
+                        strategy.isMaxDeltaByMinMax()
+                        && null != lastFMinCandleData.getMaxMaxCandleListAll()
+                        && lastFMinCandleData.getMaxMaxCandleListAll().size() > 1
+                ) {
+                    var deltaAverage = 0.;
+                    var deltaCount = 0;
+                    var stepLengthAverage = 0;
+                    for (var i = 1; i < lastFMinCandleData.getMaxMaxCandleListAll().size(); i++) {
+                        var candleList = candleHistoryService.getCandlesByFigiBetweenDateTimes(
+                                candle.getFigi(),
+                                lastFMinCandleData.getMaxMaxCandleListAll().get(i).getDateTime(),
+                                lastFMinCandleData.getMaxMaxCandleListAll().get(i - 1).getDateTime(),
+                                strategy.getInterval()
+                        );
+                        annotation += " i=" + i;
+                        annotation += " from=" + printDateTime(lastFMinCandleData.getMaxMaxCandleListAll().get(i).getDateTime());
+                        annotation += " to=" + lastFMinCandleData.getMaxMaxCandleListAll().get(i - 1).getDateTime();
+                        if (candleList.size() > 0) {
+                            var maxCandleDelta = candleList.stream().reduce((first, second) ->
+                                    first.getHighestPrice().compareTo(second.getHighestPrice()) > 0 ? first : second
+                            ).orElse(null);
+                            var curDelta  = maxCandleDelta.getHighestPrice().doubleValue() - lastFMinCandleData.getMaxMaxCandleListAll().get(i - 1).getLowestPrice().doubleValue();
+                            annotation += " maxC=" + printDateTime(maxCandleDelta.getDateTime());
+                            annotation += " curDelta=" + printPrice(curDelta);
+                            annotation += " size=" + candleList.size();
+                            deltaAverage += curDelta;
+                            deltaCount++;
+                            stepLengthAverage += candleList.size();
+                        }
+                    }
+                    if (deltaCount > 0) {
+                        delta = BigDecimal.valueOf(deltaAverage/deltaCount);
+                        annotation += " delta=" + printPrice(delta);
+                        waitMax2 = waitMax.add(delta.multiply(BigDecimal.valueOf(strategy.getBuyWaitMaxDeltaK())));
+                        waitMaxBuy = waitMax.subtract(delta.multiply(BigDecimal.valueOf(strategy.getBuyWaitMaxBuyDeltaK())));
+                        stepMaxLength = stepLengthAverage / deltaCount;
+                        annotation += " stepMaxLength=" + stepMaxLength;
+                    }
+                }
+                if (null != maxAverageCandle && null == waitMax2) {
                     blueMax = getAlligatorBlue(candle.getFigi(), maxAverageCandle.getDateTime(), strategy);
                     greenMax = getAlligatorGreen(candle.getFigi(), maxAverageCandle.getDateTime(), strategy);
                     annotation += " greenMax=" + printPrice(greenMax);
@@ -280,13 +322,18 @@ public class AlligatorService implements
                         //resBuy = true;
                     }
 
+                    var reverseUpMinLength = strategy.getReverseUpMinLength();
+                    if (reverseUpMinLength > 0 && stepMaxLength != null) {
+                        reverseUpMinLength = stepMaxLength;
+                    }
+                    annotation += " reverseUpMinLength=" + reverseUpMinLength;
                     if (
                             //!resBuy
                             //&& !isMax2
                             minIntervalCandle.getLowestPrice().compareTo(waitMaxBuy) >= 0
-                            && strategy.getReverseUpMinLength() > 0
+                            && reverseUpMinLength > 0
                             && candleListMin.size() < strategy.getReverseMaxLength()
-                            && candleListMin.size() > strategy.getReverseUpMinLength()
+                            && candleListMin.size() > reverseUpMinLength
                             && null != waitMax2
                             //&& purchaseRate.compareTo(waitMax2) < 0
                     ) {
@@ -304,8 +351,8 @@ public class AlligatorService implements
                                 maxPrice = maxPrice.min(BigDecimal.valueOf(averagePrice));
                                 annotation += " averagePrice=" + printPrice(averagePrice);
                             }
-                            annotation += " maxPrice=" + printPrice(maxPrice) + " OK by ReverseMinLength=" + strategy.getReverseUpMinLength();
-                            //annotation += " SELL OK by ReverseMinLength=" + strategy.getReverseUpMinLength();
+                            annotation += " maxPrice=" + printPrice(maxPrice) + " OK by ReverseMinLength=" + reverseUpMinLength;
+                            //annotation += " SELL OK by ReverseMinLength=" + reverseUpMinLength;
                             //resBuy = true;
                         }
                     }
@@ -435,7 +482,7 @@ public class AlligatorService implements
                         //}
                     }
                 }
-                priceWanted = maxPrice; // для графиков
+                priceWantedOrig = maxPrice; // для графиков
             }
         }
 
@@ -815,9 +862,10 @@ public class AlligatorService implements
                     strategy,
                     candleOrig,
                     "Date|open|high|low|close|ema2|profit|loss|limitPrice|lossAvg|deadLineTop|investBottom|investTop|smaTube|strategy"
-                            + "|emaBlue1|emaRed|emaGreen|emaBlue|max|min|zs|waitMax|maxBuy|stopLoss|waitMax2|isDayEnd|smaUp|smaDown|priceWanted|trendUp|trendDown|purchaseRate",
+                            + "|emaBlue1|emaRed|emaGreen|emaBlue|max|min|zs|waitMax|maxBuy|stopLoss|waitMax2|isDayEnd|smaUp|smaDown|priceWanted|trendUp|trendDown|purchaseRate"
+                            + "|priceWantedOrig",
                     "{} | {} | {} | {} | {} | | {} | {} | {} | {} | ||||by {}"
-                            + "| {} | {} | {} | {} | {} | {} | {} | {} | {} || {} | {} | {} | {}| {}| {}| {}|",
+                            + "| {} | {} | {} | {} | {} | {} | {} | {} | {} || {} | {} | {} | {}| {}| {}| {}||{}",
                     printDateTime(candleOrig.getDateTime()),
                     candleOrig.getOpenPrice(),
                     candleOrig.getHighestPrice(),
@@ -843,7 +891,8 @@ public class AlligatorService implements
                     smaDown != null ? smaDown : "",
                     priceWanted != null ? printPrice(priceWanted) : "",
                     trendName == "UP" ? sma + Math.abs(sma) * 0.001 : "",
-                    trendName == "DOWN" ? sma - Math.abs(sma) * 0.001 : ""
+                    trendName == "DOWN" ? sma - Math.abs(sma) * 0.001 : "",
+                    priceWantedOrig != null ? printPrice(priceWantedOrig) : ""
             );
         }
         log.trace("isShouldBuy {} {} end resBuy={}", candle.getFigi(), candle.getDateTime(), resBuy);
@@ -1405,9 +1454,10 @@ public class AlligatorService implements
                 strategy,
                 candle,
                 "Date|open|high|low|close|ema2|profit|loss|limitPrice|lossAvg|deadLineTop|investBottom|investTop|smaTube|strategy"
-                        + "|emaBlue1|emaRed|emaGreen|emaBlue|max|min|zs|waitMax|maxBuy|stopLoss|waitMax2|isDayEnd|smaUp|smaDown|priceWanted|trendUp|trendDown|purchaseRate",
+                        + "|emaBlue1|emaRed|emaGreen|emaBlue|max|min|zs|waitMax|maxBuy|stopLoss|waitMax2|isDayEnd|smaUp|smaDown|priceWanted|trendUp|trendDown|purchaseRate"
+                        + "|priceWantedOrig",
                 "{} | {} | {} | {} | {} | | {} | {} | {} | {} | ||||sell {}"
-                        + "| {} | {} | {} | {} | {} | {} | {} ||| {}|| {}| {} | {}|||| {}",
+                        + "| {} | {} | {} | {} | {} | {} | {} ||| {}|| {}| {} | {}|||| {}|",
                 printDateTime(candle.getDateTime()),
                 candle.getOpenPrice(),
                 candle.getHighestPrice(),
@@ -1754,6 +1804,7 @@ public class AlligatorService implements
         CandleDomainEntity beginCandle;
         List<CandleDomainEntity> maxCandleList;
         List<CandleDomainEntity> maxMaxCandleList;
+        List<CandleDomainEntity> maxMaxCandleListAll;
         String annotation;
         Boolean isUpPrev;
     }
@@ -1973,7 +2024,9 @@ public class AlligatorService implements
             return null;
         }
         List<CandleDomainEntity> minCandleList = new ArrayList<>();
+        List<CandleDomainEntity> minCandleListAll = new ArrayList<>();
         List<CandleDomainEntity> minMinCandleList = new ArrayList<>();
+        List<CandleDomainEntity> minMinCandleListAll = new ArrayList<>();
         var annotation = "";
         var iFindMax = 0;
         var isTrendUp = false;
@@ -2109,6 +2162,9 @@ public class AlligatorService implements
             ) {
                 minCandleList.add(middleCandle);
             }
+            if (isMin) {
+                minCandleListAll.add(middleCandle);
+            }
             if (countMaxCandle > 0 && minCandleList.size() >= countMaxCandle) {
                 break;
             }
@@ -2140,6 +2196,23 @@ public class AlligatorService implements
                 if (minMinCandleList.size() >= countFromEnd) {
                     fMaxCandle = minMinCandleList.get(countFromEnd - 1);
                 }
+            }
+        }
+        if (strategy.isMaxDeltaByMinMax()) {
+            var curMinCandleList = minCandleListAll;
+            for(var i = 0; i < minCandleListAll.size() && curMinCandleList.size() > 0; i++) {
+                var minCandle = curMinCandleList.stream().reduce((first, second) ->
+                        first.getLowestPrice().compareTo(second.getLowestPrice()) < 0 ? first : second
+                ).orElse(null);
+                minMinCandleListAll.add(minCandle);
+                var minIndex = curMinCandleList.indexOf(minCandle);
+                annotation += " i=" + i;
+                annotation += " minIndex=" + minIndex;
+                annotation += " size=" + curMinCandleList.size();
+                if (minIndex == curMinCandleList.size() - 1) {
+                    break;
+                }
+                curMinCandleList = curMinCandleList.subList(minIndex + 1, curMinCandleList.size());
             }
         }
         if (strategy.getLastFMinStepMaxLength() > 0 && minMinCandleList.size() > 0) {
@@ -2179,6 +2252,7 @@ public class AlligatorService implements
                     .fMaxCandle(fMaxCandle)
                     .beginCandle(beginCandle)
                     .maxMaxCandleList(minMinCandleList)
+                    .maxMaxCandleListAll(minMinCandleListAll)
                     .maxCandleList(minCandleList)
                     .annotation(annotation)
                     .isUpPrev(false)
