@@ -130,6 +130,7 @@ public abstract class AAlligatorStrategy extends AStrategy implements Cloneable,
     public boolean isReverse() { return false; }
     public boolean isMaxDeltaByMinMax() { return false; }
     public boolean isMaxDeltaByMinMaxOnly() { return false; }
+    public Boolean isWaitMaxBuyByMinMax() {return false; }
     public Integer getReverseMaxLength() { return 0; }
     public Integer getReverseUpMinLength() { return 0; }
     public boolean isPriceWantedAsMaxPrice() { return false; }
@@ -151,6 +152,7 @@ public abstract class AAlligatorStrategy extends AStrategy implements Cloneable,
     public Boolean isUpLimitPriceToMinProfitPercent() {return false; }
     public Double getReverseStopLossK() { return 1.5; }
     public Double getDownFromPriceWantedK() { return -1.; }
+    public Boolean isUpLimitPriceToWaitMax() {return false; }
 
 
     public Integer getSmaLength() { return 13 * 10; }

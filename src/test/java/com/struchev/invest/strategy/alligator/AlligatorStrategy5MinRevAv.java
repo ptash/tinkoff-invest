@@ -6,6 +6,10 @@ import org.springframework.stereotype.Component;
 public class AlligatorStrategy5MinRevAv extends AlligatorStrategy5MinRev4 {
     public boolean isMaxDeltaByMinMax() { return true; }
     public boolean isMaxDeltaByMinMaxOnly() { return true; }
+    public Boolean isUpLimitPriceToWaitMax() {return true; }
+    public Boolean isWaitMaxBuyByMinMax() {return true; }
+
+    //==========
 
     public Integer getLimitPriceDownStepLength() { return 30; }
     public Double getLimitPriceDownProfitK() { return 0.15; }
@@ -16,6 +20,5 @@ public class AlligatorStrategy5MinRevAv extends AlligatorStrategy5MinRev4 {
 
     public Integer getLastFMinStepMaxLength() { return 25; }
 
-    public Boolean isUpLimitPriceToWaitMax() {return true; }
     public boolean isEnabled() { return true; }
 }

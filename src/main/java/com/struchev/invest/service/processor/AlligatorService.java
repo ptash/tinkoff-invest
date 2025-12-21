@@ -242,6 +242,7 @@ public class AlligatorService implements
                         && lastFMinCandleData.getMaxMaxCandleListAll().size() > 1
                 ) {
                     var deltaAverage = 0.;
+                    var deltaAverageDown = 0.;
                     var deltaCount = 0;
                     var stepLengthAverage = 0;
                     annotation += " allSize=" + lastFMinCandleData.getMaxMaxCandleListAll().size();
@@ -267,10 +268,17 @@ public class AlligatorService implements
                                             //- lastFMinCandleData.getMaxMaxCandleListAll().get(i - 1).getLowestPrice().doubleValue()
                                             - lastFMinCandleData.getMaxMaxCandleListAll().get(i).getLowestPrice().doubleValue()
                                     ;
+                            var curDeltaDown  =
+                                    lastFMinCandleData.getMaxMaxCandleListAll().get(i).getLowestPrice().doubleValue()
+                                            //- lastFMinCandleData.getMaxMaxCandleListAll().get(i - 1).getLowestPrice().doubleValue()
+                                            - lastFMinCandleData.getMaxMaxCandleListAll().get(i - 1).getLowestPrice().doubleValue()
+                                    ;
                             annotation += " maxC=" + printDateTime(maxCandleDelta.getDateTime());
                             annotation += " curDelta=" + printPrice(curDelta);
+                            annotation += " curDeltaDown=" + printPrice(curDeltaDown);
                             annotation += " size=" + candleList.size();
                             deltaAverage += curDelta;
+                            deltaAverageDown += curDeltaDown;
                             deltaCount++;
                             stepLengthAverage += candleList.size();
                         }
@@ -279,7 +287,13 @@ public class AlligatorService implements
                         delta = BigDecimal.valueOf(deltaAverage/deltaCount);
                         annotation += " delta=" + printPrice(delta);
                         waitMax2 = waitMax.add(delta.multiply(BigDecimal.valueOf(strategy.getBuyWaitMaxDeltaK())));
-                        waitMaxBuy = waitMax.subtract(delta.multiply(BigDecimal.valueOf(strategy.getBuyWaitMaxBuyDeltaK())));
+                        if (strategy.isWaitMaxBuyByMinMax() && deltaAverageDown > 0) {
+                            var deltaDown = deltaAverageDown/deltaCount;
+                            annotation += " deltaDown=" + printPrice(deltaDown);
+                            waitMaxBuy = waitMax.subtract(BigDecimal.valueOf(deltaDown).multiply(BigDecimal.valueOf(strategy.getBuyWaitMaxBuyDeltaK())));
+                        } else {
+                            waitMaxBuy = waitMax.subtract(delta.multiply(BigDecimal.valueOf(strategy.getBuyWaitMaxBuyDeltaK())));
+                        }
                         stepMaxLength = stepLengthAverage / deltaCount;
                         annotation += " stepMaxLength=" + stepMaxLength;
                     }
@@ -422,8 +436,8 @@ public class AlligatorService implements
                     var realLimitPrice = priceWanted.doubleValue() + realLimitPercent * priceWanted.abs().doubleValue() / 100.;
                     var stopLoss = priceWanted.doubleValue() - 2 * waitMaxBuy.subtract(waitMax).abs().doubleValue();
                     if (
-                            isMaxPriceDown
-                            && strategy.isUpLimitPriceToWaitMax()
+                            //isMaxPriceDown
+                            strategy.isUpLimitPriceToWaitMax()
                             && waitMax.doubleValue() > realLimitPrice
                     ) {
                         realLimitPrice = waitMax.doubleValue();
