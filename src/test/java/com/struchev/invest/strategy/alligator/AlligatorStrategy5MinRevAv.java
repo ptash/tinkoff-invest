@@ -15,5 +15,7 @@ public class AlligatorStrategy5MinRevAv extends AlligatorStrategy5MinRev4 {
     public Boolean isDownPriceWantedToMinProfitPercent() {return false; }
 
     public Integer getLastFMinStepMaxLength() { return 25; }
+
+    public Boolean isUpLimitPriceToWaitMax() {return true; }
     public boolean isEnabled() { return true; }
 }

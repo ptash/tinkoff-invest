@@ -318,6 +318,7 @@ public class AlligatorService implements
 
                 BigDecimal maxPrice = null;
                 priceWanted = null;
+                var isMaxPriceDown = false;
                 if (strategy.getReverseMaxLength() > 0) {
                     annotation += " minLength=" + candleListMin.size();
 
@@ -336,6 +337,7 @@ public class AlligatorService implements
                             && null != waitMaxBuy
                             //&& purchaseRate.compareTo(waitMaxBuy) < 0
                     ) {
+                        isMaxPriceDown = true;
                         maxPrice = waitMaxBuy;
                         annotation += " maxPrice=" + printPrice(maxPrice) + " OK by ReverseLength=" + reverseMaxLength;
                         //annotation += " SELL OK by ReverseLength=" + reverseMaxLength;
@@ -361,6 +363,7 @@ public class AlligatorService implements
                             annotation += " isOK=" + isOk + " " + printPrice(lastFMinCandle.getHighestPrice()) + "<" + printPrice(Math.min(blueMin, greenMin));
                         }
                         if (isOk) {
+                            isMaxPriceDown = false;
                             maxPrice = waitMax2;
                             if (strategy.isPriceWantedAsMaxPrice()) {
                                 var averagePrice = candleListMin.stream().mapToDouble(c -> c.getMedianPrice().doubleValue()).average().orElse(maxPrice.doubleValue());
@@ -418,6 +421,14 @@ public class AlligatorService implements
                     var realLimitPercent = waitMax2.subtract(waitMax).abs().doubleValue() * strategy.getReverseStopLossK() * 100. / waitMax.abs().doubleValue();
                     var realLimitPrice = priceWanted.doubleValue() + realLimitPercent * priceWanted.abs().doubleValue() / 100.;
                     var stopLoss = priceWanted.doubleValue() - 2 * waitMaxBuy.subtract(waitMax).abs().doubleValue();
+                    if (
+                            isMaxPriceDown
+                            && strategy.isUpLimitPriceToWaitMax()
+                            && waitMax.doubleValue() > realLimitPrice
+                    ) {
+                        realLimitPrice = waitMax.doubleValue();
+                        realLimitPercent = 100. * (realLimitPrice - priceWanted.doubleValue()) / priceWanted.abs().doubleValue();
+                    }
                     annotation += " realLimitPercent=" + printPrice(realLimitPercent);
                     annotation += " realLimitPrice=" + printPrice(realLimitPrice);
                     annotation += " stopLoss=" + printPrice(stopLoss);
