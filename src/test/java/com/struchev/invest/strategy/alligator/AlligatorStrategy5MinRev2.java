@@ -8,8 +8,6 @@ import java.time.format.DateTimeFormatter;
 
 @Component
 public class AlligatorStrategy5MinRev2 extends AlligatorStrategy5MinRev {
-
-    public boolean isMaxDeltaByMinMax() { return true; }
     public boolean isBuyMaxOnlySmaUp() { return true; }
     public Integer getReverseMaxLength() { return 20; }
     public Integer getReverseUpMinLength() { return 10; }
