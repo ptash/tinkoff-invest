@@ -284,7 +284,7 @@ public class AlligatorService implements
                         annotation += " stepMaxLength=" + stepMaxLength;
                     }
                 }
-                if (null != maxAverageCandle && null == waitMax2) {
+                if (null != maxAverageCandle && null == waitMax2 && !strategy.isMaxDeltaByMinMaxOnly()) {
                     blueMax = getAlligatorBlue(candle.getFigi(), maxAverageCandle.getDateTime(), strategy);
                     greenMax = getAlligatorGreen(candle.getFigi(), maxAverageCandle.getDateTime(), strategy);
                     annotation += " greenMax=" + printPrice(greenMax);
@@ -333,6 +333,7 @@ public class AlligatorService implements
                     annotation += " reverseMaxLength=" + reverseMaxLength;
                     if (
                             candleListMin.size() < reverseMaxLength
+                            && null != waitMaxBuy
                             //&& purchaseRate.compareTo(waitMaxBuy) < 0
                     ) {
                         maxPrice = waitMaxBuy;
@@ -344,7 +345,8 @@ public class AlligatorService implements
                     if (
                             //!resBuy
                             //&& !isMax2
-                            minIntervalCandle.getLowestPrice().compareTo(waitMaxBuy) >= 0
+                            null != waitMaxBuy
+                            && minIntervalCandle.getLowestPrice().compareTo(waitMaxBuy) >= 0
                             && reverseUpMinLength > 0
                             && candleListMin.size() < reverseMaxLength
                             && candleListMin.size() > reverseUpMinLength
@@ -387,13 +389,17 @@ public class AlligatorService implements
                             }
                         }
                     }
-                } else if (isMax2){
+                } else if (
+                        isMax2
+                        && null != waitMax
+                        && null != waitMaxBuy
+                ){
                     if (
                             purchaseRate.compareTo(waitMax) < 0
-                                    && purchaseRate.compareTo(waitMaxBuy) > 0
-                                    && purchaseRate.doubleValue() < green
-                                    && waitMax.doubleValue() < greenMax
-                                    && waitMax2.doubleValue() > greenMax
+                            && purchaseRate.compareTo(waitMaxBuy) > 0
+                            && purchaseRate.doubleValue() < green
+                            && waitMax.doubleValue() < greenMax
+                            && waitMax2.doubleValue() > greenMax
                     ) {
                         annotation += " SELL OK by waitMax";
                         resBuy = true;
