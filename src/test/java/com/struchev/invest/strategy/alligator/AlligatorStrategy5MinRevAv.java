@@ -9,6 +9,9 @@ public class AlligatorStrategy5MinRevAv extends AlligatorStrategy5MinRev4 {
     public Boolean isUpLimitPriceToWaitMax() {return true; }
     public Boolean isWaitMaxBuyByMinMax() {return true; }
 
+    public Boolean isSkipDownMinHighestPrice() { return true; }
+    public boolean isStopLossForcePrev() { return false; }
+
     //==========
 
     public Integer getLimitPriceDownStepLength() { return 30; }
