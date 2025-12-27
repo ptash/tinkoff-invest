@@ -28,7 +28,8 @@ public class AlligatorStrategy5MinRev2 extends AlligatorStrategy5MinRev {
         if (dateInZone.getDayOfWeek().getValue() < 6) {
             return OffsetDateTime.parse("2000-01-01T23:30:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
         } else {
-            return OffsetDateTime.parse("2000-01-01T18:35:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+            // не торговать по выходным
+            return OffsetDateTime.parse("2000-01-01T01:35:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
         }
     }
     public OffsetDateTime getDayTimeEndBuy(OffsetDateTime dateTime) {
@@ -36,7 +37,8 @@ public class AlligatorStrategy5MinRev2 extends AlligatorStrategy5MinRev {
         if (dateInZone.getDayOfWeek().getValue() < 6) {
             return OffsetDateTime.parse("2000-01-01T22:05:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
         } else {
-            return OffsetDateTime.parse("2000-01-01T17:10:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+            // не торговать по выходным
+            return OffsetDateTime.parse("2000-01-01T01:10:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
         }
     }
 }
