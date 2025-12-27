@@ -2332,7 +2332,7 @@ public class AlligatorService implements
             annotation += " iLastDownMin=" + iLastDownMin;
             //var curMinCandleList = minCandleListAll.subList(0, iLastDownMin);
             var curMinCandleList = minCandleListAll;
-            if (null == fMaxCandle && strategy.isMaxDeltaByMinMaxAllMin()) {
+            if (null == fMaxCandle && strategy.isMaxDeltaByMinMaxAllMinUp()) {
                 isfMaxCandleOver = true;
                 fMaxCandle = minCandleListAll.get(0);
             }
@@ -2357,12 +2357,12 @@ public class AlligatorService implements
                 curMinCandleList = curMinCandleList.subList(minIndex + 1, curMinCandleList.size());
             }
             annotation += " minMinCandleListAll.size()=" + minMinCandleListAll.size();
-            if (minMinCandleListAll.size() > 1 && strategy.isMaxDeltaByMinMaxAllMin()) {
+            if (minMinCandleListAll.size() > 1 && strategy.isMaxDeltaByMinMaxAllMinUp()) {
                 if (null == fMaxCandle) {
                     isfMaxCandleOver = true;
                     fMaxCandle = minMinCandleListAll.get(0);
                 }
-            } else if (strategy.isMaxDeltaByMinMaxAllMin()) {
+            } else if (strategy.isMaxDeltaByMinMaxAllMinUp()) {
                 minMinCandleListAll.clear();
                 annotation += " CLEAR";
                 // попробуем восходящие минимумы

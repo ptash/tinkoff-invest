@@ -143,6 +143,7 @@ public abstract class AAlligatorStrategy extends AStrategy implements Cloneable,
     public boolean isRevMax() { return false; }
     public boolean isMaxSameTrend() { return false; }
     public boolean isMaxDeltaByMinMaxAllMin() { return false; }
+    public boolean isMaxDeltaByMinMaxAllMinUp() { return false; }
     public boolean isMinLowestPriceUnderMinSameTrend() { return false; }
     public Integer getMinLowestPriceUnderAnyLength() { return null; }
     public Integer getLastFMinStepMaxLength() { return 0; }
