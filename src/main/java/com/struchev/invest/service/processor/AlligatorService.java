@@ -396,6 +396,7 @@ public class AlligatorService implements
                             && candleListMin.size() > reverseUpMinLength
                             && null != waitMax2
                             && candleListMin.size() >= reverseMinLength
+                            && !lastFMinCandleData.getIsfMaxCandleOver()
                             //&& purchaseRate.compareTo(waitMax2) < 0
                     ) {
                         var isOk = true;
@@ -1887,6 +1888,7 @@ public class AlligatorService implements
     @Data
     public static class AlligatorMouthFMax {
         CandleDomainEntity fMaxCandle;
+        Boolean isfMaxCandleOver = false;
         CandleDomainEntity beginCandle;
         List<CandleDomainEntity> maxCandleList;
         List<CandleDomainEntity> maxMaxCandleList;
@@ -2120,6 +2122,7 @@ public class AlligatorService implements
         var isMinLowestPriceOverAnyMinLengthCalc = false;
         var isMinLowestPriceOverAnyMinLength = false;
         Integer iLastDownMin = 0;
+        var isfMaxCandleOver = false;
         for (var i = candleList.size() - 1 - 2; i >= 2; i--) {
             var curCandleList = candleList.subList(i - 2, i + 3);
             var middleCandle = curCandleList.get(2);
@@ -2329,6 +2332,10 @@ public class AlligatorService implements
             annotation += " iLastDownMin=" + iLastDownMin;
             //var curMinCandleList = minCandleListAll.subList(0, iLastDownMin);
             var curMinCandleList = minCandleListAll;
+            if (null == fMaxCandle && strategy.isMaxDeltaByMinMaxAllMin()) {
+                isfMaxCandleOver = true;
+                fMaxCandle = minCandleListAll.get(0);
+            }
             if (null != fMaxCandle) {
                 CandleDomainEntity finalFMaxCandle = fMaxCandle;
                 curMinCandleList = curMinCandleList.stream().filter(c -> c.getLowestPrice().compareTo(finalFMaxCandle.getLowestPrice()) >= 0).collect(Collectors.toList());
@@ -2350,16 +2357,18 @@ public class AlligatorService implements
                 curMinCandleList = curMinCandleList.subList(minIndex + 1, curMinCandleList.size());
             }
             annotation += " minMinCandleListAll.size()=" + minMinCandleListAll.size();
-            if (minMinCandleListAll.size() > 1) {
+            if (minMinCandleListAll.size() > 1 && strategy.isMaxDeltaByMinMaxAllMin()) {
                 if (null == fMaxCandle) {
+                    isfMaxCandleOver = true;
                     fMaxCandle = minMinCandleListAll.get(0);
                 }
-            } else {
+            } else if (strategy.isMaxDeltaByMinMaxAllMin()) {
                 minMinCandleListAll.clear();
                 annotation += " CLEAR";
                 // попробуем восходящие минимумы
                 curMinCandleList = minCandleListAll;
                 if (null == fMaxCandle && minCandleListAll.size() > 0) {
+                    isfMaxCandleOver = true;
                     fMaxCandle = minCandleListAll.get(0);
                 }
                 if (null != fMaxCandle) {
@@ -2390,6 +2399,7 @@ public class AlligatorService implements
         ) {
             return AlligatorMouthFMax.builder()
                     .fMaxCandle(fMaxCandle)
+                    .isfMaxCandleOver(isfMaxCandleOver)
                     .beginCandle(beginCandle)
                     .maxMaxCandleList(minMinCandleList)
                     .maxMaxCandleListAll(minMinCandleListAll)
