@@ -13,6 +13,8 @@ public class AlligatorStrategy5MinRevAv extends AlligatorStrategy5MinRev4 {
     public boolean isStopLossForcePrev() { return false; }
     public boolean isMaxDeltaByMinMaxAllMin() { return true; }
 
+    public Integer getReverseUpMinLength() { return 100; }
+
     //==========
 
     public Integer getLimitPriceDownStepLength() { return 30; }
