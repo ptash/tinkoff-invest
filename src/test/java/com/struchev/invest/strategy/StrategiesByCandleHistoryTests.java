@@ -117,10 +117,14 @@ class StrategiesByCandleHistoryTests {
     //private OffsetDateTime dateBefore = OffsetDateTime.parse("2025-07-26T00:00:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
     //private OffsetDateTime dateBefore = OffsetDateTime.parse("2025-08-09T00:00:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
     //private OffsetDateTime dateBefore = OffsetDateTime.parse("2025-08-23T00:00:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
-    private OffsetDateTime dateBefore = OffsetDateTime.parse("2025-09-13T00:00:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+    //private OffsetDateTime dateBefore = OffsetDateTime.parse("2025-09-13T00:00:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
 
-    //private OffsetDateTime dateBefore = OffsetDateTime.parse("2025-09-04T00:00:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+    //private OffsetDateTime dateBefore = OffsetDateTime.parse("2025-12-06T00:00:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
 
+    private OffsetDateTime dateBefore = OffsetDateTime.parse("2025-12-13T00:00:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+    //private OffsetDateTime dateBefore = OffsetDateTime.parse("2025-12-20T00:00:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+
+    //private OffsetDateTime dateBefore = OffsetDateTime.parse("2025-12-27T00:00:00+03:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
 
     @Value("${tinkoff.emulator}")
     private Boolean isTinkoffEmulator;

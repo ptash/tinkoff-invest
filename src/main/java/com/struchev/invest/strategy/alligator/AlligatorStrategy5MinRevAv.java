@@ -1,0 +1,29 @@
+package com.struchev.invest.strategy.alligator;
+
+import org.springframework.stereotype.Component;
+
+@Component
+public class AlligatorStrategy5MinRevAv extends AlligatorStrategy5MinRev4 {
+    public boolean isMaxDeltaByMinMax() { return true; }
+    public boolean isMaxDeltaByMinMaxOnly() { return true; }
+    public Boolean isUpLimitPriceToWaitMax() {return true; }
+    public Boolean isWaitMaxBuyByMinMax() {return true; }
+
+    public Boolean isSkipDownMinHighestPrice() { return true; }
+    public boolean isStopLossForcePrev() { return false; }
+    public boolean isMaxDeltaByMinMaxAllMin() { return true; }
+    public boolean isMaxDeltaByMinMaxAllMinUp() { return false; }
+
+    public Integer getReverseUpMinLength() { return 100; }
+
+    //==========
+
+    public Integer getLimitPriceDownStepLength() { return 30; }
+    public Double getLimitPriceDownProfitK() { return 0.15; }
+
+    public Integer getMinLowestPriceOverAnyMinLength() { return 7; }
+    public Integer getMinLowestPriceOverAnyMaxLength() { return 14; }
+    public Boolean isDownPriceWantedToMinProfitPercent() {return false; }
+
+    public Integer getLastFMinStepMaxLength() { return 25; }
+}

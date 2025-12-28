@@ -36,9 +36,10 @@ public class SmaStrategy extends ASmaStrategy {
 
         //FIGIES.put("FUTNG0825000", 1);
         //FIGIES.put("FUTBR0925000", 1);
+        //FIGIES.put("FUTNG0925000", 1);
     }
     @Override
     public Map<String, Integer> getFigies()  { return FIGIES; }
 
-    public boolean isEnabled() { return true; }
+    public boolean isEnabled() { return false; }
 }
