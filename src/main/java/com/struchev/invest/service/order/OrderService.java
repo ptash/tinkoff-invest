@@ -126,7 +126,7 @@ public class OrderService implements IOrderService {
         var instrument = instrumentService.getInstrument(candle.getFigi());
         var priceWanted = candle.getClosingPrice();
         if (orderDetails.getPriceWanted() != null) {
-            priceWanted = candleHistoryReverseForShortService.preparePrice(orderDetails.getPriceWanted());
+            priceWanted = candleHistoryReverseForShortService.preparePrice(orderDetails.getPriceWanted()).min(candle.getHighestPrice());
         }
         var order = OrderDomainEntity.builder()
                 .currency(instrument.getCurrency())
@@ -168,7 +168,7 @@ public class OrderService implements IOrderService {
         var instrument = instrumentService.getInstrument(candle.getFigi());
         var priceWanted = candle.getClosingPrice();
         if (orderDetails.getPriceWanted() != null) {
-            priceWanted = orderDetails.getPriceWanted();
+            priceWanted = orderDetails.getPriceWanted().max(candle.getLowestPrice());
         }
         var order = OrderDomainEntity.builder()
                 .currency(instrument.getCurrency())

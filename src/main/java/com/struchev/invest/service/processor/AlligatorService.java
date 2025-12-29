@@ -574,7 +574,7 @@ public class AlligatorService implements
                         //}
                     }
                 }
-                if (null != waitMax && null != waitMax2) {
+                if (strategy.isRevMaxRev() && null != waitMax && null != waitMax2) {
                     priceWanted = null;
                     limitPrice = null;
                     stopLoss = null;

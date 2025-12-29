@@ -363,11 +363,8 @@ public class PurchaseService {
 
     private OrderDomainEntity openOrder(CandleDomainEntity candle, AStrategy strategy, OrderDetails orderDetails, Boolean isShort)
     {
-        log.info("strategy = {} {} orderDetails = {}", strategy.getExtName(), strategy.getName(), orderDetails);
-        log.info("getIsReverse = {}", orderDetails.getIsReverse());
-        if (!orderDetails.getIsReverse()) {
-            throw new RuntimeException("openOrder");
-        }
+        //log.info("strategy = {} {} orderDetails = {}", strategy.getExtName(), strategy.getName(), orderDetails);
+        //log.info("getIsReverse = {}", orderDetails.getIsReverse());
         if (orderDetails.getIsReverse()) {
             isShort = !isShort;
             var map = orderDetails.getCurrentPrices();
@@ -386,7 +383,7 @@ public class PurchaseService {
             if (null != orderDetails.getLimitPercent()) {
                 orderDetails.setLimitPercent(candleHistoryReverseForShortService.preparePrice(orderDetails.getLimitPercent()));
             }
-            log.info("orderDetails = {}", orderDetails);
+            //log.info("orderDetails = {}", orderDetails);
         }
         OrderDomainEntity order;
         if (isShort) {
