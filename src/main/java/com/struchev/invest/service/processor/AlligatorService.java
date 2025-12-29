@@ -192,6 +192,7 @@ public class AlligatorService implements
         Double zs = null;
         Integer stepMaxLength = null;
         Integer stepMinLength = null;
+        Integer stepAvLength = null;
         var average = getAveragePercent(candle.getFigi(), candle.getDateTime(), strategy);
 
         log.trace("isShouldBuy {} {} average={}", candle.getFigi(), candle.getDateTime(), average);
@@ -311,8 +312,10 @@ public class AlligatorService implements
                         }
                         stepMaxLength = (int) Math.floor((stepLengthArray.stream().mapToInt(c -> c).max().orElse(0)) * 1.2);
                         stepMinLength = (int) Math.ceil((stepLengthArray.stream().mapToInt(c -> c).min().orElse(0)) * 0.8);
+                        stepAvLength = (int) Math.floor(stepLengthArray.stream().mapToInt(c -> c).average().orElse(0) / stepLengthArray.size());
                         annotation += " stepMaxLength=" + stepMaxLength;
                         annotation += " stepMinLength=" + stepMinLength;
+                        annotation += " stepAvLength=" + stepAvLength;
                     }
                 }
                 if (null != maxAverageCandle && null == waitMax2 && !strategy.isMaxDeltaByMinMaxOnly()) {
@@ -574,6 +577,7 @@ public class AlligatorService implements
                         //}
                     }
                 }
+                priceWantedOrig = maxPrice; // для графиков
                 if (strategy.isRevMaxRev() && null != waitMax && null != waitMax2) {
                     priceWanted = null;
                     limitPrice = null;
@@ -612,7 +616,19 @@ public class AlligatorService implements
                         if (realLimitPercent < strategy.getBuyMinProfitPercent()) {
                             annotation += " SKIP by MinProfitPercent=" + strategy.getBuyMinProfitPercent();
                             resBuy = false;
-                        } else {
+                        }
+
+                        //if (resBuy && candleListMin.size() < stepAvLength) {
+                        //    annotation += " SKIP by stepAvLength=" + stepAvLength;
+                        //    resBuy = false;
+                        //}
+
+                        if (null != priceWanted && priceWanted.compareTo(candleOrig.getLowestPrice()) < 0) {
+                            priceWanted = candleOrig.getLowestPrice();
+                            annotation += " new priceWanted=" + printPrice(priceWanted);
+                        }
+
+                        if (resBuy) {
                             setOrderBooleanData(strategy, candle, "isReverse", true);
                             setOrderBigDecimalData(strategy, candle, "limitPrice", BigDecimal.valueOf(limitPrice));
                             setOrderBigDecimalData(strategy, candle, "limitPercent", BigDecimal.valueOf(realLimitPercent));
@@ -629,8 +645,8 @@ public class AlligatorService implements
                             }
                         }
                     }
+                    priceWantedOrig = priceWanted;
                 }
-                priceWantedOrig = maxPrice; // для графиков
             }
         }
 
