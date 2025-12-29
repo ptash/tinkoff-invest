@@ -3,10 +3,10 @@ package com.struchev.invest.service.processor;
 import com.struchev.invest.entity.CandleDomainEntity;
 import com.struchev.invest.entity.OrderDetails;
 import com.struchev.invest.entity.OrderDomainEntity;
+import com.struchev.invest.service.candle.CandleHistoryReverseForShortService;
 import com.struchev.invest.service.candle.CandleHistoryService;
 import com.struchev.invest.service.notification.NotificationForShortService;
 import com.struchev.invest.service.notification.NotificationService;
-import com.struchev.invest.service.order.OrderForShortService;
 import com.struchev.invest.service.order.OrderService;
 import com.struchev.invest.strategy.AStrategy;
 import com.struchev.invest.strategy.StrategySelector;
@@ -41,6 +41,7 @@ public class PurchaseService {
     private final CrossInstrumentByFiatService crossInstrumentByFiatService;
 
     private final CandleHistoryService candleHistoryService;
+    private final CandleHistoryReverseForShortService candleHistoryReverseForShortService;
 
     /**
      * Обработчик новой свечи используя оба типа стратегий
@@ -166,15 +167,13 @@ public class PurchaseService {
                             }
                         }
 
-                        order = orderService.openOrder(candleDomainEntity, strategy, buildOrderDetails(strategy, candleDomainEntity));
-                        notificationService.sendBuyInfo(strategy, order, candleDomainEntity);
+                        order = openOrder(candleDomainEntity, strategy, buildOrderDetails(strategy, candleDomainEntity), false);
                     }
 
                     if (isShouldBuyShort && !isShouldBuy) {
                         var isTrendBuy = calculator.isTrendBuy(strategy, candleDomainEntity);
                         if (!isTrendBuy && !isShouldBuy) {
-                            order = orderService.openOrderShort(candleDomainEntity, strategy, buildOrderShortDetails(strategy, candleDomainEntity));
-                            notificationForShortService.sendSellInfo(strategy, order, candleDomainEntity);
+                            order = openOrder(candleDomainEntity, strategy, buildOrderShortDetails(strategy, candleDomainEntity), true);
                         }
                     }
                     if (null != order) {
@@ -223,8 +222,7 @@ public class PurchaseService {
                             notificationService.sendSellInfo(strategy, order, candleDomainEntity);
                             isSell = true;
                             if (!strategy.isArchive() && (isShouldBuyShort || calculator.isTrendBuyShort(strategy, candleDomainEntity))) {
-                                order = orderService.openOrderShort(candleDomainEntity, strategy, buildOrderShortDetails(strategy, candleDomainEntity));
-                                notificationForShortService.sendSellInfo(strategy, order, candleDomainEntity);
+                                order = openOrder(candleDomainEntity, strategy, buildOrderShortDetails(strategy, candleDomainEntity), true);
                                 isSell = false;
                             }
                             log.trace("observeNewCandle order=long {} {} closeOrder end", strategy.getName(), candleDomainEntity.getDateTime());
@@ -249,8 +247,7 @@ public class PurchaseService {
                             notificationForShortService.sendBuyInfo(strategy, order, candleDomainEntity);
                             isSell = true;
                             if (!strategy.isArchive() && (isShouldBuy || calculator.isTrendBuy(strategy, candleDomainEntity))) {
-                                order = orderService.openOrder(candleDomainEntity, strategy, buildOrderDetails(strategy, candleDomainEntity));
-                                notificationService.sendBuyInfo(strategy, order, candleDomainEntity);
+                                order = openOrder(candleDomainEntity, strategy, buildOrderDetails(strategy, candleDomainEntity), false);
                                 isSell = false;
                             }
                             log.trace("observeNewCandle order=short {} {} closeOrder end", strategy.getName(), candleDomainEntity.getDateTime());
@@ -362,5 +359,43 @@ public class PurchaseService {
                 .currentPrices(currentPrices)
                 .booleanDataMap(booleanDataMap)
                 .build();
+    }
+
+    private OrderDomainEntity openOrder(CandleDomainEntity candle, AStrategy strategy, OrderDetails orderDetails, Boolean isShort)
+    {
+        log.info("strategy = {} {} orderDetails = {}", strategy.getExtName(), strategy.getName(), orderDetails);
+        log.info("getIsReverse = {}", orderDetails.getIsReverse());
+        if (!orderDetails.getIsReverse()) {
+            throw new RuntimeException("openOrder");
+        }
+        if (orderDetails.getIsReverse()) {
+            isShort = !isShort;
+            var map = orderDetails.getCurrentPrices();
+            map.forEach((key, value) -> {
+                if (!(
+                        key.toLowerCase().contains("steplength")
+                        || key.toLowerCase().contains("percent")
+                        || key.toLowerCase().contains("second")
+                )) {
+                    map.put(key, candleHistoryReverseForShortService.preparePrice(value));
+                }
+            });
+            if (null != orderDetails.getPriceWanted()) {
+                orderDetails.setPriceWanted(candleHistoryReverseForShortService.preparePrice(orderDetails.getPriceWanted()));
+            }
+            if (null != orderDetails.getLimitPercent()) {
+                orderDetails.setLimitPercent(candleHistoryReverseForShortService.preparePrice(orderDetails.getLimitPercent()));
+            }
+            log.info("orderDetails = {}", orderDetails);
+        }
+        OrderDomainEntity order;
+        if (isShort) {
+            order = orderService.openOrderShort(candle, strategy, orderDetails);
+            notificationForShortService.sendSellInfo(strategy, order, candle);
+        } else {
+            order = orderService.openOrder(candle, strategy, orderDetails);
+            notificationService.sendBuyInfo(strategy, order, candle);
+        }
+        return order;
     }
 }

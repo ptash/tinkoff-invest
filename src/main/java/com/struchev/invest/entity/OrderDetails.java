@@ -23,6 +23,7 @@ public class OrderDetails {
 
     BigDecimal priceWanted;
     BigDecimal limitPercent;
+    Boolean isReverse;
 
     public Map<String, BigDecimal> getCurrentPrices() {
         if (currentPrices == null) {
@@ -57,5 +58,8 @@ public class OrderDetails {
     }
     public BigDecimal getLimitPercent() {
         return getCurrentPrices().getOrDefault("limitPercent", null);
+    }
+    public Boolean getIsReverse() {
+        return getBooleanDataMap().getOrDefault("isReverse", false);
     }
 }
