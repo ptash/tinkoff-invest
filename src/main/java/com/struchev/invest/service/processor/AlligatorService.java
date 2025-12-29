@@ -606,7 +606,7 @@ public class AlligatorService implements
                         var deltaD = greenCur - waitMax.doubleValue();
                         annotation += " deltaU=" + printPrice(deltaU);
                         annotation += " deltaD=" + printPrice(deltaD);
-                        if (deltaU < deltaD) {
+                        if (deltaU < deltaD && (deltaD / deltaU) < 3) {
                             priceWanted = BigDecimal.valueOf(waitMax2.doubleValue());
                             limitPrice = waitMaxBuy.doubleValue();
                             stopLoss = candle.getHighestPrice().doubleValue() + Math.abs(priceWanted.doubleValue() - limitPrice);
