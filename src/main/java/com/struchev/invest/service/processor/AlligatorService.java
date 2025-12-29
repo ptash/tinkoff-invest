@@ -582,23 +582,28 @@ public class AlligatorService implements
                     priceWanted = null;
                     limitPrice = null;
                     stopLoss = null;
-                    if (green > waitMax2.doubleValue()) {
-                        priceWanted = BigDecimal.valueOf(green + (waitMax2.doubleValue() - waitMaxBuy.doubleValue()));
-                        limitPrice = green;
+                    var greenCur = Math.max(Math.max(green, blue), red);
+                    if (greenCur > waitMax2.doubleValue()) {
+                        priceWanted = BigDecimal.valueOf(greenCur + (waitMax2.doubleValue() - waitMaxBuy.doubleValue()));
+                        limitPrice = greenCur;
                         var maxIntervalCandle = candleListMin.stream().reduce((first, second) ->
                                 first.getHighestPrice().compareTo(second.getHighestPrice()) > 0 ? first : second
                         ).orElse(null);
                         annotation += " priceWanted=" + printPrice(priceWanted);
                         annotation += " maxCPrice=" + printPrice(maxIntervalCandle.getHighestPrice());
                         if (maxIntervalCandle.getHighestPrice().doubleValue() < priceWanted.doubleValue()) {
-                            priceWanted = BigDecimal.valueOf(waitMax2.doubleValue() + (waitMax2.doubleValue() - waitMax.doubleValue()));
-                            limitPrice = waitMax.doubleValue();
-                            annotation += " new priceWanted=" + printPrice(priceWanted);
+                            var priceWantedNew = BigDecimal.valueOf(waitMax2.doubleValue() + (waitMax2.doubleValue() - waitMax.doubleValue()));
+                            annotation += " new priceWantedNew=" + printPrice(priceWantedNew);
+                            if (priceWantedNew.doubleValue() > greenCur) {
+                                priceWanted = priceWantedNew;
+                                limitPrice = waitMax.doubleValue();
+                                annotation += " new priceWanted=" + printPrice(priceWanted);
+                            }
                         }
                         stopLoss = candle.getHighestPrice().doubleValue() + Math.abs(priceWanted.doubleValue() - limitPrice);
-                    } else if (green < waitMax2.doubleValue() && green > waitMax.doubleValue()) {
-                        var deltaU = waitMax2.doubleValue() - green;
-                        var deltaD = green - waitMax.doubleValue();
+                    } else if (greenCur < waitMax2.doubleValue() && greenCur > waitMax.doubleValue()) {
+                        var deltaU = waitMax2.doubleValue() - greenCur;
+                        var deltaD = greenCur - waitMax.doubleValue();
                         annotation += " deltaU=" + printPrice(deltaU);
                         annotation += " deltaD=" + printPrice(deltaD);
                         if (deltaU < deltaD) {
