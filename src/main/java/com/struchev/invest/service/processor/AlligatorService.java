@@ -222,6 +222,7 @@ public class AlligatorService implements
                 var minIntervalCandle = candleListMin.stream().reduce((first, second) ->
                         first.getLowestPrice().compareTo(second.getLowestPrice()) < 0 ? first : second
                 ).orElse(null);
+                annotation += " minIntervalCandle=" + printDateTime(minIntervalCandle.getDateTime());
                 var minFirstIntervalCandle = candleListMin.stream().filter(v ->
                         v.getLowestPrice().compareTo(lastFMinCandle.getLowestPrice()) < 0
                 ).findFirst().orElse(null);
@@ -612,16 +613,9 @@ public class AlligatorService implements
                             stopLoss = candle.getHighestPrice().doubleValue() + Math.abs(priceWanted.doubleValue() - limitPrice);
                         }
                     }
-                    if (null != priceWanted && candleOrig.getHighestPrice().compareTo(priceWanted) > 0) {
-                        annotation += " BUY REV OK by priceWanted";
+                    if (null != priceWanted && candleOrig.getHighestPrice().compareTo(priceWanted) >= 0) {
+                        annotation += " BUY REV OK by priceWanted=" + printPrice(priceWanted);
                         resBuy = true;
-
-                        var realLimitPercent = priceWanted.subtract(BigDecimal.valueOf(limitPrice)).abs().doubleValue() * strategy.getReverseStopLossK() * 100. / priceWanted.abs().doubleValue();
-                        annotation += " realLimitPercent=" + printPrice(realLimitPercent);
-                        if (realLimitPercent < strategy.getBuyMinProfitPercent()) {
-                            annotation += " SKIP by MinProfitPercent=" + strategy.getBuyMinProfitPercent();
-                            resBuy = false;
-                        }
 
                         var percentDown = Math.abs((waitMax.doubleValue() - waitMaxBuy.doubleValue()) / waitMax.doubleValue()) * 100.;
                         annotation += " percentDown=" + printPrice(percentDown);
@@ -630,15 +624,61 @@ public class AlligatorService implements
                             resBuy = false;
                         }
 
+                        if (
+                                minIntervalCandle != null
+                                && !minIntervalCandle.getDateTime().equals(lastFMinCandle.getDateTime())
+                        ) {
+                            var blueMin = blue;
+                            var redMin = red;
+                            var greenMin = green;
+                            if (!minIntervalCandle.getDateTime().equals(lastFMinCandle.getDateTime())) {
+                                blueMin = getAlligatorBlue(candle.getFigi(), minIntervalCandle.getDateTime(), strategy);
+                                redMin = getAlligatorRed(candle.getFigi(), minIntervalCandle.getDateTime(), strategy);
+                                greenMin = getAlligatorGreen(candle.getFigi(), minIntervalCandle.getDateTime(), strategy);
+                            }
+                            var deltaMax = lastFMinCandle.getLowestPrice().doubleValue() - minIntervalCandle.getLowestPrice().doubleValue();
+                            annotation += " deltaMax=" + printPrice(deltaMax);
+                            var minMix = Math.min(blueMin, Math.min(redMin, greenMin));
+                            var deltaMin = minMix - minIntervalCandle.getLowestPrice().doubleValue();
+                            annotation += " deltaMin=" + printPrice(deltaMin);
+                            var maxWantedPrice = waitMax.doubleValue() + deltaMin + deltaMax;
+                            annotation += " maxWantedPrice=" + printPrice(maxWantedPrice);
+                            if (maxWantedPrice > priceWanted.doubleValue()) {
+                                priceWanted = BigDecimal.valueOf(maxWantedPrice);
+                                var maxMix = Math.max(blueMin, Math.max(redMin, greenMin));
+                                var newLimitPrice = waitMax.doubleValue() + (maxMix - minMix) + deltaMax;
+                                annotation += " newLimitPrice=" + printPrice(newLimitPrice);
+                                if (limitPrice < newLimitPrice) {
+                                    limitPrice = newLimitPrice;
+                                    annotation += " new limitPrice=" + printPrice(limitPrice);
+                                }
+                                if (candleOrig.getHighestPrice().compareTo(priceWanted) < 0) {
+                                    annotation += " SKIP by maxWantedPrice=" + printPrice(maxWantedPrice);
+                                    resBuy = false;
+                                }
+                            }
+                        }
+
+                        if (null != priceWanted && priceWanted.compareTo(candleOrig.getLowestPrice()) < 0) {
+                            priceWanted = candleOrig.getLowestPrice();
+                            annotation += " new by Orig priceWanted=" + printPrice(priceWanted);
+                            if (waitMax.doubleValue() > limitPrice) {
+                                limitPrice = waitMax.doubleValue();
+                                annotation += " new limitPrice=" + printPrice(limitPrice);
+                            }
+                        }
+
+                        var realLimitPercent = priceWanted.subtract(BigDecimal.valueOf(limitPrice)).abs().doubleValue() * strategy.getReverseStopLossK() * 100. / priceWanted.abs().doubleValue();
+                        annotation += " realLimitPercent=" + printPrice(realLimitPercent);
+                        if (realLimitPercent < strategy.getBuyMinProfitPercent()) {
+                            annotation += " SKIP by MinProfitPercent=" + strategy.getBuyMinProfitPercent();
+                            resBuy = false;
+                        }
+
                         //if (resBuy && candleListMin.size() < stepAvLength) {
                         //    annotation += " SKIP by stepAvLength=" + stepAvLength;
                         //    resBuy = false;
                         //}
-
-                        if (null != priceWanted && priceWanted.compareTo(candleOrig.getLowestPrice()) < 0) {
-                            priceWanted = candleOrig.getLowestPrice();
-                            annotation += " new priceWanted=" + printPrice(priceWanted);
-                        }
 
                         if (resBuy) {
                             setOrderBooleanData(strategy, candle, "isReverse", true);
