@@ -11,5 +11,4 @@ public class AlligatorStrategy5MinRevAvR extends AlligatorStrategy5MinRevAv {
 
     public boolean isStopLossForce() { return false; }
     public Integer getLimitPriceDownStepLength() { return 0; }
-    public boolean isEnabled() { return true; }
 }
