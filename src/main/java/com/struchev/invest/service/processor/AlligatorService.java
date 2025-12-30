@@ -623,6 +623,13 @@ public class AlligatorService implements
                             resBuy = false;
                         }
 
+                        var percentDown = Math.abs((waitMax.doubleValue() - waitMaxBuy.doubleValue()) / waitMax.doubleValue()) * 100.;
+                        annotation += " percentDown=" + printPrice(percentDown);
+                        if (percentDown < strategy.getBuyMinProfitPercent()) {
+                            annotation += " SKIP by MinProfitPercent=" + strategy.getBuyMinProfitPercent();
+                            resBuy = false;
+                        }
+
                         //if (resBuy && candleListMin.size() < stepAvLength) {
                         //    annotation += " SKIP by stepAvLength=" + stepAvLength;
                         //    resBuy = false;
