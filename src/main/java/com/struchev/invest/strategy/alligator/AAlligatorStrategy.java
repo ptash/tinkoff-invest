@@ -137,7 +137,7 @@ public abstract class AAlligatorStrategy extends AStrategy implements Cloneable,
     public boolean isCandleOrigInMinCandleList() { return false; }
     public Integer getTrendUpLength() { return 1; }
     public boolean isStopLossForce() { return false; }
-    public boolean isStopLossWeak() { return false; }
+    public boolean isStopLossByLimit() { return false; }
     public boolean isStopLossForcePrev() { return false; }
     public boolean isStopLossSkipByBuy() { return true; }
     public Double getBuyWaitMaxFromGreenDeltaK() {return 0.4; }

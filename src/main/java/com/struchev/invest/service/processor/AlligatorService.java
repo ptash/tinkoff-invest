@@ -1410,6 +1410,13 @@ public class AlligatorService implements
             }
         }
 
+        if (null != stopLoss && strategy.isStopLossByLimit() && candle.getLowestPrice().doubleValue() < stopLoss)
+        {
+            annotation += " stop lost limit OK";
+            limitPrice = stopLoss;
+            limitPercent = BigDecimal.valueOf((limitPrice - purchaseRate.doubleValue()) * 100. / purchaseRate.abs().doubleValue());
+        }
+
         if (
                 true
             //&& newLimitPercent > strategy.getSellLimitCriteriaOrig().getExitProfitPercent()
@@ -1432,10 +1439,14 @@ public class AlligatorService implements
             annotation += " newStopLoss=lastBySell=" + printPrice(stopLoss);
         }
         if (null != stopLoss) {
-            if (strategy.isStopLossWeak() && candle.getLowestPrice().doubleValue() < stopLoss) {
-                annotation += " stop lost week OK";
-                res = true;
-                isStopLoss = true;
+            if (strategy.isStopLossByLimit()) {
+                var maxStopLoss = purchaseRate.doubleValue() - 2 * Math.abs(purchaseRate.doubleValue() - stopLoss);
+                annotation += " maxStopLoss=" + printPrice(maxStopLoss);
+                if (candle.getLowestPrice().doubleValue() < maxStopLoss) {
+                    annotation += " stop lost by 2 limit OK";
+                    res = true;
+                    isStopLoss = true;
+                }
             } else if (!isStopLossForce && candle.getClosingPrice().doubleValue() < stopLoss) {
                 annotation += " stop lost OK";
                 res = true;
