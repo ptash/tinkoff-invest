@@ -5,6 +5,6 @@ import org.springframework.stereotype.Component;
 @Component
 public class AlligatorStrategy5MinRevAvRR extends AlligatorStrategy5MinRevAvR {
 
-    public boolean isRevMaxRevRev() { return true; }
+    public boolean isRev() { return false; }
     public boolean isEnabled() { return true; }
 }
