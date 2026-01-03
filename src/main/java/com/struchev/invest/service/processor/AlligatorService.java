@@ -1449,7 +1449,7 @@ public class AlligatorService implements
 
         if (null != stopLoss && strategy.isStopLossByLimit())
         {
-            var curMinCandleList = candleHistoryService.getCandlesByFigiBetweenDateTimes(candle.getFigi(), order.getPurchaseDateTime(), candlePrev.getDateTime(), strategy.getInterval());
+            var curMinCandleList = candleHistoryService.getCandlesByFigiBetweenDateTimes(candle.getFigi(), order.getPurchaseDateTime(), candle.getDateTime(), strategy.getInterval());
             var minCurCandle = curMinCandleList.stream().reduce((first, second) ->
                     first.getLowestPrice().compareTo(second.getLowestPrice()) < 0 ? first : second
             ).orElse(null);
@@ -1457,6 +1457,11 @@ public class AlligatorService implements
                 annotation += " stop lost limit OK " + printPrice(stopLoss);
                 limitPrice = stopLoss;
                 limitPercent = BigDecimal.valueOf((limitPrice - purchaseRate.doubleValue()) * 100. / purchaseRate.abs().doubleValue());
+                if (minCurCandle.getDateTime().compareTo(candle.getDateTime()) < 0) {
+                    // если не удалось сразу продать по лимитной, продает потом сразу по какой придется...
+                    annotation += " stop lost prev limit OK";
+                    res = true;
+                }
             }
             var nextStopLoss = stopLoss;
             var minCurCandleByHighest = curMinCandleList.stream().reduce((first, second) ->
