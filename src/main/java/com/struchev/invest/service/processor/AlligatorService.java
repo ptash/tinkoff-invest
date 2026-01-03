@@ -586,7 +586,7 @@ public class AlligatorService implements
                     var greenCur = Math.max(Math.max(green, blue), red);
                     if (greenCur > waitMax2.doubleValue()) {
                         priceWanted = BigDecimal.valueOf(greenCur + (waitMax2.doubleValue() - waitMaxBuy.doubleValue()));
-                        limitPrice = greenCur;
+                        stopLoss = greenCur;
                         var maxIntervalCandle = candleListMin.stream().reduce((first, second) ->
                                 first.getHighestPrice().compareTo(second.getHighestPrice()) > 0 ? first : second
                         ).orElse(null);
@@ -597,11 +597,11 @@ public class AlligatorService implements
                             annotation += " new priceWantedNew=" + printPrice(priceWantedNew);
                             if (priceWantedNew.doubleValue() > greenCur) {
                                 priceWanted = priceWantedNew;
-                                limitPrice = waitMax.doubleValue();
+                                stopLoss = waitMax.doubleValue();
                                 annotation += " new priceWanted=" + printPrice(priceWanted);
                             }
                         }
-                        stopLoss = candle.getHighestPrice().doubleValue() + Math.abs(priceWanted.doubleValue() - limitPrice);
+                        limitPrice = candle.getHighestPrice().doubleValue() + Math.abs(priceWanted.doubleValue() - stopLoss);
                     } else if (greenCur < waitMax2.doubleValue() && greenCur > waitMax.doubleValue()) {
                         var deltaU = waitMax2.doubleValue() - greenCur;
                         var deltaD = greenCur - waitMax.doubleValue();
@@ -609,8 +609,8 @@ public class AlligatorService implements
                         annotation += " deltaD=" + printPrice(deltaD);
                         if (deltaU < deltaD && (deltaD / deltaU) < 3) {
                             priceWanted = BigDecimal.valueOf(waitMax2.doubleValue());
-                            limitPrice = waitMaxBuy.doubleValue();
-                            stopLoss = candle.getHighestPrice().doubleValue() + Math.abs(priceWanted.doubleValue() - limitPrice);
+                            stopLoss = waitMaxBuy.doubleValue();
+                            limitPrice = candle.getHighestPrice().doubleValue() + Math.abs(priceWanted.doubleValue() - stopLoss);
                         }
                     }
                     if (null != priceWanted && candleOrig.getHighestPrice().compareTo(priceWanted) >= 0) {
@@ -646,11 +646,11 @@ public class AlligatorService implements
                             if (maxWantedPrice > priceWanted.doubleValue()) {
                                 priceWanted = BigDecimal.valueOf(maxWantedPrice);
                                 var maxMix = Math.max(blueMin, Math.max(redMin, greenMin));
-                                var newLimitPrice = waitMax.doubleValue() + (maxMix - minMix) + deltaMax;
-                                annotation += " newLimitPrice=" + printPrice(newLimitPrice);
-                                if (limitPrice < newLimitPrice) {
-                                    limitPrice = newLimitPrice;
-                                    annotation += " new limitPrice=" + printPrice(limitPrice);
+                                var newStopLoss = waitMax.doubleValue() + (maxMix - minMix) + deltaMax;
+                                annotation += " newStopLoss=" + printPrice(newStopLoss);
+                                if (stopLoss < newStopLoss) {
+                                    stopLoss = newStopLoss;
+                                    annotation += " new stopLoss=" + printPrice(stopLoss);
                                 }
                                 if (candleOrig.getHighestPrice().compareTo(priceWanted) < 0) {
                                     annotation += " SKIP by maxWantedPrice=" + printPrice(maxWantedPrice);
@@ -662,15 +662,17 @@ public class AlligatorService implements
                         if (null != priceWanted && priceWanted.compareTo(candleOrig.getLowestPrice()) < 0) {
                             priceWanted = candleOrig.getLowestPrice();
                             annotation += " new by Orig priceWanted=" + printPrice(priceWanted);
-                            if (waitMax.doubleValue() > limitPrice) {
-                                limitPrice = waitMax.doubleValue();
-                                annotation += " new limitPrice=" + printPrice(limitPrice);
+                            if (waitMax.doubleValue() > stopLoss) {
+                                stopLoss = waitMax.doubleValue();
+                                annotation += " new stopLoss=" + printPrice(stopLoss);
                             }
                         }
 
                         var realLimitPercent = priceWanted.subtract(BigDecimal.valueOf(limitPrice)).abs().doubleValue() * strategy.getReverseStopLossK() * 100. / priceWanted.abs().doubleValue();
+                        var stopLossPercent = priceWanted.subtract(BigDecimal.valueOf(stopLoss)).abs().doubleValue() * strategy.getReverseStopLossK() * 100. / priceWanted.abs().doubleValue();
                         annotation += " realLimitPercent=" + printPrice(realLimitPercent);
-                        if (realLimitPercent < strategy.getBuyMinProfitPercent()) {
+                        annotation += " stopLossPercent=" + printPrice(stopLossPercent);
+                        if (stopLossPercent < strategy.getBuyMinProfitPercent()) {
                             annotation += " SKIP by MinProfitPercent=" + strategy.getBuyMinProfitPercent();
                             resBuy = false;
                         }
@@ -681,10 +683,12 @@ public class AlligatorService implements
                         //}
 
                         if (resBuy) {
-                            setOrderBooleanData(strategy, candle, "isReverse", true);
-                            setOrderBigDecimalData(strategy, candle, "limitPrice", BigDecimal.valueOf(limitPrice));
-                            setOrderBigDecimalData(strategy, candle, "limitPercent", BigDecimal.valueOf(realLimitPercent));
+                            if (!strategy.isRevMaxRevRev()) {
+                                setOrderBooleanData(strategy, candle, "isReverse", true);
+                            }
                             setOrderBigDecimalData(strategy, candle, "stopLoss", BigDecimal.valueOf(stopLoss));
+                            setOrderBigDecimalData(strategy, candle, "limitPercent", BigDecimal.valueOf(realLimitPercent));
+                            setOrderBigDecimalData(strategy, candle, "limitPrice", BigDecimal.valueOf(limitPrice));
                             setOrderBigDecimalData(strategy, candle, "priceWanted", priceWanted);
                             if (strategy.getLimitPriceDownStepLength() > 0) {
                                 var downDelta = Math.abs(limitPrice - priceWanted.doubleValue()) * strategy.getLimitPriceDownProfitK();
@@ -693,7 +697,7 @@ public class AlligatorService implements
                                     stepLength = stepMaxLength - 1;
                                 }
                                 setOrderBigDecimalData(strategy, candle, "LimitPriceStepLength", BigDecimal.valueOf(stepLength));
-                                setOrderBigDecimalData(strategy, candle, "LimitPriceDownDelta", BigDecimal.valueOf(-downDelta));
+                                setOrderBigDecimalData(strategy, candle, "LimitPriceDownDelta", BigDecimal.valueOf(downDelta));
                             }
                         }
                     }
@@ -1277,7 +1281,7 @@ public class AlligatorService implements
         limitPrice = (double) (purchaseRate.floatValue() + Math.abs(purchaseRate.floatValue() * newLimitPercent / 100.f));
         var downStepLength = order.getDetails().getCurrentPrices().getOrDefault("LimitPriceStepLength", BigDecimal.ZERO).intValue();
         if (downStepLength > 0) {
-            var downDelta = order.getDetails().getCurrentPrices().getOrDefault("LimitPriceDownDelta", BigDecimal.ZERO).doubleValue();
+            var downDelta = order.getDetails().getCurrentPrices().getOrDefault("LimitPriceDownDelta", BigDecimal.ZERO).abs().doubleValue();
             var candleList = candleHistoryService.getCandlesByFigiBetweenDateTimes(candle.getFigi(), order.getPurchaseDateTime(), candle.getDateTime(), strategy.getInterval());
             if (candleList != null) {
                 var intervalNum = candleList.size() / downStepLength;

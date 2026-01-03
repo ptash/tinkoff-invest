@@ -377,11 +377,17 @@ public class PurchaseService {
                     map.put(key, candleHistoryReverseForShortService.preparePrice(value));
                 }
             });
+
             if (null != orderDetails.getPriceWanted()) {
                 orderDetails.setPriceWanted(candleHistoryReverseForShortService.preparePrice(orderDetails.getPriceWanted()));
-            }
-            if (null != orderDetails.getLimitPercent()) {
-                orderDetails.setLimitPercent(candleHistoryReverseForShortService.preparePrice(orderDetails.getLimitPercent()));
+                if (null != orderDetails.getLimitPercent()) {
+                    var priceWanted = orderDetails.getPriceWanted();
+                    var limitPrice = orderDetails.getCurrentPrices().get("stopLoss");
+                    var limitPercent = BigDecimal.valueOf(priceWanted.subtract(limitPrice).abs().doubleValue()  * 100. / priceWanted.abs().doubleValue());
+                    orderDetails.setLimitPercent(limitPercent);
+                    orderDetails.getCurrentPrices().put("stopLoss", orderDetails.getCurrentPrices().get("limitPrice"));
+                    orderDetails.getCurrentPrices().put("limitPrice", limitPrice);
+                }
             }
             //log.info("orderDetails = {}", orderDetails);
         }
