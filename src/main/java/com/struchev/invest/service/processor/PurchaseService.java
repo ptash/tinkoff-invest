@@ -387,6 +387,7 @@ public class PurchaseService {
                     orderDetails.setLimitPercent(limitPercent);
                     orderDetails.getCurrentPrices().put("stopLoss", orderDetails.getCurrentPrices().get("limitPrice"));
                     orderDetails.getCurrentPrices().put("limitPrice", limitPrice);
+                    orderDetails.getCurrentPrices().put("limitPercent", limitPercent);
                 }
             }
             //log.info("orderDetails = {}", orderDetails);

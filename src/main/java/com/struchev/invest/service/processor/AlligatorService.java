@@ -677,6 +677,16 @@ public class AlligatorService implements
                             resBuy = false;
                         }
 
+                        if (limitPrice <= priceWanted.doubleValue()) {
+                            annotation += " SKIP by limitPrice=" + printPrice(limitPrice);
+                            resBuy = false;
+                        }
+
+                        if (stopLoss >= priceWanted.doubleValue()) {
+                            annotation += " SKIP by stopLoss=" + printPrice(stopLoss);
+                            resBuy = false;
+                        }
+
                         //if (resBuy && candleListMin.size() < stepAvLength) {
                         //    annotation += " SKIP by stepAvLength=" + stepAvLength;
                         //    resBuy = false;
@@ -1422,7 +1432,11 @@ public class AlligatorService implements
             annotation += " newStopLoss=lastBySell=" + printPrice(stopLoss);
         }
         if (null != stopLoss) {
-            if (!isStopLossForce && candle.getClosingPrice().doubleValue() < stopLoss) {
+            if (strategy.isStopLossWeak() && candle.getLowestPrice().doubleValue() < stopLoss) {
+                annotation += " stop lost week OK";
+                res = true;
+                isStopLoss = true;
+            } else if (!isStopLossForce && candle.getClosingPrice().doubleValue() < stopLoss) {
                 annotation += " stop lost OK";
                 res = true;
                 isStopLoss = true;
