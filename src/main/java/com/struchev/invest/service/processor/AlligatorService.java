@@ -1358,6 +1358,39 @@ public class AlligatorService implements
                 annotation += " limitPrice=" + printPrice(limitPrice);
             }
         }
+        if (strategy.getLimitPriceMaxK() > 0) {
+            var limitPercentInit = order.getDetails().getCurrentPrices().getOrDefault("limitPercentInit", null);
+            if (limitPercentInit == null) {
+                limitPercent = BigDecimal.valueOf(strategy.getLimitPriceMaxK() * limitPercent.doubleValue());
+                newLimitPercent = limitPercent.floatValue();
+                limitPrice = (double) (purchaseRate.floatValue() + Math.abs(purchaseRate.floatValue() * newLimitPercent / 100.f));
+                annotation += " INIT limitPercent=" + printPrice(limitPercent);
+                limitPercentInit = limitPercent;
+                order.getDetails().getCurrentPrices().put("limitPercentInit", limitPercentInit);
+            }
+            var curMinCandleList = candleHistoryService.getCandlesByFigiBetweenDateTimes(candle.getFigi(), order.getPurchaseDateTime(), candlePrev.getDateTime(), strategy.getInterval());
+            var maxCurCandle = curMinCandleList.stream().reduce((first, second) ->
+                    first.getHighestPrice().compareTo(second.getHighestPrice()) > 0 ? first : second
+            ).orElse(null);
+            for (var i = (strategy.getLimitPriceMaxK() - 1); i > 0; i--) {
+                var newLimitPercentI = limitPercentInit.doubleValue() * i / strategy.getLimitPriceMaxK();
+                var limitPriceI = (purchaseRate.doubleValue() + Math.abs(purchaseRate.doubleValue() * newLimitPercentI / 100.f));
+                annotation += "limitPriceI = " + printPrice(limitPriceI);
+                if (limitPriceI < maxCurCandle.getHighestPrice().doubleValue()) {
+                    // смотрим есть еще такая свеча
+                    var minCurCandle = curMinCandleList.stream().filter(c -> c.getDateTime().compareTo(maxCurCandle.getDateTime()) > 0).reduce((first, second) ->
+                            first.getLowestPrice().compareTo(second.getLowestPrice()) < 0 ? first : second
+                    ).orElse(null);
+                    annotation += "MaxK = " + i;
+                    if (null != minCurCandle && minCurCandle.getLowestPrice().doubleValue() < limitPriceI) {
+                        limitPrice = limitPriceI;
+                        limitPercent = BigDecimal.valueOf((limitPrice - purchaseRate.doubleValue()) * 100. / purchaseRate.abs().doubleValue());
+                        newLimitPercent = limitPercent.floatValue();
+                        annotation += "new limitPrice by MaxK = " + printPrice(limitPriceI);
+                    }
+                }
+            }
+        }
 
         //Float newLimitPercent = (float) ((100.f * (limitPrice.floatValue() - purchaseRate.floatValue()) / Math.abs(purchaseRate.floatValue())));
         //Float newLimitPercentAverage = (float) (newLimitPercent / average);
@@ -1425,6 +1458,21 @@ public class AlligatorService implements
                 limitPrice = stopLoss;
                 limitPercent = BigDecimal.valueOf((limitPrice - purchaseRate.doubleValue()) * 100. / purchaseRate.abs().doubleValue());
             }
+            var nextStopLoss = stopLoss;
+            var minCurCandleByHighest = curMinCandleList.stream().reduce((first, second) ->
+                    first.getHighestPrice().compareTo(second.getHighestPrice()) < 0 ? first : second
+            ).orElse(null);
+            for (var i = 1; i < (strategy.getStopLossByLimitMaxK() - 1); i++) {
+                nextStopLoss -= Math.abs(purchaseRate.doubleValue() - stopLoss);
+                annotation += " nextStopLoss=" + printPrice(nextStopLoss);
+                if (minCurCandleByHighest.getHighestPrice().doubleValue() < nextStopLoss) {
+                    annotation += " stop lost next limit OK " + printPrice(stopLoss);
+                    limitPrice = nextStopLoss;
+                    limitPercent = BigDecimal.valueOf((limitPrice - purchaseRate.doubleValue()) * 100. / purchaseRate.abs().doubleValue());
+                } else {
+                    break;
+                }
+            }
         }
 
         if (
@@ -1450,10 +1498,10 @@ public class AlligatorService implements
         }
         if (null != stopLoss) {
             if (strategy.isStopLossByLimit()) {
-                var maxStopLoss = purchaseRate.doubleValue() - 4 * Math.abs(purchaseRate.doubleValue() - stopLoss);
+                var maxStopLoss = purchaseRate.doubleValue() - strategy.getStopLossByLimitMaxK() * Math.abs(purchaseRate.doubleValue() - stopLoss);
                 annotation += " maxStopLoss=" + printPrice(maxStopLoss);
                 if (candle.getLowestPrice().doubleValue() < maxStopLoss) {
-                    annotation += " stop lost by 2 limit OK";
+                    annotation += " stop lost by MaxK limit OK";
                     res = true;
                     isStopLoss = true;
                 }
