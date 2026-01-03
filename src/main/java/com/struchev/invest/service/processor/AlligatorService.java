@@ -1375,18 +1375,27 @@ public class AlligatorService implements
             for (var i = (strategy.getLimitPriceMaxK() - 1); i > 0; i--) {
                 var newLimitPercentI = limitPercentInit.doubleValue() * i / strategy.getLimitPriceMaxK();
                 var limitPriceI = (purchaseRate.doubleValue() + Math.abs(purchaseRate.doubleValue() * newLimitPercentI / 100.f));
-                annotation += "limitPriceI = " + printPrice(limitPriceI);
+                annotation += " limitPriceI = " + printPrice(limitPriceI);
                 if (limitPriceI < maxCurCandle.getHighestPrice().doubleValue()) {
+                    annotation += " MaxK = " + i;
+                    // находим первую
+                    var firstMaxCandle = curMinCandleList.stream().filter(c -> c.getHighestPrice().doubleValue() > limitPriceI).findFirst().orElse(null);
+                    annotation += " firstMaxCandle = " + printDateTime(firstMaxCandle.getDateTime());
                     // смотрим есть еще такая свеча
-                    var minCurCandle = curMinCandleList.stream().filter(c -> c.getDateTime().compareTo(maxCurCandle.getDateTime()) > 0).reduce((first, second) ->
+                    //var minCurCandleAfterFirstMax = curMinCandleList.stream().filter(c -> c.getDateTime().compareTo(firstMaxCandle.getDateTime()) > 0).reduce((first, second) ->
+                    //        first.getLowestPrice().compareTo(second.getLowestPrice()) < 0 ? first : second
+                    //).orElse(null);
+                    var minCurCandleAfterFirstMax = curMinCandleList.stream().filter(c -> c.getDateTime().compareTo(maxCurCandle.getDateTime()) > 0).reduce((first, second) ->
                             first.getLowestPrice().compareTo(second.getLowestPrice()) < 0 ? first : second
                     ).orElse(null);
-                    annotation += "MaxK = " + i;
-                    if (null != minCurCandle && minCurCandle.getLowestPrice().doubleValue() < limitPriceI) {
-                        limitPrice = limitPriceI;
-                        limitPercent = BigDecimal.valueOf((limitPrice - purchaseRate.doubleValue()) * 100. / purchaseRate.abs().doubleValue());
-                        newLimitPercent = limitPercent.floatValue();
-                        annotation += "new limitPrice by MaxK = " + printPrice(limitPriceI);
+                    if (null != minCurCandleAfterFirstMax) {
+                        annotation += " minCurCandleAfterFirstMax = " + printDateTime(minCurCandleAfterFirstMax.getDateTime());
+                        if (minCurCandleAfterFirstMax.getLowestPrice().doubleValue() < limitPriceI) {
+                            limitPrice = limitPriceI;
+                            limitPercent = BigDecimal.valueOf((limitPrice - purchaseRate.doubleValue()) * 100. / purchaseRate.abs().doubleValue());
+                            newLimitPercent = limitPercent.floatValue();
+                            annotation += "new limitPrice by MaxK = " + printPrice(limitPriceI);
+                        }
                     }
                 }
             }
