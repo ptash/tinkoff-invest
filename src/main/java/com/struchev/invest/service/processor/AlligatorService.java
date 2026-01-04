@@ -481,6 +481,14 @@ public class AlligatorService implements
                     annotation += " realLimitPercent=" + printPrice(realLimitPercent);
                     annotation += " realLimitPrice=" + printPrice(realLimitPrice);
                     annotation += " stopLoss=" + printPrice(stopLoss);
+                    var realStopLossPercent = 100. * (priceWanted.doubleValue() - stopLoss) / priceWanted.abs().doubleValue();
+                    annotation += " realStopLossPercent=" + printPrice(realStopLossPercent);
+                    if (strategy.getBuyMinStopLossPercent() != null && realStopLossPercent < strategy.getBuyMinStopLossPercent()) {
+                        stopLoss = priceWanted.doubleValue() - strategy.getBuyMinStopLossPercent() / 100. * priceWanted.abs().doubleValue();
+                        annotation += " new by minPercent stopLoss=" + printPrice(stopLoss);
+                        //annotation += " SKIP StopLossPercent=" + strategy.getBuyMinStopLossPercent();
+                        //resBuy = false;
+                    }
                     if (!isIgnoreSkip && realLimitPercent < strategy.getBuyMinProfitPercent()) {
                         if (strategy.isDownPriceWantedToMinProfitPercent()) {
                             var isDown = true;
@@ -1086,6 +1094,25 @@ public class AlligatorService implements
             strategy.setSellLimitCriteria(candle.getFigi(), sellLimitCriteria);
         }
 
+        if (
+                resBuy
+                && strategy.getBuySkipDownLength() > 0
+        ) {
+            var candleList = getCandlesByFigiByLength(candle.getFigi(), candleOrig.getDateTime(), strategy.getBuySkipDownLength(), strategy.getInterval());
+            annotation += " check BuySkipDown from " + printDateTime(candleList.get(0).getDateTime()) + " to " + printDateTime(candleList.get(candleList.size() - 1).getDateTime());
+            var isOneUp = false;
+            for (var i = 0; i < (candleList.size() - 1); i++) {
+                if (candleList.get(i).getLowestPrice().compareTo(candleList.get(i + 1).getLowestPrice()) < 0) {
+                    isOneUp = true;
+                    break;
+                }
+            }
+            if (!isOneUp) {
+                resBuy = false;
+                annotation += " SKIP by BuySkipDownLength=" + strategy.getBuySkipDownLength();
+            }
+        }
+
         log.trace("isShouldBuy {} {} after setSellLimitCriteria", candle.getFigi(), candle.getDateTime());
 
         if (isReport) {
@@ -1293,6 +1320,51 @@ public class AlligatorService implements
         annotation += " limitPercent" + limitPercent;
         Float newLimitPercent = limitPercent.floatValue();
         limitPrice = (double) (purchaseRate.floatValue() + Math.abs(purchaseRate.floatValue() * newLimitPercent / 100.f));
+
+        if (strategy.getLimitPriceMaxK() > 0) {
+            var limitPercentInit = order.getDetails().getCurrentPrices().getOrDefault("limitPercentInit", null);
+            if (limitPercentInit == null) {
+                limitPercent = BigDecimal.valueOf(strategy.getLimitPriceMaxK() * limitPercent.doubleValue());
+                newLimitPercent = limitPercent.floatValue();
+                limitPrice = (double) (purchaseRate.floatValue() + Math.abs(purchaseRate.floatValue() * newLimitPercent / 100.f));
+                annotation += " INIT limitPercent=" + printPrice(limitPercent);
+                limitPercentInit = limitPercent;
+                order.getDetails().getCurrentPrices().put("limitPercentInit", limitPercentInit);
+            }
+            var curMinCandleList = candleHistoryService.getCandlesByFigiBetweenDateTimes(candle.getFigi(), order.getPurchaseDateTime(), candlePrev.getDateTime(), strategy.getInterval());
+            var maxCurCandle = curMinCandleList.stream().reduce((first, second) ->
+                    first.getHighestPrice().compareTo(second.getHighestPrice()) > 0 ? first : second
+            ).orElse(null);
+            for (var i = (strategy.getLimitPriceMaxK() - 1); i > 0; i--) {
+                var newLimitPercentI = limitPercentInit.doubleValue() * i / strategy.getLimitPriceMaxK();
+                var limitPriceI = (purchaseRate.doubleValue() + Math.abs(purchaseRate.doubleValue() * newLimitPercentI / 100.f));
+                annotation += " limitPriceI = " + printPrice(limitPriceI);
+                if (limitPriceI < maxCurCandle.getHighestPrice().doubleValue()) {
+                    annotation += " MaxK = " + i;
+                    // находим первую
+                    var firstMaxCandle = curMinCandleList.stream().filter(c -> c.getHighestPrice().doubleValue() > limitPriceI).findFirst().orElse(null);
+                    annotation += " firstMaxCandle = " + printDateTime(firstMaxCandle.getDateTime());
+                    // смотрим есть еще такая свеча
+                    //var minCurCandleAfterFirstMax = curMinCandleList.stream().filter(c -> c.getDateTime().compareTo(firstMaxCandle.getDateTime()) > 0).reduce((first, second) ->
+                    //        first.getLowestPrice().compareTo(second.getLowestPrice()) < 0 ? first : second
+                    //).orElse(null);
+                    var minCurCandleAfterFirstMax = curMinCandleList.stream().filter(c -> c.getDateTime().compareTo(maxCurCandle.getDateTime()) > 0).reduce((first, second) ->
+                            first.getLowestPrice().compareTo(second.getLowestPrice()) < 0 ? first : second
+                    ).orElse(null);
+                    if (null != minCurCandleAfterFirstMax) {
+                        annotation += " minCurCandleAfterFirstMax = " + printDateTime(minCurCandleAfterFirstMax.getDateTime());
+                        if (minCurCandleAfterFirstMax.getLowestPrice().doubleValue() < limitPriceI) {
+                            limitPrice = limitPriceI;
+                            limitPercent = BigDecimal.valueOf((limitPrice - purchaseRate.doubleValue()) * 100. / purchaseRate.abs().doubleValue());
+                            newLimitPercent = limitPercent.floatValue();
+                            annotation += "new limitPrice by MaxK = " + printPrice(limitPriceI);
+                            order.getDetails().getCurrentPrices().put("limitPercentDownInit", limitPercent);
+                        }
+                    }
+                }
+            }
+        }
+
         var downStepLength = order.getDetails().getCurrentPrices().getOrDefault("LimitPriceStepLength", BigDecimal.ZERO).intValue();
         if (downStepLength > 0) {
             var downDelta = order.getDetails().getCurrentPrices().getOrDefault("LimitPriceDownDelta", BigDecimal.ZERO).abs().doubleValue();
@@ -1300,8 +1372,8 @@ public class AlligatorService implements
             if (candleList != null) {
                 var intervalNum = candleList.size() / downStepLength;
                 if (intervalNum > 0) {
-                    var limitPercentInit = order.getDetails().getCurrentPrices().getOrDefault("limitPercentInit", limitPercent);
-                    annotation += " limitPercentInit=" + printPrice(limitPercentInit);
+                    var limitPercentInit = order.getDetails().getCurrentPrices().getOrDefault("limitPercentDownInit", limitPercent);
+                    annotation += " limitPercentDownInit=" + printPrice(limitPercentInit);
                     var limitPriceInit = (double) (purchaseRate.floatValue() + Math.abs(purchaseRate.doubleValue() * limitPercentInit.doubleValue() / 100.));
                     var limitPriceOld = limitPrice;
                     limitPrice = limitPriceInit - intervalNum * downDelta;
@@ -1346,7 +1418,7 @@ public class AlligatorService implements
                         limitPercent = BigDecimal.valueOf((limitPrice - purchaseRate.doubleValue()) * 100. / purchaseRate.abs().doubleValue());
                         newLimitPercent = limitPercent.floatValue();
 
-                        order.getDetails().getCurrentPrices().put("limitPercentInit", limitPercentInit);
+                        order.getDetails().getCurrentPrices().put("limitPercentDownInit", limitPercentInit);
                     } else {
                         limitPrice = limitPriceOld;
                     }
@@ -1356,48 +1428,6 @@ public class AlligatorService implements
                 annotation += " intervalNum=" + intervalNum;
                 annotation += " limitPercent=" + printPrice(limitPercent);
                 annotation += " limitPrice=" + printPrice(limitPrice);
-            }
-        }
-        if (strategy.getLimitPriceMaxK() > 0) {
-            var limitPercentInit = order.getDetails().getCurrentPrices().getOrDefault("limitPercentInit", null);
-            if (limitPercentInit == null) {
-                limitPercent = BigDecimal.valueOf(strategy.getLimitPriceMaxK() * limitPercent.doubleValue());
-                newLimitPercent = limitPercent.floatValue();
-                limitPrice = (double) (purchaseRate.floatValue() + Math.abs(purchaseRate.floatValue() * newLimitPercent / 100.f));
-                annotation += " INIT limitPercent=" + printPrice(limitPercent);
-                limitPercentInit = limitPercent;
-                order.getDetails().getCurrentPrices().put("limitPercentInit", limitPercentInit);
-            }
-            var curMinCandleList = candleHistoryService.getCandlesByFigiBetweenDateTimes(candle.getFigi(), order.getPurchaseDateTime(), candlePrev.getDateTime(), strategy.getInterval());
-            var maxCurCandle = curMinCandleList.stream().reduce((first, second) ->
-                    first.getHighestPrice().compareTo(second.getHighestPrice()) > 0 ? first : second
-            ).orElse(null);
-            for (var i = (strategy.getLimitPriceMaxK() - 1); i > 0; i--) {
-                var newLimitPercentI = limitPercentInit.doubleValue() * i / strategy.getLimitPriceMaxK();
-                var limitPriceI = (purchaseRate.doubleValue() + Math.abs(purchaseRate.doubleValue() * newLimitPercentI / 100.f));
-                annotation += " limitPriceI = " + printPrice(limitPriceI);
-                if (limitPriceI < maxCurCandle.getHighestPrice().doubleValue()) {
-                    annotation += " MaxK = " + i;
-                    // находим первую
-                    var firstMaxCandle = curMinCandleList.stream().filter(c -> c.getHighestPrice().doubleValue() > limitPriceI).findFirst().orElse(null);
-                    annotation += " firstMaxCandle = " + printDateTime(firstMaxCandle.getDateTime());
-                    // смотрим есть еще такая свеча
-                    //var minCurCandleAfterFirstMax = curMinCandleList.stream().filter(c -> c.getDateTime().compareTo(firstMaxCandle.getDateTime()) > 0).reduce((first, second) ->
-                    //        first.getLowestPrice().compareTo(second.getLowestPrice()) < 0 ? first : second
-                    //).orElse(null);
-                    var minCurCandleAfterFirstMax = curMinCandleList.stream().filter(c -> c.getDateTime().compareTo(maxCurCandle.getDateTime()) > 0).reduce((first, second) ->
-                            first.getLowestPrice().compareTo(second.getLowestPrice()) < 0 ? first : second
-                    ).orElse(null);
-                    if (null != minCurCandleAfterFirstMax) {
-                        annotation += " minCurCandleAfterFirstMax = " + printDateTime(minCurCandleAfterFirstMax.getDateTime());
-                        if (minCurCandleAfterFirstMax.getLowestPrice().doubleValue() < limitPriceI) {
-                            limitPrice = limitPriceI;
-                            limitPercent = BigDecimal.valueOf((limitPrice - purchaseRate.doubleValue()) * 100. / purchaseRate.abs().doubleValue());
-                            newLimitPercent = limitPercent.floatValue();
-                            annotation += "new limitPrice by MaxK = " + printPrice(limitPriceI);
-                        }
-                    }
-                }
             }
         }
 
