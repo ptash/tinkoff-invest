@@ -138,8 +138,10 @@ public abstract class AAlligatorStrategy extends AStrategy implements Cloneable,
     public Integer getTrendUpLength() { return 1; }
     public boolean isStopLossForce() { return false; }
     public boolean isStopLossByLimit() { return false; }
+    public Double getStopLossMaxDownLengthK() { return null; }
     public Integer getStopLossByLimitMaxK() { return 4; }
     public Integer getLimitPriceMaxK() { return 0; }
+    public Double getLimitPriceMaxDownLengthK() { return null; }
 
     public Integer getBuySkipDownLength() { return 0; }
     public boolean isStopLossForcePrev() { return false; }
