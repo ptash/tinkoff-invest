@@ -1335,7 +1335,7 @@ public class AlligatorService implements
             var maxCurCandle = curMinCandleList.stream().reduce((first, second) ->
                     first.getHighestPrice().compareTo(second.getHighestPrice()) > 0 ? first : second
             ).orElse(null);
-            for (var i = (strategy.getLimitPriceMaxK() - 1); i > 0; i--) {
+            for (var i = (strategy.getLimitPriceMaxK() - 1); i > 0 && null != maxCurCandle; i--) {
                 var newLimitPercentI = limitPercentInit.doubleValue() * i / strategy.getLimitPriceMaxK();
                 var limitPriceI = (purchaseRate.doubleValue() + Math.abs(purchaseRate.doubleValue() * newLimitPercentI / 100.f));
                 annotation += " limitPriceI = " + printPrice(limitPriceI);
@@ -1492,11 +1492,43 @@ public class AlligatorService implements
             var minCurCandle = curMinCandleList.stream().reduce((first, second) ->
                     first.getLowestPrice().compareTo(second.getLowestPrice()) < 0 ? first : second
             ).orElse(null);
-            if (minCurCandle.getLowestPrice().doubleValue() < stopLoss) {
+            var isStopLossOk = false;
+            if (null != minCurCandle && minCurCandle.getLowestPrice().doubleValue() < stopLoss) {
+                annotation += " minCurCandle=" + printDateTime(minCurCandle.getDateTime());
+                if (isStopLossForce) {
+                    if (minCurCandle.getHighestPrice().doubleValue() < stopLoss) {
+                        annotation += " stop lost force OK";
+                        if (strategy.isStopLossForcePrev()) {
+                            // находим первую
+                            Double finalStopLoss = stopLoss;
+                            var firstMaxCandle = curMinCandleList.stream().filter(c -> c.getHighestPrice().doubleValue() < finalStopLoss).findFirst().orElse(null);
+                            annotation += " firstMaxCandle = " + printDateTime(firstMaxCandle.getDateTime());
+                            // смотрим есть еще такая свеча
+                            var minCurCandleAfterFirstMin = curMinCandleList.stream().filter(c -> c.getDateTime().compareTo(firstMaxCandle.getDateTime()) > 0).reduce((first, second) ->
+                                    first.getHighestPrice().compareTo(second.getHighestPrice()) < 0 ? first : second
+                            ).orElse(null);
+                            //var minCurCandleAfterFirstMin = curMinCandleList.stream().filter(c -> c.getDateTime().compareTo(minCurCandle.getDateTime()) > 0).reduce((first, second) ->
+                            //        first.getLowestPrice().compareTo(second.getLowestPrice()) < 0 ? first : second
+                            //).orElse(null);
+                            if (null != minCurCandleAfterFirstMin) {
+                                annotation += " minCurCandleAfterFirstMin=" + printDateTime(minCurCandleAfterFirstMin.getDateTime());
+                                if (minCurCandleAfterFirstMin.getHighestPrice().doubleValue() < stopLoss) {
+                                    isStopLossOk = true;
+                                }
+                            }
+                        } else {
+                            isStopLossOk = true;
+                        }
+                    }
+                } else {
+                    isStopLossOk = true;
+                }
+            }
+            if (isStopLossOk) {
                 annotation += " stop lost limit OK " + printPrice(stopLoss);
                 limitPrice = stopLoss;
                 limitPercent = BigDecimal.valueOf((limitPrice - purchaseRate.doubleValue()) * 100. / purchaseRate.abs().doubleValue());
-                if (minCurCandle.getDateTime().compareTo(candle.getDateTime()) < 0) {
+                if (!isStopLossForce && minCurCandle.getDateTime().compareTo(candle.getDateTime()) < 0) {
                     // если не удалось сразу продать по лимитной, продает потом сразу по какой придется...
                     annotation += " stop lost prev limit OK";
                     res = true;
