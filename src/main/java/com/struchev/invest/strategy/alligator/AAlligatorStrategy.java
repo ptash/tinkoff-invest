@@ -28,10 +28,19 @@ public abstract class AAlligatorStrategy extends AStrategy implements Cloneable,
     }
 
     String extName;
+    Boolean isShort = false;
 
     @Override
     public String getExtName() {
         return extName == null ? super.getName() : extName;
+    }
+
+    public void setShort() {
+        isShort = true;
+    }
+
+    public Boolean isShort()  {
+        return isShort;
     }
 
     public void setExtName(String name) {
@@ -128,6 +137,10 @@ public abstract class AAlligatorStrategy extends AStrategy implements Cloneable,
     public Integer isLimitPriceDownMaxStep() { return 0; }
 
     public boolean isReverse() { return false; }
+    public boolean isFractal() { return false; }
+    public Integer getMaxDeepFractal() { return 100; }
+    public Integer getFractalLength() { return 10; }
+    public boolean isAlligator() { return true; }
     public boolean isMaxDeltaByMinMax() { return false; }
     public boolean isMaxDeltaByMinMaxOnly() { return false; }
     public Boolean isWaitMaxBuyByMinMax() {return false; }

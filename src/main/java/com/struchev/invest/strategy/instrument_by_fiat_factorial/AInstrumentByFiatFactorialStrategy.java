@@ -32,6 +32,7 @@ public abstract class AInstrumentByFiatFactorialStrategy extends AStrategy imple
         return extName == null ? super.getName() : extName;
     }
 
+    public void setShort() {}
     public void setExtName(String name) {
         this.extName = name;
     }
