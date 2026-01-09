@@ -203,7 +203,7 @@ public class AlligatorService implements
         Double nextMax = null;
         if (green != null && blue != null && strategy.isFractal()) {
             var fractalMinData = getMinFractalData(candle, strategy);
-            annotation += " MIN " + fractalMinData.getAnnotation();
+            annotation += " MIN ";// + fractalMinData.getAnnotation();
             if (fractalMinData.getPolyline() != null) {
                 annotation += " polylineBegin=" + printDateTime(fractalMinData.getPolyline().get(0).getCandleBegin().getDateTime())
                         + " to " + printDateTime(fractalMinData.getPolyline().get(fractalMinData.getPolyline().size() - 1).getCandleEnd().getDateTime());
@@ -219,7 +219,7 @@ public class AlligatorService implements
             }
 
             var fractalMaxData = getMaxFractalData(candle, strategy);
-            annotation += " MAX " + fractalMaxData.getAnnotation();
+            annotation += " MAX ";// + fractalMaxData.getAnnotation();
             if (fractalMaxData.getPolyline() != null) {
                 annotation += " polylineBegin=" + printDateTime(fractalMaxData.getPolyline().get(0).getCandleBegin().getDateTime())
                         + " to " + printDateTime(fractalMaxData.getPolyline().get(fractalMaxData.getPolyline().size() - 1).getCandleEnd().getDateTime());
@@ -231,6 +231,28 @@ public class AlligatorService implements
                             + fractalMaxData.getNextPriceDelta();
                     annotation += " getNextPriceDelta=" + printPrice(fractalMaxData.getNextPriceDelta());
                     annotation += " nextMax=" + printPrice(nextMax);
+                }
+            }
+
+            if (
+                    null != nextMin
+                    && null != nextMax
+                    && nextMax > nextMin
+            ) {
+                var expectPercent = 100. * (nextMax - nextMin) / Math.abs(nextMin);
+                annotation += " expectPercent=" + printPrice(expectPercent);
+                if (
+                        expectPercent > strategy.getBuyMinProfitPercent()
+                        && candleOrig.getLowestPrice().doubleValue() < nextMin
+                ) {
+                    annotation += " BUY OK";
+                    resBuy = true;
+                    priceWanted = BigDecimal.valueOf(nextMin);
+                    stopLoss = nextMin - (nextMax - nextMin);
+                    setOrderBigDecimalData(strategy, candle, "limitPrice", BigDecimal.valueOf(nextMax));
+                    setOrderBigDecimalData(strategy, candle, "limitPercent", BigDecimal.valueOf(expectPercent));
+                    setOrderBigDecimalData(strategy, candle, "stopLoss", BigDecimal.valueOf(stopLoss));
+                    setOrderBigDecimalData(strategy, candle, "priceWanted", priceWanted);
                 }
             }
         }
@@ -1343,7 +1365,7 @@ public class AlligatorService implements
 
         log.trace("isShouldSell {} {} after average average={}", candle.getFigi(), candle.getDateTime(), res);
 
-        if (strategy.isReverse()) {
+        if (strategy.isReverse() || strategy.isFractal()) {
             stopLoss = order.getDetails().getCurrentPrices().getOrDefault("stopLoss", BigDecimal.ZERO).doubleValue();
             if (isTrendUp) {
                 var stopLossUp = order.getDetails().getCurrentPrices().getOrDefault("stopLossUp", null);
@@ -1358,7 +1380,51 @@ public class AlligatorService implements
         var limitPercent = order.getDetails().getCurrentPrices().getOrDefault("limitPercent", BigDecimal.ZERO);
         annotation += " limitPercent" + limitPercent;
         Float newLimitPercent = limitPercent.floatValue();
-        limitPrice = (double) (purchaseRate.floatValue() + Math.abs(purchaseRate.floatValue() * newLimitPercent / 100.f));
+        limitPrice = (double) (purchaseRate.floatValue() + Math.abs(purchaseRate.floatValue()) * newLimitPercent / 100.f);
+        annotation += " limitPrice" + printPrice(limitPrice);
+
+        Double nextMin = null;
+        Double nextMax = null;
+        if (green != null && blue != null && strategy.isFractal()) {
+            var fractalMinData = getMinFractalData(candlePrev, strategy);
+            annotation += " MIN ";// + fractalMinData.getAnnotation();
+            if (fractalMinData.getPolyline() != null) {
+                annotation += " polylineBegin=" + printDateTime(fractalMinData.getPolyline().get(0).getCandleBegin().getDateTime())
+                        + " to " + printDateTime(fractalMinData.getPolyline().get(fractalMinData.getPolyline().size() - 1).getCandleEnd().getDateTime());
+                if (fractalMinData.getPolylineLike() != null) {
+                    annotation += " polylineLikeBegin=" + printDateTime(fractalMinData.getPolylineLike().get(0).getCandleBegin().getDateTime())
+                            + " to " + printDateTime(fractalMinData.getPolylineLike().get(fractalMinData.getPolylineLike().size() - 1).getCandleEnd().getDateTime());
+                    annotation += " polylineLikeAfterEnd=" + printDateTime(fractalMinData.getPolylineLikeAfter().get(0).getCandleEnd().getDateTime());
+                    nextMin = fractalMinData.getPolyline().get(fractalMinData.getPolyline().size() - 1).getCandleEnd().getLowestPrice().doubleValue()
+                            + fractalMinData.getNextPriceDelta();
+                    annotation += " getNextPriceDelta=" + printPrice(fractalMinData.getNextPriceDelta());
+                    annotation += " nextMin=" + printPrice(nextMin);
+                }
+            }
+
+            var fractalMaxData = getMaxFractalData(candlePrev, strategy);
+            annotation += " MAX ";// + fractalMaxData.getAnnotation();
+            if (fractalMaxData.getPolyline() != null) {
+                annotation += " polylineBegin=" + printDateTime(fractalMaxData.getPolyline().get(0).getCandleBegin().getDateTime())
+                        + " to " + printDateTime(fractalMaxData.getPolyline().get(fractalMaxData.getPolyline().size() - 1).getCandleEnd().getDateTime());
+                if (fractalMaxData.getPolylineLike() != null) {
+                    annotation += " polylineLikeBegin=" + printDateTime(fractalMaxData.getPolylineLike().get(0).getCandleBegin().getDateTime())
+                            + " to " + printDateTime(fractalMaxData.getPolylineLike().get(fractalMaxData.getPolylineLike().size() - 1).getCandleEnd().getDateTime());
+                    annotation += " polylineLikeAfterEnd=" + printDateTime(fractalMaxData.getPolylineLikeAfter().get(0).getCandleEnd().getDateTime());
+                    nextMax = fractalMaxData.getPolyline().get(fractalMaxData.getPolyline().size() - 1).getCandleEnd().getHighestPrice().doubleValue()
+                            + fractalMaxData.getNextPriceDelta();
+                    annotation += " getNextPriceDelta=" + printPrice(fractalMaxData.getNextPriceDelta());
+                    annotation += " nextMax=" + printPrice(nextMax);
+                }
+            }
+
+            if (null != nextMax && limitPrice > nextMax) {
+                limitPrice = nextMax;
+                limitPercent = BigDecimal.valueOf((limitPrice - purchaseRate.doubleValue()) * 100. / purchaseRate.abs().doubleValue());
+                newLimitPercent = limitPercent.floatValue();
+                annotation += "new limitPrice nextMax = " + printPrice(nextMax);
+            }
+        }
 
         if (strategy.getLimitPriceMaxK() > 0) {
             var limitPercentInit = order.getDetails().getCurrentPrices().getOrDefault("limitPercentInit", null);
@@ -1524,7 +1590,10 @@ public class AlligatorService implements
             limitPercent = BigDecimal.valueOf(newLimitPercent);
             annotation += " new limitPrice=lastBySell=" + printPrice(limitPrice);
             annotation += " new newLimitPercent=" + printPrice(newLimitPercent);
-        } else if (strategy.getLimitPriceDownStepLength() < 1 && !strategy.isRevMaxRev()) {
+        } else if (
+                strategy.getLimitPriceDownStepLength() < 1
+                && strategy.isMinProfitPercent()
+            ) {
             annotation += " limitPrice=" + printPrice(limitPrice);
             annotation += " newLimitPercent=" + printPrice(newLimitPercent);
             var minProfitPercent = strategy.getSellLimitCriteriaOrig().getExitProfitPercent();
@@ -1683,6 +1752,11 @@ public class AlligatorService implements
                     isStopLoss = true;
                 }
             }
+        }
+
+        if (res && strategy.isStopLossOnlyByLimit()) {
+            annotation += " SKIP by only limit";
+            res = false;
         }
 
         if (res && strategy.isStopLossSkipByBuy()) {
@@ -1925,7 +1999,7 @@ public class AlligatorService implements
                         + "|emaBlue1|emaRed|emaGreen|emaBlue|max|min|zs|waitMax|maxBuy|stopLoss|waitMax2|isDayEnd|smaUp|smaDown|priceWanted|trendUp|trendDown|purchaseRate"
                         + "|priceWantedOrig|nextMin|nextMax",
                 "{} | {} | {} | {} | {} | | {} | {} | {} | {} | ||||sell {}"
-                        + "| {} | {} | {} | {} | {} | {} | {} ||| {}|| {}| {} | {}|||| {}|||",
+                        + "| {} | {} | {} | {} | {} | {} | {} ||| {}|| {}| {} | {}|||| {}||{}|{}",
                 printDateTime(candle.getDateTime()),
                 candle.getOpenPrice(),
                 candle.getHighestPrice(),
@@ -1947,7 +2021,9 @@ public class AlligatorService implements
                 isDayEnd ? candle.getLowestPrice().subtract(candle.getLowestPrice().abs().multiply(BigDecimal.valueOf(0.01))) : "",
                 smaUp != null ? smaUp : "",
                 smaDown != null ? smaDown : "",
-                purchaseRate
+                purchaseRate,
+                nextMin != null ? printPrice(nextMin) : "",
+                nextMax != null ? printPrice(nextMax) : ""
         );
         log.trace("isShouldSell {} {} end res", candle.getFigi(), candle.getDateTime(), res);
         return res;
@@ -2316,6 +2392,29 @@ public class AlligatorService implements
         return getFractalData(strategy, fractalLineList, CandleDomainEntity::getHighestPrice);
     }
 
+    private Map<String, FractalData> fractalDataCashMap = new LinkedHashMap<>() {
+        @Override
+        protected boolean removeEldestEntry(final Map.Entry eldest) {
+            return size() > 4 * 20;
+        }
+    };
+
+    private synchronized void addFractalDataToCash(
+            String key,
+            FractalData fractalData
+    ) {
+        fractalDataCashMap.put(key, fractalData);
+    }
+
+    private synchronized FractalData getFractalDataFromCash(
+            String key
+    ) {
+        if (fractalDataCashMap.containsKey(key)) {
+            return fractalDataCashMap.get(key);
+        }
+        return null;
+    }
+
     private FractalData getFractalData(
             AAlligatorStrategy strategy,
             List<FractalLineData> fractalLineList,
@@ -2330,6 +2429,16 @@ public class AlligatorService implements
         }
         var annotation = "";
         var polyline = fractalLineList.subList(fractalLineList.size() - strategy.getFractalLength(), fractalLineList.size());
+
+        var cashKey = polyline.get(0).getCandleBegin().getFigi()
+                + (strategy.isShort() ? "Short" : "Long")
+                + Integer.toHexString(keyExtractor.hashCode())
+                + printDateTime(polyline.get(0).getCandleBegin().getDateTime());
+        var fractalDataFromCash = getFractalDataFromCash(cashKey);
+
+        if (null != fractalDataFromCash) {
+            return fractalDataFromCash;
+        }
         List<FractalLineData> polylineLike = null;
         List<FractalLineData> polylineLikeAfter = null;
         Double diff = null;
@@ -2339,11 +2448,17 @@ public class AlligatorService implements
         //        2.
         //    ) + Math.pow(line.getLength(), 2.));
         Double k1 = null;
+        Integer kLength1 = null;
         for(var pi = 0; pi < polyline.size(); pi++) {
             var line = polyline.get(pi);
             if (!keyExtractor.apply(line.getCandleEnd()).equals(keyExtractor.apply(line.getCandleBegin()))) {
-                k1 = 1. / Math.abs(keyExtractor.apply(line.getCandleEnd()).doubleValue() - keyExtractor.apply(line.getCandleBegin()).doubleValue());
-                break;
+                var curK = Math.abs(keyExtractor.apply(line.getCandleEnd()).doubleValue() - keyExtractor.apply(line.getCandleBegin()).doubleValue());
+                if (k1 == null || k1 < curK) {
+                    k1 = curK;
+                }
+            }
+            if (kLength1 == null || kLength1 < line.getLength()) {
+                kLength1 = line.getLength();
             }
         }
         if (k1 == null) {
@@ -2365,11 +2480,17 @@ public class AlligatorService implements
             //        2.
             //) + Math.pow(line.getLength(), 2.));
             Double k2 = null;
+            Integer kLength2 = null;
             for(var pi = 0; pi < polylinePrev.size(); pi++) {
                 var line = polylinePrev.get(pi);
                 if (!keyExtractor.apply(line.getCandleEnd()).equals(keyExtractor.apply(line.getCandleBegin()))) {
-                    k2 = 1. / Math.abs(keyExtractor.apply(line.getCandleEnd()).doubleValue() - keyExtractor.apply(line.getCandleBegin()).doubleValue());
-                    break;
+                    var curK = Math.abs(keyExtractor.apply(line.getCandleEnd()).doubleValue() - keyExtractor.apply(line.getCandleBegin()).doubleValue());
+                    if (k2 == null || k2 < curK) {
+                        k2 = curK;
+                    }
+                }
+                if (kLength2 == null || kLength2 < line.getLength()) {
+                    kLength2 = line.getLength();
                 }
             }
             if (k2 == null) {
@@ -2385,8 +2506,11 @@ public class AlligatorService implements
                 var l2 = line2.getLength();
                 //var diffPointJ = Math.sqrt(Math.pow(d1 / k1 - d2 / k2, 2.) + Math.pow(l1 / k1 - l2 / k2, 2.));
                 var diffPointJ = Math.abs((d1 / k1) - (d2 / k2));
+                //diffPointJ = diffPointJ * diffPointJ;
                 annotationI += " dJ=" + printPrice(diffPointJ);
-                diffCur += diffPointJ;
+                var diffPointLengthJ = Math.abs((l1.doubleValue() / kLength1) - (l2.doubleValue() / kLength2));
+                annotationI += " dLJ=" + printPrice(diffPointLengthJ);
+                diffCur += diffPointJ + 0.5 * diffPointLengthJ;
             }
             if (diff == null || diff > diffCur) {
                 annotation += " i=" + i + " polylinePrevB=" + printDateTime(polylinePrev.get(0).getCandleBegin().getDateTime()) + " to " + printDateTime(polylinePrev.get(polylinePrev.size() - 1).getCandleEnd().getDateTime());
@@ -2405,15 +2529,16 @@ public class AlligatorService implements
         }
 
         fractalData.setAnnotation(annotation);
-        fractalData.setPolyline(polyline);
+        fractalData.setPolyline(new ArrayList<>(polyline));
 
         if (null != polylineLike) {
-            fractalData.setPolylineLike(polylineLike);
+            fractalData.setPolylineLike(new ArrayList<>(polylineLike));
             fractalData.setDiff(diff);
             fractalData.setNextPriceDelta(nextPriceDelta);
-            fractalData.setPolylineLikeAfter(polylineLikeAfter);
+            fractalData.setPolylineLikeAfter(new ArrayList<>(polylineLikeAfter));
         }
 
+        addFractalDataToCash(cashKey, fractalData);
         return fractalData;
     }
 
