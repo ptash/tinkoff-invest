@@ -19,7 +19,7 @@ public class AlligatorFractal5Min extends AlligatorStrategy5Min {
 
     public Double getMaxGreenPercent() { return 3.0; }
 
-    public Float getBuyMinProfitPercent() { return .15f; }
+    public Float getBuyMinProfitPercent() { return .25f; }
     public boolean isMinProfitPercent() { return false; }
 
     //public boolean isStopLossByLimit() { return true; }

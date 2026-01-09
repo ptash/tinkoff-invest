@@ -2374,7 +2374,7 @@ public class AlligatorService implements
             fractalData.setAnnotation("fractalLineList=null");
             return fractalData;
         }
-        return getFractalData(strategy, fractalLineList, CandleDomainEntity::getLowestPrice);
+        return getFractalData(strategy, fractalLineList, CandleDomainEntity::getLowestPrice, compareToMin);
     }
 
     private FractalData getMaxFractalData(
@@ -2389,7 +2389,7 @@ public class AlligatorService implements
             fractalData.setAnnotation("fractalLineList=null");
             return fractalData;
         }
-        return getFractalData(strategy, fractalLineList, CandleDomainEntity::getHighestPrice);
+        return getFractalData(strategy, fractalLineList, CandleDomainEntity::getHighestPrice, BigDecimal::compareTo);
     }
 
     private Map<String, FractalData> fractalDataCashMap = new LinkedHashMap<>() {
@@ -2418,7 +2418,8 @@ public class AlligatorService implements
     private FractalData getFractalData(
             AAlligatorStrategy strategy,
             List<FractalLineData> fractalLineList,
-            Function<? super CandleDomainEntity, ? extends BigDecimal> keyExtractor
+            Function<? super CandleDomainEntity, ? extends BigDecimal> keyExtractor,
+            Comparator<? super BigDecimal> comparator
     ) {
         var fractalData = FractalData.builder()
                 .annotation("")
@@ -2523,8 +2524,11 @@ public class AlligatorService implements
                         i + strategy.getFractalLength(),
                         Math.min(fractalLineList.size(), i + strategy.getFractalLength() + strategy.getFractalLength())
                 );
-                var lineNext = polylineLikeAfter.get(0);
-                nextPriceDelta = k1 * (keyExtractor.apply(lineNext.getCandleEnd()).doubleValue() - keyExtractor.apply(lineNext.getCandleBegin()).doubleValue()) / k2;
+                var nextBegin = polylineLikeAfter.get(0).getCandleBegin();
+                var topLine = polylineLikeAfter.stream().reduce((first, second) ->
+                        comparator.compare(keyExtractor.apply(first.getCandleEnd()), keyExtractor.apply(second.getCandleEnd())) > 0 ? first : second
+                ).orElse(null);;
+                nextPriceDelta = k1 * (keyExtractor.apply(topLine.getCandleEnd()).doubleValue() - keyExtractor.apply(nextBegin).doubleValue()) / k2;
             }
         }
 
