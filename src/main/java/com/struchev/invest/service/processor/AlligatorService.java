@@ -248,10 +248,17 @@ public class AlligatorService implements
                     annotation += " BUY OK";
                     resBuy = true;
                     priceWanted = BigDecimal.valueOf(nextMin);
+                    if (strategy.getBuyMaxProfitPercent() != null) {
+                        expectPercent = strategy.getBuyMaxProfitPercent();
+                    }
                     var realLimitPrice = priceWanted.doubleValue() + expectPercent * priceWanted.abs().doubleValue() / 100.;
                     stopLoss = nextMin - (nextMax - nextMin);
                     if (strategy.isRev()) {
-                        stopLoss = nextMin - 4 * (nextMax - nextMin);
+                        if (strategy.getBuyMaxProfitPercent() != null) {
+                            stopLoss = nextMin - strategy.getBuyMaxProfitPercent() / 100. * Math.abs(nextMin);
+                        } else {
+                            stopLoss = nextMin - 4 * (nextMax - nextMin);
+                        }
                     }
                     setOrderBigDecimalData(strategy, candle, "limitPrice", BigDecimal.valueOf(realLimitPrice));
                     setOrderBigDecimalData(strategy, candle, "limitPercent", BigDecimal.valueOf(expectPercent));
@@ -1428,6 +1435,8 @@ public class AlligatorService implements
                     var limitPriceRev = order.getDetails().getCurrentPrices().getOrDefault("limitPriceRev", null);
                     if (limitPriceRev == null || limitPriceRev.doubleValue() < nextMin) {
                         limitPriceRev = BigDecimal.valueOf(nextMin);
+                        stopLoss = limitPriceRev.doubleValue();
+                        order.getDetails().getCurrentPrices().put("stopLoss", BigDecimal.valueOf(stopLoss));
                         orderService.updateDetailsCurrentPrice(order, "limitPriceRev", limitPriceRev);
                     }
                     annotation += " limitPriceRev=" + printPrice(limitPriceRev);
@@ -2428,14 +2437,17 @@ public class AlligatorService implements
             FractalData fractalData
     ) {
         fractalDataCashMap.put(key, fractalData);
+        log.trace("getFractalDataFromCash key={} PUT", key);
     }
 
     private synchronized FractalData getFractalDataFromCash(
             String key
     ) {
         if (fractalDataCashMap.containsKey(key)) {
+            log.trace("getFractalDataFromCash key={} OK", key);
             return fractalDataCashMap.get(key);
         }
+        log.trace("getFractalDataFromCash key={} NULL", key);
         return null;
     }
 
@@ -2595,8 +2607,12 @@ public class AlligatorService implements
         if (fractalLineLastCandleCashMap.containsKey(key)) {
             lastCandle = fractalLineLastCandleCashMap.get(key);
             if (lastCandle.getDateTime().compareTo(candle.getDateTime()) >= 0) {
+                log.trace("fractalLineLastCandleCashMap key={} lastCandle={} >=0", key, lastCandle.getDateTime());
                 return;
             }
+            log.trace("fractalLineLastCandleCashMap key={} lastCandle={} - {}", key, lastCandle.getDateTime(), candle.getDateTime());
+        } else {
+            log.trace("fractalLineLastCandleCashMap key={} NULL", key);
         }
 
         List<CandleDomainEntity> candleListAll;
@@ -2657,6 +2673,7 @@ public class AlligatorService implements
         }
 
         fractalLineLastCandleCashMap.put(key, candle);
+        log.trace("fractalLineLastCandleCashMap key={} PUT {} fractalLineCashMap.size = {}", key, candle.getDateTime(), fractalLineCashMap.size());
     }
 
     private synchronized void addCashedValueFractalLine(

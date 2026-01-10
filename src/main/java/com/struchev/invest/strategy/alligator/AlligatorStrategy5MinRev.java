@@ -5,6 +5,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class AlligatorStrategy5MinRev extends AlligatorStrategy5Min {
     public boolean isReverse() { return true; }
+    public boolean isAlligator() { return false; }
     public boolean isSkipBySmaFarGreenBlue() { return false; }
 
     public Double getMaxGreenPercent() { return 3.0; }

@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 public class AlligatorStrategy5MinRevAvR extends AlligatorStrategy5MinRevAv {
 
     public boolean isRevMaxRev() { return true; }
+    public boolean isMinProfitPercent() { return false; }
     public boolean isRev() { return true; }
 
     public boolean isBuyMaxOnlySmaUp() { return false; }
