@@ -27,7 +27,10 @@ public class TinkoffMockAPI extends ATinkoffAPI {
     private final BigDecimal PERCENT_FUTURE = new BigDecimal("0.00025");
 
     @Override
-    public OrderResult buy(InstrumentService.Instrument instrument, BigDecimal price, Integer count) {
+    public OrderResult buy(InstrumentService.Instrument instrument, BigDecimal price, Integer count, CandleDomainEntity candle) {
+        if (candle.getHighestPrice().compareTo(price) < 0) {
+            price = candle.getHighestPrice();
+        }
         return OrderResult.builder()
                 .commissionInitial(calculateCommission(price, count, instrument))
                 .commission(calculateCommission(price, count, instrument))
@@ -38,7 +41,10 @@ public class TinkoffMockAPI extends ATinkoffAPI {
     }
 
     @Override
-    public OrderResult buyShort(InstrumentService.Instrument instrument, BigDecimal price, Integer count) {
+    public OrderResult buyShort(InstrumentService.Instrument instrument, BigDecimal price, Integer count, CandleDomainEntity candle) {
+        if (candle.getLowestPrice().compareTo(price) > 0) {
+            price = candle.getLowestPrice();
+        }
         return OrderResult.builder()
                 .commissionInitial(calculateCommission(price, count, instrument))
                 .commission(calculateCommission(price, count, instrument))
@@ -86,6 +92,11 @@ public class TinkoffMockAPI extends ATinkoffAPI {
                 (candle.getHighestPrice().compareTo(price) > 0 && !candle.getDateTime().equals(order.getPurchaseDateTime()))
                 || (candle.getClosingPrice().compareTo(price) > 0 && candle.getDateTime().equals(order.getPurchaseDateTime()))
         ) {
+            if (candle.getLowestPrice().compareTo(price) > 0) {
+                limitOrder.setPrice(candle.getLowestPrice());
+                limitOrder.setPricePt(candle.getLowestPrice());
+                limitOrder.setCommission(calculateCommission(candle.getLowestPrice(), count, instrument));
+            }
             log.info("sellLimit: OK");
             return limitOrder;
         } else {
@@ -140,6 +151,11 @@ public class TinkoffMockAPI extends ATinkoffAPI {
                 (candle.getLowestPrice().compareTo(price) < 0 && !candle.getDateTime().equals(order.getSellDateTime()))
                 || (candle.getClosingPrice().compareTo(price) < 0 && candle.getDateTime().equals(order.getSellDateTime()))
         ) {
+            if (candle.getHighestPrice().compareTo(price) < 0) {
+                limitOrder.setPrice(candle.getHighestPrice());
+                limitOrder.setPricePt(candle.getHighestPrice());
+                limitOrder.setCommission(calculateCommission(candle.getHighestPrice(), count, instrument));
+            }
             return limitOrder;
         } else {
             addOrderResult(instrument, limitOrder);
@@ -153,6 +169,11 @@ public class TinkoffMockAPI extends ATinkoffAPI {
             var price = order.getPrice();
             log.info("closeSellLimit: Sell limit for {} with price {} and limit {} date {}", instrument.getFigi(), candle.getLowestPrice(), price, candle.getDateTime());
             if (candle.getLowestPrice().compareTo(price) < 0) {
+                if (candle.getHighestPrice().compareTo(price) < 0) {
+                    order.setPrice(candle.getHighestPrice());
+                    order.setPricePt(candle.getHighestPrice());
+                    order.setCommission(calculateCommission(candle.getHighestPrice(), Math.toIntExact(order.getLots()), instrument));
+                }
                 return order;
             }
         }

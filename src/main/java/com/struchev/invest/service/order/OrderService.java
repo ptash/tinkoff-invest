@@ -146,7 +146,7 @@ public class OrderService implements IOrderService {
                 && !tinkoffOrderAPI.checkGoodSell(instrument, priceWanted, order.getLots(), strategy.getPriceError(), candle)) {
             throw new RuntimeException("checkGoodSell return false for figi " + instrument.getFigi());
         }
-        var result = tinkoffOrderAPI.buyShort(instrument, priceWanted, order.getLots());
+        var result = tinkoffOrderAPI.buyShort(instrument, priceWanted, order.getLots(), candle);
         order.setSellCommissionInitial(result.getCommissionInitial());
         order.setSellCommission(result.getCommission());
         order.setSellPriceMoney(result.getPrice());
@@ -187,7 +187,7 @@ public class OrderService implements IOrderService {
                 && !tinkoffOrderAPI.checkGoodBuy(instrument, priceWanted, order.getLots(), strategy.getPriceError(), candle)) {
             throw new RuntimeException("checkGoodBuy return false for figi " + instrument.getFigi() + " priceWanted " + priceWanted + " candle" + candle);
         }
-        var result = tinkoffOrderAPI.buy(instrument, priceWanted, order.getLots());
+        var result = tinkoffOrderAPI.buy(instrument, priceWanted, order.getLots(), candle);
         order.setPurchaseCommissionInitial(result.getCommissionInitial());
         order.setPurchaseCommission(result.getCommission());
         order.setPurchasePriceMoney(result.getPrice());

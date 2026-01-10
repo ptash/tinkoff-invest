@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 public class TinkoffGRPCAPI extends ATinkoffAPI {
     private final NotificationService notificationService;
 
-    public OrderResult buy(InstrumentService.Instrument instrument, BigDecimal price, Integer count) {
+    public OrderResult buy(InstrumentService.Instrument instrument, BigDecimal price, Integer count, CandleDomainEntity candle) {
         long quantity = count / instrument.getLot();
         var quotation = Quotation.newBuilder()
                 .setUnits(price.longValue())
@@ -72,7 +72,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
     }
 
     @Override
-    public OrderResult buyShort(InstrumentService.Instrument instrument, BigDecimal price, Integer count) {
+    public OrderResult buyShort(InstrumentService.Instrument instrument, BigDecimal price, Integer count, CandleDomainEntity candle) {
         long quantity = count / instrument.getLot();
         var quotation = Quotation.newBuilder()
                 .setUnits(price.longValue())

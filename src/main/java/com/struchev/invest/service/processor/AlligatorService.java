@@ -248,8 +248,12 @@ public class AlligatorService implements
                     annotation += " BUY OK";
                     resBuy = true;
                     priceWanted = BigDecimal.valueOf(nextMin);
+                    var realLimitPrice = priceWanted.doubleValue() + expectPercent * priceWanted.abs().doubleValue() / 100.;
                     stopLoss = nextMin - (nextMax - nextMin);
-                    setOrderBigDecimalData(strategy, candle, "limitPrice", BigDecimal.valueOf(nextMax));
+                    if (strategy.isRev()) {
+                        stopLoss = nextMin - 4 * (nextMax - nextMin);
+                    }
+                    setOrderBigDecimalData(strategy, candle, "limitPrice", BigDecimal.valueOf(realLimitPrice));
                     setOrderBigDecimalData(strategy, candle, "limitPercent", BigDecimal.valueOf(expectPercent));
                     setOrderBigDecimalData(strategy, candle, "stopLoss", BigDecimal.valueOf(stopLoss));
                     setOrderBigDecimalData(strategy, candle, "priceWanted", priceWanted);
@@ -764,9 +768,6 @@ public class AlligatorService implements
                         //}
 
                         if (resBuy) {
-                            if (strategy.isRev()) {
-                                setOrderBooleanData(strategy, candle, "isReverse", true);
-                            }
                             setOrderBigDecimalData(strategy, candle, "stopLoss", BigDecimal.valueOf(stopLoss));
                             setOrderBigDecimalData(strategy, candle, "limitPercent", BigDecimal.valueOf(realLimitPercent));
                             setOrderBigDecimalData(strategy, candle, "limitPrice", BigDecimal.valueOf(limitPrice));
@@ -785,6 +786,10 @@ public class AlligatorService implements
                     priceWantedOrig = priceWanted;
                 }
             }
+        }
+
+        if (strategy.isRev()) {
+            setOrderBooleanData(strategy, candle, "isReverse", true);
         }
 
         log.trace("isShouldBuy {} {} isReverse resBuy={}", candle.getFigi(), candle.getDateTime(), resBuy);
@@ -1418,11 +1423,30 @@ public class AlligatorService implements
                 }
             }
 
-            if (null != nextMax && limitPrice > nextMax) {
-                limitPrice = nextMax;
-                limitPercent = BigDecimal.valueOf((limitPrice - purchaseRate.doubleValue()) * 100. / purchaseRate.abs().doubleValue());
-                newLimitPercent = limitPercent.floatValue();
-                annotation += "new limitPrice nextMax = " + printPrice(nextMax);
+            if (strategy.isRev()) {
+                if (null != nextMax) {
+                    var limitPriceRev = order.getDetails().getCurrentPrices().getOrDefault("limitPriceRev", null);
+                    if (limitPriceRev == null || limitPriceRev.doubleValue() < nextMin) {
+                        limitPriceRev = BigDecimal.valueOf(nextMin);
+                        orderService.updateDetailsCurrentPrice(order, "limitPriceRev", limitPriceRev);
+                    }
+                    annotation += " limitPriceRev=" + printPrice(limitPriceRev);
+                    if (
+                            limitPriceRev.doubleValue() > candle.getLowestPrice().doubleValue()
+                    ) {
+                        limitPrice = candlePrev.getHighestPrice().min(limitPriceRev).doubleValue();
+                        limitPercent = BigDecimal.valueOf((limitPrice - purchaseRate.doubleValue()) * 100. / purchaseRate.abs().doubleValue());
+                        newLimitPercent = limitPercent.floatValue();
+                        annotation += "new limitPrice nextMax = " + printPrice(limitPrice);
+                    }
+                }
+            } else {
+                if (null != nextMax && limitPrice > nextMax) {
+                    limitPrice = nextMax;
+                    limitPercent = BigDecimal.valueOf((limitPrice - purchaseRate.doubleValue()) * 100. / purchaseRate.abs().doubleValue());
+                    newLimitPercent = limitPercent.floatValue();
+                    annotation += "new limitPrice nextMax = " + printPrice(limitPrice);
+                }
             }
         }
 

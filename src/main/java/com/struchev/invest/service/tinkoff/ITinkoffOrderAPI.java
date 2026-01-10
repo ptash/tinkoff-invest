@@ -29,8 +29,8 @@ public interface ITinkoffOrderAPI {
         Boolean isDirtyOrderLimits;
     }
 
-    OrderResult buy(InstrumentService.Instrument instrument, BigDecimal price, Integer count);
-    OrderResult buyShort(InstrumentService.Instrument instrument, BigDecimal price, Integer count);
+    OrderResult buy(InstrumentService.Instrument instrument, BigDecimal price, Integer count, CandleDomainEntity candle);
+    OrderResult buyShort(InstrumentService.Instrument instrument, BigDecimal price, Integer count, CandleDomainEntity candle);
 
     OrderResult sell(InstrumentService.Instrument instrument, BigDecimal price, Integer count);
     OrderResult sellShort(InstrumentService.Instrument instrument, BigDecimal price, Integer count);
