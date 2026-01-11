@@ -70,7 +70,7 @@ public class CandleListenerService {
 
         log.info("Init first candle for {} strategies", strategies.size());
 
-        if (Objects.equals(interval, "1min")) {
+        if (Objects.equals(interval, "1min") || Objects.equals(interval, "5min")) {
             strategies.stream()
                     .flatMap(figi -> {
                         var candles = candleRepository.findByFigiAndIntervalAndBeforeDateTimeLimit(figi,
