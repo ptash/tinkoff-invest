@@ -375,12 +375,16 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                 }
             }
             if (res.getLots() != null && res.getLots() > 0 && res.getIsExecuted()) {
+                log.info("Sell limit for {} is executed {}", instrument.getFigi(), res);
                 orderResultBuilder
                         .lots(res.lots)
                         .price(res.getPrice())
                         .pricePt(res.getPricePt())
                         .isExecuted(true)
+                        .orderPricePt(res.getOrderPricePt())
+                        .orderPrice(res.getOrderPrice())
                         .commission(res.getCommission());
+                return orderResultBuilder.build();
             }
             // новую будем создавать
             uuid = null;
