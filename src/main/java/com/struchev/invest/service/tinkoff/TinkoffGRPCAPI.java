@@ -134,6 +134,11 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
         if (isPriceExecutedOnTotalOrderAmount) {
             priceExecuted = toBigDecimal(result.getTotalOrderAmount(), 8, initPrice)
                     .divide(BigDecimal.valueOf(result.getLotsExecuted()), 8, RoundingMode.HALF_DOWN);
+        //} else if (isPriceExecutedOnAveragePositionPrice) {
+        //    priceExecuted = toBigDecimal(result.getA(), 8, initPrice);
+        } else if (isPriceExecutedOnExecutedOrderPriceDivideLots) {
+            priceExecuted = toBigDecimal(result.getExecutedOrderPrice(), 8, initPrice)
+                    .divide(BigDecimal.valueOf(result.getLotsExecuted()), 8, RoundingMode.HALF_DOWN);
         } else {
             priceExecuted = toBigDecimal(result.getExecutedOrderPrice(), 8, initPrice);
         }
@@ -368,9 +373,14 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                     return res;
                 } else {
                     log.info("Sell limit for {} changed from {} to {}", instrument.getFigi(), curPrice, price);
-                    res = this.closeAllSellLimit(instrument, candle);
-                    if (res.getOrderId() != null) {
+                    log.debug("res = {}", res);
+                    var resCloseAll = this.closeAllSellLimit(instrument, candle);
+                    log.debug("resCloseAll = {}", resCloseAll);
+                    if (resCloseAll.getOrderId() != null) {
                         orderId = res.getOrderId();
+                    }
+                    if (resCloseAll.getLots() != null && resCloseAll.getLots() > 0 && resCloseAll.getIsExecuted() && !res.getIsExecuted()) {
+                        res = resCloseAll;
                     }
                 }
             }
