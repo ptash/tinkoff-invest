@@ -202,35 +202,58 @@ public class AlligatorService implements
         Double nextMin = null;
         Double nextMax = null;
         if (green != null && blue != null && strategy.isFractal()) {
-            var fractalMinData = getMinFractalData(candle, strategy);
-            annotation += " MIN ";// + fractalMinData.getAnnotation();
-            if (fractalMinData.getPolyline() != null) {
-                annotation += " polylineBegin=" + printDateTime(fractalMinData.getPolyline().get(0).getCandleBegin().getDateTime())
-                        + " to " + printDateTime(fractalMinData.getPolyline().get(fractalMinData.getPolyline().size() - 1).getCandleEnd().getDateTime());
-                if (fractalMinData.getPolylineLike() != null) {
-                    annotation += " polylineLikeBegin=" + printDateTime(fractalMinData.getPolylineLike().get(0).getCandleBegin().getDateTime())
-                    + " to " + printDateTime(fractalMinData.getPolylineLike().get(fractalMinData.getPolylineLike().size() - 1).getCandleEnd().getDateTime());
-                    annotation += " polylineLikeAfterEnd=" + printDateTime(fractalMinData.getPolylineLikeAfter().get(0).getCandleEnd().getDateTime());
-                    nextMin = fractalMinData.getPolyline().get(fractalMinData.getPolyline().size() - 1).getCandleEnd().getLowestPrice().doubleValue()
-                            + fractalMinData.getNextPriceDelta();
-                    annotation += " getNextPriceDelta=" + printPrice(fractalMinData.getNextPriceDelta());
-                    annotation += " nextMin=" + printPrice(nextMin);
-                }
-            }
+            if (strategy.isFractalMinMaxInOne()) {
+                var fractalData = getMinMaxFractalData(candle, strategy);
+                annotation += " MIN ";// + fractalMinData.getAnnotation();
+                if (fractalData.getPolyline() != null) {
+                    annotation += " polylineBegin=" + printDateTime(fractalData.getPolyline().get(0).getCandleBegin().getDateTime())
+                            + " to " + printDateTime(fractalData.getPolyline().get(fractalData.getPolyline().size() - 1).getCandleEnd().getDateTime());
+                    if (fractalData.getPolylineLike() != null) {
+                        annotation += " polylineLikeBegin=" + printDateTime(fractalData.getPolylineLike().get(0).getCandleBegin().getDateTime())
+                                + " to " + printDateTime(fractalData.getPolylineLike().get(fractalData.getPolylineLike().size() - 1).getCandleEnd().getDateTime());
+                        annotation += " polylineLikeAfterEnd=" + printDateTime(fractalData.getPolylineLikeAfter().get(0).getCandleEnd().getDateTime());
+                        nextMin = fractalData.getPolyline().get(fractalData.getPolyline().size() - 1).getCandleEnd().getLowestPrice().doubleValue()
+                                + fractalData.getNextPriceDelta();
+                        annotation += " getNextPriceDelta=" + printPrice(fractalData.getNextPriceDelta());
+                        annotation += " nextMin=" + printPrice(nextMin);
 
-            var fractalMaxData = getMaxFractalData(candle, strategy);
-            annotation += " MAX ";// + fractalMaxData.getAnnotation();
-            if (fractalMaxData.getPolyline() != null) {
-                annotation += " polylineBegin=" + printDateTime(fractalMaxData.getPolyline().get(0).getCandleBegin().getDateTime())
-                        + " to " + printDateTime(fractalMaxData.getPolyline().get(fractalMaxData.getPolyline().size() - 1).getCandleEnd().getDateTime());
-                if (fractalMaxData.getPolylineLike() != null) {
-                    annotation += " polylineLikeBegin=" + printDateTime(fractalMaxData.getPolylineLike().get(0).getCandleBegin().getDateTime())
-                            + " to " + printDateTime(fractalMaxData.getPolylineLike().get(fractalMaxData.getPolylineLike().size() - 1).getCandleEnd().getDateTime());
-                    annotation += " polylineLikeAfterEnd=" + printDateTime(fractalMaxData.getPolylineLikeAfter().get(0).getCandleEnd().getDateTime());
-                    nextMax = fractalMaxData.getPolyline().get(fractalMaxData.getPolyline().size() - 1).getCandleEnd().getHighestPrice().doubleValue()
-                            + fractalMaxData.getNextPriceDelta();
-                    annotation += " getNextPriceDelta=" + printPrice(fractalMaxData.getNextPriceDelta());
-                    annotation += " nextMax=" + printPrice(nextMax);
+                        nextMax = fractalData.getPolyline().get(fractalData.getPolyline().size() - 1).getCandleEnd().getHighestPrice().doubleValue()
+                                + fractalData.getNextPriceDelta2();
+                        annotation += " getNextPriceDelta=" + printPrice(fractalData.getNextPriceDelta2());
+                        annotation += " nextMax=" + printPrice(nextMax);
+                    }
+                }
+            } else {
+                var fractalMinData = getMinFractalData(candle, strategy);
+                annotation += " MIN ";// + fractalMinData.getAnnotation();
+                if (fractalMinData.getPolyline() != null) {
+                    annotation += " polylineBegin=" + printDateTime(fractalMinData.getPolyline().get(0).getCandleBegin().getDateTime())
+                            + " to " + printDateTime(fractalMinData.getPolyline().get(fractalMinData.getPolyline().size() - 1).getCandleEnd().getDateTime());
+                    if (fractalMinData.getPolylineLike() != null) {
+                        annotation += " polylineLikeBegin=" + printDateTime(fractalMinData.getPolylineLike().get(0).getCandleBegin().getDateTime())
+                                + " to " + printDateTime(fractalMinData.getPolylineLike().get(fractalMinData.getPolylineLike().size() - 1).getCandleEnd().getDateTime());
+                        annotation += " polylineLikeAfterEnd=" + printDateTime(fractalMinData.getPolylineLikeAfter().get(0).getCandleEnd().getDateTime());
+                        nextMin = fractalMinData.getPolyline().get(fractalMinData.getPolyline().size() - 1).getCandleEnd().getLowestPrice().doubleValue()
+                                + fractalMinData.getNextPriceDelta();
+                        annotation += " getNextPriceDelta=" + printPrice(fractalMinData.getNextPriceDelta());
+                        annotation += " nextMin=" + printPrice(nextMin);
+                    }
+                }
+
+                var fractalMaxData = getMaxFractalData(candle, strategy);
+                annotation += " MAX ";// + fractalMaxData.getAnnotation();
+                if (fractalMaxData.getPolyline() != null) {
+                    annotation += " polylineBegin=" + printDateTime(fractalMaxData.getPolyline().get(0).getCandleBegin().getDateTime())
+                            + " to " + printDateTime(fractalMaxData.getPolyline().get(fractalMaxData.getPolyline().size() - 1).getCandleEnd().getDateTime());
+                    if (fractalMaxData.getPolylineLike() != null) {
+                        annotation += " polylineLikeBegin=" + printDateTime(fractalMaxData.getPolylineLike().get(0).getCandleBegin().getDateTime())
+                                + " to " + printDateTime(fractalMaxData.getPolylineLike().get(fractalMaxData.getPolylineLike().size() - 1).getCandleEnd().getDateTime());
+                        annotation += " polylineLikeAfterEnd=" + printDateTime(fractalMaxData.getPolylineLikeAfter().get(0).getCandleEnd().getDateTime());
+                        nextMax = fractalMaxData.getPolyline().get(fractalMaxData.getPolyline().size() - 1).getCandleEnd().getHighestPrice().doubleValue()
+                                + fractalMaxData.getNextPriceDelta();
+                        annotation += " getNextPriceDelta=" + printPrice(fractalMaxData.getNextPriceDelta());
+                        annotation += " nextMax=" + printPrice(nextMax);
+                    }
                 }
             }
 
@@ -2378,7 +2401,9 @@ public class AlligatorService implements
     @Data
     public static class FractalLineData {
         CandleDomainEntity candleBegin;
+        Boolean isBeginKeyExtractor1;
         CandleDomainEntity candleEnd;
+        Boolean isEndKeyExtractor1;
         Integer length;
     }
 
@@ -2391,7 +2416,24 @@ public class AlligatorService implements
         List<FractalLineData> polylineLikeAfter;
         Double diff;
         Double nextPriceDelta;
+        Double nextPriceDelta2;
         String annotation;
+    }
+
+    private FractalData getMinMaxFractalData(
+            CandleDomainEntity candle,
+            AAlligatorStrategy strategy
+    ) {
+        var fractalData = FractalData.builder()
+                .annotation("")
+                .build();
+        Comparator<? super BigDecimal> compareToMin = (b1, b2) -> -b1.compareTo(b2);
+        var fractalLineList = getFractalLineData(candle, strategy, CandleDomainEntity::getLowestPrice, compareToMin, CandleDomainEntity::getHighestPrice, BigDecimal::compareTo);
+        if (fractalLineList == null) {
+            fractalData.setAnnotation("fractalLineList=null");
+            return fractalData;
+        }
+        return getFractalData(strategy, fractalLineList, CandleDomainEntity::getLowestPrice, compareToMin, CandleDomainEntity::getHighestPrice, BigDecimal::compareTo);
     }
 
     private FractalData getMinFractalData(
@@ -2402,12 +2444,12 @@ public class AlligatorService implements
                 .annotation("")
                 .build();
         Comparator<? super BigDecimal> compareToMin = (b1, b2) -> -b1.compareTo(b2);
-        var fractalLineList = getFractalLineData(candle, strategy, CandleDomainEntity::getLowestPrice, compareToMin);
+        var fractalLineList = getFractalLineData(candle, strategy, CandleDomainEntity::getLowestPrice, compareToMin, null, null);
         if (fractalLineList == null) {
             fractalData.setAnnotation("fractalLineList=null");
             return fractalData;
         }
-        return getFractalData(strategy, fractalLineList, CandleDomainEntity::getLowestPrice, compareToMin);
+        return getFractalData(strategy, fractalLineList, CandleDomainEntity::getLowestPrice, compareToMin, null, null);
     }
 
     private FractalData getMaxFractalData(
@@ -2417,12 +2459,12 @@ public class AlligatorService implements
         var fractalData = FractalData.builder()
                 .annotation("")
                 .build();
-        var fractalLineList = getFractalLineData(candle, strategy, CandleDomainEntity::getHighestPrice, BigDecimal::compareTo);
+        var fractalLineList = getFractalLineData(candle, strategy, CandleDomainEntity::getHighestPrice, BigDecimal::compareTo, null, null);
         if (fractalLineList == null) {
             fractalData.setAnnotation("fractalLineList=null");
             return fractalData;
         }
-        return getFractalData(strategy, fractalLineList, CandleDomainEntity::getHighestPrice, BigDecimal::compareTo);
+        return getFractalData(strategy, fractalLineList, CandleDomainEntity::getHighestPrice, BigDecimal::compareTo, null, null);
     }
 
     private Map<String, FractalData> fractalDataCashMap = new LinkedHashMap<>() {
@@ -2454,8 +2496,10 @@ public class AlligatorService implements
     private FractalData getFractalData(
             AAlligatorStrategy strategy,
             List<FractalLineData> fractalLineList,
-            Function<? super CandleDomainEntity, ? extends BigDecimal> keyExtractor,
-            Comparator<? super BigDecimal> comparator
+            Function<? super CandleDomainEntity, ? extends BigDecimal> keyExtractor1,
+            Comparator<? super BigDecimal> comparator1,
+            Function<? super CandleDomainEntity, ? extends BigDecimal> keyExtractor2,
+            Comparator<? super BigDecimal> comparator2
     ) {
         var fractalData = FractalData.builder()
                 .annotation("")
@@ -2469,8 +2513,11 @@ public class AlligatorService implements
 
         var cashKey = polyline.get(0).getCandleBegin().getFigi()
                 + (strategy.isShort() ? "Short" : "Long")
-                + Integer.toHexString(keyExtractor.hashCode())
+                + getMethodKey(keyExtractor1)
                 + printDateTime(polyline.get(0).getCandleBegin().getDateTime());
+        if (null != keyExtractor2) {
+            cashKey += getMethodKey(keyExtractor2);
+        }
         var fractalDataFromCash = getFractalDataFromCash(cashKey);
 
         if (null != fractalDataFromCash) {
@@ -2480,6 +2527,7 @@ public class AlligatorService implements
         List<FractalLineData> polylineLikeAfter = null;
         Double diff = null;
         Double nextPriceDelta = null;
+        Double nextPriceDelta2 = null;
         //var k1 = 1. / Math.sqrt(Math.pow(
         //        line.getCandleBegin().getLowestPrice().doubleValue() - line.getCandleEnd().getLowestPrice().doubleValue(),
         //        2.
@@ -2488,8 +2536,16 @@ public class AlligatorService implements
         Integer kLength1 = null;
         for(var pi = 0; pi < polyline.size(); pi++) {
             var line = polyline.get(pi);
-            if (!keyExtractor.apply(line.getCandleEnd()).equals(keyExtractor.apply(line.getCandleBegin()))) {
-                var curK = Math.abs(keyExtractor.apply(line.getCandleEnd()).doubleValue() - keyExtractor.apply(line.getCandleBegin()).doubleValue());
+            var beginKeyExtractor = keyExtractor1;
+            if (!line.getIsBeginKeyExtractor1()) {
+                beginKeyExtractor = keyExtractor2;
+            }
+            var endKeyExtractor = keyExtractor1;
+            if (!line.getIsEndKeyExtractor1()) {
+                endKeyExtractor = keyExtractor2;
+            }
+            if (!endKeyExtractor.apply(line.getCandleEnd()).equals(beginKeyExtractor.apply(line.getCandleBegin()))) {
+                var curK = Math.abs(endKeyExtractor.apply(line.getCandleEnd()).doubleValue() - beginKeyExtractor.apply(line.getCandleBegin()).doubleValue());
                 if (k1 == null || k1 < curK) {
                     k1 = curK;
                 }
@@ -2520,8 +2576,16 @@ public class AlligatorService implements
             Integer kLength2 = null;
             for(var pi = 0; pi < polylinePrev.size(); pi++) {
                 var line = polylinePrev.get(pi);
-                if (!keyExtractor.apply(line.getCandleEnd()).equals(keyExtractor.apply(line.getCandleBegin()))) {
-                    var curK = Math.abs(keyExtractor.apply(line.getCandleEnd()).doubleValue() - keyExtractor.apply(line.getCandleBegin()).doubleValue());
+                var beginKeyExtractor = keyExtractor1;
+                if (!line.getIsBeginKeyExtractor1()) {
+                    beginKeyExtractor = keyExtractor2;
+                }
+                var endKeyExtractor = keyExtractor1;
+                if (!line.getIsEndKeyExtractor1()) {
+                    endKeyExtractor = keyExtractor2;
+                }
+                if (!endKeyExtractor.apply(line.getCandleEnd()).equals(beginKeyExtractor.apply(line.getCandleBegin()))) {
+                    var curK = Math.abs(endKeyExtractor.apply(line.getCandleEnd()).doubleValue() - beginKeyExtractor.apply(line.getCandleBegin()).doubleValue());
                     if (k2 == null || k2 < curK) {
                         k2 = curK;
                     }
@@ -2537,8 +2601,26 @@ public class AlligatorService implements
             for (var j = 0; j < polyline.size(); j++) {
                 var line1 = polyline.get(j);
                 var line2 = polylinePrev.get(j);
-                var d1 = keyExtractor.apply(line1.getCandleEnd()).doubleValue() - keyExtractor.apply(line1.getCandleBegin()).doubleValue();
-                var d2 = keyExtractor.apply(line2.getCandleEnd()).doubleValue() - keyExtractor.apply(line2.getCandleBegin()).doubleValue();
+
+                var beginKeyExtractor = keyExtractor1;
+                if (!line1.getIsBeginKeyExtractor1()) {
+                    beginKeyExtractor = keyExtractor2;
+                }
+                var endKeyExtractor = keyExtractor1;
+                if (!line1.getIsEndKeyExtractor1()) {
+                    endKeyExtractor = keyExtractor2;
+                }
+                var d1 = endKeyExtractor.apply(line1.getCandleEnd()).doubleValue() - beginKeyExtractor.apply(line1.getCandleBegin()).doubleValue();
+
+                beginKeyExtractor = keyExtractor1;
+                if (!line2.getIsBeginKeyExtractor1()) {
+                    beginKeyExtractor = keyExtractor2;
+                }
+                endKeyExtractor = keyExtractor1;
+                if (!line2.getIsEndKeyExtractor1()) {
+                    endKeyExtractor = keyExtractor2;
+                }
+                var d2 = endKeyExtractor.apply(line2.getCandleEnd()).doubleValue() - beginKeyExtractor.apply(line2.getCandleBegin()).doubleValue();
                 var l1 = line1.getLength();
                 var l2 = line2.getLength();
                 //var diffPointJ = Math.sqrt(Math.pow(d1 / k1 - d2 / k2, 2.) + Math.pow(l1 / k1 - l2 / k2, 2.));
@@ -2562,9 +2644,15 @@ public class AlligatorService implements
                 );
                 var nextBegin = polylineLikeAfter.get(0).getCandleBegin();
                 var topLine = polylineLikeAfter.stream().reduce((first, second) ->
-                        comparator.compare(keyExtractor.apply(first.getCandleEnd()), keyExtractor.apply(second.getCandleEnd())) > 0 ? first : second
+                        comparator1.compare(keyExtractor1.apply(first.getCandleEnd()), keyExtractor1.apply(second.getCandleEnd())) > 0 ? first : second
                 ).orElse(null);;
-                nextPriceDelta = k1 * (keyExtractor.apply(topLine.getCandleEnd()).doubleValue() - keyExtractor.apply(nextBegin).doubleValue()) / k2;
+                nextPriceDelta2 = nextPriceDelta = k1 * (keyExtractor1.apply(topLine.getCandleEnd()).doubleValue() - keyExtractor1.apply(nextBegin).doubleValue()) / k2;
+                if (null != keyExtractor2) {
+                    var topLine2 = polylineLikeAfter.stream().reduce((first, second) ->
+                            comparator2.compare(keyExtractor2.apply(first.getCandleEnd()), keyExtractor2.apply(second.getCandleEnd())) > 0 ? first : second
+                    ).orElse(null);
+                    nextPriceDelta2 = nextPriceDelta = k1 * (keyExtractor2.apply(topLine2.getCandleEnd()).doubleValue() - keyExtractor2.apply(nextBegin).doubleValue()) / k2;
+                }
             }
         }
 
@@ -2575,6 +2663,7 @@ public class AlligatorService implements
             fractalData.setPolylineLike(new ArrayList<>(polylineLike));
             fractalData.setDiff(diff);
             fractalData.setNextPriceDelta(nextPriceDelta);
+            fractalData.setNextPriceDelta2(nextPriceDelta2);
             fractalData.setPolylineLikeAfter(new ArrayList<>(polylineLikeAfter));
         }
 
@@ -2598,11 +2687,16 @@ public class AlligatorService implements
     private synchronized void calcFractalLine(
             CandleDomainEntity candle,
             AAlligatorStrategy strategy,
-            Function<? super CandleDomainEntity, ? extends BigDecimal> keyExtractor,
-            Comparator<? super BigDecimal> comparator
+            Function<? super CandleDomainEntity, ? extends BigDecimal> keyExtractor1,
+            Comparator<? super BigDecimal> comparator1,
+            Function<? super CandleDomainEntity, ? extends BigDecimal> keyExtractor2,
+            Comparator<? super BigDecimal> comparator2
     )
     {
-        var key = candle.getFigi() + (strategy.isShort() ? "Short" : "Long") + Integer.toHexString(keyExtractor.hashCode());
+        var key = candle.getFigi() + (strategy.isShort() ? "Short" : "Long") + getMethodKey(keyExtractor1);
+        if (null != keyExtractor2) {
+            key += getMethodKey(keyExtractor2);
+        }
         CandleDomainEntity lastCandle = null;
         if (fractalLineLastCandleCashMap.containsKey(key)) {
             lastCandle = fractalLineLastCandleCashMap.get(key);
@@ -2629,10 +2723,12 @@ public class AlligatorService implements
         }
 
         CandleDomainEntity prevMinCandle = null;
+        Boolean isPrevKeyExtractor = null;
         if (fractalLineCashMap.containsKey(key)) {
             var list = fractalLineCashMap.get(key);
             if (list.size() > 0) {
                 prevMinCandle = list.get(list.size() - 1).getCandleEnd();
+                isPrevKeyExtractor = list.get(list.size() - 1).getIsEndKeyExtractor1();
             }
         }
         for (var i = 0; i < candleListAll.size(); i++) {
@@ -2645,10 +2741,18 @@ public class AlligatorService implements
             //        keyExtractor.apply(first).compareTo(keyExtractor.apply(second)) < 0 ? first : second
             //).orElse(null);
             var minCandle = candleList.stream().reduce((first, second) ->
-                    comparator.compare(keyExtractor.apply(first), keyExtractor.apply(second)) > 0 ? first : second
+                    comparator1.compare(keyExtractor1.apply(first), keyExtractor1.apply(second)) > 0 ? first : second
             ).orElse(null);
             var middleCandle = candleList.get(2);
             var isMin = minCandle == middleCandle;
+            Boolean isKeyExtractor1 = true;
+            if (!isMin && null != keyExtractor2) {
+                var maxCandle = candleList.stream().reduce((first, second) ->
+                        comparator2.compare(keyExtractor2.apply(first), keyExtractor2.apply(second)) > 0 ? first : second
+                ).orElse(null);
+                isMin = maxCandle == middleCandle;
+                isKeyExtractor1 = false;
+            }
 
             if (isMin && null != prevMinCandle) {
                 //if (prevMinCandle.getLowestPrice().compareTo(middleCandle.getLowestPrice()) == 0) {
@@ -2662,13 +2766,16 @@ public class AlligatorService implements
                     );
                     addCashedValueFractalLine(candle.getFigi(), strategy, FractalLineData.builder()
                             .candleBegin(prevMinCandle)
+                            .isBeginKeyExtractor1(isPrevKeyExtractor)
                             .candleEnd(middleCandle)
+                            .isEndKeyExtractor1(isKeyExtractor1)
                             .length(candleBetween.size())
-                            .build(), keyExtractor);
+                            .build(), keyExtractor1, keyExtractor2);
                 //}
             }
             if (isMin) {
                 prevMinCandle = middleCandle;
+                isPrevKeyExtractor = isKeyExtractor1;
             }
         }
 
@@ -2680,9 +2787,13 @@ public class AlligatorService implements
             String figi,
             AAlligatorStrategy strategy,
             FractalLineData v,
-            Function<? super CandleDomainEntity, ? extends BigDecimal> keyExtractor
+            Function<? super CandleDomainEntity, ? extends BigDecimal> keyExtractor1,
+            Function<? super CandleDomainEntity, ? extends BigDecimal> keyExtractor2
     ) {
-        var key = figi + (strategy.isShort() ? "Short" : "Long") + Integer.toHexString(keyExtractor.hashCode());
+        var key = figi + (strategy.isShort() ? "Short" : "Long") + getMethodKey(keyExtractor1);
+        if (null != keyExtractor2) {
+            key += getMethodKey(keyExtractor2);
+        }
         if (!fractalLineCashMap.containsKey(key)) {
             fractalLineCashMap.put(key, new ArrayList<>());
         }
@@ -2696,11 +2807,16 @@ public class AlligatorService implements
     private List<FractalLineData> getFractalLineData(
         CandleDomainEntity candle,
         AAlligatorStrategy strategy,
-        Function<? super CandleDomainEntity, ? extends BigDecimal> keyExtractor,
-        Comparator<? super BigDecimal> comparator
+        Function<? super CandleDomainEntity, ? extends BigDecimal> keyExtractor1,
+        Comparator<? super BigDecimal> comparator1,
+        Function<? super CandleDomainEntity, ? extends BigDecimal> keyExtractor2,
+        Comparator<? super BigDecimal> comparator2
     ) {
-        calcFractalLine(candle, strategy, keyExtractor, comparator);
-        var key = candle.getFigi() + (strategy.isShort() ? "Short" : "Long") + Integer.toHexString(keyExtractor.hashCode());
+        calcFractalLine(candle, strategy, keyExtractor1, comparator1, keyExtractor2, comparator2);
+        var key = candle.getFigi() + (strategy.isShort() ? "Short" : "Long") + getMethodKey(keyExtractor1);
+        if (null != keyExtractor2) {
+            key += getMethodKey(keyExtractor2);
+        }
         return fractalLineCashMap.getOrDefault(key, null);
     }
 
