@@ -1190,7 +1190,7 @@ public class AlligatorService implements
             log.trace("isShouldBuy {} {} report begin", candle.getFigi(), candle.getDateTime());
             annotation = "res = " + resBuy + " " + annotation;
             notificationService.reportStrategyExt(
-                    strategy.isReverse() ? false : resBuy,
+                    strategy.isRev() ? false : resBuy,
                     strategy,
                     candleOrig,
                     "Date|open|high|low|close|ema2|profit|loss|limitPrice|lossAvg|deadLineTop|investBottom|investTop|smaTube|strategy"
