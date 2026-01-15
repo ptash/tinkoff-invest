@@ -223,6 +223,22 @@ public class AlligatorService implements
                         annotation += " nextMax=" + printPrice(nextMax);
                     }
                 }
+
+                var fractalMaxData = getMaxFractalData(candle, strategy);
+                annotation += " MAX ";// + fractalMaxData.getAnnotation();
+                if (fractalMaxData.getPolyline() != null) {
+                    annotation += " polylineBegin=" + printDateTime(fractalMaxData.getPolyline().get(0).getCandleBegin().getDateTime())
+                            + " to " + printDateTime(fractalMaxData.getPolyline().get(fractalMaxData.getPolyline().size() - 1).getCandleEnd().getDateTime());
+                    if (fractalMaxData.getPolylineLike() != null) {
+                        annotation += " polylineLikeBegin=" + printDateTime(fractalMaxData.getPolylineLike().get(0).getCandleBegin().getDateTime())
+                                + " to " + printDateTime(fractalMaxData.getPolylineLike().get(fractalMaxData.getPolylineLike().size() - 1).getCandleEnd().getDateTime());
+                        annotation += " polylineLikeAfterEnd=" + printDateTime(fractalMaxData.getPolylineLikeAfter().get(0).getCandleEnd().getDateTime());
+                        nextMax = fractalMaxData.getPolyline().get(fractalMaxData.getPolyline().size() - 1).getCandleEnd().getHighestPrice().doubleValue()
+                                + fractalMaxData.getNextPriceDelta();
+                        annotation += " getNextPriceDelta=" + printPrice(fractalMaxData.getNextPriceDelta());
+                        annotation += " nextMax=" + printPrice(nextMax);
+                    }
+                }
             } else {
                 var fractalMinData = getMinFractalData(candle, strategy);
                 annotation += " MIN ";// + fractalMinData.getAnnotation();
