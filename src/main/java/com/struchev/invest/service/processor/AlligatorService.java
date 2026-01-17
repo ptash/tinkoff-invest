@@ -193,7 +193,10 @@ public class AlligatorService implements
         Integer stepMaxLength = null;
         Integer stepMinLength = null;
         Integer stepAvLength = null;
-        var average = getAveragePercent(candle.getFigi(), candle.getDateTime(), strategy);
+        Double average = null;
+        if (!strategy.isFractal()) {
+            average = getAveragePercent(candle.getFigi(), candle.getDateTime(), strategy);
+        }
 
         log.trace("isShouldBuy {} {} average={}", candle.getFigi(), candle.getDateTime(), average);
 
@@ -3767,7 +3770,7 @@ public class AlligatorService implements
         String key = "len" + figi + "-" + printDateTime(currentDateTime) + "-" + interval;
         var res = getCashedValueCandleList(key);
         if (res != null) {
-            log.trace("getCandlesByFigiByLength: find value in cash by key {} size {}. Need {}", key, res.size(), length);
+            //log.trace("getCandlesByFigiByLength: find value in cash by key {} size {}. Need {}", key, res.size(), length);
             if (res.size() == length) {
                 return res;
             }
@@ -3778,7 +3781,7 @@ public class AlligatorService implements
 
         res = candleHistoryService.getCandlesByFigiByLength(figi, currentDateTime, length, interval);
         addCashedValueCandleList(key, res);
-        log.trace("getCandlesByFigiByLength: add value to cash with key {} size {}", key, length);
+        //log.trace("getCandlesByFigiByLength: add value to cash with key {} size {}", key, length);
         return res;
     }
 
