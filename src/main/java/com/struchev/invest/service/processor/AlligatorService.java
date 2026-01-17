@@ -204,7 +204,7 @@ public class AlligatorService implements
         if (green != null && blue != null && strategy.isFractal()) {
             if (strategy.isFractalMinMaxInOne()) {
                 var fractalData = getMinMaxFractalData(candle, strategy);
-                annotation += " MINMAX";// + fractalData.getAnnotation();
+                annotation += " MINMAX" + fractalData.getAnnotationShort();
                 if (fractalData.getPolyline() != null) {
                     annotation += " polylineBegin=" + printDateTime(fractalData.getPolyline().get(0).getCandleBegin().getDateTime())
                             + " to " + printDateTime(fractalData.getPolyline().get(fractalData.getPolyline().size() - 1).getCandleEnd().getDateTime());
@@ -1441,7 +1441,7 @@ public class AlligatorService implements
         if (green != null && blue != null && strategy.isFractal()) {
             if (strategy.isFractalMinMaxInOne() && !strategy.isFractalMinMaxInOneOnlyOnBuy()) {
                 var fractalData = getMinMaxFractalData(candlePrev, strategy);
-                annotation += " MINMAX";// + fractalData.getAnnotation();
+                annotation += " MINMAX" + fractalData.getAnnotationShort();
                 if (fractalData.getPolyline() != null) {
                     annotation += " polylineBegin=" + printDateTime(fractalData.getPolyline().get(0).getCandleBegin().getDateTime())
                             + " to " + printDateTime(fractalData.getPolyline().get(fractalData.getPolyline().size() - 1).getCandleEnd().getDateTime());
@@ -2459,6 +2459,7 @@ public class AlligatorService implements
         Double nextPriceDelta;
         Double nextPriceDelta2;
         String annotation;
+        String annotationShort;
     }
 
     private FractalData getMinMaxFractalData(
@@ -2738,6 +2739,7 @@ public class AlligatorService implements
         }
 
         fractalData.setAnnotation(annotation);
+        fractalData.setAnnotationShort(" fractalLineList.size()=" + fractalLineList.size());
         fractalData.setPolyline(new ArrayList<>(polyline));
 
         addFractalDataToCash(cashKey, fractalData);
