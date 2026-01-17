@@ -274,6 +274,13 @@ public class CandleListenerService {
         var byFigi = currentCandleByFigiAndInterval.get(figi);
         var candle = byFigi.getOrDefault(interval, null);
         byFigi.put(interval, null);
+
+        if (null != candle) {
+            if (!lastProcessCandleByFigiAndInterval.containsKey(figi)) {
+                lastProcessCandleByFigiAndInterval.put(figi, new HashMap<>());
+            }
+            lastProcessCandleByFigiAndInterval.get(figi).put(interval, candle);
+        }
         return candle;
     }
 
@@ -283,13 +290,39 @@ public class CandleListenerService {
         }
         var byFigi = currentCandleByFigiAndInterval.get(candle.getFigi());
         var candlePrev = byFigi.getOrDefault(candle.getInterval(), null);
+
         if (null != candlePrev) {
+            if (candlePrev.getDateTime().compareTo(candle.getDateTime()) > 0) {
+                log.warn("Skip add new observe candle by datetime. Prev candle {} {} version {}. New candle {} version {}", candle.getFigi(), candlePrev.getDateTime(), candlePrev.getVersion(), candle.getDateTime(), candle.getVersion());
+                return;
+            }
+            if (candlePrev.getDateTime().equals(candle.getDateTime()) && candlePrev.getVersion() > candle.getVersion()) {
+                log.warn("Skip add new observe candle by version. Prev candle {} {} version {}. New candle {} version {}", candle.getFigi(), candlePrev.getDateTime(), candlePrev.getVersion(), candle.getDateTime(), candle.getVersion());
+                return;
+            }
             log.warn("Skip observe candle {} {} version {}. New candle {} version {}", candle.getFigi(), candlePrev.getDateTime(), candlePrev.getVersion(), candle.getDateTime(), candle.getVersion());
+        }
+
+        CandleDomainEntity candlePrevProcess = null;
+        var lastProcessByFigi = lastProcessCandleByFigiAndInterval.getOrDefault(candle.getFigi(), null);
+        if (null != lastProcessByFigi) {
+            candlePrevProcess = lastProcessByFigi.getOrDefault(candle.getInterval(), null);
+        }
+        if (null != candlePrevProcess) {
+            if (candlePrevProcess.getDateTime().compareTo(candle.getDateTime()) > 0) {
+                log.warn("Skip add new observe candle by datetime. Prev process candle {} {} version {}. New candle {} version {}", candle.getFigi(), candlePrevProcess.getDateTime(), candlePrevProcess.getVersion(), candle.getDateTime(), candle.getVersion());
+                return;
+            }
+            if (candlePrevProcess.getDateTime().equals(candle.getDateTime()) && candlePrevProcess.getVersion() > candle.getVersion()) {
+                log.warn("Skip add new observe candle by version. Prev process candle {} {} version {}. New candle {} version {}", candle.getFigi(), candlePrevProcess.getDateTime(), candlePrevProcess.getVersion(), candle.getDateTime(), candle.getVersion());
+                return;
+            }
         }
         byFigi.put(candle.getInterval(), candle);
     }
 
     private Map<String, Map<String, CandleDomainEntity>> currentCandleByFigiAndInterval = new HashMap<>();
+    private Map<String, Map<String, CandleDomainEntity>> lastProcessCandleByFigiAndInterval = new HashMap<>();
 
     @PostConstruct
     void init() {
