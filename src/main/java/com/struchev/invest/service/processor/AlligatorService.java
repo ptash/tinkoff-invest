@@ -1510,11 +1510,14 @@ public class AlligatorService implements
                     if (
                             limitPriceRev.doubleValue() > candle.getLowestPrice().doubleValue()
                     ) {
+                        /*
+                        // что-то не особо зашло...
                         if (candlePrev.getOpenPrice().compareTo(candlePrev.getClosingPrice()) <= 0) {
                             limitPrice = candlePrev.getClosingPrice().doubleValue();
                         } else {
                             limitPrice = candlePrev.getMedianPrice().doubleValue();
-                        }
+                        }*/
+                        limitPrice = candlePrev.getHighestPrice().doubleValue();
                         limitPrice = Math.min(limitPrice, limitPriceRev.doubleValue());
                         limitPercent = BigDecimal.valueOf((limitPrice - purchaseRate.doubleValue()) * 100. / purchaseRate.abs().doubleValue());
                         newLimitPercent = limitPercent.floatValue();
