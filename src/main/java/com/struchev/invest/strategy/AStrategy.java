@@ -51,6 +51,7 @@ public abstract class AStrategy {
     public abstract Duration getDelayBySL();
 
     public Integer getDelayPlusBySL() { return null; }
+    public Integer getDelayPlusBySLMaxOrder() { return null; }
 
     public Boolean isCheckBook() { return true; }
 

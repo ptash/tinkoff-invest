@@ -22,6 +22,9 @@ public abstract class AAlligatorStrategy extends AStrategy implements Cloneable,
     public Duration getDelayBySL() {
         return null;
     }
+    public Integer getDelayPlusBySL() { return 5; }
+    public Integer getDelayPlusBySLMaxOrder() { return 2; }
+    public Double getDelayPlusBySLFactor() { return null; }
 
     public Duration getHistoryDuration() {
         return Duration.ofDays(100);

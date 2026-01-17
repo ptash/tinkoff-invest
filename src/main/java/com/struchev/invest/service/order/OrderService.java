@@ -80,7 +80,7 @@ public class OrderService implements IOrderService {
     public List<OrderDomainEntity> findClosedByFigiAndStrategy(String figi, AStrategy strategy) {
         return orders.stream()
                 .filter(o -> o.getFigi().equals(figi))
-                .filter(o -> o.getSellDateTime() != null)
+                .filter(o -> o.getSellDateTime() != null && o.getPurchaseDateTime() != null)
                 .filter(o -> o.getStrategy().equals(strategy.getName()))
                 .collect(Collectors.toList());
     }

@@ -88,83 +88,8 @@ public class PurchaseService {
                     var isTrendBuyShort = calculator.isTrendBuyShort(strategy, candleDomainEntity);
                     log.trace("observeNewCandle order=null {} {}: isShouldBuy = {} isShouldBuyShort = {} isTrendBuyShort = {}", strategy.getName(), candleDomainEntity.getDateTime(), isShouldBuy, isShouldBuyShort, isTrendBuyShort);
                     if (isShouldBuy && !isShouldBuyShort && !isTrendBuyShort) {
-                        OrderDomainEntity lastOrder = null;
-                        var finishedOrders = orderService.findClosedByFigiAndStrategy(candleDomainEntity.getFigi(), strategy);
-                        if (finishedOrders.size() > 0) {
-                            lastOrder = finishedOrders.get(finishedOrders.size() - 1);
-                        }
-                        if (strategy.getDelayBySL() != null
-                                && lastOrder != null
-                                && lastOrder.getSellProfit() != null
-                                && lastOrder.getSellProfit().compareTo(BigDecimal.ZERO) < 0) {
-                            var length = strategy.getDelayBySL().getSeconds() / 60;
-                            var candles = candleHistoryService.getCandlesByFigiAndIntervalAndBeforeDateTimeLimit(
-                                    candleDomainEntity.getFigi(),
-                                    candleDomainEntity.getDateTime(),
-                                    Long.valueOf(length).intValue(),
-                                    strategy.getInterval()
-                            );
-                            if (candles.size() < length) {
-                                log.warn("Buy cancel by DelayBySL {} {}: getCandlesByFigiByLength return null for length {}", strategy.getName(), candleDomainEntity.getFigi(), length);
-                            }
-                            if (lastOrder.getSellDateTime().isAfter(candles.get(0).getDateTime())) {
-                                log.info("Buy cancel by DelayBySL {} {}: {} isAfter {}",
-                                        strategy.getName(),
-                                        candleDomainEntity.getFigi(),
-                                        lastOrder.getSellDateTime(),
-                                        candles.get(0).getDateTime()
-                                );
-                                return;
-                            }
-                        }
-
-                        if (strategy.getDelayPlusBySL() != null
-                                && lastOrder != null
-                                && lastOrder.getSellProfit() != null
-                                && lastOrder.getSellPrice() != null
-                                && lastOrder.getSellProfit().compareTo(BigDecimal.ZERO) < 0
-                        ) {
-                            log.info("Buy by DelayPlusBySL {} {} {} - {}",
-                                    strategy.getName(),
-                                    candleDomainEntity.getFigi(),
-                                    candleDomainEntity.getDateTime(),
-                                    strategy.getDelayPlusBySL()
-                            );
-                            var candles = candleHistoryService.getCandlesByFigiByLength(
-                                    candleDomainEntity.getFigi(),
-                                    candleDomainEntity.getDateTime(),
-                                    strategy.getDelayPlusBySL(),
-                                    strategy.getInterval()
-                            );
-                            if (candles == null) {
-                                log.info("Buy cancel by DelayPlusBySL {} {}: getCandlesByFigiByLength return null", lastOrder.getSellDateTime(), candles.get(0).getDateTime());
-                                return;
-                            }
-                            if (lastOrder.getSellDateTime().isAfter(candles.get(0).getDateTime())
-                                    && candleDomainEntity.getClosingPrice().compareTo(lastOrder.getSellPrice().subtract(
-                                    lastOrder.getPurchasePrice().subtract(lastOrder.getSellPrice()).multiply(BigDecimal.valueOf(strategy.getDelayPlusBySLFactor()))
-                            )) >= 0
-                            ) {
-                                log.info("Buy cancel by DelayPlusBySL {} {} {} - {}: {} = {} isAfter {}; {} = {} >= {} ({} {} {})",
-                                        strategy.getName(),
-                                        candleDomainEntity.getFigi(),
-                                        candleDomainEntity.getDateTime(),
-                                        strategy.getDelayPlusBySL(),
-                                        lastOrder.getSellDateTime().isAfter(candles.get(0).getDateTime()),
-                                        lastOrder.getSellDateTime(),
-                                        candles.get(0).getDateTime(),
-                                        candleDomainEntity.getClosingPrice().compareTo(lastOrder.getSellPrice().subtract(
-                                                lastOrder.getPurchasePrice().subtract(lastOrder.getSellPrice()).multiply(BigDecimal.valueOf(strategy.getDelayPlusBySLFactor())))),
-                                        candleDomainEntity.getClosingPrice(),
-                                        lastOrder.getSellPrice().subtract(
-                                                lastOrder.getPurchasePrice().subtract(lastOrder.getSellPrice()).multiply(BigDecimal.valueOf(strategy.getDelayPlusBySLFactor()))),
-                                        lastOrder.getSellPrice(),
-                                        lastOrder.getPurchasePrice(),
-                                        strategy.getDelayPlusBySLFactor()
-
-                                );
-                                return;
-                            }
+                        if (!checkOrdersDelay(strategy, candleDomainEntity)) {
+                            return;
                         }
 
                         order = openOrder(candleDomainEntity, strategy, buildOrderDetails(strategy, candleDomainEntity), false);
@@ -173,6 +98,9 @@ public class PurchaseService {
                     if (isShouldBuyShort && !isShouldBuy) {
                         var isTrendBuy = calculator.isTrendBuy(strategy, candleDomainEntity);
                         if (!isTrendBuy && !isShouldBuy) {
+                            if (!checkOrdersDelay(strategy, candleDomainEntity)) {
+                                return;
+                            }
                             order = openOrder(candleDomainEntity, strategy, buildOrderShortDetails(strategy, candleDomainEntity), true);
                         }
                     }
@@ -401,5 +329,118 @@ public class PurchaseService {
             notificationService.sendBuyInfo(strategy, order, candle);
         }
         return order;
+    }
+
+    private Boolean checkOrdersDelay(AStrategy strategy, CandleDomainEntity candleDomainEntity) {
+        OrderDomainEntity lastOrder = null;
+        var finishedOrders = orderService.findClosedByFigiAndStrategy(candleDomainEntity.getFigi(), strategy);
+        if (finishedOrders.size() > 0) {
+            lastOrder = finishedOrders.get(finishedOrders.size() - 1);
+        }
+        if (strategy.getDelayBySL() != null
+                && lastOrder != null
+                && lastOrder.getSellProfit() != null
+                && lastOrder.getSellProfit().compareTo(BigDecimal.ZERO) < 0) {
+            var length = strategy.getDelayBySL().getSeconds() / 60;
+            var candles = candleHistoryService.getCandlesByFigiAndIntervalAndBeforeDateTimeLimit(
+                    candleDomainEntity.getFigi(),
+                    candleDomainEntity.getDateTime(),
+                    Long.valueOf(length).intValue(),
+                    strategy.getInterval()
+            );
+            if (candles.size() < length) {
+                log.warn("Buy cancel by DelayBySL {} {}: getCandlesByFigiByLength return null for length {}", strategy.getName(), candleDomainEntity.getFigi(), length);
+            }
+            if (lastOrder.getSellDateTime().isAfter(candles.get(0).getDateTime())) {
+                log.info("Buy cancel by DelayBySL {} {}: {} isAfter {}",
+                        strategy.getName(),
+                        candleDomainEntity.getFigi(),
+                        lastOrder.getSellDateTime(),
+                        candles.get(0).getDateTime()
+                );
+                return false;
+            }
+        }
+
+        if (strategy.getDelayPlusBySL() != null
+                && lastOrder != null
+                && !lastOrder.isShort()
+                && lastOrder.getSellProfit() != null
+                && lastOrder.getSellPrice() != null
+                && lastOrder.getSellProfit().subtract(lastOrder.getPurchaseCommission()).subtract(lastOrder.getSellCommission())
+                .compareTo(BigDecimal.ZERO) < 0
+        ) {
+            log.info("Buy by DelayPlusBySL {} {} {} - {}",
+                    strategy.getName(),
+                    candleDomainEntity.getFigi(),
+                    candleDomainEntity.getDateTime(),
+                    strategy.getDelayPlusBySL()
+            );
+            var candles = candleHistoryService.getCandlesByFigiByLength(
+                    candleDomainEntity.getFigi(),
+                    candleDomainEntity.getDateTime(),
+                    strategy.getDelayPlusBySL(),
+                    strategy.getInterval()
+            );
+            if (candles == null) {
+                log.info("Buy cancel by DelayPlusBySL {} {}: getCandlesByFigiByLength return null", lastOrder.getSellDateTime(), candles.get(0).getDateTime());
+                return false;
+            }
+            if (strategy.getDelayPlusBySLMaxOrder() != null) {
+                var negativeOrders = 0;
+                for (var i = 0; i < strategy.getDelayPlusBySLMaxOrder(); i++) {
+                    if (finishedOrders.size() > i) {
+                        var o = finishedOrders.get(finishedOrders.size() - 1 - i);
+                        if (
+                                o.getSellDateTime().isAfter(candles.get(0).getDateTime())
+                                        && o.getSellProfit().subtract(o.getPurchaseCommission()).subtract(o.getSellCommission())
+                                        .compareTo(BigDecimal.ZERO) < 0
+                        ) {
+                            log.info("Buy cancel by DelayPlusBySLMaxOrder {} {}: {} {} isAfter {} with negative profit {}",
+                                    strategy.getName(),
+                                    candleDomainEntity.getFigi(),
+                                    i,
+                                    o.getSellDateTime(),
+                                    candles.get(0).getDateTime(),
+                                    o.getSellProfit().subtract(o.getPurchaseCommission()).subtract(o.getSellCommission())
+                            );
+                            negativeOrders++;
+                        }
+                    }
+                }
+                if (negativeOrders >= strategy.getDelayPlusBySLMaxOrder()) {
+                    notificationService.sendMessageAndLog("Buy cancel by max order " + negativeOrders
+                            + " >= " + strategy.getDelayPlusBySLMaxOrder() + " from " + candles.get(0).getDateTime() + "(" + strategy.getDelayPlusBySL() + ")");
+                    return false;
+                }
+            }
+            if (strategy.getDelayPlusBySLFactor() != null
+                    && lastOrder.getSellDateTime().isAfter(candles.get(0).getDateTime())
+                    && candleDomainEntity.getClosingPrice().compareTo(lastOrder.getSellPrice().subtract(
+                    lastOrder.getPurchasePrice().subtract(lastOrder.getSellPrice()).multiply(BigDecimal.valueOf(strategy.getDelayPlusBySLFactor()))
+            )) >= 0
+            ) {
+                log.info("Buy cancel by DelayPlusBySL {} {} {} - {}: {} = {} isAfter {}; {} = {} >= {} ({} {} {})",
+                        strategy.getName(),
+                        candleDomainEntity.getFigi(),
+                        candleDomainEntity.getDateTime(),
+                        strategy.getDelayPlusBySL(),
+                        lastOrder.getSellDateTime().isAfter(candles.get(0).getDateTime()),
+                        lastOrder.getSellDateTime(),
+                        candles.get(0).getDateTime(),
+                        candleDomainEntity.getClosingPrice().compareTo(lastOrder.getSellPrice().subtract(
+                                lastOrder.getPurchasePrice().subtract(lastOrder.getSellPrice()).multiply(BigDecimal.valueOf(strategy.getDelayPlusBySLFactor())))),
+                        candleDomainEntity.getClosingPrice(),
+                        lastOrder.getSellPrice().subtract(
+                                lastOrder.getPurchasePrice().subtract(lastOrder.getSellPrice()).multiply(BigDecimal.valueOf(strategy.getDelayPlusBySLFactor()))),
+                        lastOrder.getSellPrice(),
+                        lastOrder.getPurchasePrice(),
+                        strategy.getDelayPlusBySLFactor()
+
+                );
+                return false;
+            }
+        }
+        return true;
     }
 }
