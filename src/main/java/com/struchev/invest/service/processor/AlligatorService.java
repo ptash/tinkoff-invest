@@ -2471,6 +2471,8 @@ public class AlligatorService implements
         Double nextPriceDelta2;
         String annotation;
         String annotationShort;
+        Integer i;
+        Double k2;
     }
 
     private FractalData getMinMaxFractalData(
@@ -2621,6 +2623,7 @@ public class AlligatorService implements
         annotation += " i=" + (fractalLineList.size() - 1) + " polylineLast=" + printDateTime(lastLine.getCandleBegin().getDateTime()) + " to " + printDateTime(lastLine.getCandleEnd().getDateTime());
 
         var annotationI = "";
+        List<FractalData> listFractalData = new ArrayList<FractalData>();
         for (var i = 0; i < (fractalLineList.size() - strategy.getFractalLength()); i++) {
             annotationI = "";
             var polylinePrev = fractalLineList.subList(i, i + strategy.getFractalLength());
@@ -2695,6 +2698,13 @@ public class AlligatorService implements
                 //annotationI += "=(" + l1 + " / kLength1) - (" + l2 + " / kLength2)";
                 diffCur += diffPointJ + 0.5 * diffPointLengthJ;
             }
+            if (strategy.getFractalAverageNumber() != null) {
+                listFractalData.add(FractalData.builder()
+                        .diff(diffCur)
+                        .i(i)
+                        .k2(k2)
+                        .build());
+            }
             if (diff == null || diff > diffCur) {
                 annotation += " II=" + i + " polylinePrevB=" + printDateTime(polylinePrev.get(0).getCandleBegin().getDateTime()) + " to " + printDateTime(polylinePrev.get(polylinePrev.size() - 1).getCandleEnd().getDateTime());
                 annotation += " diff=" + printPrice(diffCur);
@@ -2738,6 +2748,58 @@ public class AlligatorService implements
                 annotation += " k2=" + printPrice(k2);
                 annotation += annotationI;
                  */
+            }
+        }
+
+        if (strategy.getFractalAverageNumber() != null) {
+            listFractalData = listFractalData.stream().sorted(Comparator.comparingDouble(FractalData::getDiff)).collect(Collectors.toList());
+            var nextPriceDeltaSum = nextPriceDelta;
+            var nextPriceDelta2Sum = nextPriceDelta2;
+            var count = 1;
+            for (var iFd = 1; iFd < strategy.getFractalAverageNumber(); iFd++) {
+                if (listFractalData.size() > iFd) {
+                    count++;
+                    var fd = listFractalData.get(iFd);
+                    var i = fd.getI();
+                    var k2 = fd.getK2();
+                    annotation += " iFd=" + iFd;
+                    annotation += " diff=" + fd.getDiff();
+
+                    var polylineLikeAfterI = fractalLineList.subList(
+                            i + strategy.getFractalLength(),
+                            Math.min(fractalLineList.size(), i + strategy.getFractalLength() + strategy.getFractalLength())
+                    );
+                    annotation += " II=" + i + " polylinePrevB=" + printDateTime(fractalLineList.get(i).getCandleBegin().getDateTime());
+
+                    var nextBegin = polylineLikeAfterI.get(0).getCandleBegin();
+                    var topLine = polylineLikeAfterI.stream().reduce((first, second) ->
+                            comparator1.compare(keyExtractor1.apply(first.getCandleEnd()), keyExtractor1.apply(second.getCandleEnd())) > 0 ? first : second
+                    ).orElse(null);
+                    annotation += " topLine=" + printDateTime(topLine.getCandleEnd().getDateTime());
+                    var nextPriceDelta2I = k1 * (keyExtractor1.apply(topLine.getCandleEnd()).doubleValue() - keyExtractor1.apply(nextBegin).doubleValue()) / k2;
+                    var nextPriceDeltaI = nextPriceDelta2I;
+                    annotation += " nextPriceDeltaI=" + printPrice(nextPriceDeltaI)
+                    //        + "=" + printPrice(k1) + "*(" + printPrice(keyExtractor1.apply(topLine.getCandleEnd())) + "-" + printPrice(keyExtractor1.apply(nextBegin)) + ")/" + printPrice(k2)
+                    ;
+                    if (null != keyExtractor2) {
+                        var topLine2 = polylineLikeAfterI.stream().reduce((first, second) ->
+                                comparator2.compare(keyExtractor2.apply(first.getCandleEnd()), keyExtractor2.apply(second.getCandleEnd())) > 0 ? first : second
+                        ).orElse(null);
+                        annotation += " topLine2=" + printDateTime(topLine2.getCandleEnd().getDateTime());
+                        nextPriceDelta2I = k1 * (keyExtractor2.apply(topLine2.getCandleEnd()).doubleValue() - keyExtractor2.apply(nextBegin).doubleValue()) / k2;
+                        annotation += " nextPriceDelta2I=" + printPrice(nextPriceDelta2I)
+                        //    + "=" + printPrice(k1) + "*(" + printPrice(keyExtractor2.apply(topLine2.getCandleEnd())) + "-" + printPrice(keyExtractor2.apply(nextBegin)) + ")/" + printPrice(k2)
+                        ;
+                        if (strategy.isFractalMinMaxInOneOnlyDeltaOne()) {
+                            nextPriceDeltaI = nextPriceDelta2I;
+                            annotation += " new nextPriceDeltaI=" + printPrice(nextPriceDeltaI);
+                        }
+                    }
+                    nextPriceDeltaSum += nextPriceDeltaI;
+                    nextPriceDelta2Sum += nextPriceDelta2I;
+                }
+                nextPriceDelta = nextPriceDeltaSum / count;
+                nextPriceDelta2 = nextPriceDelta2Sum / count;
             }
         }
 
@@ -2901,9 +2963,9 @@ public class AlligatorService implements
                         middleCandle.getDateTime(),
                         strategy.getInterval()
                 );
-                if (strategy.isFractalInDayTimeTrading()) {
-                    candleBetween = candleBetween.stream().filter(c -> Date.getDateTimeInZone(c.getDateTime()).getDayOfWeek().getValue() < 6).collect(Collectors.toList());
-                }
+                //if (strategy.isFractalInDayTimeTrading()) {
+                //    candleBetween = candleBetween.stream().filter(c -> Date.getDateTimeInZone(c.getDateTime()).getDayOfWeek().getValue() < 6).collect(Collectors.toList());
+                //}
                 addCashedValueFractalLine(candle.getFigi(), strategy, FractalLineData.builder()
                             .candleBegin(prevMinCandle)
                             .isBeginKeyExtractor1(isPrevKeyExtractor)
