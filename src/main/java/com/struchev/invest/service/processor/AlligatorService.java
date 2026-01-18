@@ -2756,12 +2756,14 @@ public class AlligatorService implements
 
         if (strategy.getFractalAverageNumber() != null) {
             listFractalData = listFractalData.stream().sorted(Comparator.comparingDouble(FractalData::getDiff)).collect(Collectors.toList());
-            var nextPriceDeltaSum = nextPriceDelta;
-            var nextPriceDelta2Sum = nextPriceDelta2;
-            var count = 1;
+            List<Double> nextPriceDeltaList = new ArrayList<>();
+            nextPriceDeltaList.add(nextPriceDelta);
+            List<Double> nextPriceDelta2List = new ArrayList<>();
+            nextPriceDelta2List.add(nextPriceDelta2);
+            List<Double> diffList = new ArrayList<>();
+            diffList.add(diff);
             for (var iFd = 1; iFd < strategy.getFractalAverageNumber(); iFd++) {
                 if (listFractalData.size() > iFd) {
-                    count++;
                     var fd = listFractalData.get(iFd);
                     var i = fd.getI();
                     var k2 = fd.getK2();
@@ -2798,11 +2800,19 @@ public class AlligatorService implements
                             annotation += " new nextPriceDeltaI=" + printPrice(nextPriceDeltaI);
                         }
                     }
-                    nextPriceDeltaSum += nextPriceDeltaI;
-                    nextPriceDelta2Sum += nextPriceDelta2I;
+                    nextPriceDeltaList.add(nextPriceDeltaI);
+                    nextPriceDelta2List.add(nextPriceDelta2I);
+                    diffList.add(fd.getDiff());
                 }
-                nextPriceDelta = nextPriceDeltaSum / count;
-                nextPriceDelta2 = nextPriceDelta2Sum / count;
+                var diffSum = diffList.stream().mapToDouble(v -> v).sum();
+                nextPriceDelta = 0.;
+                nextPriceDelta2 = 0.;
+                for (iFd = 0; iFd < diffList.size(); iFd++) {
+                    nextPriceDelta += nextPriceDeltaList.get(iFd) * diffList.get(iFd) / diffSum;
+                    nextPriceDelta2 += nextPriceDelta2List.get(iFd) * diffList.get(iFd) / diffSum;
+                }
+                //nextPriceDelta = nextPriceDeltaList.stream().mapToDouble(v -> v).average().orElseThrow();
+                //nextPriceDelta2 = nextPriceDelta2List.stream().mapToDouble(v -> v).average().orElseThrow();
             }
         }
 
