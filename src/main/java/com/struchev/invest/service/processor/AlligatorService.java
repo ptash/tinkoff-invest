@@ -2572,6 +2572,7 @@ public class AlligatorService implements
             cashKey += getMethodKey(keyExtractor2);
         }
         cashKey += strategy.isFractalMinMaxInOneOnlyDeltaOne() ? "is1" : "is0";
+        cashKey += strategy.isFractalInDayTimeTrading() ? "is1" : "is0";
         var fractalDataFromCash = getFractalDataFromCash(cashKey);
 
         if (null != fractalDataFromCash) {
@@ -2770,6 +2771,20 @@ public class AlligatorService implements
         }
     };
 
+    private String buildKeyFractalLine(
+            String figi,
+            AAlligatorStrategy strategy,
+            Function<? super CandleDomainEntity, ? extends BigDecimal> keyExtractor1,
+            Function<? super CandleDomainEntity, ? extends BigDecimal> keyExtractor2
+    ) {
+        var key = figi + (strategy.isShort() ? "Short" : "Long") + getMethodKey(keyExtractor1);
+        if (null != keyExtractor2) {
+            key += getMethodKey(keyExtractor2);
+        }
+        key += strategy.isFractalInDayTimeTrading() ? "isF1" : "isF0";
+        return key;
+    }
+
     private synchronized void calcFractalLine(
             CandleDomainEntity candle,
             AAlligatorStrategy strategy,
@@ -2779,10 +2794,7 @@ public class AlligatorService implements
             Comparator<? super BigDecimal> comparator2
     )
     {
-        var key = candle.getFigi() + (strategy.isShort() ? "Short" : "Long") + getMethodKey(keyExtractor1);
-        if (null != keyExtractor2) {
-            key += getMethodKey(keyExtractor2);
-        }
+        var key = buildKeyFractalLine(candle.getFigi(), strategy, keyExtractor1, keyExtractor2);
         CandleDomainEntity lastCandle = null;
         if (fractalLineLastCandleCashMap.containsKey(key)) {
             lastCandle = fractalLineLastCandleCashMap.get(key);
@@ -2830,6 +2842,12 @@ public class AlligatorService implements
                     comparator1.compare(keyExtractor1.apply(first), keyExtractor1.apply(second)) > 0 ? first : second
             ).orElse(null);
             var middleCandle = candleList.get(2);
+            if (strategy.isFractalInDayTimeTrading()) {
+                var dateInZone = Date.getDateTimeInZone(middleCandle.getDateTime());
+                if (dateInZone.getDayOfWeek().getValue() >= 6) {
+                    continue;
+                }
+            }
             var isMin = minCandle == middleCandle;
             var isMax = false;
             var isMinFirst = true;
@@ -2948,10 +2966,7 @@ public class AlligatorService implements
             Function<? super CandleDomainEntity, ? extends BigDecimal> keyExtractor1,
             Function<? super CandleDomainEntity, ? extends BigDecimal> keyExtractor2
     ) {
-        var key = figi + (strategy.isShort() ? "Short" : "Long") + getMethodKey(keyExtractor1);
-        if (null != keyExtractor2) {
-            key += getMethodKey(keyExtractor2);
-        }
+        var key = buildKeyFractalLine(figi, strategy, keyExtractor1, keyExtractor2);
         if (!fractalLineCashMap.containsKey(key)) {
             fractalLineCashMap.put(key, new ArrayList<>());
         }
@@ -2972,10 +2987,7 @@ public class AlligatorService implements
         Comparator<? super BigDecimal> comparator2
     ) {
         calcFractalLine(candle, strategy, keyExtractor1, comparator1, keyExtractor2, comparator2);
-        var key = candle.getFigi() + (strategy.isShort() ? "Short" : "Long") + getMethodKey(keyExtractor1);
-        if (null != keyExtractor2) {
-            key += getMethodKey(keyExtractor2);
-        }
+        var key = buildKeyFractalLine(candle.getFigi(), strategy, keyExtractor1, keyExtractor2);
         return fractalLineCashMap.getOrDefault(key, null);
     }
 

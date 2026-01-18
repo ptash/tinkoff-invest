@@ -144,6 +144,7 @@ public abstract class AAlligatorStrategy extends AStrategy implements Cloneable,
     public boolean isFractalMinMaxInOne() { return false; }
     public boolean isFractalMinMaxInOneOnlyOnBuy() { return false; }
     public boolean isFractalMinMaxInOneOnlyDeltaOne() { return false; }
+    public boolean isFractalInDayTimeTrading() { return false; }
     public Integer getMaxDeepFractal() { return 100; }
     public Integer getFractalLength() { return 10; }
     public boolean isAlligator() { return true; }
