@@ -2525,7 +2525,7 @@ public class AlligatorService implements
     private Map<String, FractalData> fractalDataCashMap = new LinkedHashMap<>() {
         @Override
         protected boolean removeEldestEntry(final Map.Entry eldest) {
-            return size() > 4 * 20;
+            return size() > 4 * 40;
         }
     };
 
@@ -2570,11 +2570,14 @@ public class AlligatorService implements
                 + (strategy.isShort() ? "Short" : "Long")
                 + getMethodKey(keyExtractor1)
                 + printDateTime(polyline.get(0).getCandleBegin().getDateTime());
+        cashKey += strategy.isFractalMinMaxInOneOnlyDeltaOne() ? "is1" : "is0";
+        cashKey += strategy.isFractalInDayTimeTrading() ? "is1" : "is0";
         if (null != keyExtractor2) {
             cashKey += getMethodKey(keyExtractor2);
         }
-        cashKey += strategy.isFractalMinMaxInOneOnlyDeltaOne() ? "is1" : "is0";
-        cashKey += strategy.isFractalInDayTimeTrading() ? "is1" : "is0";
+        if (null != strategy.getFractalAverageNumber()) {
+            cashKey += strategy.getFractalAverageNumber();
+        }
         var fractalDataFromCash = getFractalDataFromCash(cashKey);
 
         if (null != fractalDataFromCash) {
@@ -2823,13 +2826,13 @@ public class AlligatorService implements
     private Map<String, List<FractalLineData>> fractalLineCashMap = new LinkedHashMap<>() {
         @Override
         protected boolean removeEldestEntry(final Map.Entry eldest) {
-            return size() > 4 * 20;
+            return size() > 4 * 30;
         }
     };
     private Map<String, CandleDomainEntity> fractalLineLastCandleCashMap = new LinkedHashMap<>() {
         @Override
         protected boolean removeEldestEntry(final Map.Entry eldest) {
-            return size() > 4 * 20;
+            return size() > 4 * 30;
         }
     };
 
