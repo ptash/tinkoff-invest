@@ -2901,6 +2901,9 @@ public class AlligatorService implements
                         middleCandle.getDateTime(),
                         strategy.getInterval()
                 );
+                if (strategy.isFractalInDayTimeTrading()) {
+                    candleBetween = candleBetween.stream().filter(c -> Date.getDateTimeInZone(c.getDateTime()).getDayOfWeek().getValue() < 6).collect(Collectors.toList());
+                }
                 addCashedValueFractalLine(candle.getFigi(), strategy, FractalLineData.builder()
                             .candleBegin(prevMinCandle)
                             .isBeginKeyExtractor1(isPrevKeyExtractor)
