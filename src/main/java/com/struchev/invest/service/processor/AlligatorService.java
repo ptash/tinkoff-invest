@@ -2804,16 +2804,18 @@ public class AlligatorService implements
                     nextPriceDelta2List.add(nextPriceDelta2I);
                     diffList.add(fd.getDiff());
                 }
-                var diffSum = diffList.stream().mapToDouble(v -> v).sum();
-                nextPriceDelta = 0.;
-                nextPriceDelta2 = 0.;
-                for (iFd = 0; iFd < diffList.size(); iFd++) {
-                    nextPriceDelta += nextPriceDeltaList.get(iFd) * diffList.get(iFd) / diffSum;
-                    nextPriceDelta2 += nextPriceDelta2List.get(iFd) * diffList.get(iFd) / diffSum;
-                }
-                //nextPriceDelta = nextPriceDeltaList.stream().mapToDouble(v -> v).average().orElseThrow();
-                //nextPriceDelta2 = nextPriceDelta2List.stream().mapToDouble(v -> v).average().orElseThrow();
             }
+            /*
+            var diffSum = diffList.stream().mapToDouble(v -> v).sum();
+            nextPriceDelta = 0.;
+            nextPriceDelta2 = 0.;
+            for (var iFd = 0; iFd < diffList.size(); iFd++) {
+                nextPriceDelta += nextPriceDeltaList.get(iFd) * diffList.get(iFd) / diffSum;
+                nextPriceDelta2 += nextPriceDelta2List.get(iFd) * diffList.get(iFd) / diffSum;
+            }
+             */
+            nextPriceDelta = nextPriceDeltaList.stream().mapToDouble(v -> v).average().orElseThrow();
+            nextPriceDelta2 = nextPriceDelta2List.stream().mapToDouble(v -> v).average().orElseThrow();
         }
 
         if (null != polylineLike) {
