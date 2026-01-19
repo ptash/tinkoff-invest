@@ -364,7 +364,6 @@ public class PurchaseService {
 
         if (strategy.getDelayPlusBySL() != null
                 && lastOrder != null
-                && !lastOrder.isShort()
                 && lastOrder.getSellProfit() != null
                 && lastOrder.getSellPrice() != null
                 && lastOrder.getSellProfit().subtract(lastOrder.getPurchaseCommission()).subtract(lastOrder.getSellCommission())
@@ -396,9 +395,10 @@ public class PurchaseService {
                                         && o.getSellProfit().subtract(o.getPurchaseCommission()).subtract(o.getSellCommission())
                                         .compareTo(BigDecimal.ZERO) < 0
                         ) {
-                            log.info("Buy cancel by DelayPlusBySLMaxOrder {} {}: {} {} isAfter {} with negative profit {}",
+                            log.info("Buy cancel by DelayPlusBySLMaxOrder {} {} count {}: {} {} isAfter {} with negative profit {}",
                                     strategy.getName(),
                                     candleDomainEntity.getFigi(),
+                                    negativeOrders,
                                     i,
                                     o.getSellDateTime(),
                                     candles.get(0).getDateTime(),
