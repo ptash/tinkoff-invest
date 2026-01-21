@@ -126,7 +126,7 @@ public class OrderService implements IOrderService {
         var instrument = instrumentService.getInstrument(candle.getFigi());
         var priceWanted = candle.getClosingPrice();
         if (orderDetails.getPriceWanted() != null) {
-            priceWanted = candleHistoryReverseForShortService.preparePrice(orderDetails.getPriceWanted()).min(candle.getHighestPrice());
+            priceWanted = candleHistoryReverseForShortService.preparePrice(orderDetails.getPriceWanted()).min(candle.getLowestPrice());
         }
         var order = OrderDomainEntity.builder()
                 .currency(instrument.getCurrency())
@@ -168,7 +168,7 @@ public class OrderService implements IOrderService {
         var instrument = instrumentService.getInstrument(candle.getFigi());
         var priceWanted = candle.getClosingPrice();
         if (orderDetails.getPriceWanted() != null) {
-            priceWanted = orderDetails.getPriceWanted().max(candle.getLowestPrice());
+            priceWanted = orderDetails.getPriceWanted().max(candle.getHighestPrice());
         }
         var order = OrderDomainEntity.builder()
                 .currency(instrument.getCurrency())
@@ -319,7 +319,7 @@ public class OrderService implements IOrderService {
         }
 
         if (lots > 0) {
-            var result = tinkoffOrderAPI.sellShort(instrument, candle.getClosingPrice(), lots);
+            var result = tinkoffOrderAPI.sellShort(instrument, candle.getClosingPrice(), lots, candle);
 
             order.setPurchaseDateTime(candle.getDateTime());
             order = setOrderInfoBuy(order, result);
@@ -347,7 +347,7 @@ public class OrderService implements IOrderService {
             lots -= order.getCellLots().intValue();
         }
         if (lots > 0) {
-            var result = tinkoffOrderAPI.sell(instrument, candle.getClosingPrice(), lots);
+            var result = tinkoffOrderAPI.sell(instrument, candle.getClosingPrice(), lots, candle);
 
             order.setSellDateTime(candle.getDateTime());
             order = setOrderInfoSell(order, result);

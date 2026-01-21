@@ -1325,6 +1325,7 @@ public class AlligatorService implements
         log.trace("isShouldSell {} {} begin", candle.getFigi(), candle.getDateTime());
         var annotation = "";
         var res = false;
+        var resByLimit = false;
 
         var candlePrevList = getCandlesByFigiByLength(candle.getFigi(), candle.getDateTime(), 1, strategy.getInterval());
         var candlePrev = candlePrevList.get(0);
@@ -1556,7 +1557,9 @@ public class AlligatorService implements
                     if (
                             limitPriceRev.doubleValue() > candle.getLowestPrice().doubleValue()
                     ) {
-
+                        resByLimit = true;
+                        annotation += " SELL BY limitPriceRev = " + printPrice(limitPriceRev);
+                        /*
                         // что-то не особо зашло...
                         if (candlePrev.getOpenPrice().compareTo(candlePrev.getClosingPrice()) <= 0) {
                             limitPrice = candlePrev.getClosingPrice().doubleValue();
@@ -1570,6 +1573,7 @@ public class AlligatorService implements
                         limitPercent = BigDecimal.valueOf((limitPrice - purchaseRate.doubleValue()) * 100. / purchaseRate.abs().doubleValue());
                         newLimitPercent = limitPercent.floatValue();
                         annotation += "new limitPrice nextMax = " + printPrice(limitPrice);
+                         */
                     }
                 }
             } else {
@@ -1910,16 +1914,17 @@ public class AlligatorService implements
             }
         }
 
-        if (res && strategy.isStopLossOnlyByLimit()) {
-            annotation += " SKIP by only limit";
-            res = false;
-        }
-
         if (res && strategy.isStopLossSkipByBuy()) {
             if (isShouldBuyInternal(strategy, candle, false)) {
                 annotation += " skip by buy";
                 res = false;
             }
+        }
+
+        if (strategy.isStopLossOnlyByLimit()) {
+            annotation += " isStopLossOnlyByLimit=" + resByLimit;
+            //res = false;
+            res = resByLimit;
         }
 
         log.trace("isShouldSell {} {} before sma res={}", candle.getFigi(), candle.getDateTime(), res);
