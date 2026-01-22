@@ -326,7 +326,18 @@ public class AlligatorService implements
                     realPriceWanted = candle.getClosingPrice();
                 } else {
                     realPriceWanted = candle.getMedianPrice();
+                    var isDownMinMax = true;
+                    for (var i = 0; i < candleMinMaxList.size(); i++) {
+                        if (candleMinMaxList.get(i).getOpenPrice().compareTo(candleMinMaxList.get(i).getClosingPrice()) < 0) {
+                            isDownMinMax = false;
+                        }
+                    }
+                    if (isDownMinMax) {
+                        realPriceWanted = realPriceWanted.min(candle.getClosingPrice());
+                    }
                 }
+                annotation += " realPriceWanted=" + printPrice(realPriceWanted);
+
                 if (
                         expectPercent > strategy.getBuyMinProfitPercent()
                         && candleOrig.getLowestPrice().doubleValue() < nextMin
