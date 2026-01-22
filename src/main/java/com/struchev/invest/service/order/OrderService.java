@@ -127,7 +127,7 @@ public class OrderService implements IOrderService {
         var priceWanted = candle.getClosingPrice();
         if (orderDetails.getPriceWanted() != null) {
             //priceWanted = candleHistoryReverseForShortService.preparePrice(orderDetails.getPriceWanted()).min(candle.getLowestPrice());
-            priceWanted = orderDetails.getPriceWanted();
+            priceWanted = candleHistoryReverseForShortService.preparePrice(orderDetails.getPriceWanted());
         }
         var order = OrderDomainEntity.builder()
                 .currency(instrument.getCurrency())

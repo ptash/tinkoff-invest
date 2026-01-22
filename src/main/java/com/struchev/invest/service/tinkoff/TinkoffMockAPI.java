@@ -43,7 +43,10 @@ public class TinkoffMockAPI extends ATinkoffAPI {
     @Override
     public OrderResult buyShort(InstrumentService.Instrument instrument, BigDecimal price, Integer count, CandleDomainEntity candle) {
         if (candle.getLowestPrice().compareTo(price) > 0) {
+            //log.info("buyShort change price from {} to {}", price, candle.getLowestPrice());
             price = candle.getLowestPrice();
+        } else {
+            //log.info("buyShort price from {}", price);
         }
         return OrderResult.builder()
                 .commissionInitial(calculateCommission(price, count, instrument))
