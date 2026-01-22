@@ -1587,6 +1587,15 @@ public class AlligatorService implements
                             limitPrice = limitPriceRev.doubleValue();
                         } else {
                             limitPrice = candlePrev.getMedianPrice().doubleValue();
+                            var isDownMinMax = true;
+                            for (var i = 0; i < candleMinMaxList.size(); i++) {
+                                if (candleMinMaxList.get(i).getOpenPrice().compareTo(candleMinMaxList.get(i).getClosingPrice()) < 0) {
+                                    isDownMinMax = false;
+                                }
+                            }
+                            if (isDownMinMax) {
+                                limitPrice = Math.min(limitPrice, candle.getClosingPrice().doubleValue());
+                            }
                         }
                         //limitPrice = candlePrev.getHighestPrice().doubleValue();
                         annotation += "new limitPrice HighestPrice = " + printPrice(limitPrice);
