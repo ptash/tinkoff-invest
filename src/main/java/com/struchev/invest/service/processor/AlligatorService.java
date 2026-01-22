@@ -321,14 +321,25 @@ public class AlligatorService implements
                         }
                     }
                 }
+                var realPriceWanted = priceWanted;
+                if (candle.getOpenPrice().compareTo(candle.getClosingPrice()) <= 0) {
+                    realPriceWanted = candle.getClosingPrice();
+                } else {
+                    realPriceWanted = candle.getMedianPrice();
+                }
                 if (
                         expectPercent > strategy.getBuyMinProfitPercent()
                         && candleOrig.getLowestPrice().doubleValue() < nextMin
+                        //&& realPriceWanted.compareTo(candleOrig.getLowestPrice()) >= 0
+                        && realPriceWanted.compareTo(candleOrig.getHighestPrice()) <= 0
                         && !isSkip
                 ) {
                     annotation += " BUY OK";
                     resBuy = true;
                     priceWanted = BigDecimal.valueOf(nextMin);
+
+                    priceWanted = realPriceWanted;
+
                     if (strategy.getBuyMaxProfitPercent() != null) {
                         expectPercent = strategy.getBuyMaxProfitPercent();
                     }
@@ -1557,9 +1568,8 @@ public class AlligatorService implements
                     if (
                             limitPriceRev.doubleValue() > candle.getLowestPrice().doubleValue()
                     ) {
-                        resByLimit = true;
-                        annotation += " SELL BY limitPriceRev = " + printPrice(limitPriceRev);
-                        /*
+                        //resByLimit = false;
+                        //annotation += " SELL BY limitPriceRev = " + printPrice(limitPriceRev);
                         // что-то не особо зашло...
                         if (candlePrev.getOpenPrice().compareTo(candlePrev.getClosingPrice()) <= 0) {
                             limitPrice = candlePrev.getClosingPrice().doubleValue();
@@ -1573,7 +1583,6 @@ public class AlligatorService implements
                         limitPercent = BigDecimal.valueOf((limitPrice - purchaseRate.doubleValue()) * 100. / purchaseRate.abs().doubleValue());
                         newLimitPercent = limitPercent.floatValue();
                         annotation += "new limitPrice nextMax = " + printPrice(limitPrice);
-                         */
                     }
                 }
             } else {

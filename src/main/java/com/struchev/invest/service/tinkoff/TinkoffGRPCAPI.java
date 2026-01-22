@@ -474,7 +474,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
         return orderResultBuilder.build();
     }
 
-    public OrderResult sell(InstrumentService.Instrument instrument, BigDecimal price, Integer count) {
+    public OrderResult sell(InstrumentService.Instrument instrument, BigDecimal price, Integer count, CandleDomainEntity candle) {
         long quantity = count / instrument.getLot();
         var quotation = Quotation.newBuilder()
                 .setUnits(price.longValue())
@@ -521,7 +521,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
     }
 
     @Override
-    public OrderResult sellShort(InstrumentService.Instrument instrument, BigDecimal price, Integer count) {
+    public OrderResult sellShort(InstrumentService.Instrument instrument, BigDecimal price, Integer count, CandleDomainEntity candle) {
         long quantity = count / instrument.getLot();
         var quotation = Quotation.newBuilder()
                 .setUnits(price.longValue())

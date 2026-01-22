@@ -55,7 +55,8 @@ public class TinkoffMockAPI extends ATinkoffAPI {
     }
 
     @Override
-    public OrderResult sell(InstrumentService.Instrument instrument, BigDecimal price, Integer count) {
+    public OrderResult sell(InstrumentService.Instrument instrument, BigDecimal price, Integer count, CandleDomainEntity candle) {
+        price = price.min(candle.getLowestPrice());
         return OrderResult.builder()
                 .commissionInitial(calculateCommission(price, count, instrument))
                 .commission(calculateCommission(price, count, instrument))
@@ -66,7 +67,8 @@ public class TinkoffMockAPI extends ATinkoffAPI {
     }
 
     @Override
-    public OrderResult sellShort(InstrumentService.Instrument instrument, BigDecimal price, Integer count) {
+    public OrderResult sellShort(InstrumentService.Instrument instrument, BigDecimal price, Integer count, CandleDomainEntity candle) {
+        price = price.max(candle.getHighestPrice());
         return OrderResult.builder()
                 .commissionInitial(calculateCommission(price, count, instrument))
                 .commission(calculateCommission(price, count, instrument))
@@ -204,7 +206,8 @@ public class TinkoffMockAPI extends ATinkoffAPI {
     public Boolean checkGoodBuy(InstrumentService.Instrument instrument, BigDecimal price, Integer count, BigDecimal priceError, CandleDomainEntity candle) {
         //var delta = price.multiply(priceError);
         //delta = moneyRound(instrument, delta);
-        return candle.getLowestPrice().compareTo(price) <= 0;
+        //return candle.getLowestPrice().compareTo(price) <= 0;
+        return price.compareTo(candle.getLowestPrice()) >= 0;
     }
 
     private BigDecimal moneyRound(InstrumentService.Instrument instrument, BigDecimal price) {

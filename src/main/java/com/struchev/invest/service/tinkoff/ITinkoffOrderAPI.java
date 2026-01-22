@@ -32,8 +32,8 @@ public interface ITinkoffOrderAPI {
     OrderResult buy(InstrumentService.Instrument instrument, BigDecimal price, Integer count, CandleDomainEntity candle);
     OrderResult buyShort(InstrumentService.Instrument instrument, BigDecimal price, Integer count, CandleDomainEntity candle);
 
-    OrderResult sell(InstrumentService.Instrument instrument, BigDecimal price, Integer count);
-    OrderResult sellShort(InstrumentService.Instrument instrument, BigDecimal price, Integer count);
+    OrderResult sell(InstrumentService.Instrument instrument, BigDecimal price, Integer count, CandleDomainEntity candle);
+    OrderResult sellShort(InstrumentService.Instrument instrument, BigDecimal price, Integer count, CandleDomainEntity candle);
 
     public OrderResult sellLimit(InstrumentService.Instrument instrument, BigDecimal price, Integer count, String uuid, String orderId, CandleDomainEntity candle, OrderDomainEntity order);
     public OrderResult sellLimitShort(InstrumentService.Instrument instrument, BigDecimal price, Integer count, String uuid, String orderId, CandleDomainEntity candle, OrderDomainEntity order);
