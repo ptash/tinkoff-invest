@@ -56,7 +56,7 @@ public class TinkoffMockAPI extends ATinkoffAPI {
 
     @Override
     public OrderResult sell(InstrumentService.Instrument instrument, BigDecimal price, Integer count, CandleDomainEntity candle) {
-        price = price.min(candle.getLowestPrice());
+        price = price.max(candle.getLowestPrice());
         return OrderResult.builder()
                 .commissionInitial(calculateCommission(price, count, instrument))
                 .commission(calculateCommission(price, count, instrument))
@@ -68,7 +68,7 @@ public class TinkoffMockAPI extends ATinkoffAPI {
 
     @Override
     public OrderResult sellShort(InstrumentService.Instrument instrument, BigDecimal price, Integer count, CandleDomainEntity candle) {
-        price = price.max(candle.getHighestPrice());
+        price = price.min(candle.getHighestPrice());
         return OrderResult.builder()
                 .commissionInitial(calculateCommission(price, count, instrument))
                 .commission(calculateCommission(price, count, instrument))
