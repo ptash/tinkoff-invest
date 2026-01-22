@@ -145,7 +145,7 @@ public class OrderService implements IOrderService {
 
         if (strategy.isCheckBook()
                 && !tinkoffOrderAPI.checkGoodSell(instrument, priceWanted, order.getLots(), strategy.getPriceError(), candle)) {
-            throw new RuntimeException("checkGoodSell return false for figi " + instrument.getFigi());
+            throw new RuntimeException("checkGoodSell return false for figi " + instrument.getFigi() + " and strategy " + strategy.getExtName());
         }
         var result = tinkoffOrderAPI.buyShort(instrument, priceWanted, order.getLots(), candle);
         order.setSellCommissionInitial(result.getCommissionInitial());
