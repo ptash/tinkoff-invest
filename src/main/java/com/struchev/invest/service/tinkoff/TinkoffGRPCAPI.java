@@ -435,6 +435,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                 checkInstrumentAvailableToSell(instrument, direction == OrderDirection.ORDER_DIRECTION_SELL ? count : -count);
                 var result = getApi().getOrdersService().postOrderSync(instrument.getFigi(), quantity, quotation,
                         direction, getAccountIdByFigi(instrument), OrderType.ORDER_TYPE_LIMIT, uuid);
+                log.info("postOrderSync res = {}", result);
                 orderResultBuilder
                         .orderId(result.getOrderId());
                 if (result.getExecutionReportStatus().getNumber() == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_FILL_VALUE

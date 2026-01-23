@@ -291,11 +291,9 @@ public class OrderService implements IOrderService {
         }
         if (null != result.getLots() && result.getLots() > 0 && result.getIsExecuted()) {
             if (order.isShort()) {
-                order.setPurchaseDateTime(candle.getDateTime());
-                order = setOrderInfoBuy(order, result);
+                order = setOrderInfoBuy(order, result, candle);
             } else {
-                order.setSellDateTime(candle.getDateTime());
-                order = setOrderInfoSell(order, result);
+                order = setOrderInfoSell(order, result, candle);
             }
         }
         return order;
@@ -322,9 +320,7 @@ public class OrderService implements IOrderService {
 
         if (lots > 0) {
             var result = tinkoffOrderAPI.sellShort(instrument, candle.getClosingPrice(), lots, candle);
-
-            order.setPurchaseDateTime(candle.getDateTime());
-            order = setOrderInfoBuy(order, result);
+            order = setOrderInfoBuy(order, result, candle);
         }
 
         return order;
@@ -350,9 +346,7 @@ public class OrderService implements IOrderService {
         }
         if (lots > 0) {
             var result = tinkoffOrderAPI.sell(instrument, candle.getClosingPrice(), lots, candle);
-
-            order.setSellDateTime(candle.getDateTime());
-            order = setOrderInfoSell(order, result);
+            order = setOrderInfoSell(order, result, candle);
         }
 
         return order;
@@ -362,21 +356,17 @@ public class OrderService implements IOrderService {
         var closeResult = tinkoffOrderAPI.closeSellLimit(instrument, order.getSellLimitOrderId(), candle);
         if (null != closeResult.getLots() && closeResult.getLots() > 0 && closeResult.getIsExecuted()) {
             if (order.isShort()) {
-                order.setPurchaseDateTime(candle.getDateTime());
-                order = setOrderInfoBuy(order, closeResult);
+                order = setOrderInfoBuy(order, closeResult, candle);
             } else {
-                order.setSellDateTime(candle.getDateTime());
-                order = setOrderInfoSell(order, closeResult);
+                order = setOrderInfoSell(order, closeResult, candle);
             }
         } else {
             closeResult = tinkoffOrderAPI.closeAllSellLimit(instrument, candle);
             if (null != closeResult.getLots() && closeResult.getLots() > 0 && closeResult.getIsExecuted()) {
                 if (order.isShort()) {
-                    order.setPurchaseDateTime(candle.getDateTime());
-                    order = setOrderInfoBuy(order, closeResult);
+                    order = setOrderInfoBuy(order, closeResult, candle);
                 } else {
-                    order.setSellDateTime(candle.getDateTime());
-                    order = setOrderInfoSell(order, closeResult);
+                    order = setOrderInfoSell(order, closeResult, candle);
                 }
             }
         }
@@ -407,7 +397,7 @@ public class OrderService implements IOrderService {
         order.setOrderDomainEntity(newOrderDomainEntity);
     }
 
-    private OrderDomainEntity setOrderInfoBuy(OrderDomainEntity order, ITinkoffOrderAPI.OrderResult result) {
+    private OrderDomainEntity setOrderInfoBuy(OrderDomainEntity order, ITinkoffOrderAPI.OrderResult result, CandleDomainEntity candle) {
         order.setPurchaseOrderId(result.getOrderId());
         order.setPurchaseCommissionInitial(result.getCommissionInitial());
         order.setPurchaseCommission(result.getCommission());
@@ -420,16 +410,35 @@ public class OrderService implements IOrderService {
             order.setPurchasePrice(result.getPrice());
         }
 
+        var isPurchaseAllDone = true;
         if (result.getLots() != null) {
             var lots = order.getCellLots() == null ? 0 : order.getCellLots();
-            lots += result.getLots().intValue();
+            if (
+                    result.getOrderId() != null
+                    && result.getOrderId().equals(order.getSellLimitOrderId())
+            ) {
+                var key = "sl" + result.getOrderId();
+                var prevLotsValue = order.getDetails().getCurrentInts().getOrDefault(key, 0);
+                var newLots = result.getLots().intValue() - prevLotsValue;
+                if (newLots > 0) {
+                    log.info("setOrderInfoBuy {} add lots {} to by sellLimitId {}", candle.getFigi(), newLots, prevLotsValue, result.getOrderId());
+                    lots += newLots;
+                    order.getDetails().getCurrentInts().put(key, result.getLots().intValue());
+                }
+                isPurchaseAllDone = order.getLots() <= lots;
+            } else {
+                lots += result.getLots().intValue();
+            }
             order.setCellLots(lots);
         }
         order.setSellProfit(order.getSellPrice().subtract(order.getPurchasePrice()));
+        if (isPurchaseAllDone) {
+            order.setPurchaseDateTime(candle.getDateTime());
+        }
         return saveOrder(order);
     }
 
-    private OrderDomainEntity setOrderInfoSell(OrderDomainEntity order, ITinkoffOrderAPI.OrderResult result) {
+    private OrderDomainEntity setOrderInfoSell(OrderDomainEntity order, ITinkoffOrderAPI.OrderResult result, CandleDomainEntity candle) {
         order.setSellOrderId(result.getOrderId());
         order.setSellCommissionInitial(result.getCommissionInitial());
         order.setSellCommission(result.getCommission());
@@ -442,12 +451,31 @@ public class OrderService implements IOrderService {
             order.setSellPrice(result.getPrice());
         }
 
+        var isSellAllDone = true;
         if (result.getLots() != null) {
             var lots = order.getCellLots() == null ? 0 : order.getCellLots();
-            lots += result.getLots().intValue();
+            if (
+                    result.getOrderId() != null
+                    && result.getOrderId().equals(order.getSellLimitOrderId())
+            ) {
+                var key = "sl" + result.getOrderId();
+                var prevLotsValue = order.getDetails().getCurrentInts().getOrDefault(key, 0);
+                var newLots = result.getLots().intValue() - prevLotsValue;
+                if (newLots > 0) {
+                    log.info("setOrderInfoSell {} add lots {} to by sellLimitId {}", candle.getFigi(), newLots, prevLotsValue, result.getOrderId());
+                    lots += newLots;
+                    order.getDetails().getCurrentInts().put(key, result.getLots().intValue());
+                }
+                isSellAllDone = order.getLots() <= lots;
+            } else {
+                lots += result.getLots().intValue();
+            }
             order.setCellLots(lots);
         }
         order.setSellProfit(order.getSellPrice().subtract(order.getPurchasePrice()));
+        if (isSellAllDone) {
+            order.setSellDateTime(candle.getDateTime());
+        }
         return saveOrder(order);
     }
 

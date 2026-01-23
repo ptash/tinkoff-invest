@@ -341,7 +341,7 @@ public class AlligatorService implements
                 if (
                         expectPercent > strategy.getBuyMinProfitPercent()
                         && candleOrig.getLowestPrice().doubleValue() < nextMin
-                        //&& realPriceWanted.compareTo(candleOrig.getLowestPrice()) >= 0
+                        && (strategy.isRev() || realPriceWanted.compareTo(candleOrig.getLowestPrice()) >= 0)
                         && realPriceWanted.compareTo(candleOrig.getHighestPrice()) <= 0
                         && !isSkip
                 ) {

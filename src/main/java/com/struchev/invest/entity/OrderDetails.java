@@ -20,10 +20,18 @@ public class OrderDetails {
     Map<String, Boolean> booleanDataMap;
     Map<String, OffsetDateTime> dateTimes;
     Map<String, String> annotations;
+    Map<String, Integer> currentInts;
 
     BigDecimal priceWanted;
     BigDecimal limitPercent;
     Boolean isReverse;
+
+    public Map<String, Integer> getCurrentInts() {
+        if (currentInts == null) {
+            currentInts = new HashMap<>();
+        }
+        return currentInts;
+    }
 
     public Map<String, BigDecimal> getCurrentPrices() {
         if (currentPrices == null) {
