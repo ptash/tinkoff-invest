@@ -2908,9 +2908,9 @@ public class AlligatorService implements
 
         fractalData.setAnnotation(annotation);
         var aShort = " fractalLineList.size()=" + fractalLineList.size();
-        for (var i = 0; i < polyline.size(); i++) {
-            aShort += " i=" + i + " " + printDateTime(fractalLineList.get(i).getCandleBegin().getDateTime()) + "-" + printDateTime(fractalLineList.get(i).getCandleEnd().getDateTime()) + "(" + fractalLineList.get(i).getLength() + ")";
-        }
+        //for (var i = 0; i < polyline.size(); i++) {
+        //    aShort += " i=" + i + " " + printDateTime(fractalLineList.get(i).getCandleBegin().getDateTime()) + "-" + printDateTime(fractalLineList.get(i).getCandleEnd().getDateTime()) + "(" + fractalLineList.get(i).getLength() + ")";
+        //}
         fractalData.setAnnotationShort(aShort);
         fractalData.setPolyline(new ArrayList<>(polyline));
 

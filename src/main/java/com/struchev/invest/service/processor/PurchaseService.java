@@ -390,19 +390,34 @@ public class PurchaseService {
                 for (var i = 0; i < strategy.getDelayPlusBySLMaxOrder(); i++) {
                     if (finishedOrders.size() > i) {
                         var o = finishedOrders.get(finishedOrders.size() - 1 - i);
+                        var purchasePrice = o.getPurchasePrice();
+                        if (o.getPurchasePriceMoney() != null) {
+                            purchasePrice = o.getPurchasePriceMoney();
+                        }
+                        var sellPrice = o.getSellPrice();
+                        if (o.getSellPriceMoney() != null) {
+                            sellPrice = o.getSellPriceMoney();
+                        }
+                        var profit = sellPrice.subtract(purchasePrice).multiply(BigDecimal.valueOf(o.getLots()))
+                                .subtract(o.getPurchaseCommission())
+                                .subtract(o.getSellCommission());
                         if (
                                 o.getSellDateTime().isAfter(candles.get(0).getDateTime())
-                                        && o.getSellProfit().subtract(o.getPurchaseCommission()).subtract(o.getSellCommission())
-                                        .compareTo(BigDecimal.ZERO) < 0
+                                        && profit.compareTo(BigDecimal.ZERO) < 0
                         ) {
-                            log.info("Buy cancel by DelayPlusBySLMaxOrder {} {} count {}: {} {} isAfter {} with negative profit {}",
+                            log.info("Buy cancel by DelayPlusBySLMaxOrder {} {} count {}: {} {} isAfter {} with negative profit {} = ({} - {}) * {} - {} - {}",
                                     strategy.getName(),
                                     candleDomainEntity.getFigi(),
                                     negativeOrders,
                                     i,
                                     o.getSellDateTime(),
                                     candles.get(0).getDateTime(),
-                                    o.getSellProfit().subtract(o.getPurchaseCommission()).subtract(o.getSellCommission())
+                                    profit,
+                                    sellPrice,
+                                    purchasePrice,
+                                    o.getLots(),
+                                    o.getPurchaseCommission(),
+                                    o.getSellCommission()
                             );
                             negativeOrders++;
                         }
