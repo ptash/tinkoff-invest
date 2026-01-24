@@ -132,6 +132,7 @@ public abstract class AAlligatorStrategy extends AStrategy implements Cloneable,
     public boolean isSkipBuyUnderSma() { return false; }
     public boolean isBuyOnlyAfterMax2() { return false; }
     public boolean isBuyMaxOnlySmaUp() { return false; }
+    public boolean isBuyMaxOnlySmaDown() { return false; }
     public boolean isSkipSellSmaNearGreenBlue() { return false; }
     public Integer getLimitPriceDownStepLength() { return 0; }
     public Double getLimitPriceDownProfitK() { return 0.25; }
@@ -173,6 +174,7 @@ public abstract class AAlligatorStrategy extends AStrategy implements Cloneable,
     public boolean isRevMaxRev() { return false; }
     public boolean isMinProfitPercent() { return true; }
     public boolean isRev() { return false; }
+    public boolean isPriceWantedAv() { return false; }
     public boolean isMaxSameTrend() { return false; }
     public boolean isMaxDeltaByMinMaxAllMin() { return false; }
     public boolean isMaxDeltaByMinMaxAllMinUp() { return false; }

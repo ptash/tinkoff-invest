@@ -324,27 +324,29 @@ public class AlligatorService implements
                         }
                     }
                 }
-                var realPriceWanted = priceWanted;
-                if (candle.getOpenPrice().compareTo(candle.getClosingPrice()) <= 0) {
-                    realPriceWanted = candle.getClosingPrice();
-                } else {
-                    realPriceWanted = candle.getMedianPrice();
-                    var isDownMinMax = true;
-                    for (var i = 0; i < candleMinMaxList.size(); i++) {
-                        if (candleMinMaxList.get(i).getOpenPrice().compareTo(candleMinMaxList.get(i).getClosingPrice()) < 0) {
-                            isDownMinMax = false;
+                var realPriceWanted = BigDecimal.valueOf(nextMin);
+                if (strategy.isPriceWantedAv()) {
+                    if (candle.getOpenPrice().compareTo(candle.getClosingPrice()) <= 0) {
+                        realPriceWanted = candle.getClosingPrice();
+                    } else {
+                        realPriceWanted = candle.getMedianPrice();
+                        var isDownMinMax = true;
+                        for (var i = 0; i < candleMinMaxList.size(); i++) {
+                            if (candleMinMaxList.get(i).getOpenPrice().compareTo(candleMinMaxList.get(i).getClosingPrice()) < 0) {
+                                isDownMinMax = false;
+                            }
                         }
-                    }
-                    if (isDownMinMax) {
-                        realPriceWanted = realPriceWanted.min(candle.getClosingPrice());
-                    }
-                    if (realPriceWanted.compareTo(BigDecimal.valueOf(nextMin)) > 0) {
-                        annotation += " SKIP by PriceWanted > nextMin";
-                        isSkip = true;
+                        if (isDownMinMax) {
+                            realPriceWanted = realPriceWanted.min(candle.getClosingPrice());
+                        }
+                        if (realPriceWanted.compareTo(BigDecimal.valueOf(nextMin)) > 0) {
+                            annotation += " SKIP by PriceWanted > nextMin";
+                            isSkip = true;
+                        }
                     }
                 }
                 annotation += " realPriceWanted=" + printPrice(realPriceWanted);
-                if (realPriceWanted.compareTo(BigDecimal.valueOf(nextMin)) > 0) {
+                if (strategy.isPriceWantedAv() && realPriceWanted.compareTo(BigDecimal.valueOf(nextMin)) > 0) {
                     realPriceWanted = BigDecimal.valueOf(nextMin);
                     annotation += " new min realPriceWanted=" + printPrice(realPriceWanted);
                 }
@@ -1042,6 +1044,11 @@ public class AlligatorService implements
         }
         if (resBuy && strategy.isBuyMaxOnlySmaUp() && !isTrendUp) {
             annotation += " SKIP max by trend down";
+            resBuy = false;
+        }
+
+        if (resBuy && strategy.isBuyMaxOnlySmaDown() && isTrendUp) {
+            annotation += " SKIP max by trend up";
             resBuy = false;
         }
 
