@@ -302,6 +302,9 @@ public class AlligatorService implements
                     && nextMax > nextMin
             ) {
                 var expectPercent = 100. * (nextMax - nextMin) / Math.abs(nextMin);
+                if (null != strategy.getBuyProfitPercentK()) {
+                    expectPercent = expectPercent * strategy.getBuyProfitPercentK();
+                }
                 annotation += " expectPercent=" + printPrice(expectPercent);
                 var isSkip = false;
                 if (strategy.isRev()) {
@@ -335,8 +338,16 @@ public class AlligatorService implements
                     if (isDownMinMax) {
                         realPriceWanted = realPriceWanted.min(candle.getClosingPrice());
                     }
+                    if (realPriceWanted.compareTo(BigDecimal.valueOf(nextMin)) > 0) {
+                        annotation += " SKIP by PriceWanted > nextMin";
+                        isSkip = true;
+                    }
                 }
                 annotation += " realPriceWanted=" + printPrice(realPriceWanted);
+                if (realPriceWanted.compareTo(BigDecimal.valueOf(nextMin)) > 0) {
+                    realPriceWanted = BigDecimal.valueOf(nextMin);
+                    annotation += " new min realPriceWanted=" + printPrice(realPriceWanted);
+                }
 
                 if (
                         expectPercent > strategy.getBuyMinProfitPercent()
@@ -1608,6 +1619,23 @@ public class AlligatorService implements
             } else {
                 if (null != nextMax && limitPrice > nextMax) {
                     limitPrice = nextMax;
+                    if (
+                            null != strategy.getBuyProfitPercentK()
+                    ) {
+                        var minV = Math.min(nextMin, stopLoss);
+                        if (nextMax > order.getDetails().getPriceWanted().doubleValue()) {
+                            limitPrice = order.getDetails().getPriceWanted().add(BigDecimal.valueOf(
+                                    (nextMax - order.getDetails().getPriceWanted().doubleValue()) * strategy.getBuyProfitPercentK()
+                            )).doubleValue();
+                            annotation += "by nextMax > priceWanted limitPrice= " + printPrice(limitPrice);
+                        } else if (nextMax > stopLoss) {
+                            limitPrice = minV + (nextMax - stopLoss) * strategy.getBuyProfitPercentK();
+                            annotation += "by nextMax > stopLoss limitPrice= " + printPrice(limitPrice);
+                        } else if (nextMax > minV) {
+                            limitPrice = minV + (nextMax - minV) * strategy.getBuyProfitPercentK();
+                            annotation += "by nextMax > minV limitPrice= " + printPrice(limitPrice);
+                        }
+                    }
                     limitPercent = BigDecimal.valueOf((limitPrice - purchaseRate.doubleValue()) * 100. / purchaseRate.abs().doubleValue());
                     newLimitPercent = limitPercent.floatValue();
                     annotation += "new limitPrice nextMax = " + printPrice(limitPrice);

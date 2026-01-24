@@ -183,6 +183,7 @@ public abstract class AAlligatorStrategy extends AStrategy implements Cloneable,
     public Integer getMinLowestPriceOverAnyMaxLength() { return null; }
     public Float getBuyMinProfitPercent() { return null; }
     public Float getBuyMaxProfitPercent() { return null; }
+    public Double getBuyProfitPercentK() { return null; }
     public Float getBuyMinStopLossPercent() { return null; }
     public Boolean isDownPriceWantedToMinProfitPercent() {return false; }
     public Boolean isUpLimitPriceToMinProfitPercent() {return false; }
