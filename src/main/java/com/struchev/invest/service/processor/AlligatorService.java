@@ -209,91 +209,84 @@ public class AlligatorService implements
         Double nextMinInO = null;
         Double nextMaxInO = null;
         if (green != null && blue != null && strategy.isFractal()) {
-            if (strategy.isFractalMinMaxInOne()) {
-                var fractalData = getMinMaxFractalData(candle, strategy);
-                annotation += " MINMAX" + fractalData.getAnnotationShort();
-                if (fractalData.getPolyline() != null) {
-                    annotation += " polylineBegin=" + printDateTime(fractalData.getPolyline().get(0).getCandleBegin().getDateTime())
-                            + " to " + printDateTime(fractalData.getPolyline().get(fractalData.getPolyline().size() - 1).getCandleEnd().getDateTime());
-                    if (fractalData.getPolylineLike() != null) {
-                        annotation += " polylineLikeBegin=" + printDateTime(fractalData.getPolylineLike().get(0).getCandleBegin().getDateTime())
-                                + " to " + printDateTime(fractalData.getPolylineLike().get(fractalData.getPolylineLike().size() - 1).getCandleEnd().getDateTime());
-                        annotation += " polylineLikeAfterEnd=" + printDateTime(fractalData.getPolylineLikeAfter().get(0).getCandleEnd().getDateTime());
-                        nextMin = nextMinInO = fractalData.getPolyline().get(fractalData.getPolyline().size() - 1).getCandleEnd().getLowestPrice().doubleValue()
-                                + fractalData.getNextPriceDelta();
-                        annotation += " getNextPriceDelta=" + printPrice(fractalData.getNextPriceDelta());
-                        annotation += " nextMin=" + printPrice(nextMin);
+            var fractalData = getMinMaxFractalData(candle, strategy);
+            annotation += " MINMAX" + fractalData.getAnnotationShort();
+            if (fractalData.getPolyline() != null) {
+                annotation += " polylineBegin=" + printDateTime(fractalData.getPolyline().get(0).getCandleBegin().getDateTime())
+                        + " to " + printDateTime(fractalData.getPolyline().get(fractalData.getPolyline().size() - 1).getCandleEnd().getDateTime());
+                if (fractalData.getPolylineLike() != null) {
+                    annotation += " polylineLikeBegin=" + printDateTime(fractalData.getPolylineLike().get(0).getCandleBegin().getDateTime())
+                            + " to " + printDateTime(fractalData.getPolylineLike().get(fractalData.getPolylineLike().size() - 1).getCandleEnd().getDateTime());
+                    annotation += " polylineLikeAfterEnd=" + printDateTime(fractalData.getPolylineLikeAfter().get(0).getCandleEnd().getDateTime());
+                    nextMinInO = fractalData.getPolyline().get(fractalData.getPolyline().size() - 1).getCandleEnd().getLowestPrice().doubleValue()
+                            + fractalData.getNextPriceDelta();
+                    annotation += " getNextPriceDelta=" + printPrice(fractalData.getNextPriceDelta());
+                    annotation += " nextMin=" + printPrice(nextMin);
 
-                        nextMax = nextMaxInO = fractalData.getPolyline().get(fractalData.getPolyline().size() - 1).getCandleEnd().getHighestPrice().doubleValue()
+                    nextMaxInO = fractalData.getPolyline().get(fractalData.getPolyline().size() - 1).getCandleEnd().getHighestPrice().doubleValue()
+                            + fractalData.getNextPriceDelta2();
+                    annotation += " getNextPriceDelta=" + printPrice(fractalData.getNextPriceDelta2());
+                    annotation += " nextMax=" + printPrice(nextMax);
+
+                    if (strategy.isFractalMinMaxInOneOnlyDeltaOne()) {
+                        nextMin = fractalData.getPolyline().get(fractalData.getPolyline().size() - 1).getCandleEnd().getLowestPrice().doubleValue()
                                 + fractalData.getNextPriceDelta2();
-                        annotation += " getNextPriceDelta=" + printPrice(fractalData.getNextPriceDelta2());
-                        annotation += " nextMax=" + printPrice(nextMax);
-
-                        if (strategy.isFractalMinMaxInOneOnlyDeltaOne()) {
-                            nextMin = fractalData.getPolyline().get(fractalData.getPolyline().size() - 1).getCandleEnd().getLowestPrice().doubleValue()
-                                    + fractalData.getNextPriceDelta2();
-                            annotation += " new nextMin=" + printPrice(nextMin);
-                        }
-                    }
-                }
-
-                if (strategy.isFractalMinMaxInOneOnlyOnBuy()) {
-                    var fractalMaxData = getMaxFractalData(candle, strategy);
-                    annotation += " MAX " + fractalMaxData.getAnnotationShort();
-                    if (fractalMaxData.getPolyline() != null) {
-                        annotation += " polylineBegin=" + printDateTime(fractalMaxData.getPolyline().get(0).getCandleBegin().getDateTime())
-                                + " to " + printDateTime(fractalMaxData.getPolyline().get(fractalMaxData.getPolyline().size() - 1).getCandleEnd().getDateTime());
-                        if (fractalMaxData.getPolylineLike() != null) {
-                            annotation += " polylineLikeBegin=" + printDateTime(fractalMaxData.getPolylineLike().get(0).getCandleBegin().getDateTime())
-                                    + " to " + printDateTime(fractalMaxData.getPolylineLike().get(fractalMaxData.getPolylineLike().size() - 1).getCandleEnd().getDateTime());
-                            annotation += " polylineLikeAfterEnd=" + printDateTime(fractalMaxData.getPolylineLikeAfter().get(0).getCandleEnd().getDateTime());
-                            nextMax = fractalMaxData.getPolyline().get(fractalMaxData.getPolyline().size() - 1).getCandleEnd().getHighestPrice().doubleValue()
-                                    + fractalMaxData.getNextPriceDelta();
-                            annotation += " getNextPriceDelta=" + printPrice(fractalMaxData.getNextPriceDelta());
-                            annotation += " nextMax=" + printPrice(nextMax);
-                        }
+                        annotation += " new nextMin=" + printPrice(nextMin);
                     }
                 }
             }
-            if (!strategy.isFractalMinMaxInOne() || strategy.isFractalMinMaxInOneOnlyOnBuy()) {
-                var fractalMinData = getMinFractalData(candle, strategy);
-                annotation += " MIN " + fractalMinData.getAnnotationShort();
-                if (fractalMinData.getPolyline() != null) {
-                    annotation += " polylineBegin=" + printDateTime(fractalMinData.getPolyline().get(0).getCandleBegin().getDateTime())
-                            + " to " + printDateTime(fractalMinData.getPolyline().get(fractalMinData.getPolyline().size() - 1).getCandleEnd().getDateTime());
-                    if (fractalMinData.getPolylineLike() != null) {
-                        annotation += " polylineLikeBegin=" + printDateTime(fractalMinData.getPolylineLike().get(0).getCandleBegin().getDateTime())
-                                + " to " + printDateTime(fractalMinData.getPolylineLike().get(fractalMinData.getPolylineLike().size() - 1).getCandleEnd().getDateTime());
-                        annotation += " polylineLikeAfterEnd=" + printDateTime(fractalMinData.getPolylineLikeAfter().get(0).getCandleEnd().getDateTime());
+            if (strategy.isFractalMinMaxInOne()) {
+                if (!strategy.isFractalMinMaxInOneOnlyDeltaOne()) {
+                    nextMin = nextMinInO;
+                }
+                nextMax = nextMaxInO;
+            }
 
-                        nextMinOnly = fractalMinData.getPolyline().get(fractalMinData.getPolyline().size() - 1).getCandleEnd().getLowestPrice().doubleValue()
-                                + fractalMinData.getNextPriceDelta();
-                        annotation += " getNextPriceDelta=" + printPrice(fractalMinData.getNextPriceDelta());
-                        if (strategy.isFractalMinMaxInOne()) {
-                            annotation += " nextMinOnly=" + printPrice(nextMinOnly);
-                        } else {
-                            nextMin = nextMinOnly;
-                            annotation += " nextMin=" + printPrice(nextMin);
-                        }
-                    }
+            var fractalMaxData = getMaxFractalData(candle, strategy);
+            annotation += " MAX " + fractalMaxData.getAnnotationShort();
+            if (fractalMaxData.getPolyline() != null) {
+                annotation += " polylineBegin=" + printDateTime(fractalMaxData.getPolyline().get(0).getCandleBegin().getDateTime())
+                        + " to " + printDateTime(fractalMaxData.getPolyline().get(fractalMaxData.getPolyline().size() - 1).getCandleEnd().getDateTime());
+                if (fractalMaxData.getPolylineLike() != null) {
+                    annotation += " polylineLikeBegin=" + printDateTime(fractalMaxData.getPolylineLike().get(0).getCandleBegin().getDateTime())
+                            + " to " + printDateTime(fractalMaxData.getPolylineLike().get(fractalMaxData.getPolylineLike().size() - 1).getCandleEnd().getDateTime());
+                    annotation += " polylineLikeAfterEnd=" + printDateTime(fractalMaxData.getPolylineLikeAfter().get(0).getCandleEnd().getDateTime());
+                    nextMaxOnly = fractalMaxData.getPolyline().get(fractalMaxData.getPolyline().size() - 1).getCandleEnd().getHighestPrice().doubleValue()
+                            + fractalMaxData.getNextPriceDelta();
+                    annotation += " getNextPriceDelta=" + printPrice(fractalMaxData.getNextPriceDelta());
+                    annotation += " nextMaxOnly=" + printPrice(nextMaxOnly);
+                }
+            }
+
+            if (strategy.isFractalMinMaxInOne() && strategy.isFractalMinMaxInOneOnlyOnBuy()) {
+                nextMax = nextMaxOnly;
+            }
+
+
+            var fractalMinData = getMinFractalData(candle, strategy);
+            annotation += " MIN " + fractalMinData.getAnnotationShort();
+            if (fractalMinData.getPolyline() != null) {
+                annotation += " polylineBegin=" + printDateTime(fractalMinData.getPolyline().get(0).getCandleBegin().getDateTime())
+                        + " to " + printDateTime(fractalMinData.getPolyline().get(fractalMinData.getPolyline().size() - 1).getCandleEnd().getDateTime());
+                if (fractalMinData.getPolylineLike() != null) {
+                    annotation += " polylineLikeBegin=" + printDateTime(fractalMinData.getPolylineLike().get(0).getCandleBegin().getDateTime())
+                            + " to " + printDateTime(fractalMinData.getPolylineLike().get(fractalMinData.getPolylineLike().size() - 1).getCandleEnd().getDateTime());
+                    annotation += " polylineLikeAfterEnd=" + printDateTime(fractalMinData.getPolylineLikeAfter().get(0).getCandleEnd().getDateTime());
+
+                    nextMinOnly = fractalMinData.getPolyline().get(fractalMinData.getPolyline().size() - 1).getCandleEnd().getLowestPrice().doubleValue()
+                            + fractalMinData.getNextPriceDelta();
+                    annotation += " getNextPriceDelta=" + printPrice(fractalMinData.getNextPriceDelta());
+                    annotation += " nextMinOnly=" + printPrice(nextMinOnly);
                 }
             }
             if (!strategy.isFractalMinMaxInOne() || strategy.isFractalMinMaxInOneOnlyOnBuy()) {
-                var fractalMaxData = getMaxFractalData(candle, strategy);
-                annotation += " MAX ";// + fractalMaxData.getAnnotation();
-                if (fractalMaxData.getPolyline() != null) {
-                    annotation += " polylineBegin=" + printDateTime(fractalMaxData.getPolyline().get(0).getCandleBegin().getDateTime())
-                            + " to " + printDateTime(fractalMaxData.getPolyline().get(fractalMaxData.getPolyline().size() - 1).getCandleEnd().getDateTime());
-                    if (fractalMaxData.getPolylineLike() != null) {
-                        annotation += " polylineLikeBegin=" + printDateTime(fractalMaxData.getPolylineLike().get(0).getCandleBegin().getDateTime())
-                                + " to " + printDateTime(fractalMaxData.getPolylineLike().get(fractalMaxData.getPolylineLike().size() - 1).getCandleEnd().getDateTime());
-                        annotation += " polylineLikeAfterEnd=" + printDateTime(fractalMaxData.getPolylineLikeAfter().get(0).getCandleEnd().getDateTime());
-                        nextMax = nextMaxOnly = fractalMaxData.getPolyline().get(fractalMaxData.getPolyline().size() - 1).getCandleEnd().getHighestPrice().doubleValue()
-                                + fractalMaxData.getNextPriceDelta();
-                        annotation += " getNextPriceDelta=" + printPrice(fractalMaxData.getNextPriceDelta());
-                        annotation += " nextMax=" + printPrice(nextMax);
-                    }
+                if (!strategy.isFractalMinMaxInOne()) {
+                    nextMin = nextMinOnly;
                 }
+            }
+
+            if (!strategy.isFractalMinMaxInOne() || strategy.isFractalMinMaxInOneOnlyOnBuy()) {
+                nextMax = nextMaxOnly;
             }
 
             if (
@@ -351,6 +344,34 @@ public class AlligatorService implements
                     annotation += " new min realPriceWanted=" + printPrice(realPriceWanted);
                 }
 
+                stopLoss = nextMin - (nextMax - nextMin);
+                if (strategy.isRev()) {
+                    if (strategy.getBuyMaxProfitPercent() != null) {
+                        stopLoss = nextMin - strategy.getBuyMaxProfitPercent() / 100. * Math.abs(nextMin);
+                    } else {
+                        stopLoss = nextMin - 4 * (nextMax - nextMin);
+                    }
+                }
+
+                if (strategy.isStopLossByLimitAndAllMinLines()) {
+                    var minAllLines = nextMin;
+                    if (null != nextMinInO) {
+                        minAllLines = Math.min(minAllLines, nextMinInO);
+                    }
+                    if (null != nextMinOnly) {
+                        minAllLines = Math.min(minAllLines, nextMinOnly);
+                    }
+                    annotation += " minAllLines=" + minAllLines;
+                    if (realPriceWanted.compareTo(BigDecimal.valueOf(minAllLines)) <= 0) {
+                        annotation += " SKIP by PriceWanted <= minAllLines";
+                        isSkip = true;
+                    }
+                    if (stopLoss >= realPriceWanted.doubleValue()) {
+                        annotation += " SKIP by stopLoss >= PriceWanted";
+                        isSkip = true;
+                    }
+                }
+
                 if (
                         expectPercent > strategy.getBuyMinProfitPercent()
                         && candleOrig.getLowestPrice().doubleValue() < nextMin
@@ -368,14 +389,7 @@ public class AlligatorService implements
                         expectPercent = strategy.getBuyMaxProfitPercent();
                     }
                     var realLimitPrice = priceWanted.doubleValue() + expectPercent * priceWanted.abs().doubleValue() / 100.;
-                    stopLoss = nextMin - (nextMax - nextMin);
-                    if (strategy.isRev()) {
-                        if (strategy.getBuyMaxProfitPercent() != null) {
-                            stopLoss = nextMin - strategy.getBuyMaxProfitPercent() / 100. * Math.abs(nextMin);
-                        } else {
-                            stopLoss = nextMin - 4 * (nextMax - nextMin);
-                        }
-                    }
+
                     setOrderBigDecimalData(strategy, candle, "limitPrice", BigDecimal.valueOf(realLimitPrice));
                     setOrderBigDecimalData(strategy, candle, "limitPercent", BigDecimal.valueOf(expectPercent));
                     setOrderBigDecimalData(strategy, candle, "stopLoss", BigDecimal.valueOf(stopLoss));
@@ -1528,60 +1542,67 @@ public class AlligatorService implements
         Double nextMinInO = null;
         Double nextMaxInO = null;
         if (green != null && blue != null && strategy.isFractal()) {
-            if (strategy.isFractalMinMaxInOne()) {
-                var fractalData = getMinMaxFractalData(candlePrev, strategy);
-                annotation += " MINMAX" + fractalData.getAnnotationShort();
-                if (fractalData.getPolyline() != null) {
-                    annotation += " polylineBegin=" + printDateTime(fractalData.getPolyline().get(0).getCandleBegin().getDateTime())
-                            + " to " + printDateTime(fractalData.getPolyline().get(fractalData.getPolyline().size() - 1).getCandleEnd().getDateTime());
-                    if (fractalData.getPolylineLike() != null) {
-                        annotation += " polylineLikeBegin=" + printDateTime(fractalData.getPolylineLike().get(0).getCandleBegin().getDateTime())
-                                + " to " + printDateTime(fractalData.getPolylineLike().get(fractalData.getPolylineLike().size() - 1).getCandleEnd().getDateTime());
-                        annotation += " polylineLikeAfterEnd=" + printDateTime(fractalData.getPolylineLikeAfter().get(0).getCandleEnd().getDateTime());
-                        nextMin = nextMinInO = fractalData.getPolyline().get(fractalData.getPolyline().size() - 1).getCandleEnd().getLowestPrice().doubleValue()
-                                + fractalData.getNextPriceDelta();
-                        annotation += " getNextPriceDelta=" + printPrice(fractalData.getNextPriceDelta());
-                        annotation += " nextMin=" + printPrice(nextMin);
 
-                        nextMax = nextMaxInO = fractalData.getPolyline().get(fractalData.getPolyline().size() - 1).getCandleEnd().getHighestPrice().doubleValue()
-                                + fractalData.getNextPriceDelta2();
-                        annotation += " getNextPriceDelta=" + printPrice(fractalData.getNextPriceDelta2());
-                        annotation += " nextMax=" + printPrice(nextMax);
-                    }
+            var fractalData = getMinMaxFractalData(candlePrev, strategy);
+            annotation += " MINMAX" + fractalData.getAnnotationShort();
+            if (fractalData.getPolyline() != null) {
+                annotation += " polylineBegin=" + printDateTime(fractalData.getPolyline().get(0).getCandleBegin().getDateTime())
+                        + " to " + printDateTime(fractalData.getPolyline().get(fractalData.getPolyline().size() - 1).getCandleEnd().getDateTime());
+                if (fractalData.getPolylineLike() != null) {
+                    annotation += " polylineLikeBegin=" + printDateTime(fractalData.getPolylineLike().get(0).getCandleBegin().getDateTime())
+                            + " to " + printDateTime(fractalData.getPolylineLike().get(fractalData.getPolylineLike().size() - 1).getCandleEnd().getDateTime());
+                    annotation += " polylineLikeAfterEnd=" + printDateTime(fractalData.getPolylineLikeAfter().get(0).getCandleEnd().getDateTime());
+                    nextMinInO = fractalData.getPolyline().get(fractalData.getPolyline().size() - 1).getCandleEnd().getLowestPrice().doubleValue()
+                            + fractalData.getNextPriceDelta();
+                    annotation += " getNextPriceDelta=" + printPrice(fractalData.getNextPriceDelta());
+                    annotation += " nextMinInO=" + printPrice(nextMinInO);
+
+                    nextMaxInO = fractalData.getPolyline().get(fractalData.getPolyline().size() - 1).getCandleEnd().getHighestPrice().doubleValue()
+                            + fractalData.getNextPriceDelta2();
+                    annotation += " getNextPriceDelta=" + printPrice(fractalData.getNextPriceDelta2());
+                    annotation += " nextMaxInO=" + printPrice(nextMaxInO);
                 }
             }
-            if (!strategy.isFractalMinMaxInOne() || strategy.isFractalMinMaxInOneOnlyOnBuy()) {
-                var fractalMinData = getMinFractalData(candlePrev, strategy);
-                annotation += " MIN " + fractalMinData.getAnnotationShort();
-                if (fractalMinData.getPolyline() != null) {
-                    annotation += " polylineBegin=" + printDateTime(fractalMinData.getPolyline().get(0).getCandleBegin().getDateTime())
-                            + " to " + printDateTime(fractalMinData.getPolyline().get(fractalMinData.getPolyline().size() - 1).getCandleEnd().getDateTime());
-                    if (fractalMinData.getPolylineLike() != null) {
-                        annotation += " polylineLikeBegin=" + printDateTime(fractalMinData.getPolylineLike().get(0).getCandleBegin().getDateTime())
-                                + " to " + printDateTime(fractalMinData.getPolylineLike().get(fractalMinData.getPolylineLike().size() - 1).getCandleEnd().getDateTime());
-                        annotation += " polylineLikeAfterEnd=" + printDateTime(fractalMinData.getPolylineLikeAfter().get(0).getCandleEnd().getDateTime());
-                        nextMin = nextMinOnly = fractalMinData.getPolyline().get(fractalMinData.getPolyline().size() - 1).getCandleEnd().getLowestPrice().doubleValue()
-                                + fractalMinData.getNextPriceDelta();
-                        annotation += " getNextPriceDelta=" + printPrice(fractalMinData.getNextPriceDelta());
-                        annotation += " nextMin=" + printPrice(nextMin);
-                    }
-                }
+            if (strategy.isFractalMinMaxInOne()) {
+                nextMin = nextMinInO;
+                nextMax = nextMaxInO;
+            }
 
-                var fractalMaxData = getMaxFractalData(candlePrev, strategy);
-                annotation += " MAX " + fractalMaxData.getAnnotationShort();
-                if (fractalMaxData.getPolyline() != null) {
-                    annotation += " polylineBegin=" + printDateTime(fractalMaxData.getPolyline().get(0).getCandleBegin().getDateTime())
-                            + " to " + printDateTime(fractalMaxData.getPolyline().get(fractalMaxData.getPolyline().size() - 1).getCandleEnd().getDateTime());
-                    if (fractalMaxData.getPolylineLike() != null) {
-                        annotation += " polylineLikeBegin=" + printDateTime(fractalMaxData.getPolylineLike().get(0).getCandleBegin().getDateTime())
-                                + " to " + printDateTime(fractalMaxData.getPolylineLike().get(fractalMaxData.getPolylineLike().size() - 1).getCandleEnd().getDateTime());
-                        annotation += " polylineLikeAfterEnd=" + printDateTime(fractalMaxData.getPolylineLikeAfter().get(0).getCandleEnd().getDateTime());
-                        nextMax = nextMaxOnly = fractalMaxData.getPolyline().get(fractalMaxData.getPolyline().size() - 1).getCandleEnd().getHighestPrice().doubleValue()
-                                + fractalMaxData.getNextPriceDelta();
-                        annotation += " getNextPriceDelta=" + printPrice(fractalMaxData.getNextPriceDelta());
-                        annotation += " nextMax=" + printPrice(nextMax);
-                    }
+            var fractalMinData = getMinFractalData(candlePrev, strategy);
+            annotation += " MIN " + fractalMinData.getAnnotationShort();
+            if (fractalMinData.getPolyline() != null) {
+                annotation += " polylineBegin=" + printDateTime(fractalMinData.getPolyline().get(0).getCandleBegin().getDateTime())
+                        + " to " + printDateTime(fractalMinData.getPolyline().get(fractalMinData.getPolyline().size() - 1).getCandleEnd().getDateTime());
+                if (fractalMinData.getPolylineLike() != null) {
+                    annotation += " polylineLikeBegin=" + printDateTime(fractalMinData.getPolylineLike().get(0).getCandleBegin().getDateTime())
+                            + " to " + printDateTime(fractalMinData.getPolylineLike().get(fractalMinData.getPolylineLike().size() - 1).getCandleEnd().getDateTime());
+                    annotation += " polylineLikeAfterEnd=" + printDateTime(fractalMinData.getPolylineLikeAfter().get(0).getCandleEnd().getDateTime());
+                    nextMinOnly = fractalMinData.getPolyline().get(fractalMinData.getPolyline().size() - 1).getCandleEnd().getLowestPrice().doubleValue()
+                            + fractalMinData.getNextPriceDelta();
+                    annotation += " getNextPriceDelta=" + printPrice(fractalMinData.getNextPriceDelta());
+                    annotation += " nextMinOnly=" + printPrice(nextMinOnly);
                 }
+            }
+
+            var fractalMaxData = getMaxFractalData(candlePrev, strategy);
+            annotation += " MAX " + fractalMaxData.getAnnotationShort();
+            if (fractalMaxData.getPolyline() != null) {
+                annotation += " polylineBegin=" + printDateTime(fractalMaxData.getPolyline().get(0).getCandleBegin().getDateTime())
+                        + " to " + printDateTime(fractalMaxData.getPolyline().get(fractalMaxData.getPolyline().size() - 1).getCandleEnd().getDateTime());
+                if (fractalMaxData.getPolylineLike() != null) {
+                    annotation += " polylineLikeBegin=" + printDateTime(fractalMaxData.getPolylineLike().get(0).getCandleBegin().getDateTime())
+                            + " to " + printDateTime(fractalMaxData.getPolylineLike().get(fractalMaxData.getPolylineLike().size() - 1).getCandleEnd().getDateTime());
+                    annotation += " polylineLikeAfterEnd=" + printDateTime(fractalMaxData.getPolylineLikeAfter().get(0).getCandleEnd().getDateTime());
+                    nextMaxOnly = fractalMaxData.getPolyline().get(fractalMaxData.getPolyline().size() - 1).getCandleEnd().getHighestPrice().doubleValue()
+                            + fractalMaxData.getNextPriceDelta();
+                    annotation += " getNextPriceDelta=" + printPrice(fractalMaxData.getNextPriceDelta());
+                    annotation += " nextMaxOnly=" + printPrice(nextMaxOnly);
+                }
+            }
+
+            if (!strategy.isFractalMinMaxInOne() || strategy.isFractalMinMaxInOneOnlyOnBuy()) {
+                nextMin = nextMinOnly;
+                nextMax = nextMaxOnly;
             }
 
             if (strategy.isRev()) {
@@ -1649,7 +1670,14 @@ public class AlligatorService implements
                         }
                     }
 
-                    if (!isTrendUp & strategy.isStopLossByLimitAndAllMinLines() && null != nextMin) {
+                    if (
+                            ((!isTrendUp
+                            && strategy.isStopLossOnDownByLimitAndAllMinLines())
+                                    || (strategy.isStopLossByLimitAndAllMinLines()
+                                    && candle.getLowestPrice().doubleValue() < stopLoss)
+                            )
+                            && null != nextMin
+                    ) {
                         var minAllLines = nextMin;
                         if (null != nextMinInO) {
                             minAllLines = Math.min(minAllLines, nextMinInO);
@@ -1669,6 +1697,15 @@ public class AlligatorService implements
                                 var isDownMinMax = true;
                                 for (var i = 0; i < candleMinMaxList.size(); i++) {
                                     if (candleMinMaxList.get(i).getOpenPrice().compareTo(candleMinMaxList.get(i).getClosingPrice()) < 0) {
+                                        isDownMinMax = false;
+                                    }
+                                }
+                                if (!isDownMinMax) {
+                                    var candleSize = candlePrev.getHighestPrice().doubleValue() - candlePrev.getLowestPrice().doubleValue();
+                                    var minMaxSize = nextMax - minAllLines;
+                                    annotation += " candleSize=" + printPrice(candleSize);
+                                    annotation += " minMaxSize=" + printPrice(minMaxSize);
+                                    if (candleSize > minMaxSize) {
                                         isDownMinMax = false;
                                     }
                                 }

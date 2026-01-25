@@ -44,6 +44,7 @@ public class AlligatorFractal5Min10 extends AlligatorFractal5Min {
     public Integer getTrendUpLength() { return 15; }
     public Integer getTrendUpLengthOnSell() { return 1; }
     public boolean isStopLossByLimitAndAllMinLines() { return true; }
+    //public boolean isStopLossOnDownByLimitAndAllMinLines() { return true; }
 
     public boolean isEnabled() { return true; }
 }
