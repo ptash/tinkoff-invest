@@ -1487,8 +1487,8 @@ public class AlligatorService implements
                 smaUp = sma;
             } else {
                 smaDown = sma;
-                if (strategy.getTrendUpLength() > 1) {
-                    annotation += " TrendUpLength=" + strategy.getTrendUpLength();
+                if (strategy.getTrendUpLengthOnSell() > 1) {
+                    annotation += " TrendUpLength=" + strategy.getTrendUpLengthOnSell();
                     var smaListPrev = getSma(candle.getFigi(), candle.getDateTime(), strategy.getSmaLength(), strategy.getInterval(), CandleDomainEntity::getMedianPrice, strategy.getTrendUpLength());
                     for (var iSma = 1; iSma < smaListPrev.size(); iSma++) {
                         var isTrendUpPrev = smaListPrev.get(iSma - 1) <= smaListPrev.get(iSma);
@@ -1624,28 +1624,65 @@ public class AlligatorService implements
                     }
                 }
             } else {
-                if (null != nextMax && limitPrice > nextMax) {
+                if (null != nextMax) {
                     limitPrice = nextMax;
+                    var buyProfitPercentK = strategy.getBuyProfitPercentK();
+                    if (!isTrendUp && null != strategy.getBuyOnDownProfitPercentK()) {
+                        buyProfitPercentK = strategy.getBuyOnDownProfitPercentK();
+                    }
+                    annotation += " buyProfitPercentK=" + buyProfitPercentK;
                     if (
-                            null != strategy.getBuyProfitPercentK()
+                            null != buyProfitPercentK
                     ) {
                         var minV = Math.min(nextMin, stopLoss);
                         if (nextMax > order.getDetails().getPriceWanted().doubleValue()) {
                             limitPrice = order.getDetails().getPriceWanted().add(BigDecimal.valueOf(
-                                    (nextMax - order.getDetails().getPriceWanted().doubleValue()) * strategy.getBuyProfitPercentK()
+                                    (nextMax - order.getDetails().getPriceWanted().doubleValue()) * buyProfitPercentK
                             )).doubleValue();
-                            annotation += "by nextMax > priceWanted limitPrice= " + printPrice(limitPrice);
+                            annotation += " by nextMax > priceWanted limitPrice= " + printPrice(limitPrice);
                         } else if (nextMax > stopLoss) {
-                            limitPrice = minV + (nextMax - stopLoss) * strategy.getBuyProfitPercentK();
-                            annotation += "by nextMax > stopLoss limitPrice= " + printPrice(limitPrice);
+                            limitPrice = minV + (nextMax - stopLoss) * buyProfitPercentK;
+                            annotation += " by nextMax > stopLoss limitPrice= " + printPrice(limitPrice);
                         } else if (nextMax > minV) {
-                            limitPrice = minV + (nextMax - minV) * strategy.getBuyProfitPercentK();
-                            annotation += "by nextMax > minV limitPrice= " + printPrice(limitPrice);
+                            limitPrice = minV + (nextMax - minV) * buyProfitPercentK;
+                            annotation += " by nextMax > minV limitPrice= " + printPrice(limitPrice);
+                        }
+                    }
+
+                    if (!isTrendUp & strategy.isStopLossByLimitAndAllMinLines() && null != nextMin) {
+                        var minAllLines = nextMin;
+                        if (null != nextMinInO) {
+                            minAllLines = Math.min(minAllLines, nextMinInO);
+                        }
+                        if (null != nextMinOnly) {
+                            minAllLines = Math.min(minAllLines, nextMinOnly);
+                        }
+                        annotation += " minAllLines=" + minAllLines;
+                        var limitPriceOrig = limitPrice;
+                        if (
+                                minAllLines > candle.getLowestPrice().doubleValue()
+                        ) {
+                            if (candlePrev.getOpenPrice().compareTo(candlePrev.getClosingPrice()) <= 0) {
+                                limitPrice = minAllLines;
+                            } else {
+                                limitPrice = candlePrev.getMedianPrice().doubleValue();
+                                var isDownMinMax = true;
+                                for (var i = 0; i < candleMinMaxList.size(); i++) {
+                                    if (candleMinMaxList.get(i).getOpenPrice().compareTo(candleMinMaxList.get(i).getClosingPrice()) < 0) {
+                                        isDownMinMax = false;
+                                    }
+                                }
+                                if (isDownMinMax) {
+                                    limitPrice = Math.min(limitPrice, candle.getClosingPrice().doubleValue());
+                                }
+                            }
+                            annotation += "new limitPrice HighestPrice = " + printPrice(limitPrice);
+                            limitPrice = Math.min(limitPriceOrig, Math.min(limitPrice, minAllLines));
                         }
                     }
                     limitPercent = BigDecimal.valueOf((limitPrice - purchaseRate.doubleValue()) * 100. / purchaseRate.abs().doubleValue());
                     newLimitPercent = limitPercent.floatValue();
-                    annotation += "new limitPrice nextMax = " + printPrice(limitPrice);
+                    annotation += " new limitPrice nextMax = " + printPrice(limitPrice);
                 }
             }
         }

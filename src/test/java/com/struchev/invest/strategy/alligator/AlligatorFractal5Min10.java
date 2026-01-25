@@ -29,7 +29,7 @@ public class AlligatorFractal5Min10 extends AlligatorFractal5Min {
         if (isRev()) {
             return true;
         }
-        return false;
+        return true;
     }
 
     public boolean isPriceWantedAv() {
@@ -39,7 +39,11 @@ public class AlligatorFractal5Min10 extends AlligatorFractal5Min {
         return true;
     }
 
+    public Double getBuyOnDownProfitPercentK() { return 0.4; }
+
     public Integer getTrendUpLength() { return 15; }
+    public Integer getTrendUpLengthOnSell() { return 1; }
+    public boolean isStopLossByLimitAndAllMinLines() { return true; }
 
     public boolean isEnabled() { return true; }
 }

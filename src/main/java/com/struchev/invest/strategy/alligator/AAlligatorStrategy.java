@@ -158,6 +158,7 @@ public abstract class AAlligatorStrategy extends AStrategy implements Cloneable,
     public boolean isPriceWantedAsMaxPrice() { return false; }
     public boolean isCandleOrigInMinCandleList() { return false; }
     public Integer getTrendUpLength() { return 1; }
+    public Integer getTrendUpLengthOnSell() { return getTrendUpLength(); }
     public boolean isStopLossForce() { return false; }
     public boolean isStopLossByLimit() { return false; }
     public Double getStopLossMaxDownLengthK() { return null; }
@@ -169,6 +170,7 @@ public abstract class AAlligatorStrategy extends AStrategy implements Cloneable,
     public boolean isStopLossForcePrev() { return false; }
     public boolean isStopLossSkipByBuy() { return true; }
     public boolean isStopLossOnlyByLimit() { return false; }
+    public boolean isStopLossByLimitAndAllMinLines() { return false; }
     public Double getBuyWaitMaxFromGreenDeltaK() {return 0.4; }
     public boolean isRevMax() { return false; }
     public boolean isRevMaxRev() { return false; }
@@ -186,6 +188,7 @@ public abstract class AAlligatorStrategy extends AStrategy implements Cloneable,
     public Float getBuyMinProfitPercent() { return null; }
     public Float getBuyMaxProfitPercent() { return null; }
     public Double getBuyProfitPercentK() { return null; }
+    public Double getBuyOnDownProfitPercentK() { return null; }
     public Float getBuyMinStopLossPercent() { return null; }
     public Boolean isDownPriceWantedToMinProfitPercent() {return false; }
     public Boolean isUpLimitPriceToMinProfitPercent() {return false; }
