@@ -426,7 +426,8 @@ public class OrderService implements IOrderService {
                     order.getDetails().getCurrentInts().put(key, result.getLots().intValue());
                 }
                 isPurchaseAllDone = order.getLots() <= lots;
-            } else {
+            } else if (result.getLots() > 0) {
+                log.info("Add buy lots {} for {} without orderId by {}", result.getLots(), candle.getFigi(), result);
                 lots += result.getLots().intValue();
             }
             order.setCellLots(lots);
@@ -467,7 +468,8 @@ public class OrderService implements IOrderService {
                     order.getDetails().getCurrentInts().put(key, result.getLots().intValue());
                 }
                 isSellAllDone = order.getLots() <= lots;
-            } else {
+            } else if (result.getLots() > 0) {
+                log.info("Add sell lots {} for {} without orderId by {}", result.getLots(), candle.getFigi(), result);
                 lots += result.getLots().intValue();
             }
             order.setCellLots(lots);
