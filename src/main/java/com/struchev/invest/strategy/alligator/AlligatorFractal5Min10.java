@@ -35,7 +35,7 @@ public class AlligatorFractal5Min10 extends AlligatorFractal5Min {
         return true;
     }
 
-    public Double getBuyOnDownProfitPercentK() { return 0.4; }
+    //public Double getBuyOnDownProfitPercentK() { return 0.4; }
 
     public Integer getTrendUpLength() { return 15; }
     public Integer getTrendUpLengthOnSell() { return 1; }
