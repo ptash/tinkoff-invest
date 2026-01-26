@@ -1381,8 +1381,9 @@ public class AlligatorService implements
         var res = false;
         var resByLimit = false;
 
-        var candlePrevList = getCandlesByFigiByLength(candle.getFigi(), candle.getDateTime(), 1, strategy.getInterval());
-        var candlePrev = candlePrevList.get(0);
+        var candlePrevList = getCandlesByFigiByLength(candle.getFigi(), candle.getDateTime(), 2, strategy.getInterval());
+        var candlePrev = candlePrevList.get(1);
+        var candlePrevPrev = candlePrevList.get(0);
 
         var blue = getAlligatorBlue(candle.getFigi(), candle.getDateTime(), strategy);
         var red = getAlligatorRed(candle.getFigi(), candle.getDateTime(), strategy);
@@ -2038,11 +2039,12 @@ public class AlligatorService implements
                 annotation += " stop lost OK";
                 res = true;
                 isStopLoss = true;
-            } else if (isStopLossForce && candle.getHighestPrice().doubleValue() < stopLoss) {
+            } else if (isStopLossForce && candle.getLowestPrice().doubleValue() < stopLoss) {
                 annotation += " stop lost force OK";
                 if (
                         strategy.isStopLossForcePrev()
                         && candlePrev.getHighestPrice().doubleValue() >= stopLoss
+                        && candlePrevPrev.getHighestPrice().doubleValue() >= stopLoss
                 ) {
                     annotation += " SKIP by prev";
                 } else {
