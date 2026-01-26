@@ -2043,8 +2043,8 @@ public class AlligatorService implements
                 annotation += " stop lost force OK";
                 if (
                         strategy.isStopLossForcePrev()
-                        && candlePrev.getHighestPrice().doubleValue() >= stopLoss
-                        && candlePrevPrev.getHighestPrice().doubleValue() >= stopLoss
+                        && (candlePrev.getHighestPrice().doubleValue() >= stopLoss
+                            || candlePrevPrev.getHighestPrice().doubleValue() >= stopLoss)
                 ) {
                     annotation += " SKIP by prev";
                 } else {
