@@ -246,12 +246,14 @@ public class OrderService implements IOrderService {
         if (order.isShort()) {
             limitPrice = order.getSellPrice().multiply(BigDecimal.valueOf((100. - limitPercent.doubleValue())/100.));
             if (order.getDetails().getLimitPrice() != null) {
+                log.debug("Change short limitPrice from {} ({}) to {} by details", limitPrice, limitPercent, candleHistoryReverseForShortService.preparePrice(order.getDetails().getLimitPrice()));
                 limitPrice = candleHistoryReverseForShortService.preparePrice(order.getDetails().getLimitPrice());
             }
             //log.info("limitPrice {} = {} * (100 - {})/100", limitPrice, order.getSellPrice(), limitPercent);
         } else {
             limitPrice = order.getPurchasePrice().multiply(BigDecimal.valueOf((limitPercent.doubleValue() + 100.)/100.));
             if (order.getDetails().getLimitPrice() != null) {
+                log.debug("Change long limitPrice from {} ({}) to {} by details", limitPrice, limitPercent, order.getDetails().getLimitPrice());
                 limitPrice = order.getDetails().getLimitPrice();
             }
         }

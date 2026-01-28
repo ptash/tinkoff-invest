@@ -1643,6 +1643,7 @@ public class AlligatorService implements
                         limitPercent = BigDecimal.valueOf((limitPrice - purchaseRate.doubleValue()) * 100. / purchaseRate.abs().doubleValue());
                         newLimitPercent = limitPercent.floatValue();
                         annotation += "new limitPrice nextMax = " + printPrice(limitPrice);
+                        annotation += "limitPercent = " + printPrice(limitPercent);
                     }
                 }
             } else {
@@ -2014,6 +2015,9 @@ public class AlligatorService implements
             strategy.setSellLimitCriteria(candle.getFigi(), sellLimitCriteria);
             var prevLimitPercent = order.getDetails().getCurrentPrices().getOrDefault("limitPercent", null);
             if (prevLimitPercent == null || !prevLimitPercent.equals(limitPercent)) {
+                if (null != limitPrice) {
+                    order.getDetails().getCurrentPrices().put("limitPrice", BigDecimal.valueOf(limitPrice));
+                }
                 orderService.updateDetailsCurrentPrice(order, "limitPercent", limitPercent);
             }
         } else {
