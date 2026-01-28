@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import ru.tinkoff.piapi.core.exception.ApiRuntimeException;
 
 import javax.annotation.PostConstruct;
 import javax.transaction.Transactional;
@@ -224,6 +225,11 @@ public class OrderService implements IOrderService {
             log.info("Skip limit figi {}: getSellLimitCriteria = null", candle.getFigi());
             return order;
         }
+        var sellLimitFrozen = order.getDetails().getDateTimes().getOrDefault("sellLimitFrozen", null);
+        if (sellLimitFrozen != null && sellLimitFrozen.compareTo(candle.getDateTime()) > 0) {
+            log.info("Skip limit figi {} by frozen {} > {}", candle.getFigi(), sellLimitFrozen, candle.getDateTime());
+            return order;
+        }
         BigDecimal limitPercent = order.getDetails().getLimitPercent();
         if (limitPercent == null && null != strategy.getSellLimitCriteria(candle.getFigi()).getExitProfitPercent()) {
             limitPercent = BigDecimal.valueOf(strategy.getSellLimitCriteria(candle.getFigi()).getExitProfitPercent());
@@ -286,8 +292,18 @@ public class OrderService implements IOrderService {
             order.setSellPriceLimitWanted(limitPrice);
             needSave = true;
         }
-        if (needSave) {
-            order = saveOrder(order);
+        if (
+                result.getException() instanceof ApiRuntimeException
+                && ((ApiRuntimeException) result.getException()).getMessage().contains("Ошибка метода выставления торгового поручения")
+        ) {
+            var frozenMinutes = 5;
+            if (result.getOrderId() != null) {
+                frozenMinutes = 1;
+            }
+            var sellLimitFrozenDatatime = candle.getDateTime().plusMinutes(frozenMinutes);
+            log.info("sellLimitFrozen {} minutes for figi {} to {}", frozenMinutes, candle.getFigi(), sellLimitFrozenDatatime);
+            order.getDetails().getDateTimes().put("sellLimitFrozen", sellLimitFrozenDatatime);
+            needSave = true;
         }
         if (null != result.getLots() && result.getLots() > 0 && result.getIsExecuted()) {
             if (order.isShort()) {
@@ -295,6 +311,10 @@ public class OrderService implements IOrderService {
             } else {
                 order = setOrderInfoSell(order, result, candle);
             }
+            needSave = false;
+        }
+        if (needSave) {
+            order = saveOrder(order);
         }
         return order;
     }

@@ -458,7 +458,7 @@ public class TinkoffGRPCAPI extends ATinkoffAPI {
                 }
             }
         } catch (Exception e) {
-            log.warn("Error in sellLimit {}", instrument.getFigi(), e);
+            log.warn("Error in sellLimit {} {}", instrument.getFigi(), e, e);
             List<OrderState> orders;
             if (getIsSandboxMode()) {
                 orders = getApi().getSandboxService().getOrdersSync(getAccountIdByFigi(instrument));
