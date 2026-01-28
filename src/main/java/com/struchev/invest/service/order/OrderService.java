@@ -245,9 +245,15 @@ public class OrderService implements IOrderService {
         BigDecimal limitPrice;
         if (order.isShort()) {
             limitPrice = order.getSellPrice().multiply(BigDecimal.valueOf((100. - limitPercent.doubleValue())/100.));
+            if (order.getDetails().getLimitPrice() != null) {
+                limitPrice = candleHistoryReverseForShortService.preparePrice(order.getDetails().getLimitPrice());
+            }
             //log.info("limitPrice {} = {} * (100 - {})/100", limitPrice, order.getSellPrice(), limitPercent);
         } else {
             limitPrice = order.getPurchasePrice().multiply(BigDecimal.valueOf((limitPercent.doubleValue() + 100.)/100.));
+            if (order.getDetails().getLimitPrice() != null) {
+                limitPrice = order.getDetails().getLimitPrice();
+            }
         }
         //log.info("Increment {}", instrument.getMinPriceIncrement());
         if (!instrument.getMinPriceIncrement().equals(BigDecimal.ZERO) && instrument.getMinPriceIncrement().compareTo(BigDecimal.valueOf(0.00000001f)) > 0) {
