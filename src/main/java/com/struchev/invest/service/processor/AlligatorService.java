@@ -1649,6 +1649,9 @@ public class AlligatorService implements
             } else {
                 if (null != nextMax) {
                     limitPrice = nextMax;
+                    //if (strategy.getLimitPercentByNextMaxK() != null) {
+                    //    var limitPriceFrom =
+                    //}
                     var buyProfitPercentK = strategy.getBuyProfitPercentK();
                     if (!isTrendUp && null != strategy.getBuyOnDownProfitPercentK()) {
                         buyProfitPercentK = strategy.getBuyOnDownProfitPercentK();
@@ -2765,13 +2768,25 @@ public class AlligatorService implements
             fractalData.setAnnotation(" fractalLineList.size() < strategy.getFractalLength(): " + fractalLineList.size() + " < " + strategy.getFractalLength());
             return fractalData;
         }
+        log.trace("getFractalData fractalLineList.size = {} from {} to {}", fractalLineList.size(), fractalLineList.get(0).getCandleBegin().getDateTime(), fractalLineList.get(fractalLineList.size() - 1).getCandleEnd().getDateTime());
         var annotation = "";
         var polyline = fractalLineList.subList(fractalLineList.size() - strategy.getFractalLength(), fractalLineList.size());
+        log.trace("getFractalData polyline.size = {} from {} to {}", polyline.size(), polyline.get(0).getCandleBegin().getDateTime(), polyline.get(polyline.size() - 1).getCandleEnd().getDateTime());
+
+        var aa = "";
+        for (var i = 0; i < polyline.size(); i++) {
+            aa += " i=" + i + " "
+                    + printDateTime(polyline.get(i).getCandleBegin().getDateTime()) + "-"
+                    + printDateTime(polyline.get(i).getCandleEnd().getDateTime()) + "("
+                    + polyline.get(i).getLength() + ")";
+        }
+        log.trace("getFractalData 1 aa = {}", aa);
 
         var cashKey = polyline.get(0).getCandleBegin().getFigi()
                 + (strategy.isShort() ? "Short" : "Long")
                 + getMethodKey(keyExtractor1)
-                + printDateTime(polyline.get(0).getCandleBegin().getDateTime());
+                + printDateTime(polyline.get(0).getCandleBegin().getDateTime())
+                + (polyline.get(0).getIsBeginKeyExtractor1() ? "k10" : "k11");
         cashKey += strategy.isFractalMinMaxInOneOnlyDeltaOne() ? "is1" : "is0";
         cashKey += strategy.isFractalInDayTimeTrading() ? "is1" : "is0";
         if (null != keyExtractor2) {
@@ -2817,6 +2832,7 @@ public class AlligatorService implements
             }
         }
         if (k1 == null) {
+            log.trace("return k1=null");
             fractalData.setAnnotation("k1=null");
             return fractalData;
         }
@@ -3024,8 +3040,21 @@ public class AlligatorService implements
         fractalData.setAnnotation(annotation);
         var aShort = " fractalLineList.size()=" + fractalLineList.size();
         for (var i = 0; i < polyline.size(); i++) {
-            aShort += " i=" + i + " " + printDateTime(fractalLineList.get(i).getCandleBegin().getDateTime()) + "-" + printDateTime(fractalLineList.get(i).getCandleEnd().getDateTime()) + "(" + fractalLineList.get(i).getLength() + ")";
+            aShort += " i=" + i + " "
+                    + printDateTime(polyline.get(i).getCandleBegin().getDateTime()) + "-"
+                    + printDateTime(polyline.get(i).getCandleEnd().getDateTime()) + "("
+                    + polyline.get(i).getLength() + ")";
         }
+
+        aa = "";
+        for (var i = 0; i < polyline.size(); i++) {
+            aa += " i=" + i + " "
+                    + printDateTime(polyline.get(i).getCandleBegin().getDateTime()) + "-"
+                    + printDateTime(polyline.get(i).getCandleEnd().getDateTime()) + "("
+                    + polyline.get(i).getLength() + ")";
+        }
+        log.trace("getFractalData 2 aa = {}", aa);
+
         fractalData.setAnnotationShort(aShort);
         fractalData.setPolyline(new ArrayList<>(polyline));
 
@@ -3251,9 +3280,12 @@ public class AlligatorService implements
         List<FractalLineData> list = fractalLineCashMap.get(key);
         list.add(v);
         log.trace("addCashedValueFractalLine add line to key {} from {} to {} size = {}", key, v.getCandleBegin().getDateTime(), v.getCandleEnd().getDateTime(), v.getLength());
+        log.trace("addCashedValueFractalLine 1 by key {} fractalLineList.size = {} from {} to {}", key, list.size(), list.get(0).getCandleBegin().getDateTime(), list.get(list.size() - 1).getCandleEnd().getDateTime());
         while (list.size() > strategy.getMaxDeepFractal()) {
+            log.trace("addCashedValueFractalLine remove line to key {} from {} to {} size = {}", 0, list.get(0).getCandleBegin().getDateTime(), list.get(0).getCandleEnd().getDateTime(), list.get(0).getLength());
             list.remove(0);
         }
+        log.trace("addCashedValueFractalLine 2 by key {} fractalLineList.size = {} from {} to {}", key, list.size(), list.get(0).getCandleBegin().getDateTime(), list.get(list.size() - 1).getCandleEnd().getDateTime());
     }
 
     private List<FractalLineData> getFractalLineData(
@@ -3266,7 +3298,11 @@ public class AlligatorService implements
     ) {
         calcFractalLine(candle, strategy, keyExtractor1, comparator1, keyExtractor2, comparator2);
         var key = buildKeyFractalLine(candle.getFigi(), strategy, keyExtractor1, keyExtractor2);
-        return fractalLineCashMap.getOrDefault(key, null);
+        var fractalLineList = fractalLineCashMap.getOrDefault(key, null);
+        if (null != fractalLineList && fractalLineList.size() > 0) {
+            log.trace("getFractalLineData by key {} fractalLineList.size = {} from {} to {}", key, fractalLineList.size(), fractalLineList.get(0).getCandleBegin().getDateTime(), fractalLineList.get(fractalLineList.size() - 1).getCandleEnd().getDateTime());
+        }
+        return fractalLineList;
     }
 
     @Builder
