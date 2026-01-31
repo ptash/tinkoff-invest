@@ -156,6 +156,7 @@ public class AlligatorService implements
         CandleDomainEntity lastFMaxCandle;
         CandleDomainEntity beginMonthCandle = null;
         var isIgnoreSkip = false;
+        var isIgnoreSkipOnlySmaUp = false;
         var lastFMaxCandleData = getLastFMaxCandle(candle.getFigi(), candle.getDateTime(), strategy, strategy.getFMaxCandleCountFromEnd());
         if (null != lastFMaxCandleData) {
             //annotation += " lastFMaxCandle " + lastFMaxCandleData.getAnnotation();
@@ -625,6 +626,25 @@ public class AlligatorService implements
                         }
                     }
 
+                    if (
+                            strategy.getReverseLongMinLength() > 0
+                            && candleListMin.size() > strategy.getReverseLongMinLength()
+                            && null != lastFMinCandleData.getMaxCandleList()
+                            && lastFMinCandleData.getMaxCandleList().size() > 0
+                    ) {
+                        annotation += " LongMinLength=" + strategy.getReverseLongMinLength();
+                        var minCandles = lastFMinCandleData.getMaxCandleList().stream()
+                                .filter(c -> c.getDateTime().compareTo(lastFMinCandle.getDateTime()) >=0).collect(Collectors.toList());
+                        annotation += " minCandles.size=" + minCandles.size() + " from " + printDateTime(minCandles.get(0).getDateTime())
+                                + " to " + printDateTime(minCandles.get(minCandles.size() - 1).getDateTime());
+                        var averagePrice = minCandles.stream()
+                            .mapToDouble(c -> c.getMedianPrice().doubleValue()).average().orElse(waitMax2.doubleValue());
+                        annotation += " averagePrice=" + printPrice(averagePrice);
+                        maxPrice = BigDecimal.valueOf(averagePrice);
+                        annotation += " maxPrice=" + printPrice(maxPrice) + " OK by LongMinLength";
+                        isIgnoreSkipOnlySmaUp = true;
+                    }
+
                     if (null != maxPrice) {
                         if (purchaseRate.compareTo(maxPrice) < 0) {
                             annotation += " SELL OK by ReverseLength";
@@ -658,7 +678,7 @@ public class AlligatorService implements
                     }
                 }
 
-                if (resBuy && strategy.isBuyMaxOnlySmaUp() && "DOWN" == trendName) {
+                if (resBuy && strategy.isBuyMaxOnlySmaUp() && "DOWN" == trendName && !isIgnoreSkipOnlySmaUp) {
                     resBuy = true;
                     annotation += " SKIP by trend DOWN";
                 }
@@ -1056,7 +1076,7 @@ public class AlligatorService implements
                 resBuy = false;
             }
         }
-        if (resBuy && strategy.isBuyMaxOnlySmaUp() && !isTrendUp) {
+        if (resBuy && strategy.isBuyMaxOnlySmaUp() && !isTrendUp && !isIgnoreSkipOnlySmaUp) {
             annotation += " SKIP max by trend down";
             resBuy = false;
         }
@@ -3039,12 +3059,12 @@ public class AlligatorService implements
 
         fractalData.setAnnotation(annotation);
         var aShort = " fractalLineList.size()=" + fractalLineList.size();
-        for (var i = 0; i < polyline.size(); i++) {
+        /*for (var i = 0; i < polyline.size(); i++) {
             aShort += " i=" + i + " "
                     + printDateTime(polyline.get(i).getCandleBegin().getDateTime()) + "-"
                     + printDateTime(polyline.get(i).getCandleEnd().getDateTime()) + "("
                     + polyline.get(i).getLength() + ")";
-        }
+        }*/
 
         aa = "";
         for (var i = 0; i < polyline.size(); i++) {
