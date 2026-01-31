@@ -638,6 +638,7 @@ public class AlligatorService implements
                         annotation += " minCandles.size=" + minCandles.size() + " from " + printDateTime(minCandles.get(0).getDateTime())
                                 + " to " + printDateTime(minCandles.get(minCandles.size() - 1).getDateTime());
                         Double averagePrice;
+                        var keyEx = strategy.getReverseLongMinKeyExtractor();
                         if (strategy.getReverseLongMinAvLength() > 0) {
                             var s = Math.min(strategy.getReverseLongMinAvLength(), minCandles.size());
                             if (s < minCandles.size()) {
@@ -647,7 +648,7 @@ public class AlligatorService implements
                             }
                             if (strategy.getReverseLongMinAvAdK() == null) {
                                 averagePrice = minCandles.stream()
-                                        .mapToDouble(c -> c.getMedianPrice().doubleValue()).average().orElse(waitMax2.doubleValue());
+                                        .mapToDouble(c -> keyEx.apply(c).doubleValue()).average().orElse(waitMax2.doubleValue());
                             } else {
                                 annotation += " LongMinAvAdK=" + printPrice(strategy.getReverseLongMinAvAdK());
                                 averagePrice = 0.;
@@ -657,13 +658,13 @@ public class AlligatorService implements
                                     if ((i + 1) < minCandles.size()) {
                                         k = k * strategy.getReverseLongMinAvAdK();
                                     }
-                                    averagePrice += minCandles.get(i).getMedianPrice().doubleValue() * k;
+                                    averagePrice += keyEx.apply(minCandles.get(i)).doubleValue() * k;
                                     kRest = kRest - k;
                                 }
                             }
                         } else {
                             averagePrice = minCandles.stream()
-                                    .mapToDouble(c -> c.getMedianPrice().doubleValue()).average().orElse(waitMax2.doubleValue());
+                                    .mapToDouble(c -> keyEx.apply(c).doubleValue()).average().orElse(waitMax2.doubleValue());
                         }
                         annotation += " averagePrice=" + printPrice(averagePrice);
                         maxPrice = BigDecimal.valueOf(averagePrice);
