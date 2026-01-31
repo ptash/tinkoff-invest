@@ -2132,14 +2132,26 @@ public class AlligatorService implements
                         && (candlePrev.getHighestPrice().doubleValue() >= stopLoss
                             || candlePrevPrev.getHighestPrice().doubleValue() >= stopLoss)
                 ) {
+                    annotation += " try SKIP by prev";
                     var isDownMinMax = false;
                     if (strategy.getReverseSellLongMinMinLength() > 0) {
                         isDownMinMax = true;
                         for (var i = candleMinMaxList.size() - 1; i >= 0 && i >= (candleMinMaxList.size() - strategy.getReverseSellLongMinMinLength()); i--) {
-                            if (candleMinMaxList.get(i).getOpenPrice().compareTo(candleMinMaxList.get(i).getClosingPrice()) < 0) {
+                            if (candleMinMaxList.get(i).getOpenPrice().compareTo(candleMinMaxList.get(i).getClosingPrice()) <= 0) {
                                 isDownMinMax = false;
-                                annotation += " isDownMinMax=false";
+                                annotation += " up " + i + " on " + printDateTime(candleMinMaxList.get(i).getDateTime());
                                 break;
+                            } else {
+                                annotation += " down " + i + " on " + printDateTime(candleMinMaxList.get(i).getDateTime());
+                            }
+                        }
+                        var firstI = Math.max(0, candleMinMaxList.size() - strategy.getReverseSellLongMinMinLength());
+                        if (isDownMinMax) {
+                            if (candleMinMaxList.get(firstI).getLowestPrice().doubleValue() <= stopLoss) {
+                                isDownMinMax = false;
+                                annotation += " down " + firstI + " under stoploss on " + printDateTime(candleMinMaxList.get(firstI).getDateTime());
+                            } else {
+                                annotation += " down " + firstI + " over stoploss on " + printDateTime(candleMinMaxList.get(firstI).getDateTime());
                             }
                         }
                     }
