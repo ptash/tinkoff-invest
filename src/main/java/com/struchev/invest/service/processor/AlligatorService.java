@@ -2131,7 +2131,23 @@ public class AlligatorService implements
                         && (candlePrev.getHighestPrice().doubleValue() >= stopLoss
                             || candlePrevPrev.getHighestPrice().doubleValue() >= stopLoss)
                 ) {
-                    annotation += " SKIP by prev";
+                    var isDownMinMax = false;
+                    if (strategy.getReverseSellLongMinMinLength() > 0) {
+                        isDownMinMax = true;
+                        for (var i = candleMinMaxList.size() - 1; i >= 0 && i >= (candleMinMaxList.size() - strategy.getReverseSellLongMinMinLength()); i--) {
+                            if (candleMinMaxList.get(i).getOpenPrice().compareTo(candleMinMaxList.get(i).getClosingPrice()) < 0) {
+                                isDownMinMax = false;
+                                annotation += " isDownMinMax=false";
+                                break;
+                            }
+                        }
+                    }
+                    if (!isDownMinMax) {
+                        annotation += " SKIP by prev";
+                    } else {
+                        res = true;
+                        isStopLoss = true;
+                    }
                 } else {
                     res = true;
                     isStopLoss = true;
