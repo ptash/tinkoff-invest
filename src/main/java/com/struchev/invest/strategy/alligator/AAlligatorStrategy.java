@@ -1,12 +1,15 @@
 package com.struchev.invest.strategy.alligator;
 
+import com.struchev.invest.entity.CandleDomainEntity;
 import com.struchev.invest.strategy.AStrategy;
 import com.struchev.invest.strategy.IStrategyShort;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 
 public abstract class AAlligatorStrategy extends AStrategy implements Cloneable, IStrategyShort {
     @Override
@@ -155,7 +158,9 @@ public abstract class AAlligatorStrategy extends AStrategy implements Cloneable,
     public Boolean isWaitMaxBuyByMinMax() {return false; }
     public Integer getReverseMaxLength() { return 0; }
     public Integer getReverseBuyLongMinMinLength() { return 0; }
+    public Integer getReverseSellLongMinMinLength() { return 0; }
     public Integer getReverseLongMinLength() { return 0; }
+    public Function<? super CandleDomainEntity, ? extends BigDecimal> getReverseLongMinKeyExtractor() { return CandleDomainEntity::getMedianPrice; }
     public Integer getReverseLongMinAvLength() { return 0; }
     public Double getReverseLongMinAvAdK() { return 0.8; }
     public Integer getReverseUpMinLength() { return 0; }
@@ -197,6 +202,7 @@ public abstract class AAlligatorStrategy extends AStrategy implements Cloneable,
     public Double getBuyOnDownProfitPercentK() { return null; }
     public Float getBuyMinStopLossPercent() { return null; }
     public Boolean isDownPriceWantedToMinProfitPercent() {return false; }
+    public Boolean isDownToMinProfitPercentStopLossByPercent() {return false; }
     public Boolean isUpLimitPriceToMinProfitPercent() {return false; }
     public Double getReverseStopLossK() { return 1.5; }
     public Double getDownFromPriceWantedK() { return -1.; }

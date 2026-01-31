@@ -762,6 +762,8 @@ public class AlligatorService implements
                         //annotation += " SKIP StopLossPercent=" + strategy.getBuyMinStopLossPercent();
                         //resBuy = false;
                     }
+                    annotation += " isIgnoreSkip=" + isIgnoreSkip;
+                    annotation += " buyMinProfitPer=" + strategy.getBuyMinProfitPercent();
                     if (!isIgnoreSkip && realLimitPercent < strategy.getBuyMinProfitPercent()) {
                         if (strategy.isDownPriceWantedToMinProfitPercent()) {
                             var isDown = true;
@@ -777,27 +779,35 @@ public class AlligatorService implements
                                 //}
                             }
 
+                            var realLimitPriceOld = realLimitPrice;
                             if (isDown) {
                                 var priceWantedOld = priceWanted;
                                 var percentDelta = strategy.getBuyMinProfitPercent() - realLimitPercent;
                                 priceWanted = BigDecimal.valueOf(priceWanted.doubleValue() - priceWanted.abs().doubleValue() * percentDelta / 100.);
+                                realStopLossPercent = newRealLimitPercent * (realStopLossPercent / realLimitPercent);
+                                annotation += " realStopLossPercent=" + printPrice(realStopLossPercent);
 
                                 realLimitPercent = newRealLimitPercent;
                                 realLimitPrice = priceWanted.doubleValue() + realLimitPercent * priceWanted.abs().doubleValue() / 100.;
                                 annotation += " UP realLimitPercent=" + printPrice(realLimitPercent);
                                 annotation += " realLimitPrice=" + printPrice(realLimitPrice);
-                                stopLoss -= priceWantedOld.subtract(priceWanted).abs().doubleValue();
-                                annotation += " stopLoss=" + printPrice(stopLoss);
+                                //stopLoss -= priceWantedOld.subtract(priceWanted).abs().doubleValue();
                             } else {
-                                var realLimitPriceOld = realLimitPrice;
-
+                                realStopLossPercent = newRealLimitPercent * (realStopLossPercent / realLimitPercent);
+                                annotation += " realStopLossPercent=" + printPrice(realStopLossPercent);
                                 realLimitPercent = newRealLimitPercent;
                                 realLimitPrice = priceWanted.doubleValue() + realLimitPercent * priceWanted.abs().doubleValue() / 100.;
                                 annotation += " UP realLimitPercent=" + printPrice(realLimitPercent);
                                 annotation += " UP realLimitPrice=" + printPrice(realLimitPrice);
-                                stopLoss -= Math.abs(realLimitPriceOld - realLimitPrice);
-                                annotation += " stopLoss=" + printPrice(stopLoss);
+
+                                //stopLoss -= Math.abs(realLimitPriceOld - realLimitPrice);
                             }
+                            if (strategy.isDownToMinProfitPercentStopLossByPercent()) {
+                                stopLoss = priceWanted.doubleValue() - realStopLossPercent * priceWanted.abs().doubleValue() / 100.;
+                            } else {
+                                stopLoss -= Math.abs(realLimitPriceOld - realLimitPrice);
+                            }
+                            annotation += " stopLoss=" + printPrice(stopLoss);
                         } else {
                             annotation += " SKIP ProfitPercent=" + strategy.getBuyMinProfitPercent();
                             resBuy = false;
