@@ -5,5 +5,6 @@ import org.springframework.stereotype.Component;
 @Component
 public class AlligatorStrategy5MinRev5L extends AlligatorStrategy5MinRev5 {
     public Integer getReverseLongMinLength() { return 40; }
+    public Integer getReverseLongMinAvLength() { return 5; }
     public boolean isEnabled() { return true; }
 }

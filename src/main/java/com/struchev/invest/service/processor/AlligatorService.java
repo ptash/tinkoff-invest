@@ -637,8 +637,34 @@ public class AlligatorService implements
                                 .filter(c -> c.getDateTime().compareTo(lastFMinCandle.getDateTime()) >=0).collect(Collectors.toList());
                         annotation += " minCandles.size=" + minCandles.size() + " from " + printDateTime(minCandles.get(0).getDateTime())
                                 + " to " + printDateTime(minCandles.get(minCandles.size() - 1).getDateTime());
-                        var averagePrice = minCandles.stream()
-                            .mapToDouble(c -> c.getMedianPrice().doubleValue()).average().orElse(waitMax2.doubleValue());
+                        Double averagePrice;
+                        if (strategy.getReverseLongMinAvLength() > 0) {
+                            var s = Math.min(strategy.getReverseLongMinAvLength(), minCandles.size());
+                            if (s < minCandles.size()) {
+                                minCandles = minCandles.subList(0, s);
+                                annotation += " minCandles.size=" + minCandles.size() + " from " + printDateTime(minCandles.get(0).getDateTime())
+                                        + " to " + printDateTime(minCandles.get(minCandles.size() - 1).getDateTime());
+                            }
+                            if (strategy.getReverseLongMinAvAdK() == null) {
+                                averagePrice = minCandles.stream()
+                                        .mapToDouble(c -> c.getMedianPrice().doubleValue()).average().orElse(waitMax2.doubleValue());
+                            } else {
+                                annotation += " LongMinAvAdK=" + printPrice(strategy.getReverseLongMinAvAdK());
+                                averagePrice = 0.;
+                                var kRest = 1.;
+                                for (var i = 0; i < minCandles.size(); i++) {
+                                    var k = kRest;
+                                    if ((i + 1) < minCandles.size()) {
+                                        k = k * strategy.getReverseLongMinAvAdK();
+                                    }
+                                    averagePrice += minCandles.get(i).getMedianPrice().doubleValue() * k;
+                                    kRest = kRest - k;
+                                }
+                            }
+                        } else {
+                            averagePrice = minCandles.stream()
+                                    .mapToDouble(c -> c.getMedianPrice().doubleValue()).average().orElse(waitMax2.doubleValue());
+                        }
                         annotation += " averagePrice=" + printPrice(averagePrice);
                         maxPrice = BigDecimal.valueOf(averagePrice);
                         annotation += " maxPrice=" + printPrice(maxPrice) + " OK by LongMinLength";
@@ -1549,11 +1575,17 @@ public class AlligatorService implements
         }
 
         var sellLimitCriteria = strategy.getSellLimitCriteria(candle.getFigi());
-        //limitPrice = order.getDetails().getCurrentPrices().getOrDefault("limitPrice", BigDecimal.ZERO).doubleValue();
+        var limitPriceOrigB = order.getDetails().getCurrentPrices().getOrDefault("limitPrice", null);
+        if (limitPriceOrigB != null) {
+            limitPrice = limitPriceOrigB.doubleValue();
+        }
+        //limitPrice = order.getDetails().getCurrentPrices().getOrDefault("limitPrice", null).doubleValue();
         var limitPercent = order.getDetails().getCurrentPrices().getOrDefault("limitPercent", BigDecimal.ZERO);
         annotation += " limitPercent" + limitPercent;
         Float newLimitPercent = limitPercent.floatValue();
-        limitPrice = (double) (purchaseRate.floatValue() + Math.abs(purchaseRate.floatValue()) * newLimitPercent / 100.f);
+        if (null == limitPrice) {
+            limitPrice = (double) (purchaseRate.floatValue() + Math.abs(purchaseRate.floatValue()) * newLimitPercent / 100.f);
+        }
         annotation += " limitPrice" + printPrice(limitPrice);
 
         Double nextMin = null;
