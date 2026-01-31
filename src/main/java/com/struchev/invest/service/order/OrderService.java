@@ -261,7 +261,7 @@ public class OrderService implements IOrderService {
         if (!instrument.getMinPriceIncrement().equals(BigDecimal.ZERO) && instrument.getMinPriceIncrement().compareTo(BigDecimal.valueOf(0.00000001f)) > 0) {
             try {
                 //log.info("Increment {} before {}", instrument.getMinPriceIncrement(), limitPrice);
-                limitPrice = limitPrice.divide(instrument.getMinPriceIncrement(), 0, order.isShort() ? RoundingMode.HALF_DOWN : RoundingMode.HALF_UP).multiply(instrument.getMinPriceIncrement());
+                limitPrice = limitPrice.divide(instrument.getMinPriceIncrement(), 0, order.isShort() ? RoundingMode.CEILING : RoundingMode.FLOOR).multiply(instrument.getMinPriceIncrement());
                 //log.info("Increment {} after {}", instrument.getMinPriceIncrement(), limitPrice);
             } catch (ArithmeticException $e) {
                 log.error("An error in limitPrice " + limitPrice + " to MinPriceIncrement " + instrument.getMinPriceIncrement(), $e);
