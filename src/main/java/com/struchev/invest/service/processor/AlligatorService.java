@@ -671,6 +671,32 @@ public class AlligatorService implements
                         isIgnoreSkipOnlySmaUp = true;
                     }
 
+                    if (maxPrice != null && strategy.getReverseBuyLongMinMinLength() > 0) {
+                        var minMinCount = 0;
+                        List<CandleDomainEntity> minCandles = new ArrayList<>();
+                        for (var i = 0; i < candleListMin.size(); i++) {
+                            if (candleListMin.get(i).getOpenPrice().compareTo(candleListMin.get(i).getClosingPrice()) >= 0) {
+                                minMinCount++;
+                                if (i == (candleListMin.size() - 1) && minMinCount >= strategy.getReverseBuyLongMinMinLength()) {
+                                    minCandles.add(candleListMin.get(i));
+                                }
+                            } else {
+                                if (minMinCount >= strategy.getReverseBuyLongMinMinLength()) {
+                                    minCandles.add(candleListMin.get(i));
+                                }
+                                minMinCount = 0;
+                            }
+                        }
+                        if (minCandles.size() > 0) {
+                            var minV = minCandles.stream().mapToDouble(c -> c.getLowestPrice().doubleValue()).min().getAsDouble();
+                            annotation += " minV=" + printPrice(minV);
+                            if (maxPrice.doubleValue() > minV) {
+                                annotation += " maxPrice change " + printPrice(maxPrice) + "=>" + printPrice(minV);
+                                maxPrice = BigDecimal.valueOf(minV);
+                            }
+                        }
+                    }
+
                     if (null != maxPrice) {
                         if (purchaseRate.compareTo(maxPrice) < 0) {
                             annotation += " SELL OK by ReverseLength";
