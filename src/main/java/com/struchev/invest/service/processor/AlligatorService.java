@@ -711,14 +711,18 @@ public class AlligatorService implements
                             minCandlesDown = minCandlesDown.subList(minCandlesDown.size() - 1, minCandlesDown.size());
                             var minV = minCandlesDown.stream().mapToDouble(c -> c.getLowestPrice().doubleValue()).min().getAsDouble();
                             var minList = candleListMinMin.subList(minMinI - minMinCountLast + 1, minMinI + 1);
-                            minV = minList.stream().mapToDouble(c -> c.getLowestPrice().doubleValue()).min().getAsDouble();
+                            var minListAll = candleListMinMin.subList(minMinI - minMinCountLast + 1, candleListMinMin.size());
+                            minV = minListAll.stream().mapToDouble(c -> c.getLowestPrice().doubleValue()).min().getAsDouble();
                             annotation += " minV=" + printPrice(minV);
                             var lastMinCandle = minCandlesDown.get(0);
                             annotation += " candle=" + printDateTime(candle.getDateTime());
                             annotation += " lastMinCandle=" + printDateTime(lastMinCandle.getDateTime());
                             if (candle.getDateTime().compareTo(lastMinCandle.getDateTime()) > 0) {
-                                //minV = minCandlesDown.stream().mapToDouble(c -> c.getOpenCloseMedianPrice().doubleValue()).min().getAsDouble();
-                                //annotation += " UP minV=" + printPrice(minV);
+                                var minV2 = Math.min(
+                                        minCandlesDown.stream().mapToDouble(c -> c.getOpenCloseMedianPrice().doubleValue()).min().getAsDouble(),
+                                        minCandlesDown.stream().mapToDouble(c -> c.getMedianPrice().doubleValue()).min().getAsDouble()
+                                );
+                                annotation += " minV2=" + printPrice(minV2);
                                 annotation += " minMinCountLast=" + minMinCountLast;
                                 var minVLast = candle.getHighestPrice().min(candle.getLowestPrice()).doubleValue()
                                         + candle.getOpenPrice().max(candle.getClosingPrice()).subtract(candle.getLowestPrice()).abs().doubleValue()
