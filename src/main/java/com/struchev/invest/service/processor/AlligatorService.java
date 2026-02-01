@@ -817,6 +817,7 @@ public class AlligatorService implements
                         var avOpenCloseV = candleListMinMin.stream().mapToDouble(c -> c.getLowHighSize().doubleValue()).average().getAsDouble();
                         annotation += " avOpenCloseV=" + printPrice(avOpenCloseV);
                         var avOpenCloseLimitPercent = 100. * avOpenCloseV / priceWanted.abs().doubleValue();
+                        avOpenCloseLimitPercent = strategy.getUpLimitPriceToAvOpenCloseK() * avOpenCloseLimitPercent;
                         annotation += " avOpenCloseLimitPercent=" + printPrice(avOpenCloseLimitPercent);
                         if (avOpenCloseLimitPercent > realLimitPercent) {
                             annotation += " new max realLimitPercent=" + printPrice(realLimitPercent) + "=>" + printPrice(avOpenCloseLimitPercent);

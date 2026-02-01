@@ -16,6 +16,7 @@ public class AlligatorStrategy5MinRev4L extends AlligatorStrategy5MinRev4 {
     public Integer getReverseBuyMinMinLength() { return 3; }
     public Integer getLimitPriceDownStepLength() { return 0; }
     public Integer getUpLimitPriceToAvOpenCloseLength() { return 20; }
+    public Double getUpLimitPriceToAvOpenCloseK() { return 2.; }
     //public Function<? super CandleDomainEntity, ? extends BigDecimal> getReverseLongMinKeyExtractor() { return CandleDomainEntity::getLowestPrice; }
     public boolean isEnabled() { return true; }
 }

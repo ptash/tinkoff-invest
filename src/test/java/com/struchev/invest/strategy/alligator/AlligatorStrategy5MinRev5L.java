@@ -17,6 +17,7 @@ public class AlligatorStrategy5MinRev5L extends AlligatorStrategy5MinRev5 {
     public Boolean isDownToMinProfitPercentStopLossByPercent() {return true; }
     public Integer getTrendUpLength() { return 10; }
     public Integer getUpLimitPriceToAvOpenCloseLength() { return 20; }
+    public Double getUpLimitPriceToAvOpenCloseK() { return 2.; }
     //public Function<? super CandleDomainEntity, ? extends BigDecimal> getReverseLongMinKeyExtractor() { return CandleDomainEntity::getLowestPrice; }
     public boolean isEnabled() { return true; }
 }
