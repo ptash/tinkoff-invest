@@ -670,49 +670,53 @@ public class AlligatorService implements
                         maxPrice = BigDecimal.valueOf(averagePrice);
                         annotation += " maxPrice=" + printPrice(maxPrice) + " OK by LongMinLength";
                         isIgnoreSkipOnlySmaUp = true;
-
-                        if (maxPrice != null && strategy.getReverseBuyLongMinMinLength() > 0) {
-                            annotation += " BuyLongMinMinLength=" + strategy.getReverseBuyLongMinMinLength();
-                            var minMinCount = 0;
-                            List<CandleDomainEntity> minCandlesDown = new ArrayList<>();
-                            var minMinCountLast = 0;
-                            for (var i = 0; i < candleListMin.size(); i++) {
-                                if (!candleListMin.get(i).isUp()) {
-                                    minMinCount++;
-                                    if (i == (candleListMin.size() - 1) && minMinCount >= strategy.getReverseBuyLongMinMinLength()) {
-                                        annotation += " add " + printDateTime(candleListMin.get(i).getDateTime());
-                                        minCandlesDown.add(candleListMin.get(i));
-                                        minMinCountLast = minMinCount;
-                                    }
-                                } else {
-                                    if (minMinCount >= strategy.getReverseBuyLongMinMinLength() && i > 0) {
-                                        annotation += " add " + printDateTime(candleListMin.get(i - 1).getDateTime());
-                                        minCandlesDown.add(candleListMin.get(i - 1));
-                                        minMinCountLast = minMinCount;
-                                    }
-                                    minMinCount = 0;
+                    }
+                    var minMinLength = isIgnoreSkipOnlySmaUp ? strategy.getReverseBuyLongMinMinLength() : strategy.getReverseBuyMinMinLength();
+                    if (
+                            maxPrice != null
+                            && minMinLength > 0
+                    ) {
+                        var l =
+                        annotation += " BuyLongMinMinLength=" + minMinLength;
+                        var minMinCount = 0;
+                        List<CandleDomainEntity> minCandlesDown = new ArrayList<>();
+                        var minMinCountLast = 0;
+                        for (var i = 0; i < candleListMin.size(); i++) {
+                            if (!candleListMin.get(i).isUp()) {
+                                minMinCount++;
+                                if (i == (candleListMin.size() - 1) && minMinCount >= minMinLength) {
+                                    annotation += " add " + printDateTime(candleListMin.get(i).getDateTime());
+                                    minCandlesDown.add(candleListMin.get(i));
+                                    minMinCountLast = minMinCount;
                                 }
+                            } else {
+                                if (minMinCount >= minMinLength && i > 0) {
+                                    annotation += " add " + printDateTime(candleListMin.get(i - 1).getDateTime());
+                                    minCandlesDown.add(candleListMin.get(i - 1));
+                                    minMinCountLast = minMinCount;
+                                }
+                                minMinCount = 0;
                             }
-                            if (minCandlesDown.size() > 0) {
-                                minCandlesDown = minCandlesDown.subList(minCandlesDown.size() - 1, minCandlesDown.size());
-                                var minV = minCandlesDown.stream().mapToDouble(c -> c.getLowestPrice().doubleValue()).min().getAsDouble();
-                                annotation += " minV=" + printPrice(minV);
-                                if (candle.getDateTime().compareTo(minCandlesDown.get(0).getDateTime()) > 0) {
-                                    minV = minCandlesDown.stream().mapToDouble(c -> c.getMedianPrice().doubleValue()).min().getAsDouble();
-                                    annotation += " UP minV=" + printPrice(minV);
-                                    annotation += " minMinCountLast" + minMinCountLast;
-                                    var minVLast = candle.getHighestPrice().min(candle.getLowestPrice()).doubleValue()
-                                            + candle.getOpenPrice().max(candle.getClosingPrice()).subtract(candle.getLowestPrice()).abs().doubleValue() / minMinCountLast;
-                                    annotation += " minVLast" + printPrice(minVLast);
-                                    //if (minV > minVLast) {
-                                        minV = minVLast;
-                                        annotation += " OPEN minV=" + printPrice(minV);
-                                    //}
-                                }
-                                if (maxPrice.doubleValue() > minV) {
-                                    annotation += " maxPrice change " + printPrice(maxPrice) + "=>" + printPrice(minV);
-                                    maxPrice = BigDecimal.valueOf(minV);
-                                }
+                        }
+                        if (minCandlesDown.size() > 0) {
+                            minCandlesDown = minCandlesDown.subList(minCandlesDown.size() - 1, minCandlesDown.size());
+                            var minV = minCandlesDown.stream().mapToDouble(c -> c.getLowestPrice().doubleValue()).min().getAsDouble();
+                            annotation += " minV=" + printPrice(minV);
+                            if (candle.getDateTime().compareTo(minCandlesDown.get(0).getDateTime()) > 0) {
+                                minV = minCandlesDown.stream().mapToDouble(c -> c.getMedianPrice().doubleValue()).min().getAsDouble();
+                                annotation += " UP minV=" + printPrice(minV);
+                                annotation += " minMinCountLast" + minMinCountLast;
+                                var minVLast = candle.getHighestPrice().min(candle.getLowestPrice()).doubleValue()
+                                        + candle.getOpenPrice().max(candle.getClosingPrice()).subtract(candle.getLowestPrice()).abs().doubleValue() / minMinCountLast;
+                                annotation += " minVLast" + printPrice(minVLast);
+                                //if (minV > minVLast) {
+                                minV = minVLast;
+                                annotation += " OPEN minV=" + printPrice(minV);
+                                //}
+                            }
+                            if (maxPrice.doubleValue() > minV) {
+                                annotation += " maxPrice change " + printPrice(maxPrice) + "=>" + printPrice(minV);
+                                maxPrice = BigDecimal.valueOf(minV);
                             }
                         }
                     }

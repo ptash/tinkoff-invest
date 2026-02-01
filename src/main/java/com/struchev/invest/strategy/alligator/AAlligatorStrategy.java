@@ -158,6 +158,7 @@ public abstract class AAlligatorStrategy extends AStrategy implements Cloneable,
     public Boolean isWaitMaxBuyByMinMax() {return false; }
     public Integer getReverseMaxLength() { return 0; }
     public Integer getReverseBuyLongMinMinLength() { return 0; }
+    public Integer getReverseBuyMinMinLength() { return 0; }
     public Integer getReverseSellLongMinMinLength() { return 0; }
     public Integer getReverseLongMinLength() { return 0; }
     public Function<? super CandleDomainEntity, ? extends BigDecimal> getReverseLongMinKeyExtractor() { return CandleDomainEntity::getMedianPrice; }
