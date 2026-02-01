@@ -671,29 +671,38 @@ public class AlligatorService implements
                         annotation += " maxPrice=" + printPrice(maxPrice) + " OK by LongMinLength";
                         isIgnoreSkipOnlySmaUp = true;
                     }
-                    var minMinLength = isIgnoreSkipOnlySmaUp ? strategy.getReverseBuyLongMinMinLength() : strategy.getReverseBuyMinMinLength();
+                    var minMinLength = isIgnoreSkipOnlySmaUp
+                            ? strategy.getReverseBuyLongMinMinLength()
+                            : strategy.getReverseBuyMinMinLength();
+                    annotation += " BuyLongMinMinLength=" + minMinLength;
                     if (
                             maxPrice != null
                             && minMinLength > 0
                     ) {
-                        var l =
-                        annotation += " BuyLongMinMinLength=" + minMinLength;
+                        annotation += " minMin from " + printDateTime(candleListMin.get(0).getDateTime()) + " to " + printDateTime(candleListMin.get(candleListMin.size() - 1).getDateTime());
                         var minMinCount = 0;
                         List<CandleDomainEntity> minCandlesDown = new ArrayList<>();
                         var minMinCountLast = 0;
-                        for (var i = 0; i < candleListMin.size(); i++) {
-                            if (!candleListMin.get(i).isUp()) {
+                        var minMinI = 0;
+                        var candleListMinMin = candleListMin;
+                        if (candleListMinMin.get(candleListMinMin.size() - 1).getDateTime().equals(candleOrig.getDateTime())) {
+                            candleListMinMin = candleListMin.subList(0, candleListMin.size() - 1);
+                        }
+                        for (var i = 0; i < candleListMinMin.size(); i++) {
+                            if (!candleListMinMin.get(i).isUp()) {
                                 minMinCount++;
-                                if (i == (candleListMin.size() - 1) && minMinCount >= minMinLength) {
-                                    annotation += " add " + printDateTime(candleListMin.get(i).getDateTime());
-                                    minCandlesDown.add(candleListMin.get(i));
+                                if (i == (candleListMinMin.size() - 1) && minMinCount >= minMinLength) {
+                                    annotation += " add " + printDateTime(candleListMinMin.get(i).getDateTime());
+                                    minCandlesDown.add(candleListMinMin.get(i));
                                     minMinCountLast = minMinCount;
+                                    minMinI = i;
                                 }
                             } else {
                                 if (minMinCount >= minMinLength && i > 0) {
-                                    annotation += " add " + printDateTime(candleListMin.get(i - 1).getDateTime());
-                                    minCandlesDown.add(candleListMin.get(i - 1));
+                                    annotation += " add " + printDateTime(candleListMinMin.get(i - 1).getDateTime());
+                                    minCandlesDown.add(candleListMinMin.get(i - 1));
                                     minMinCountLast = minMinCount;
+                                    minMinI = i - 1;
                                 }
                                 minMinCount = 0;
                             }
@@ -701,23 +710,36 @@ public class AlligatorService implements
                         if (minCandlesDown.size() > 0) {
                             minCandlesDown = minCandlesDown.subList(minCandlesDown.size() - 1, minCandlesDown.size());
                             var minV = minCandlesDown.stream().mapToDouble(c -> c.getLowestPrice().doubleValue()).min().getAsDouble();
+                            var minList = candleListMinMin.subList(minMinI - minMinCountLast + 1, minMinI + 1);
+                            minV = minList.stream().mapToDouble(c -> c.getLowestPrice().doubleValue()).min().getAsDouble();
                             annotation += " minV=" + printPrice(minV);
-                            if (candle.getDateTime().compareTo(minCandlesDown.get(0).getDateTime()) > 0) {
-                                minV = minCandlesDown.stream().mapToDouble(c -> c.getMedianPrice().doubleValue()).min().getAsDouble();
-                                annotation += " UP minV=" + printPrice(minV);
-                                annotation += " minMinCountLast" + minMinCountLast;
+                            var lastMinCandle = minCandlesDown.get(0);
+                            annotation += " candle=" + printDateTime(candle.getDateTime());
+                            annotation += " lastMinCandle=" + printDateTime(lastMinCandle.getDateTime());
+                            if (candle.getDateTime().compareTo(lastMinCandle.getDateTime()) > 0) {
+                                //minV = minCandlesDown.stream().mapToDouble(c -> c.getOpenCloseMedianPrice().doubleValue()).min().getAsDouble();
+                                //annotation += " UP minV=" + printPrice(minV);
+                                annotation += " minMinCountLast=" + minMinCountLast;
                                 var minVLast = candle.getHighestPrice().min(candle.getLowestPrice()).doubleValue()
-                                        + candle.getOpenPrice().max(candle.getClosingPrice()).subtract(candle.getLowestPrice()).abs().doubleValue() / minMinCountLast;
-                                annotation += " minVLast" + printPrice(minVLast);
-                                //if (minV > minVLast) {
-                                minV = minVLast;
-                                annotation += " OPEN minV=" + printPrice(minV);
-                                //}
+                                        + candle.getOpenPrice().max(candle.getClosingPrice()).subtract(candle.getLowestPrice()).abs().doubleValue()
+                                        / minMinCountLast;
+                                annotation += " minVLast=" + printPrice(minVLast);
+                                var minMax = lastMinCandle.getOpenCloseMedianPrice().doubleValue();
+                                annotation += " minMax=" + printPrice(minMax);
+                                if (minMax > minVLast && minVLast > minV) {
+                                    minV = minVLast;
+                                    annotation += " OPEN minV=" + printPrice(minV);
+                                }
+                            } else {
+                                var minMaxV = minList.stream().mapToDouble(c -> c.getHighestPrice().doubleValue()).max().getAsDouble();
+                                annotation += " minMaxV=" + printPrice(minMaxV);
+                                minV -= Math.abs(minMaxV - minV);
+                                annotation += " MIN minV=" + printPrice(minV);
                             }
-                            if (maxPrice.doubleValue() > minV) {
+                            //if (maxPrice.doubleValue() > minV) {
                                 annotation += " maxPrice change " + printPrice(maxPrice) + "=>" + printPrice(minV);
                                 maxPrice = BigDecimal.valueOf(minV);
-                            }
+                            //}
                         }
                     }
 
