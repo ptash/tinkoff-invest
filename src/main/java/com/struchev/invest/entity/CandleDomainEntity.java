@@ -73,6 +73,14 @@ public class CandleDomainEntity implements Cloneable {
         return getOpenPrice().add(getClosingPrice()).divide(BigDecimal.valueOf(2), 8, RoundingMode.HALF_UP);
     }
 
+    public BigDecimal getOpenCloseSize() {
+        return getOpenPrice().subtract(getClosingPrice()).abs();
+    }
+
+    public BigDecimal getLowHighSize() {
+        return getLowestPrice().subtract(getHighestPrice()).abs();
+    }
+
     public Boolean isUp() {
         return getOpenPrice().compareTo(getClosingPrice()) <= 0;
     }

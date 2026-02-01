@@ -209,6 +209,7 @@ public abstract class AAlligatorStrategy extends AStrategy implements Cloneable,
     public Double getDownFromPriceWantedK() { return -1.; }
     public Boolean isSkipDownMinHighestPrice() { return false; }
     public Boolean isUpLimitPriceToWaitMax() {return false; }
+    public Integer getUpLimitPriceToAvOpenCloseLength() { return 0; }
 
 
     public Integer getSmaLength() { return 13 * 10; }

@@ -791,6 +791,27 @@ public class AlligatorService implements
                     }
                     var realLimitPercent = waitMax2.subtract(waitMax).abs().doubleValue() * strategy.getReverseStopLossK() * 100. / waitMax.abs().doubleValue();
                     var realLimitPrice = priceWanted.doubleValue() + realLimitPercent * priceWanted.abs().doubleValue() / 100.;
+                    if (strategy.getUpLimitPriceToAvOpenCloseLength() > 0) {
+                        var candleListMinMin = getCandlesByFigiByLength(candle.getFigi(), candle.getDateTime(), strategy.getUpLimitPriceToAvOpenCloseLength(), strategy.getInterval());
+                        /*
+                        var candleListMinMin = candleListMin;
+                        if (candleListMinMin.get(candleListMinMin.size() - 1).getDateTime().equals(candleOrig.getDateTime())) {
+                            candleListMinMin = candleListMin.subList(0, candleListMin.size() - 1);
+                        }
+                        if (candleListMinMin.size() > strategy.isUpLimitPriceToAvOpenCloseLength()) {
+                            candleListMinMin = candleListMinMin.subList(candleListMinMin.size() - strategy.isUpLimitPriceToAvOpenCloseLength(), candleListMinMin.size());
+                        }*/
+                        annotation += " candleListMinMin from " + printDateTime(candleListMinMin.get(0).getDateTime()) + " to " + printDateTime(candleListMinMin.get(candleListMinMin.size() - 1).getDateTime());
+                        var avOpenCloseV = candleListMinMin.stream().mapToDouble(c -> c.getLowHighSize().doubleValue()).average().getAsDouble();
+                        annotation += " avOpenCloseV=" + printPrice(avOpenCloseV);
+                        var avOpenCloseLimitPercent = 100. * avOpenCloseV / priceWanted.abs().doubleValue();
+                        annotation += " avOpenCloseLimitPercent=" + printPrice(avOpenCloseLimitPercent);
+                        if (avOpenCloseLimitPercent > realLimitPercent) {
+                            annotation += " new realLimitPercent=" + printPrice(realLimitPercent) + "=>" + printPrice(avOpenCloseLimitPercent);
+                            realLimitPercent = avOpenCloseLimitPercent;
+                            realLimitPrice = priceWanted.doubleValue() + realLimitPercent * priceWanted.abs().doubleValue() / 100.;
+                        }
+                    }
                     stopLoss = priceWanted.doubleValue() - 2 * waitMaxBuy.subtract(waitMax).abs().doubleValue();
                     if (
                             //isMaxPriceDown
