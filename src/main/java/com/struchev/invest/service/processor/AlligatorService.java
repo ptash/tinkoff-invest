@@ -822,12 +822,11 @@ public class AlligatorService implements
                             annotation += " new max realLimitPercent=" + printPrice(realLimitPercent) + "=>" + printPrice(avOpenCloseLimitPercent);
                             realLimitPercent = avOpenCloseLimitPercent;
                         } else {
-                            annotation += " new min realLimitPercent=" + printPrice(realLimitPercent) + "=>" + printPrice(avOpenCloseLimitPercent);
-                            realLimitPercent = avOpenCloseLimitPercent;
+                            //annotation += " new min realLimitPercent=" + printPrice(realLimitPercent) + "=>" + printPrice(avOpenCloseLimitPercent);
+                            //realLimitPercent = avOpenCloseLimitPercent;
                             //resBuy = false;
                             //annotation += " SKIP avOpenCloseLimitPercent";
                         }
-                        realLimitPercent = avOpenCloseLimitPercent;
                         realLimitPrice = priceWanted.doubleValue() + realLimitPercent * priceWanted.abs().doubleValue() / 100.;
                     }
                     stopLoss = priceWanted.doubleValue() - 2 * waitMaxBuy.subtract(waitMax).abs().doubleValue();
