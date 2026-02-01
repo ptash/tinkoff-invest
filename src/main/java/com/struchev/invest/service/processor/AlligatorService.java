@@ -791,6 +791,18 @@ public class AlligatorService implements
                     }
                     var realLimitPercent = waitMax2.subtract(waitMax).abs().doubleValue() * strategy.getReverseStopLossK() * 100. / waitMax.abs().doubleValue();
                     var realLimitPrice = priceWanted.doubleValue() + realLimitPercent * priceWanted.abs().doubleValue() / 100.;
+                    annotation += " realLimitPercent=" + printPrice(realLimitPercent);
+                    annotation += " realLimitPrice=" + printPrice(realLimitPrice);
+                    if (
+                        //isMaxPriceDown
+                            strategy.isUpLimitPriceToWaitMax()
+                            && waitMax.doubleValue() > realLimitPrice
+                    ) {
+                        realLimitPrice = waitMax.doubleValue();
+                        realLimitPercent = 100. * (realLimitPrice - priceWanted.doubleValue()) / priceWanted.abs().doubleValue();
+                        annotation += " realLimitPercent=" + printPrice(realLimitPercent);
+                        annotation += " realLimitPrice=" + printPrice(realLimitPrice);
+                    }
                     if (strategy.getUpLimitPriceToAvOpenCloseLength() > 0) {
                         var candleListMinMin = getCandlesByFigiByLength(candle.getFigi(), candle.getDateTime(), strategy.getUpLimitPriceToAvOpenCloseLength(), strategy.getInterval());
                         /*
@@ -810,19 +822,12 @@ public class AlligatorService implements
                             annotation += " new realLimitPercent=" + printPrice(realLimitPercent) + "=>" + printPrice(avOpenCloseLimitPercent);
                             realLimitPercent = avOpenCloseLimitPercent;
                             realLimitPrice = priceWanted.doubleValue() + realLimitPercent * priceWanted.abs().doubleValue() / 100.;
+                        } else {
+                            resBuy = false;
+                            annotation += " SKIP avOpenCloseLimitPercent";
                         }
                     }
                     stopLoss = priceWanted.doubleValue() - 2 * waitMaxBuy.subtract(waitMax).abs().doubleValue();
-                    if (
-                            //isMaxPriceDown
-                            strategy.isUpLimitPriceToWaitMax()
-                            && waitMax.doubleValue() > realLimitPrice
-                    ) {
-                        realLimitPrice = waitMax.doubleValue();
-                        realLimitPercent = 100. * (realLimitPrice - priceWanted.doubleValue()) / priceWanted.abs().doubleValue();
-                    }
-                    annotation += " realLimitPercent=" + printPrice(realLimitPercent);
-                    annotation += " realLimitPrice=" + printPrice(realLimitPrice);
                     annotation += " stopLoss=" + printPrice(stopLoss);
                     var realStopLossPercent = 100. * (priceWanted.doubleValue() - stopLoss) / priceWanted.abs().doubleValue();
                     annotation += " realStopLossPercent=" + printPrice(realStopLossPercent);
