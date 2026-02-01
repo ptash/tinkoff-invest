@@ -672,17 +672,20 @@ public class AlligatorService implements
                         isIgnoreSkipOnlySmaUp = true;
 
                         if (maxPrice != null && strategy.getReverseBuyLongMinMinLength() > 0) {
+                            annotation += " BuyLongMinMinLength=" + strategy.getReverseBuyLongMinMinLength();
                             var minMinCount = 0;
                             List<CandleDomainEntity> minCandlesDown = new ArrayList<>();
                             for (var i = 0; i < candleListMin.size(); i++) {
-                                if (candleListMin.get(i).getOpenPrice().compareTo(candleListMin.get(i).getClosingPrice()) >= 0) {
+                                if (!candleListMin.get(i).isUp()) {
                                     minMinCount++;
                                     if (i == (candleListMin.size() - 1) && minMinCount >= strategy.getReverseBuyLongMinMinLength()) {
+                                        annotation += " add " + printDateTime(candleListMin.get(i).getDateTime());
                                         minCandlesDown.add(candleListMin.get(i));
                                     }
                                 } else {
-                                    if (minMinCount >= strategy.getReverseBuyLongMinMinLength()) {
-                                        minCandlesDown.add(candleListMin.get(i));
+                                    if (minMinCount >= strategy.getReverseBuyLongMinMinLength() && i > 0) {
+                                        annotation += " add " + printDateTime(candleListMin.get(i - 1).getDateTime());
+                                        minCandlesDown.add(candleListMin.get(i - 1));
                                     }
                                     minMinCount = 0;
                                 }
@@ -690,6 +693,14 @@ public class AlligatorService implements
                             if (minCandlesDown.size() > 0) {
                                 var minV = minCandlesDown.stream().mapToDouble(c -> c.getLowestPrice().doubleValue()).min().getAsDouble();
                                 annotation += " minV=" + printPrice(minV);
+                                if (candle.isUp()) {
+                                    minV = minCandlesDown.stream().mapToDouble(c -> c.getMedianPrice().doubleValue()).min().getAsDouble();
+                                    annotation += " UP minV=" + printPrice(minV);
+                                    if (minV > candle.getOpenPrice().doubleValue()) {
+                                        minV = candle.getOpenPrice().doubleValue();
+                                        annotation += " OPEN minV=" + printPrice(minV);
+                                    }
+                                }
                                 if (maxPrice.doubleValue() > minV) {
                                     annotation += " maxPrice change " + printPrice(maxPrice) + "=>" + printPrice(minV);
                                     maxPrice = BigDecimal.valueOf(minV);
