@@ -419,7 +419,7 @@ public class AlligatorService implements
                 waitMax = lastFMinCandle.getLowestPrice();
                 delta = deltaDown = lastFMinCandle.getLowestPrice().subtract(lastFMinCandle.getClosingPrice()).abs()
                         .min(lastFMinCandle.getLowestPrice().subtract(lastFMinCandle.getOpenPrice()).abs());
-                var candleListMin = candleHistoryService.getCandlesByFigiBetweenDateTimes(candle.getFigi(), lastFMinCandle.getDateTime(), startCandle.getDateTime(), strategy.getInterval());
+                var candleListMin = candleHistoryService.getCandlesByFigiBetweenDateTimes(candle.getFigi(), lastFMinCandle.getDateTime(), candle.getDateTime(), strategy.getInterval());
                 var minIntervalCandle = candleListMin.stream().reduce((first, second) ->
                         first.getLowestPrice().compareTo(second.getLowestPrice()) < 0 ? first : second
                 ).orElse(null);
