@@ -10,6 +10,7 @@ import java.time.format.DateTimeFormatter;
 public class AlligatorFractal5Min extends AlligatorStrategy5Min {
     public boolean isAlligator() { return false; }
     public boolean isFractal() { return true; }
+    public Integer getFractalLength() { return 20; }
     //public boolean isFractalInDayTimeTrading() { return true; }
 
     public Integer getMaxDeep() { return 4000; }

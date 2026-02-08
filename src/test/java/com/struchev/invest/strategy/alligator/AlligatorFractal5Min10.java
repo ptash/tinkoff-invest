@@ -12,16 +12,10 @@ public class AlligatorFractal5Min10 extends AlligatorFractal5Min {
     public Float getBuyMaxProfitPercent() { return 4.f; }
 
     public boolean isBuyMaxOnlySmaUp() {
-        if (isRev()) {
-            return false;
-        }
-        return true;
+        return false;
     }
 
     public boolean isBuyMaxOnlySmaDown() {
-        if (isRev()) {
-            return true;
-        }
         return false;
     }
 
