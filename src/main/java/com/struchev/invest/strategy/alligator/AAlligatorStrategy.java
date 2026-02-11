@@ -152,6 +152,9 @@ public abstract class AAlligatorStrategy extends AStrategy implements Cloneable,
     public Integer getFractalAverageNumber() { return null; }
     public Integer getMaxDeepFractal() { return 100; }
     public Integer getFractalLength() { return 10; }
+    public Integer getFractalDeltaLength() { return 0; }
+    public boolean isFractalDeltaAv() { return false; }
+    public boolean isSkipFractalK() { return false; }
     public boolean isAlligator() { return true; }
     public boolean isMaxDeltaByMinMax() { return false; }
     public boolean isMaxDeltaByMinMaxOnly() { return false; }

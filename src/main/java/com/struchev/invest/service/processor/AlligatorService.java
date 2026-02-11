@@ -3026,6 +3026,9 @@ public class AlligatorService implements
                 kLength1 = line.getLength();
             }
         }
+        if (strategy.isSkipFractalK()) {
+            k1 = 1.;
+        }
         if (k1 == null) {
             log.trace("return k1=null");
             fractalData.setAnnotation("k1=null");
@@ -3040,7 +3043,7 @@ public class AlligatorService implements
 
         var annotationI = "";
         List<FractalData> listFractalData = new ArrayList<FractalData>();
-        for (var i = 0; i < (fractalLineList.size() - strategy.getFractalLength()); i++) {
+        for (var i = 0; i < (fractalLineList.size() - strategy.getFractalLength() - strategy.getFractalDeltaLength()); i++) {
             annotationI = "";
             var polylinePrev = fractalLineList.subList(i, i + strategy.getFractalLength());
             //var k2 = 1. / Math.sqrt(Math.pow(
@@ -3068,6 +3071,9 @@ public class AlligatorService implements
                 if (kLength2 == null || kLength2 < line.getLength()) {
                     kLength2 = line.getLength();
                 }
+            }
+            if (strategy.isSkipFractalK()) {
+                k2 = 1.;
             }
             if (k2 == null) {
                 continue;
@@ -3133,20 +3139,40 @@ public class AlligatorService implements
                         Math.min(fractalLineList.size(), i + strategy.getFractalLength() + strategy.getFractalLength())
                 );
                 var nextBegin = polylineLikeAfter.get(0).getCandleBegin();
-                var topLine = polylineLikeAfter.stream().reduce((first, second) ->
+                var polylineLikeAfterDelta = polylineLikeAfter;
+                if (strategy.getFractalDeltaLength() > 0) {
+                    if (strategy.getFractalDeltaLength() > polylineLikeAfter.size()) {
+                        log.warn("polylineLikeAfter from {} to {} size {}", polylineLikeAfter.get(0).getCandleBegin().getDateTime(), polylineLikeAfter.get(polylineLikeAfter.size() - 1).getCandleEnd().getDateTime(), polylineLikeAfter.size());
+                    }
+                    polylineLikeAfterDelta = polylineLikeAfter.subList(0, strategy.getFractalDeltaLength());
+                }
+                var topLine = polylineLikeAfterDelta.stream().reduce((first, second) ->
                         comparator1.compare(keyExtractor1.apply(first.getCandleEnd()), keyExtractor1.apply(second.getCandleEnd())) > 0 ? first : second
                 ).orElse(null);
                 annotation += " topLine=" + printDateTime(topLine.getCandleEnd().getDateTime());
-                nextPriceDelta2 = nextPriceDelta = k1 * (keyExtractor1.apply(topLine.getCandleEnd()).doubleValue() - keyExtractor1.apply(nextBegin).doubleValue()) / k2;
+                var topLinePrice = keyExtractor1.apply(topLine.getCandleEnd()).doubleValue();
+                if (strategy.isFractalDeltaAv()) {
+                    var topLineAv = polylineLikeAfterDelta.stream().filter(l -> l.isEndKeyExtractor1).mapToDouble(l -> keyExtractor1.apply(l.getCandleEnd()).doubleValue()).average().getAsDouble();
+                    annotation += " topLineAv=" + printPrice(topLineAv);
+                    topLinePrice = (topLinePrice + topLineAv) / 2.;
+                }
+                nextPriceDelta = k1 * (topLinePrice - keyExtractor1.apply(nextBegin).doubleValue()) / k2;
+                nextPriceDelta2 = nextPriceDelta;
                 annotation += " nextPriceDelta=" + printPrice(nextPriceDelta)
                 //        + "=" + printPrice(k1) + "*(" + printPrice(keyExtractor1.apply(topLine.getCandleEnd())) + "-" + printPrice(keyExtractor1.apply(nextBegin)) + ")/" + printPrice(k2)
                 ;
                 if (null != keyExtractor2) {
-                    var topLine2 = polylineLikeAfter.stream().reduce((first, second) ->
+                    var topLine2 = polylineLikeAfterDelta.stream().reduce((first, second) ->
                             comparator2.compare(keyExtractor2.apply(first.getCandleEnd()), keyExtractor2.apply(second.getCandleEnd())) > 0 ? first : second
                     ).orElse(null);
                     annotation += " topLine2=" + printDateTime(topLine2.getCandleEnd().getDateTime());
-                    nextPriceDelta2 = k1 * (keyExtractor2.apply(topLine2.getCandleEnd()).doubleValue() - keyExtractor2.apply(nextBegin).doubleValue()) / k2;
+                    var topLinePrice2 = keyExtractor2.apply(topLine2.getCandleEnd()).doubleValue();
+                    if (strategy.isFractalDeltaAv()) {
+                        var topLineAv2 = polylineLikeAfterDelta.stream().filter(l -> !l.isEndKeyExtractor1).mapToDouble(l -> keyExtractor2.apply(l.getCandleEnd()).doubleValue()).average().getAsDouble();
+                        annotation += " topLineAv2=" + printPrice(topLineAv2);
+                        topLinePrice2 = (topLinePrice2 + topLineAv2) / 2.;
+                    }
+                    nextPriceDelta2 = k1 * (topLinePrice2 - keyExtractor2.apply(nextBegin).doubleValue()) / k2;
                     annotation += " nextPriceDelta2=" + printPrice(nextPriceDelta2)
                     //    + "=" + printPrice(k1) + "*(" + printPrice(keyExtractor2.apply(topLine2.getCandleEnd())) + "-" + printPrice(keyExtractor2.apply(nextBegin)) + ")/" + printPrice(k2)
                     ;
@@ -3186,21 +3212,39 @@ public class AlligatorService implements
                     annotation += " II=" + i + " polylinePrevB=" + printDateTime(fractalLineList.get(i).getCandleBegin().getDateTime());
 
                     var nextBegin = polylineLikeAfterI.get(0).getCandleBegin();
-                    var topLine = polylineLikeAfterI.stream().reduce((first, second) ->
+                    var polylineLikeAfterDeltaI = polylineLikeAfterI;
+                    if (strategy.getFractalDeltaLength() > 0) {
+                        polylineLikeAfterDeltaI = polylineLikeAfterI.subList(0, strategy.getFractalDeltaLength());
+                    }
+                    Double nextPriceDelta2I;
+                    var topLine = polylineLikeAfterDeltaI.stream().reduce((first, second) ->
                             comparator1.compare(keyExtractor1.apply(first.getCandleEnd()), keyExtractor1.apply(second.getCandleEnd())) > 0 ? first : second
                     ).orElse(null);
+                    var topLinePrice = keyExtractor1.apply(topLine.getCandleEnd()).doubleValue();
                     annotation += " topLine=" + printDateTime(topLine.getCandleEnd().getDateTime());
-                    var nextPriceDelta2I = k1 * (keyExtractor1.apply(topLine.getCandleEnd()).doubleValue() - keyExtractor1.apply(nextBegin).doubleValue()) / k2;
+                    if (strategy.isFractalDeltaAv()) {
+                        var topLineAv = polylineLikeAfterDeltaI.stream().filter(l -> l.isEndKeyExtractor1).mapToDouble(l -> keyExtractor1.apply(l.getCandleEnd()).doubleValue()).average().getAsDouble();
+                        annotation += " topLineAv=" + printPrice(topLineAv);
+                        topLinePrice = (topLinePrice + topLineAv) / 2.;
+                    }
+                    nextPriceDelta2I = k1 * (topLinePrice - keyExtractor1.apply(nextBegin).doubleValue()) / k2;
+
                     var nextPriceDeltaI = nextPriceDelta2I;
                     annotation += " nextPriceDeltaI=" + printPrice(nextPriceDeltaI)
                     //        + "=" + printPrice(k1) + "*(" + printPrice(keyExtractor1.apply(topLine.getCandleEnd())) + "-" + printPrice(keyExtractor1.apply(nextBegin)) + ")/" + printPrice(k2)
                     ;
                     if (null != keyExtractor2) {
-                        var topLine2 = polylineLikeAfterI.stream().reduce((first, second) ->
+                        var topLine2 = polylineLikeAfterDeltaI.stream().reduce((first, second) ->
                                 comparator2.compare(keyExtractor2.apply(first.getCandleEnd()), keyExtractor2.apply(second.getCandleEnd())) > 0 ? first : second
                         ).orElse(null);
                         annotation += " topLine2=" + printDateTime(topLine2.getCandleEnd().getDateTime());
-                        nextPriceDelta2I = k1 * (keyExtractor2.apply(topLine2.getCandleEnd()).doubleValue() - keyExtractor2.apply(nextBegin).doubleValue()) / k2;
+                        var topLinePrice2 = keyExtractor1.apply(topLine2.getCandleEnd()).doubleValue();
+                        if (strategy.isFractalDeltaAv()) {
+                            var topLineAv2 = polylineLikeAfterDeltaI.stream().filter(l -> !l.isEndKeyExtractor1).mapToDouble(l -> keyExtractor2.apply(l.getCandleEnd()).doubleValue()).average().getAsDouble();
+                            annotation += " topLineAv2=" + printPrice(topLineAv2);
+                            topLinePrice2 = (topLineAv2 + topLinePrice2) / 2.;
+                        }
+                        nextPriceDelta2I = k1 * (topLinePrice2 - keyExtractor2.apply(nextBegin).doubleValue()) / k2;
                         annotation += " nextPriceDelta2I=" + printPrice(nextPriceDelta2I)
                         //    + "=" + printPrice(k1) + "*(" + printPrice(keyExtractor2.apply(topLine2.getCandleEnd())) + "-" + printPrice(keyExtractor2.apply(nextBegin)) + ")/" + printPrice(k2)
                         ;
