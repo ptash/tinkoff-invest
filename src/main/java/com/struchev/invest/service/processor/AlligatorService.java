@@ -3216,7 +3216,6 @@ public class AlligatorService implements
                     if (strategy.getFractalDeltaLength() > 0) {
                         polylineLikeAfterDeltaI = polylineLikeAfterI.subList(0, strategy.getFractalDeltaLength());
                     }
-                    Double nextPriceDelta2I;
                     var topLine = polylineLikeAfterDeltaI.stream().reduce((first, second) ->
                             comparator1.compare(keyExtractor1.apply(first.getCandleEnd()), keyExtractor1.apply(second.getCandleEnd())) > 0 ? first : second
                     ).orElse(null);
@@ -3227,7 +3226,7 @@ public class AlligatorService implements
                         annotation += " topLineAv=" + printPrice(topLineAv);
                         topLinePrice = (topLinePrice + topLineAv) / 2.;
                     }
-                    nextPriceDelta2I = k1 * (topLinePrice - keyExtractor1.apply(nextBegin).doubleValue()) / k2;
+                    var nextPriceDelta2I = k1 * (topLinePrice - keyExtractor1.apply(nextBegin).doubleValue()) / k2;
 
                     var nextPriceDeltaI = nextPriceDelta2I;
                     annotation += " nextPriceDeltaI=" + printPrice(nextPriceDeltaI)
@@ -3238,7 +3237,7 @@ public class AlligatorService implements
                                 comparator2.compare(keyExtractor2.apply(first.getCandleEnd()), keyExtractor2.apply(second.getCandleEnd())) > 0 ? first : second
                         ).orElse(null);
                         annotation += " topLine2=" + printDateTime(topLine2.getCandleEnd().getDateTime());
-                        var topLinePrice2 = keyExtractor1.apply(topLine2.getCandleEnd()).doubleValue();
+                        var topLinePrice2 = keyExtractor2.apply(topLine2.getCandleEnd()).doubleValue();
                         if (strategy.isFractalDeltaAv()) {
                             var topLineAv2 = polylineLikeAfterDeltaI.stream().filter(l -> !l.isEndKeyExtractor1).mapToDouble(l -> keyExtractor2.apply(l.getCandleEnd()).doubleValue()).average().getAsDouble();
                             annotation += " topLineAv2=" + printPrice(topLineAv2);
